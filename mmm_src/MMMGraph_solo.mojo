@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.Torch_MLP import Torch_MLP
+from examples.FeedbackDelays import FeedbackDelays
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Torch_MLP
+    var graph: FeedbackDelays
     var output: List[Float64]  # Output list for audio samples
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -18,7 +18,7 @@ struct MMMGraph(Representable, Movable):
         for _ in range(self.world_ptr[0].num_chans):
             self.output.append(0.0)  # Initialize output list with zeros
 
-        self.graph = Torch_MLP(self.world_ptr)
+        self.graph = FeedbackDelays(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("MMMGraph")

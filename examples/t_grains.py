@@ -1,5 +1,8 @@
-from mmm_src.MMMAudio import MMMAudio
+"""this uses the mouse to control granular playback of the buffer
+left and right moves around in the buffer. up and down controls rate of triggers.
+"""
 
+from mmm_src.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(128, graph_name="TGrains", package_name="examples")
 

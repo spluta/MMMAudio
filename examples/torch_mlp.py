@@ -18,7 +18,7 @@ mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced
 
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_msg("toggle_inference", 0.0)
+mmm_audio.send_msg("toggle_inference", 1.0)
 
 out_size = 16
 
@@ -35,8 +35,9 @@ outputs = make_setting()
 X_train_list = []
 y_train_list = []
 
-for i, element in enumerate(y_train_list):
-    print(f"Element {i}: {element}")
+for i in range(len(y_train_list)):
+    print(f"Element {i}: {X_train_list[i]}")
+    print(f"Element {i}: {y_train_list[i]}")
 
 # when you like a setting add an input and output pair
 # this is assuming you are training on 4 pairs of data points
@@ -52,82 +53,13 @@ y_train_list.append(outputs)
 X_train_list.append([1,0])
 y_train_list.append(outputs)
 
+learn_rate = 0.001
+epochs = 5000
 
-# train the neural network - run everything below at once
-def train_nn():
-    import torch
-    import time
-    import torch.nn as nn
-    import torch.optim as optim
+layers = [ [ 64, "relu" ], [ 64, "relu" ], [ out_size, "sigmoid" ] ]
 
-    from mmm_dsp.MLP import MLP 
+from mmm_utils.mlp_trainer import train_nn
 
-    if torch.backends.mps.is_available():
-        device = torch.device("mps")
-    else:
-        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using device:", device)
-
-    learn_rate = 0.001
-    epochs = 5000
-
-    data_list = [ [ 64, "relu" ], [ 64, "relu" ], [ out_size, "sigmoid" ] ]
-
-    print(data_list)
-
-    for i, vals in enumerate(data_list):
-        print(f"Layer {i}: {vals}")
-        val, activation = vals
-        if activation is not None:
-            if activation == 'relu':
-                activation = nn.ReLU()
-            elif activation == 'sigmoid':
-                activation = nn.Sigmoid()
-            elif activation == 'tanh':
-                activation = nn.Tanh()
-            else:
-                raise ValueError("Activation function not recognized.")
-        data_list[i] = [val, activation]
+train_nn(X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_trainings/model_traced.pt")
 
 
-    print(data_list)
-
-    # Convert lists to torch tensors and move to the appropriate device
-    X_train = torch.tensor(X_train_list, dtype=torch.float32).to(device)
-    y_train = torch.tensor(y_train_list, dtype=torch.float32).to(device)
-
-    input_size = X_train.shape[1]
-    model = MLP(input_size, data_list).to(device)
-    criterion = nn.MSELoss()
-    last_time = time.time()
-
-    for nums in [[learn_rate,epochs]]:
-        optimizer = optim.Adam(model.parameters(), lr=nums[0])
-
-        # Train the model
-        for epoch in range(nums[1]):
-            optimizer.zero_grad()
-            outputs = model(X_train)
-            loss = criterion(outputs, y_train)
-            if epoch % 100 == 0:
-                elapsed_time = time.time() - last_time
-                last_time = time.time()
-                print(epoch, loss.item(), elapsed_time)
-            loss.backward()
-            optimizer.step()
-
-
-    # Print the training loss
-    print("Training loss:", loss.item())
-
-    # Save the model
-    model = model.to('cpu')
-
-    # Trace the model
-    example_input = torch.randn(1, 2)
-    traced_model = torch.jit.trace(model, example_input)
-
-    # Save the traced model
-    traced_model.save('examples/nn_trainings/model_traced.pt')
-
-train_nn()

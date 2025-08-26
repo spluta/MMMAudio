@@ -86,7 +86,7 @@ struct TrigSynth(Representable, Movable, Copyable):
         var out = 0.0
 
         for note_on in self.note_ons:
-            print(note_on[0], note_on[1], note_on[2])
+            print(note_on[0], note_on[1], note_on[2], end = "\n")
             self.current_voice = (self.current_voice + 1) % self.num_voices
             self.voices[self.current_voice].trig = 1.0
             self.voices[self.current_voice].freq = midicps(note_on[1])

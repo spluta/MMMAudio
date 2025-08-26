@@ -60,5 +60,5 @@ scheduler.sched(trig_synth(0.1))
 
 scheduler.stop_routs()
 
-mmm_audio.stop()        
-mmm_audio.start()
+mmm_audio.stop_audio()
+mmm_audio.start_audio()

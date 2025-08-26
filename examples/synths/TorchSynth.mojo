@@ -126,7 +126,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         osc2 = self.dc2.next(osc2)
         self.fb = osc2
 
-        return [osc1 * 0.2, osc2 * 0.2]
+        return [osc1 * 0.2, osc2 * 0.1]
 
     fn get_msgs(mut self, infer: Float64):
         # only will grab messages at the top of the audio block
