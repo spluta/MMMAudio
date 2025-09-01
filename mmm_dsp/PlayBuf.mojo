@@ -132,6 +132,7 @@ struct Grain(Representable, Movable, Copyable):
         self.sample = 0.0
         self.win_phase = 0.0
 
+
     fn __repr__(self) -> String:
         return String("Grain")
 
@@ -159,9 +160,8 @@ struct Grain(Representable, Movable, Copyable):
         var win = self.world_ptr[0].hann_window.next(0, self.win_phase, 0)
 
         self.sample = self.sample * win * self.gain  # Apply the window to the sample
-        output = self.panner.next(self.sample, self.pan)  # Apply panning and gain to the sample
 
-        return output  # Return the output samples
+        return self.panner.next(self.sample, self.pan)  # Return the output samples
 
 struct TGrains(Representable, Movable, Copyable):
     """
@@ -212,17 +212,14 @@ struct TGrains(Representable, Movable, Copyable):
             self.counter += 1  # Increment the counter on trigger
             if self.counter >= self.num_grains:
                 self.counter = 0  # Reset counter if it exceeds the number of grains
-            var end_frame = start_frame + duration * buffer.get_buf_sample_rate()  # Calculate end frame based on duration
         else:
             self.trig = 0.0  # Reset trigger value if no trigger
 
         zero(self.temp)  # Reset temp list to zeros
         for i in range(self.num_grains):
             if i == self.counter and self.trig > 0.0:
-                temp = self.grains[i].next(buffer, 1.0, rate, start_frame, duration, pan, gain)
-                mix(self.temp, temp)
+                mix(self.temp, self.grains[i].next(buffer, 1.0, rate, start_frame, duration, pan, gain))
             else:
-                temp = self.grains[i].next(buffer, 0.0, rate, start_frame, duration, pan, gain)
-                mix(self.temp, temp)
+                mix(self.temp, self.grains[i].next(buffer, 0.0, rate, start_frame, duration, pan, gain))
 
         return self.temp  # Return the output samples

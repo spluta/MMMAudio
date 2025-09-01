@@ -61,6 +61,10 @@ struct MMMWorld(Representable, Movable, Copyable):
             list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
             self.mouse_y = list[0]  # Update mouse y position in the world
 
+        # if key == "thrustmaster":
+        #     if list[5] == 1.0:
+        #         print("Thrustmaster joystick button pressed")
+
         self.msg_dict[key] = list
 
     fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:
@@ -68,6 +72,18 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.grab_messages == 1:
             return self.msg_dict.get(key)
         return None
+
+    fn print_msgs(mut self: Self):
+        try:
+            if self.grab_messages == 1:
+                for key in self.msg_dict.keys():
+                    print(key, end=": ")
+                    list = self.msg_dict[key]
+                    for val in list:
+                        print(String(val), end=", ")
+                print()
+        except Exception:
+            pass
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
         self.text_msg_dict[key] = list

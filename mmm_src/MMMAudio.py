@@ -23,7 +23,10 @@ sys.path.insert(0, "mmm_src")
 
 
 class MMMAudio:
-    def __init__(self, blocksize=64, channels=2, osc_port=5005, graph_name="FeedbackDelays", package_name="examples"):
+    
+
+    def __init__(self, blocksize=64, channels=2, audio_device="default", graph_name="FeedbackDelays", package_name="examples"):
+        self.device_index = None
         # this makes the graph file that should work
         from mmm_src.make_solo_graph import make_solo_graph
         make_solo_graph(graph_name, package_name)
@@ -33,6 +36,7 @@ class MMMAudio:
         self.blocksize = blocksize
         self.channels = channels
         self.counter = 0
+        self.joysticks = []
 
         self.running = False
 
@@ -40,8 +44,24 @@ class MMMAudio:
 
         # Get default system sample rate from PyAudio
         p_temp = pyaudio.PyAudio()
-        device_info = p_temp.get_default_output_device_info()
-        self.sample_rate = int(device_info['defaultSampleRate'])
+        if audio_device != "default":
+            device_index = None
+            for i in range(p_temp.get_device_count()):
+                dev_info = p_temp.get_device_info_by_index(i)
+                if audio_device in dev_info['name']:
+                    device_index = i
+                    self.audio_device_index = device_index
+                    print(f"Using audio device: {dev_info['name']}")
+                    break
+            if device_index is not None:
+                device_info = p_temp.get_device_info_by_index(device_index)
+                self.sample_rate = int(device_info['defaultSampleRate'])
+                print(f"Sample rate for {audio_device}: {self.sample_rate}")
+            else:
+                print(f"Audio device '{audio_device}' not found. Using default device.")
+                device_info = p_temp.get_default_output_device_info()
+                self.sample_rate = int(device_info['defaultSampleRate'])
+        
         print(f"Default sample rate: {self.sample_rate}")
         p_temp.terminate()
         
@@ -124,6 +144,9 @@ class MMMAudio:
                 format=format_code,
                 channels=self.channels,
                 rate=self.sample_rate,
+                input_device_index=self.audio_device_index,
+                output_device_index=self.audio_device_index,
+                input=True,
                 output=True,
                 frames_per_buffer=self.blocksize,
                 stream_callback=self.callback
@@ -186,7 +209,7 @@ class MMMAudio:
             self.mmm_audio_bridge.send_midi((key, msg.velocity))
 
 
-    def add_hid_device(self, name, vendor_id, product_id, destination):
+    def add_hid_device(self, name, vendor_id, product_id):
         """
         Add a HID device to the MMMAudio instance.
 
@@ -200,8 +223,9 @@ class MMMAudio:
         if joystick.connect():
             print(f"Connected to {name}")
             # Start reading joystick data in a separate thread
-            joystick_thread = threading.Thread(target=joystick.read_continuous, args=(name, destination, ), daemon=True)
+            joystick_thread = threading.Thread(target=joystick.read_continuous, args=(name, self.mmm_audio_bridge, ), daemon=True)
             joystick_thread.start()
+            self.joysticks.append(joystick)
         else:
             print(f"Could not connect to {name}. Make sure the device is plugged in and drivers are installed.")
 
@@ -234,9 +258,15 @@ class MMMAudio:
         # finally:
         #     transport.close()    
 
-    # def run(self):
-    #     # Wait for stream to finish
-    #     while self.stream.is_active():
-    #         time.sleep(0.1)
-            
-
+def list_audio_devices():
+    p_temp = pyaudio.PyAudio()
+    p_temp.get_device_count()
+    # List all available audio devices
+    for i in range(p_temp.get_device_count()):
+        dev_info = p_temp.get_device_info_by_index(i)
+        print(f"Device {i}: {dev_info['name']}")
+        print(f"  Input channels: {dev_info['maxInputChannels']}")
+        print(f"  Output channels: {dev_info['maxOutputChannels']}")
+        print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
+        print()
+    p_temp.terminate()

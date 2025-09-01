@@ -2,23 +2,23 @@ from python import PythonObject
 from python import Python
 
 struct MLP(Representable, Movable, Copyable):
-    var input: List[Float64]  # Input list for audio synthesis
-    var output: List[Float64]  # Output list for audio synthesis
-    var input_size: Int64  # Size of the input layer
-    var output_size: Int64  # Size of the output layer
-    var py_input: PythonObject  # Placeholder for input data
-    var py_output: PythonObject  # Placeholder for output data
-    var model: PythonObject  # Placeholder for the model
-    var MLP: PythonObject  # Placeholder for the MLP class
-    var torch: PythonObject  # Placeholder for PyTorch or similar library
+    var input: List[Float64]  
+    var output: List[Float64]  
+    var input_size: Int64  
+    var output_size: Int64 
+    var py_input: PythonObject  
+    var py_output: PythonObject  
+    var model: PythonObject  
+    var MLP: PythonObject  
+    var torch: PythonObject  
 
     fn __init__(out self, file_name: String, input_size: Int64, output_size: Int64):
-        self.input_size = input_size  # Set the input size
-        self.input = List[Float64]()  # Initialize input list with two elements
+        self.input_size = input_size  
+        self.input = List[Float64]()  
         for _ in range(input_size):
             self.input.append(0.0)  # Initialize input list with zeros
 
-        self.output = List[Float64]()  # Initialize output list with two elements
+        self.output = List[Float64]()  
         self.output_size = output_size  # Set the output size
         for _ in range(self.output_size):
             self.output.append(0.0)  # Initialize output list with zeros
@@ -29,8 +29,6 @@ struct MLP(Representable, Movable, Copyable):
         self.MLP = PythonObject(None)  # Placeholder for the MLP class
         self.torch = PythonObject(None)  # Placeholder for the torch module
 
-        
-
         try:
             # Python.add_to_path("neural_nets/MLP.py")
             self.MLP = Python.import_module("mmm_dsp.MLP")
@@ -39,7 +37,7 @@ struct MLP(Representable, Movable, Copyable):
             self.model = self.torch.jit.load(file_name)  # Load your PyTorch model
             self.model.eval()  # Set the model to evaluation mode
             for _ in range (5):
-                self.model(self.torch.randn(1, 2))  # warm it up CHris
+                self.model(self.torch.randn(1, input_size))  # warm it up CHris
 
             print("Torch model loaded successfully")
 

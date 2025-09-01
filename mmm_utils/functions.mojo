@@ -1,5 +1,7 @@
 from random import random_float64
 from math import log2
+from algorithm import vectorize
+from sys.info import simdwidthof
 
 fn linlin(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, out_max: Float64) -> Float64:
     """Maps a value from one range to another range.
@@ -156,6 +158,24 @@ fn mix(mut output: List[Float64], *lists: List[Float64]) -> None:
             if i < len(lst):
                 output[i] += lst[i]  # Sum the samples
 
+# fn mix_vectorized(mut output: List[Float64], *lists: List[Float64]) -> None:
+#     alias simd_width = simdwidthof[DType.float64]()
+#     var size = len(output)
+#     for lst in lists:
+#         var lst_size = len(lst)
+#         var simd_end = lst_size - (lst_size % simd_width)
+#         @parameter
+#         fn closure[width: Int](i: Int):
+#             var out_vec = output.load[width](i)
+#             var in_vec = lst.load[width](i)
+#             output.store[width](i, out_vec + in_vec)
+#         # Vectorized loop for the part that fits SIMD width
+#         vectorize[closure, simd_width](simd_end)
+#         # Scalar loop for the remainder and for indices beyond lst_size
+#         for i in range(simd_end, size):
+#             if i < lst_size:
+#                 output[i] += lst[i]
+
 fn mix(mut output: List[Float64], *samples: Float64) -> None:
     for i in range(len(output)):
         if i < len(samples):
@@ -165,6 +185,18 @@ fn mul(mut output: List[Float64], factor: Float64):
     """Multiplies each element in the output list by a factor."""
     for i in range(len(output)):
         output[i] *= factor  # Multiply each sample by the factor
+
+# not yet tested
+# fn mul_vectorized(mut output: List[Float64], factor: Float64):
+#     alias simd_width = simdwidthof[DType.float64]()
+#     var size = len(output)
+#     @parameter
+#     fn closure[width: Int](i: Int):
+#         # Load a SIMD vector from output, multiply by factor, and store back
+#         var vec = output.load[width](i)
+#         var result = vec * SIMD[DType.float64, width](factor)
+#         output.store[width](i, result)
+#     vectorize[closure, simd_width](size)
 
 fn zero(mut lst: List[Float64]) -> None:
     """Sets all elements of the list to zero."""

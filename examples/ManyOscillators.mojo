@@ -35,7 +35,6 @@ struct ManyOscillators(Representable, Movable, Graphable, Copyable):
             samples = self.osc_synths[i].next()
             mix(self.output, samples)
 
-
         return self.output  # Return the combined output sample
 
 

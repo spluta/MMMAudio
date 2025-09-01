@@ -78,6 +78,17 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
+    fn send_raw_hid(py_self: UnsafePointer[Self], info: PythonObject) raises -> PythonObject:
+        key = String(info[0])
+        data = Int16(info[1])
+
+        print(data)
+
+        # py_self[0].world_ptr[0].send_raw_hid(key, data)
+
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
     fn send_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         var list = List[Float64]()
@@ -85,6 +96,12 @@ struct MMMAudioBridge(Representable, Movable):
         var key = String(key_vals[0])
         for i in range(1,len(key_vals)):     
             list.append(Float64(key_vals[i]))  # Convert each value to Float64 and append to the list
+        # if not key in "mouse_x" and not key in "mouse_y":
+        #     print("send_msg:", key, list[0], end="")
+        #     for i in range(1, len(list)):
+        #         print(",", list[i], end="")
+        #     print()
+        #     print()
 
         py_self[0].world_ptr[0].send_msg(key, list)
         
@@ -137,6 +154,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             # .def_method[MMMAudioBridge.set_active_graphs]("set_active_graphs")
             .def_method[MMMAudioBridge.send_msg]("send_msg")
             .def_method[MMMAudioBridge.send_text_msg]("send_text_msg")
+            .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
             .def_method[MMMAudioBridge.send_midi]("send_midi")
         )
 

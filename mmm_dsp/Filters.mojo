@@ -179,15 +179,17 @@ struct SVF(Representable, Movable, Copyable):
 struct lpf_LR4(Representable, Movable, Copyable):
     var svf1: SVF
     var svf2: SVF
-    var sample_rate: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.svf1 = SVF(world_ptr)
         self.svf2 = SVF(world_ptr)
-        self.sample_rate = world_ptr[0].sample_rate  # Initialize sample rate from the MMMWorld instance
 
     fn __repr__(self) -> String:
         return String("lpf_LR4")
+
+    fn set_sample_rate(mut self, sample_rate: Float64):
+        self.svf1.sample_rate = sample_rate
+        self.svf2.sample_rate = sample_rate
 
     fn next(mut self, input: Float64, frequency: Float64) -> Float64:
         """Next a single sample through the 4th order lowpass filter"""
@@ -381,21 +383,132 @@ struct VAMoogLadder(Representable, Movable, Copyable):
         var v4 = g * (lp3 - self.last_4)
         var lp4 = self.last_4 + v4
         
-        # var v1 = g * (input - self.last_1)
-        # var lp1 = self.last_1 + v1
-        
-        # var v2 = g * (lp1 - self.last_2)
-        # var lp2 = self.last_2 + v2
-        
-        # var v3 = g * (lp2 - self.last_3)
-        # var lp3 = self.last_3 + v3
-        
-        # var v4 = g * (lp3 - self.last_4)
-        # var lp4 = self.last_4 + v4
-        
         self.last_1 = lp1
         self.last_2 = lp2
         self.last_3 = lp3
         self.last_4 = lp4
         
         return lp4
+
+# All of the following is a translation of Julius Smith's Faust implementation of digital filters.
+# Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
+
+struct FIR(Representable, Movable, Copyable):
+    var buffer: List[Float64]
+    var index: Int
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
+        self.buffer = List[Float64]()
+        for _ in range(num_coeffs):
+            self.buffer.append(0.0)
+        self.index = 0
+
+    fn __repr__(self) -> String:
+        return String("FIR")
+
+    fn next(mut self: FIR, input: Float64, coeffs: List[Float64]) -> Float64:
+        self.buffer[self.index] = input
+        var output = 0.0
+        for i in range(len(coeffs)):
+            output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
+        self.index = (self.index + 1) % len(self.buffer)
+        return output
+
+struct IIR(Representable, Movable, Copyable):
+    var fir1: FIR
+    var fir2: FIR
+    var fb: Float64
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.fir1 = FIR(world_ptr,2)
+        self.fir2 = FIR(world_ptr,3)
+        self.fb = 0.0
+
+    fn __repr__(self) -> String:
+        return String("IIR")
+
+    fn next(mut self: IIR, input: Float64, coeffsbv: List[Float64], coeffsav: List[Float64]) -> Float64:
+        var temp = input - self.fb
+        var output1 = self.fir1.next(temp, coeffsav)
+        var output2 = self.fir2.next(temp, coeffsbv)
+        self.fb = output1
+        return output2
+
+struct tf2(Representable, Movable, Copyable):
+    var iir: IIR
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.iir = IIR(world_ptr)
+
+    fn __repr__(self) -> String:
+        return String("tf2")
+
+    fn next(mut self: tf2, input: Float64, coeffs: List[Float64]) -> Float64:
+        var output1 = self.iir.next(input, coeffs[:3], coeffs[3:])
+        return output1
+
+struct tf2s(Representable, Movable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]
+    var tf2: tf2
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.tf2 = tf2(world_ptr)
+
+    fn __repr__(self) -> String:
+        return String("tf2s")
+
+    fn next(mut self: tf2s, input: Float64, coeffs: List[Float64]) -> Float64:
+        var b2 = coeffs[0]
+        var b1 = coeffs[1]
+        var b0 = coeffs[2]
+        var a1 = coeffs[3]
+        var a0 = coeffs[4]
+        var w1 = coeffs[5]
+
+        var c   = 1/tan(w1*0.5/self.world_ptr[0].sample_rate) # bilinear-transform scale-factor
+        var csq = c*c
+        var d   = a0 + a1 * c + csq
+        var b0d = (b0 + b1 * c + b2 * csq)/d
+        var b1d = 2 * (b0 - b2 * csq)/d
+        var b2d = (b0 - b1 * c + b2 * csq)/d
+        var a1d = 2 * (a0 - csq)/d
+        var a2d = (a0 - a1*c + csq)/d
+
+        return self.tf2.next(input, [b0d, b1d, b2d, a1d, a2d])
+
+struct Reson(Representable, Movable, Copyable):
+    var tf2s: tf2s
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.tf2s = tf2s(world_ptr)
+
+    fn __repr__(self) -> String:
+        return String("Reson")
+
+    fn lpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+        var wc = 2*pi*freq
+        var a1 = 1/q
+        var a0 = 1
+        var b2 = 0
+        var b1 = 0
+        var b0 = clip(gain, 0.0, 1.0)
+        return self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])
+    
+    fn hpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+        var wc = 2*pi*freq
+        var a1 = 1/q
+        var a0 = 1
+        var b2 = 0
+        var b1 = 0
+        var b0 = clip(gain, 0.0, 1.0)
+        return gain*input - self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])
+
+    fn bpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+        var wc = 2*pi*freq
+        var a1 = 1/q
+        var a0 = 1
+        var b2 = 0
+        var b1 = clip(gain, 0.0, 1.0)
+        var b0 = 0
+        return self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])

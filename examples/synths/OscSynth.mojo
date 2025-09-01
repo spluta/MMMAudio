@@ -43,7 +43,7 @@ struct OscSynth(Representable, Movable, Copyable):
         
         temp = 0.0
         for i in range(len(self.oscs)):
-            temp += self.oscs[i].next(self.osc_freqs[i])  # Get the next value from the Osc
+            temp += self.oscs[i].next(self.osc_freqs[i], interp = 0, os_index = 0)  # Get the next value from the Osc
 
         temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01) # Apply volume modulation
 

@@ -187,8 +187,6 @@ struct OscBuffers(Representable, Movable, Copyable):
         var octave = max(0.0, log2(samples_per_frame))
         octave = min(octave, Float64(self.sinc_interpolator.sinc_power) - 2.0)  # Calculate octave
 
-        var random_float = random_float64()  # Generate a random float for crossfade
-
         var layer: Int64 = Int64(ceil(octave))  # Round up to the nearest layer
         var sinc_crossfade: Float64 = octave - floor(octave)  # Calculate sinc crossfade
 
@@ -203,20 +201,17 @@ struct OscBuffers(Representable, Movable, Copyable):
         var frac = f_index - Float64(index)  # Get the fractional part
 
         var sinc1 = self.spaced_sinc(buf_num, index, frac, spacing1)  # Get the spaced sinc value
-        var out: Float64 = 0.0  # Initialize output value
         if layer < 12:  # Check if layer is less than 12
             var sinc2 = self.spaced_sinc(buf_num, index, frac, spacing2)  # Get the spaced sinc value for double spacing
-            out = lin_interp(sinc1, sinc2, sinc_crossfade)  # Linear interpolation between sinc1 and sinc2
+            return lin_interp(sinc1, sinc2, sinc_crossfade)  # Linear interpolation between sinc1 and sinc2
         else:
-            out = lin_interp(sinc1, 0.0, sinc_crossfade)  # Use sinc1 directly if spacing exceeds maximum sinc offset
-        return out
+            return lin_interp(sinc1, 0.0, sinc_crossfade)  # Use sinc1 directly if spacing exceeds maximum sinc offset
 
     fn spaced_sinc(self, buf_num: Int64, index: Int64, frac: Float64, spacing: Int64) -> Float64:
         var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing
 
         # var out: Float64 = 0.0  # Initialize output value
         var out: Float64 = 0.0
-
 
         for sp in range(0, self.sinc_interpolator.ripples * 2):
             var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size  # Calculate location point in the buffer

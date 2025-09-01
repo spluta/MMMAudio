@@ -84,13 +84,7 @@ struct Env(Representable, Movable, Copyable):
         var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])  # Normalized time within the segment
 
         norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
-
-        # integrate the last value so their are no sudden jumps
-        var out = lin_interp(values[segment], values[segment + 1], norm_seg) # + (self.last_out * 0.9)
         
-        self.last_out = out  # Update last output value
+        self.last_out = lin_interp(values[segment], values[segment + 1], norm_seg)  # Update last output value
 
-        # this doesn't seem to totally work
-        out = self.Lag.next(out, 0.001)  # Apply lag filter to smooth the output
-
-        return out
+        return self.Lag.next(self.last_out, 0.001)

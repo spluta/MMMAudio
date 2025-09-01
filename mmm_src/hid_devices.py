@@ -5,6 +5,8 @@ class Joystick:
     def __init__(self, name, vendor_id=0x046d, product_id=0xc215):
         self.device = None
 
+        self.verbose = False
+
         self.name = name
         self.vendor_id = vendor_id
         self.product_id = product_id
@@ -39,8 +41,8 @@ class Joystick:
         
         # this is a 32-bit integer of 1s and 0s pertaining to the joystick state
         combined = int.from_bytes(data, byteorder='little')
-        print(f"Combined data: {combined:032b}")  # Debug print of the combined data
-        print(f"Combined data: {combined>>40:032b}")  # Debug print of the combined data
+        # print(f"Combined data: {combined:032b}")  # Debug print of the combined data
+        # print(f"Combined data: {combined>>40:032b}")  # Debug print of the combined data
 
         if self.name=="logi_3Dpro":
             self.x_axis = (((combined >> 0) & 0x3FF)) / 1023.0  # X-axis (10 bits, centered around 0)
@@ -58,7 +60,7 @@ class Joystick:
                 
         elif self.name=="thrustmaster":
             self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
-            print(combined >> 28)
+            # print(combined >> 28)
             self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
             self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
 
@@ -72,15 +74,13 @@ class Joystick:
                 self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
             # print(f"Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
             # print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}")
-    
+
     def read_continuous(self, name, destination, duration=None):
         """Read joystick data continuously"""
         if not self.device:
             print("Device not connected")
             return
-        
-        start_time = time.time()
-        
+            
         try:
             while True:
                 # Check duration limit
@@ -88,15 +88,36 @@ class Joystick:
                     break
                 
                 # Read data with timeout
-                data = self.device.read(9, 100)
+                data = self.device.read(9, 10)
 
                 if data:
                     self.parse_report(data)
-                    # print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}, Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
+                    # if self.verbose:
+                    #     print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}, Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
                     destination.send_msg((name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons))
-                time.sleep(0.01)  # Small delay to prevent overwhelming output
+                    # destination.send_raw_hid((name, 10))
+                time.sleep(0.001)  # Small delay to prevent overwhelming output
                 
         except KeyboardInterrupt:
             print("\nStopped by user")
+
+    def list_hid_devices():
+        print("Available HID devices:")
+        for device_dict in hid.enumerate():
+            print(f"Manufacturer: {device_dict.get('manufacturer_string', 'Unknown')}")
+            print(f"Product: {device_dict.get('product_string', 'Unknown')}")
+            print(f"Vendor ID: 0x{device_dict.get('vendor_id', 0):04x}")
+            print(f"Product ID: 0x{device_dict.get('product_id', 0):04x}")
+            print(f"Path: {device_dict.get('path', 'Unknown')}")
+            print("--------------------")
     
 
+def list_hid_devices():
+    print("Available HID devices:")
+    for device_dict in hid.enumerate():
+        print(f"Manufacturer: {device_dict.get('manufacturer_string', 'Unknown')}")
+        print(f"Product: {device_dict.get('product_string', 'Unknown')}")
+        print(f"Vendor ID: 0x{device_dict.get('vendor_id', 0):04x}")
+        print(f"Product ID: 0x{device_dict.get('product_id', 0):04x}")
+        print(f"Path: {device_dict.get('path', 'Unknown')}")
+        print("--------------------")

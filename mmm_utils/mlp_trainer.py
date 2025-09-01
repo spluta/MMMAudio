@@ -66,7 +66,7 @@ def train_nn(X_train_list, y_train_list, layers, learn_rate, epochs, file_name):
     model = model.to('cpu')
 
     # Trace the model
-    example_input = torch.randn(1, 2)
+    example_input = torch.randn(1, input_size)
     traced_model = torch.jit.trace(model, example_input)
 
     # Save the traced model
