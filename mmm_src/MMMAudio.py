@@ -61,8 +61,14 @@ class MMMAudio:
                 print(f"Audio device '{audio_device}' not found. Using default device.")
                 device_info = p_temp.get_default_output_device_info()
                 self.sample_rate = int(device_info['defaultSampleRate'])
-        
-        print(f"Default sample rate: {self.sample_rate}")
+        else:
+            self.audio_device_index = p_temp.get_default_output_device_info()['index']
+            device_info = p_temp.get_default_output_device_info()
+            
+            self.sample_rate = int(device_info['defaultSampleRate'])
+            print(f"Sample rate for {audio_device}: {self.sample_rate}")
+
+        # print(f"Default sample rate: {self.sample_rate}")
         p_temp.terminate()
         
         self.wire_buffer = np.zeros((self.blocksize, self.channels), dtype=np.float64)
@@ -144,9 +150,9 @@ class MMMAudio:
                 format=format_code,
                 channels=self.channels,
                 rate=self.sample_rate,
-                input_device_index=self.audio_device_index,
+                # input_device_index=self.audio_device_index,
                 output_device_index=self.audio_device_index,
-                input=True,
+                # input=True,
                 output=True,
                 frames_per_buffer=self.blocksize,
                 stream_callback=self.callback

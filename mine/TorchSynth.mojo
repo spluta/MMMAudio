@@ -16,12 +16,14 @@ struct TorchSynth(Representable, Movable, Copyable):
 
     var model_input: List[Float64]  # Input list for audio synthesis
     var model_output: List[Float64]  # Placeholder for output data
-    var model: MLP  # Placeholder for the model
+    var models: List[MLP]  # Placeholder for the model
+    var current_model: Int
     var model_out_size: Int64
     var inference_trig: Impulse
 
     var button: Float64
     var button_lag: Lag
+    var volume: Float64
 
     var lags: List[Lag]
     var lag_vals: List[Float64]
@@ -58,13 +60,20 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.toggle_inference = 1.0
         self.button = 0.0
         self.button_lag = Lag(self.world_ptr)
+        self.volume = 0.0
 
+        self.models = List[MLP]()
         # load the trained model
         try:
-            self.model = MLP("mine/model_traced.pt", 3, self.model_out_size)
+            self.models.append(MLP("mine/model_traced0.pt", 3, self.model_out_size))
+            self.models.append(MLP("mine/model_traced1.pt", 3, self.model_out_size))
+            self.models.append(MLP("mine/model_traced2.pt", 3, self.model_out_size))
+            self.models.append(MLP("mine/model_traced3.pt", 3, self.model_out_size))
         except Exception:
             print("Error loading model")
             self.toggle_inference = 0.0
+
+        self.current_model = 0
 
         self.inference_trig = Impulse(self.world_ptr)
 
@@ -136,7 +145,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.fb = osc2
 
         button = self.button_lag.next(self.button, 0.01)
-        return [osc1 * 0.2 * button, osc2 * 0.2 * button]
+        return [osc1 * self.volume * button, osc2 * self.volume * button]
 
     fn get_msgs(mut self, infer: Float64):
         # name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons
@@ -146,24 +155,48 @@ struct TorchSynth(Representable, Movable, Copyable):
             toggle_inference = self.world_ptr[0].get_msg("toggle_inference")
             if toggle_inference:
                 self.toggle_inference = toggle_inference.value()[0]
-            load_msg = self.world_ptr[0].get_text_msg("load_mlp_training")
+                self.volume = 0.2
+                self.button = 1.0
+            load_msg = self.world_ptr[0].get_text_msg("load_mlp_training0")
             if load_msg:
                 print("loading new model", end="\n")
-                self.model = MLP(load_msg.value()[0], 3, self.model_out_size)
-            joystick = self.world_ptr[0].get_msg("thrustmaster")
-            if joystick:
-                self.model_input[0] = joystick.value()[0]
-                self.model_input[1] = joystick.value()[1]
-                self.model_input[2] = joystick.value()[2]
-                self.button = joystick.value()[8]
+                self.models[0] = MLP(load_msg.value()[0], 3, self.model_out_size)
+            load_msg = self.world_ptr[0].get_text_msg("load_mlp_training1")
+            if load_msg:
+                print("loading new model", end="\n")
+                self.models[1] = MLP(load_msg.value()[0], 3, self.model_out_size)
+            load_msg = self.world_ptr[0].get_text_msg("load_mlp_training2")
+            if load_msg:
+                print("loading new model", end="\n")
+                self.models[2] = MLP(load_msg.value()[0], 3, self.model_out_size)
+            load_msg = self.world_ptr[0].get_text_msg("load_mlp_training3")
+            if load_msg:
+                print("loading new model", end="\n")
+                self.models[3] = MLP(load_msg.value()[0], 3, self.model_out_size)
+
             if self.toggle_inference:
+                joystick = self.world_ptr[0].get_msg("thrustmaster")
+                if joystick:
+                    self.model_input[0] = joystick.value()[0]
+                    self.model_input[1] = joystick.value()[1]
+                    self.model_input[2] = joystick.value()[2]
+                    self.button = joystick.value()[5]
+                    self.volume = 1.0-joystick.value()[3]
+                    if joystick.value()[9] > 0.0:
+                        self.current_model = 0
+                    elif joystick.value()[10] > 0.0:
+                        self.current_model = 1
+                    elif joystick.value()[11] > 0.0:
+                        self.current_model = 2
+                    elif joystick.value()[12] > 0.0:
+                        self.current_model = 3
                 if infer > 0.0:
                     try:
-                        self.model_output = self.model.next(self.model_input)  
+                        self.model_output = self.models[self.current_model].next(self.model_input)  
                     except Exception:
                         print("Inference error in MLP model", end="\n")
             else:
                 for i in range(self.model_out_size):
-                    out = self.world_ptr[0].get_msg("model_output"+String(i))
+                    out = self.world_ptr[0].get_msg("fake_model_output"+String(i))
                     if out:
                         self.model_output[i] = out.value()[0]
