@@ -3,6 +3,7 @@ from random import random_float64
 from mmm_utils.functions import *
 from memory import Pointer
 from mmm_utils.Windows import build_sinc_table
+from algorithm.functional import vectorize
 
 struct Sinc_Interpolator(Representable, Movable, Copyable):
     var ripples: Int64  # Number of ripples for sinc interpolation
@@ -181,14 +182,14 @@ struct OscBuffers(Representable, Movable, Copyable):
 
     fn next_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
         # Sinc interpolation using the sinc table
-        var phase_diff = phase - last_phase  # Calculate phase difference
-        var slope = wrap(phase_diff, -0.5, 0.5)  # Wrap phase difference to [-0.5, 0.5]
+        var phase_diff = phase - last_phase  
+        var slope = wrap(phase_diff, -0.5, 0.5)  
         var samples_per_frame = abs(slope) * Float64(self.size)  # Calculate samples per frame based on slope
         var octave = max(0.0, log2(samples_per_frame))
-        octave = min(octave, Float64(self.sinc_interpolator.sinc_power) - 2.0)  # Calculate octave
+        octave = min(octave, Float64(self.sinc_interpolator.sinc_power) - 2.0) 
 
-        var layer: Int64 = Int64(ceil(octave))  # Round up to the nearest layer
-        var sinc_crossfade: Float64 = octave - floor(octave)  # Calculate sinc crossfade
+        var layer: Int64 = Int64(ceil(octave))  # Round up to the upper layer
+        var sinc_crossfade: Float64 = octave - floor(octave) 
 
         if layer >= self.sinc_interpolator.sinc_power - 3:
             layer = self.sinc_interpolator.sinc_power - 3  # Limit layer to a maximum of self.sinc_interpolator.sinc_power - 3
@@ -223,6 +224,56 @@ struct OscBuffers(Representable, Movable, Copyable):
             out += sinc_value * self.buffers[buf_num][spaced_point]
 
         return out  # Scale the sample by the sinc value
+
+# one would think SIMD optimization would help here, but it doesn't
+# it actually makes is worse!
+
+#     fn spaced_sinc[simd_width: Int = 4](
+#     self, 
+#     buf_num: Int64, 
+#     index: Int64, 
+#     frac: Float64, 
+#     spacing: Int64
+# ) -> Float64:
+#         var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing
+#         var loop_count = self.sinc_interpolator.ripples * 2
+#         var num_chunks = loop_count // simd_width
+#         # var remainder = loop_count % simd_width
+        
+#         var accumulator = SIMD[DType.float64, simd_width](0.0)
+        
+#             # Process SIMD chunks
+#         var sinc_values = SIMD[DType.float64, simd_width](0.0)
+#         var buffer_values = SIMD[DType.float64, simd_width](0.0)
+            
+#         for chunk in range(num_chunks):
+#             var base_sp = chunk * simd_width
+            
+#             # Calculate all values for this chunk
+#             for i in range(simd_width):
+#                 var sp = base_sp + i
+#                 var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size
+#                 var spaced_point = (loc_point / spacing) * spacing
+#                 var sinc_offset = loc_point - spaced_point
+                
+#                 sinc_values[i] = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)
+#                 buffer_values[i] = self.buffers[buf_num][spaced_point]
+            
+#             # SIMD multiply-accumulate
+#             accumulator += sinc_values * buffer_values
+        
+#         var out: Float64 = 0.0
+#         for i in range(simd_width):
+#             out += accumulator[i]
+#         # # Handle remaining iterations - it should never run this code
+#         # for sp in range(num_chunks * simd_width, loop_count):
+#         #     var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size
+#         #     var spaced_point = (loc_point / spacing) * spacing
+#         #     var sinc_offset = loc_point - spaced_point
+#         #     var sinc_value = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)
+#         #     out += sinc_value * self.buffers[buf_num][spaced_point]
+        
+#         return out
 
     fn next(self, phase: Float64, osc_type: Int64 = 0, interp: Int64 = 0) -> Float64:
         if interp == 0:

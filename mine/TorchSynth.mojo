@@ -99,7 +99,7 @@ struct TorchSynth(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("OscSynth")
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         infer = self.inference_trig.next(50)
         self.get_msgs(infer)
 
@@ -145,7 +145,9 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.fb = osc2
 
         button = self.button_lag.next(self.button, 0.01)
-        return [osc1 * self.volume * button, osc2 * self.volume * button]
+        oscs = SIMD[DType.float64, 2](osc1, osc2)
+        oscs = oscs * self.volume * button
+        return oscs
 
     fn get_msgs(mut self, infer: Float64):
         # name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons
@@ -195,8 +197,13 @@ struct TorchSynth(Representable, Movable, Copyable):
                         self.model_output = self.models[self.current_model].next(self.model_input)  
                     except Exception:
                         print("Inference error in MLP model", end="\n")
+                
             else:
                 for i in range(self.model_out_size):
                     out = self.world_ptr[0].get_msg("fake_model_output"+String(i))
                     if out:
                         self.model_output[i] = out.value()[0]
+            # doing the lags only at the top of the audio block
+            # these seems to make very little difference in cpu use
+            # for i in range(self.model_out_size):
+            #     self.lag_vals[i] = self.lags[i].next_kr(self.model_output[i], 0.1)

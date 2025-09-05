@@ -2,13 +2,13 @@ from mmm_src.MMMWorld import MMMWorld
 from examples.synths.OscSynth import OscSynth
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
+from sys.info import simdwidthof
 
 struct ManyOscillators(Representable, Movable, Graphable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
     var output: List[Float64]  # Output buffer for audio samples
     var osc_synths: List[OscSynth]  # Instances of the Oscillator
-
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -28,13 +28,25 @@ struct ManyOscillators(Representable, Movable, Graphable, Copyable):
     fn __repr__(self) -> String:
         return String("ManyOscillators")
 
-    fn next(mut self: ManyOscillators) -> List[Float64]:
-
-        zero(self.output)  # Clear the output list
-        for i in range(len(self.osc_synths)):
-            samples = self.osc_synths[i].next()
-            mix(self.output, samples)
-
-        return self.output  # Return the combined output sample
 
 
+
+    fn next(mut self) -> List[Float64]:
+        # SIMD can make this much more efficient
+        # below are two versions of the same process - one using Lists and one using a 2 value SIMD vector
+        # the SIMD version saves around 5-6% on my cpu
+        if False:
+
+            zero(self.output)  # Clear the output list
+            
+            for i in range(len(self.osc_synths)):
+                samples = self.osc_synths[i].next()
+                mix(self.output, samples)
+        else:
+            simd_sum = SIMD[DType.float64, 2](0.0, 0.0)
+            for i in range(len(self.osc_synths)):
+                simd_sum += self.osc_synths[i].next_simd()
+
+            self.output = [simd_sum[0], simd_sum[1]]
+
+        return self.output  # Return the combined output samples

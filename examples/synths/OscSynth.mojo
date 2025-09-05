@@ -14,7 +14,7 @@ struct OscSynth(Representable, Movable, Copyable):
     var pan_freq: Float64
     var vol_osc: Osc
     var vol_osc_freq: Float64
-    var out: List[Float64]  
+    var temp: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], center_freq: Float64):
         self.world_ptr = world_ptr
@@ -31,24 +31,32 @@ struct OscSynth(Representable, Movable, Copyable):
         self.osc_freqs = List[Float64]()
         self.osc_freqs.append(center_freq+random_float64(1.0,5.0))
         self.osc_freqs.append(center_freq-random_float64(1.0,5.0))
-
-        self.out = List[Float64](2, 0.0)  # Initialize with two zeros for stereo output
+        self.temp = 0.0
 
 
     fn __repr__(self) -> String:
         return String("OscSynth")
 
     fn next(mut self) -> List[Float64]:
-        zero(self.out) # zero the output
         
-        temp = 0.0
+        self.temp = 0.0
         for i in range(len(self.oscs)):
-            temp += self.oscs[i].next(self.osc_freqs[i], interp = 0, os_index = 0)  # Get the next value from the Osc
+            self.temp += self.oscs[i].next(self.osc_freqs[i], interp = 0, os_index = 0)  # Get the next value from the Osc
 
-        temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01) # Apply volume modulation
+        self.temp = self.temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01) # Apply volume modulation
 
         pan_loc = self.pan_osc.next(self.pan_freq)  # Get pan position
 
-        self.out = self.pan.next(temp, pan_loc)  # Pan the temp signal
+        return self.pan.next(self.temp, pan_loc)  # Pan the temp signal
 
-        return self.out
+    fn next_simd(mut self) -> SIMD[DType.float64, 2]:
+
+        self.temp = 0.0
+        for i in range(len(self.oscs)):
+            self.temp += self.oscs[i].next(self.osc_freqs[i], interp = 0, os_index = 0)  # Get the next value from the Osc
+
+        self.temp = self.temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01) # Apply volume modulation
+
+        pan_loc = self.pan_osc.next(self.pan_freq)  # Get pan position
+
+        return self.pan.next_simd(self.temp, pan_loc)  # Pan the temp signal
