@@ -53,7 +53,7 @@ struct PlayBuf (Representable, Movable, Copyable):
 
         Arguments:
             buffer: The audio buffer to read from (can be Buffer or InterleavedBuffer).
-            rate: The playback rate (in Hz).
+            rate: The playback rate. 1 is the normal speed of the buffer.
             loop: Whether to loop the buffer (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).
             start_frame: The start frame for playback (default: 0) upon receiving a trigger.
@@ -99,7 +99,7 @@ struct PlayBuf (Representable, Movable, Copyable):
                     for i in range(self.num_chans):
                         self.out_list[i] = buffer.next(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             self.last_trig = trig  # Update last trigger time
-            return self.out_list  
+            return self.out_list
 
 
 struct Grain(Representable, Movable, Copyable):
@@ -146,6 +146,8 @@ struct Grain(Representable, Movable, Copyable):
             self.pan = pan 
             self.gain = gain
             self.rate = rate
+
+            # TODO: user provides the buffer channel
 
             self.sample = self.play_buf.next(buffer, self.rate, False, trig, self.start_frame, self.end_frame)[0]  # Get samples from PlayBuf
         else:

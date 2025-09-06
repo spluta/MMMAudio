@@ -14,3 +14,5 @@ mmm_audio.add_hid_device("Extreme 3D pro", 0x046d, 0xc215)
 mmm_audio.joysticks[0].verbose = True
 
 mmm_audio.start_audio()
+
+-2.5 % 1

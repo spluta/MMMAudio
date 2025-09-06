@@ -23,8 +23,9 @@ struct Phasor(Representable, Movable, Copyable):
         return String("Phasor")
 
     fn increment_phase(mut self: Phasor, freq: Float64, os_index: Int = 0):
-
-        self.phase += (freq * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+        freq2 = clip(freq, -self.world_ptr[0].sample_rate, self.world_ptr[0].sample_rate) 
+        self.phase += (freq2 * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+        # self.phase = self.phase % 1.0
         if self.phase >= 1.0:
             self.phase -= 1.0
         elif self.phase < 0.0:
@@ -38,7 +39,12 @@ struct Phasor(Representable, Movable, Copyable):
         else:
             self.increment_phase(freq, os_index)
         self.last_trig = trig
-        return wrap(self.phase + phase_offset, 0.0, 1.0)  # Wrap phase to [0, 1) range
+
+        # value = self.phase + phase_offset
+        # var wrapped_value = (value) % 1.0
+        # if wrapped_value < 0.0:
+        #     wrapped_value += 1.0  # Ensure the value is within the range
+        return (self.phase + phase_offset) % 1.0
 
 struct Osc(Representable, Movable, Copyable):
     """Oscillator structure for generating waveforms.
@@ -64,8 +70,9 @@ struct Osc(Representable, Movable, Copyable):
         )
 
     fn next(mut self: Osc, freq: Float64 = 100.0, phase_offset: Float64 = 0.0, trig: Float64 = 0.0, osc_type: Int64 = 0, interp: Int64 = 1, os_index: Int = 0) -> Float64:
-        if self.oversampling.index != os_index:
-            self.oversampling.set_os_index(os_index)
+        # if self.oversampling.index != os_index:
+        #     self.oversampling.set_os_index(os_index)
+        self.oversampling.set_os_index(os_index)
 
         for i in range(self.oversampling.times_os_int):
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
@@ -211,7 +218,7 @@ struct Impulse(Representable, Movable, Copyable):
             self.last_trig = trig  # Update last trigger state
             return 1.0  # Return impulse value
 
-        if abs(phase - self.last_phase) >= 0.5:  # Check for an impulse (crossing the 0.5 threshold)
+        if phase < self.last_phase:  # Check for an impulse (crossing the 0.5 threshold)
             self.last_phase = phase 
             self.last_trig = trig 
             return 1.0  # Return impulse value
