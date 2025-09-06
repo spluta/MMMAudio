@@ -107,24 +107,24 @@ fn quadratic_interpolation(y0: Float64, y1: Float64, y2: Float64, x: Float64) ->
     # Return the estimated value
     return a + b + c
 
-fn cubic_interpolation(p0: Float64, p1: Float64, t: Float64) -> Float64:
+fn cubic_interpolation(p0: Float64, p1: Float64, p2: Float64, p3: Float64, t: Float64) -> Float64:
     """
-    Performs cubic interpolation between two points using smoothstep function.
+    Performs cubic interpolation between.
+
+    Cubic Intepolation equation from *The Audio Programming Book* 
+    by Richard Boulanger and Victor Lazzarini. pg. 400
     
     Args:
-        p0: Starting point (can be a number or array-like)
-        p1: Ending point (can be a number or array-like)
+        p0: point to th left of p1
+        p1: point to the left of the float t
+        p2: point to the right of the float t
+        p3: point to the right of p2
         t: Interpolation parameter (0.0 to 1.0)
-           t=0 returns p0, t=1 returns p1
     
     Returns:
-        Interpolated value between p0 and p1
+        Interpolated value
     """
-    # Cubic smoothstep interpolation: 3t² - 2t³
-    var smooth_t = t * t * (3.0 - 2.0 * t)
-    
-    # Linear interpolation using the smooth parameter
-    return p0 + (p1 - p0) * smooth_t
+    return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
 fn lin_interp(p0: Float64, p1: Float64, t: Float64) -> Float64:
     """Performs linear interpolation between two points.

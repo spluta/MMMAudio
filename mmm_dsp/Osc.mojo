@@ -255,13 +255,19 @@ struct Dust(Representable, Movable, Copyable):
 struct LFNoise(Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""
     var impulse: Impulse
-    var last_value: Float64  # Track the last value to generate noise
-    var next_value: Float64  # Track the next value to generate noise
+
+    # Cubic inerpolation only needs 4 points, but it needs to know the true previous point so the history
+    # needs an extra point: the 4 for interpolation, plus the point that is just changed
+    var history: List[Float64,5] # used for interpolation
+
+    # history_index: the index of the history list that the impulse's phase is moving *away* from
+    # phase is moving *towards* history_index + 1
+    var history_index: Int8 = 0 
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.impulse = Impulse(world_ptr)
-        self.last_value = 0.0  # Initialize last value
-        self.next_value = random_float64(-1.0, 1.0)
+        for ref h in self.history:
+            h = random_float64(-1.0, 1.0)
 
     fn __repr__(self) -> String:
         return String("LFNoise1")
@@ -269,20 +275,32 @@ struct LFNoise(Representable, Movable, Copyable):
     fn next(mut self: LFNoise, freq: Float64 = 100.0, interp: Int64 = 0) -> Float64:
         """Generate the next low-frequency noise sample."""
         var tick = self.impulse.next(freq)  # Update the phase
-        var sample: Float64
-        if interp == 0:
-            sample = self.next_value  # Return the next value directly if no interpolation
-        elif interp == 1:
-            # Linear interpolation between last and next value
-            sample = self.impulse.phasor.phase * (self.next_value - self.last_value) + self.last_value
-        else:
-            sample = cubic_interpolation(self.last_value, self.next_value, self.impulse.phasor.phase)  # Cubic interpolation
 
         if tick == 1.0:  # If an impulse is detected
-            self.last_value = self.next_value  # Update last value
-            self.next_value = random_float64(-1.0, 1.0)  # Generate a new random value
+            # advance the history index
+            self.history_index = (self.history_index + 1) % len(self.history)
+            # now, the current history_index will be used as cubic interpolation's p1,
+            # history_index - 1 (but computed differently to avoid negative indices) will be p0,
+            # so don't change that one, cubic interp needs to know that, so we'll change 
+            # history_index - 2 (but, again, computed differently to avoid negative indices) so
+            # the next time we wrap around to that part of the history list it will be a new random value
+            self.history[self.history_index + (len(self.history) - 2) % len(self.history)] = random_float64(-1.0, 1.0)
 
-        return sample
+        if interp == 0:
+            # no interpolation (sample & hold behavior)
+            return self.history[self.history_index + 1 % len(self.history)]
+        elif interp == 1:
+            # Linear interpolation between last and next value
+            var p0 = self.history[self.history_index]
+            var p1 = self.history[(self.history_index + 1) % len(self.history)]
+            return lin_interp(p0, p1, self.impulse.phasor.phase)
+        else:
+            var p0: Float64 = self.history[(self.history_index + (len(self.history) - 1)) % len(self.history)]
+            var p1: Float64 = self.history[self.history_index]
+            var p2: Float64 = self.history[(self.history_index + 1) % len(self.history)]
+            var p3: Float64 = self.history[(self.history_index + 2) % len(self.history)]
+            return cubic_interpolation(p0,p1,p2,p3, self.impulse.phasor.phase)  # Cubic interpolation
+
 
 struct Sweep(Representable, Movable, Copyable):
     var phase: Float64
