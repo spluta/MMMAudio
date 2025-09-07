@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.ManyOscillators import ManyOscillators
+from examples.Default_Graph import Default_Graph
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: ManyOscillators
+    var graph: Default_Graph
     var output: List[Float64]  # Output list for audio samples
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -18,7 +18,7 @@ struct MMMGraph(Representable, Movable):
         for _ in range(self.world_ptr[0].num_chans):
             self.output.append(0.0)  # Initialize output list with zeros
 
-        self.graph = ManyOscillators(self.world_ptr)
+        self.graph = Default_Graph(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("MMMGraph")

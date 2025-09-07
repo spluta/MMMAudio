@@ -87,7 +87,7 @@ struct PlayBuf (Representable, Movable, Copyable):
                 if self.impulse.phasor.phase >= self.reset_point:
                     self.impulse.phasor.phase -= self.reset_point
                 for i in range(self.num_chans):
-                    self.out_list[i] = buffer.next(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                    self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next(freq, trig = trig)
                 eor -= trig
@@ -97,7 +97,7 @@ struct PlayBuf (Representable, Movable, Copyable):
                         self.out_list[i] = 0.0
                 else:
                     for i in range(self.num_chans):
-                        self.out_list[i] = buffer.next(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                        self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             self.last_trig = trig  # Update last trigger time
             return self.out_list
 
@@ -159,7 +159,7 @@ struct Grain(Representable, Movable, Copyable):
         else:
             self.win_phase = 0.0  # Use the phase
 
-        var win = self.world_ptr[0].hann_window.next(0, self.win_phase, 0)
+        var win = self.world_ptr[0].hann_window.read(0, self.win_phase, 0)
 
         self.sample = self.sample * win * self.gain  # Apply the window to the sample
 

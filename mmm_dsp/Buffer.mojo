@@ -130,7 +130,7 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
     fn next_sinc(mut self, chan: Int64, phase: Float64, last_phase: Float64) -> Float64:
         return 0.0
 
-    fn next(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
+    fn read(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
         if self.num_frames == 0 or self.num_chans == 0:
             return 0.0  # Return zero if no frames or channels are available
         var f_idx = phase * self.num_frames
@@ -203,10 +203,10 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         var y1 = self.data[chan][mod_idx1]
         return y0 + frac * (y1 - y0)
 
-    fn next_sinc(mut self, chan: Int64, phase: Float64, last_phase: Float64) -> Float64:
+    fn read_sinc(mut self, chan: Int64, phase: Float64, last_phase: Float64) -> Float64:
         return 0.0
 
-    fn next(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
+    fn read(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
 
         if self.num_frames == 0 or self.num_chans == 0:
             return 0.0  # Return zero if no frames or channels are available
@@ -221,3 +221,16 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
             return self.quadratic_interp_loc(idx, (idx + 1), (idx + 2), frac, chan)
         else:
             return self.linear_interp_loc(idx, idx + 1, frac, chan)  # default is linear interpolation
+
+    fn write(mut self, index: Int64, value: Float64, channel: Int64 = 0):
+        if index < 0 or index >= Int64(self.num_frames):
+            return  # Out of bounds
+        self.data[channel][index] = value
+
+    fn write(mut self, index: Int64, value: List[Float64], start_channel: Int64 = 0):
+        if index < 0 or index >= Int64(self.num_frames):
+            return  # Out of bounds
+        for i in range(len(value)):
+            # only write into the buffer if the channel exists
+            if start_channel + i < self.num_chans:
+                self.data[start_channel + i][index] = value[i]

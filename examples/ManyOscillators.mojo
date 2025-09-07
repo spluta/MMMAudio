@@ -1,8 +1,9 @@
 from mmm_src.MMMWorld import MMMWorld
-from examples.synths.OscSynth import OscSynth
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
-from sys.info import simdwidthof
+
+# import the Synth used in this example
+from examples.synths.OscSynth import OscSynth
 
 struct ManyOscillators(Representable, Movable, Graphable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

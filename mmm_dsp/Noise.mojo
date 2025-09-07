@@ -38,10 +38,10 @@ struct PinkNoise(Copyable, Movable):
         """Generate the next pink noise sample.
         
         Args:
-            gain: Amplitude scaling factor
+            gain: Amplitude scaling factor.
             
         Returns:
-            A pink noise sample scaled by gain
+            A pink noise sample scaled by gain.
         """
         # Generate white noise
         var white = 2.0 * random_float64() - 1.0
@@ -72,10 +72,10 @@ struct BrownNoise(Copyable, Movable):
         """Generate the next brown noise sample.
 
         Args:
-            gain: Amplitude scaling factor
+            gain: Amplitude scaling factor.
 
         Returns:
-            A brown noise sample scaled by gain
+            A brown noise sample scaled by gain.
         """
         # Generate white noise
         var white = 2.0 * random_float64() - 1.0

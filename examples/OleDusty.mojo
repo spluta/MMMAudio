@@ -17,20 +17,17 @@ struct Dusty(Representable, Movable, Copyable):
 
         self.out = List[Float64](2, 0.0)  # Initialize with two zeros for stereo output
 
-
     fn __repr__(self) -> String:
         return String("OleDusty")
 
     fn next(mut self, freq: Float64) -> List[Float64]:
         zero(self.out) # zero the output
 
-        temp = self.dust.next(freq)
-        temp2 = self.dust2.next(freq)
-        # temp = self.dust.get_phase() * 0.2
-        # temp2 = self.dust2.get_phase() * 0.2
+        self.out[0] = self.dust.next(freq) * 0.2
+        self.out[1] = self.dust2.next(freq) * 0.2
 
-        self.out[0] = temp
-        self.out[1] = temp2
+        # self.out[0] = self.dust.get_phase() * 0.2
+        # self.out[1] = self.dust2.get_phase() * 0.2
 
         return self.out
 
@@ -59,8 +56,8 @@ struct OleDusty(Representable, Movable, Copyable):
 
         freq = linexp(self.world_ptr[0].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 
-        self.out = self.dusty.next(linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 5.0, 200.0))  # Get the next value from the Dust
-        self.out[0] = self.reson.bpf(self.out[0], freq, 10.0, 1.0)  # Apply the resonant band-pass filter
-        self.out[1] = self.reson2.bpf(self.out[1], freq, 10.0, 1.0)  # Apply the second resonant band-pass filter
+        self.out = self.dusty.next(linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 5.0, 200.0))
+        self.out[0] = self.reson.bpf(self.out[0], freq, 10.0, 1.0)  
+        self.out[1] = self.reson2.bpf(self.out[1], freq, 10.0, 1.0) 
 
         return self.out

@@ -130,10 +130,10 @@ struct Osc(Representable, Movable, Copyable):
         if interp == 2:
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
             var phase = self.phasor.next(freq, phase_offset)  # Update the phase
-            self.sample = buffer.next_sinc(0, phase, last_phase)  # Get the next sample from the Oscillator buffer using sinc interpolation
+            self.sample = buffer.read_sinc(0, phase, last_phase)  # Get the next sample from the Oscillator buffer using sinc interpolation
         else:
             var phase = self.phasor.next(freq, phase_offset)  # Update the phase
-            self.sample = buffer.next(0, phase, interp)  # Get the next sample from the Oscillator buffer
+            self.sample = buffer.read(0, phase, interp)  # Get the next sample from the Oscillator buffer
         return self.sample
 
 struct SinOsc (Representable, Movable, Copyable):
@@ -252,6 +252,21 @@ struct Dust(Representable, Movable, Copyable):
         var tick = self.impulse.next(self.freq)  # Update the phase
         if tick == 1.0:  # If an impulse is detected
             self.freq = random_exp_float64(freq*0.25, freq*4)
+            return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
+        else:
+            return 0.0  # Return zero if no impulse
+
+    fn next(mut self: Dust, low_freq: Float64 = 100.0, hi_freq: Float64 = 1000.0, trig: Float64 = 1.0) -> Float64:
+        """Generate the next dust noise sample."""
+        if trig > 0.0 and self.last_trig <= 0.0:
+            self.last_trig = trig
+            self.freq = random_exp_float64(low_freq, hi_freq)  # Update frequency if trig is greater than 0.0
+            self.impulse.phasor.phase = 0.0  # Reset phase
+            return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
+        self.last_trig = trig
+        var tick = self.impulse.next(self.freq)  # Update the phase
+        if tick == 1.0:  # If an impulse is detected
+            self.freq = random_exp_float64(low_freq, hi_freq)
             return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
         else:
             return 0.0  # Return zero if no impulse
