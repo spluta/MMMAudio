@@ -16,6 +16,10 @@ fn linlin(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, ou
     Returns:
         The mapped value in the output range.
     """
+    if value < in_min:
+        return out_min
+    elif value > in_max:
+        return out_max
     # First scale to 0..1 range, then scale to output range
     var normalized = (value - in_min) / (in_max - in_min)
     return normalized * (out_max - out_min) + out_min
@@ -34,6 +38,10 @@ fn linexp(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, ou
         The exponentially mapped value in the output range
     """
     # First scale to 0..1 range linearly, then apply exponential scaling
+    if value < in_min:
+        return out_min
+    elif value > in_max:
+        return out_max
     var normalized = (value - in_min) / (in_max - in_min)
     return out_min * pow(out_max / out_min, normalized)
 
@@ -159,7 +167,6 @@ fn cpsmidi(freq: Float64, reference_midi_note: Float64 = 69.0, reference_frequen
     return n
 
 fn mix(mut output: List[Float64], *lists: List[Float64]) -> None:
-
     for lst in lists:
         for i in range(len(output)):
             if i < len(lst):

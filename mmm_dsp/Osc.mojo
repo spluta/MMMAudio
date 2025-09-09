@@ -256,7 +256,7 @@ struct Dust(Representable, Movable, Copyable):
         else:
             return 0.0  # Return zero if no impulse
 
-    fn next(mut self: Dust, low_freq: Float64 = 100.0, hi_freq: Float64 = 1000.0, trig: Float64 = 1.0) -> Float64:
+    fn next_r(mut self: Dust, low_freq: Float64 = 100.0, hi_freq: Float64 = 1000.0, trig: Float64 = 1.0) -> Float64:
         """Generate the next dust noise sample."""
         if trig > 0.0 and self.last_trig <= 0.0:
             self.last_trig = trig

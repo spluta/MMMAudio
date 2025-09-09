@@ -7,7 +7,11 @@ struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
     var block_size: Int64
     var osc_buffers: OscBuffers  # Instance of OscBuffers for managing oscillator buffers
-    var num_chans: Int64 
+    var num_in_chans: Int64
+    var num_out_chans: Int64
+
+    var sound_in: List[Float64]
+
     var screen_dims: List[Float64]  
      
     var os_multiplier: List[Float64]  # List of multipliers for different oscillators
@@ -23,10 +27,15 @@ struct MMMWorld(Representable, Movable, Copyable):
     # windows
     var hann_window: Buffer
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_chans: Int64 = 2):
+    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
         self.block_size = block_size
-        self.num_chans = num_chans
+        self.num_in_chans = num_in_chans
+        self.num_out_chans = num_out_chans
+        self.sound_in = List[Float64]()
+        for _ in range(self.num_in_chans):
+            self.sound_in.append(0.0)  # Initialize input buffer with zeros
+
         self.osc_buffers = OscBuffers()
         self.screen_dims = List[Float64](0.0, 0.0)  # Initialize screen dimensions with zeros
         self.hann_window = Buffer(List[List[Float64]](hann_window(2048)), self.sample_rate)  # Initialize Hann window
@@ -47,8 +56,12 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
-    # fn __del__(deinit self):
-    #     print("MMMWorld finalized")
+    fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
+        self.num_in_chans = num_in_chans
+        self.num_out_chans = num_out_chans
+        self.sound_in = List[Float64]()
+        for _ in range(self.num_in_chans):
+            self.sound_in.append(0.0)  # Reinitialize input buffer with zeros
 
     fn __repr__(self) -> String:
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
@@ -64,8 +77,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         # if key == "thrustmaster":
         #     if list[5] == 1.0:
         #         print("Thrustmaster joystick button pressed")
-
-        self.msg_dict[key] = list
+        else:
+            self.msg_dict[key] = list.copy()  # Store a copy of the list to avoid reference issues
 
     fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:
 
@@ -73,20 +86,20 @@ struct MMMWorld(Representable, Movable, Copyable):
             return self.msg_dict.get(key)
         return None
 
-    fn print_msgs(mut self: Self):
-        try:
-            if self.grab_messages == 1:
-                for key in self.msg_dict.keys():
-                    print(key, end=": ")
-                    list = self.msg_dict[key]
-                    for val in list:
-                        print(String(val), end=", ")
-                print()
-        except Exception:
-            pass
+    # fn print_msgs(mut self: Self):
+    #     try:
+    #         if self.grab_messages == 1:
+    #             for key in self.msg_dict.keys():
+    #                 print(key, end=": ")
+    #                 list = self.msg_dict[key]
+    #                 for val in list:
+    #                     print(String(val), end=", ")
+    #             print()
+    #     except Exception:
+    #         pass
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
-        self.text_msg_dict[key] = list
+        self.text_msg_dict[key] = list.copy()
 
     fn get_text_msg(mut self: Self, key: String) -> Optional[List[String]]:
 
@@ -97,16 +110,16 @@ struct MMMWorld(Representable, Movable, Copyable):
     fn get_midi(mut self: Self, key: String, chan: Int64 = -1, param: Int64 = -1) -> Optional[List[List[Int64]]]:
         if self.grab_messages == 1:
             list = List[List[Int64]]()
-            for dict_key in self.midi_dict.keys():
-                if dict_key.startswith(key):
-                    parts = dict_key.split("/")
+            for dict_item in self.midi_dict.items():
+                if dict_item.key.startswith(key):
+                    parts = dict_item.key.split("/")
                     if len(parts) == 2:
                         try:
                             if (chan == -1 or Int64(parts[1]) == chan):
                                 lil_list = List[Int64]()
                                 lil_list.append(Int64(parts[1]))
-                                lil_list.append(Int64(self.midi_dict[dict_key]))
-                                list.append(lil_list)
+                                lil_list.append(Int64(dict_item.value))
+                                list.append(lil_list.copy())
                         except:
                             pass
                     if len(parts) == 3:
@@ -115,11 +128,11 @@ struct MMMWorld(Representable, Movable, Copyable):
                                 lil_list = List[Int64]()
                                 lil_list.append(Int64(parts[1]))
                                 lil_list.append(Int64(parts[2]))
-                                lil_list.append(Int64(self.midi_dict[dict_key]))
-                                list.append(lil_list)
+                                lil_list.append(Int64(dict_item.value))
+                                list.append(lil_list.copy())
                         except:
                             pass
-            return list
+            return list.copy()
         return None
 
     fn clear_midi(mut self):

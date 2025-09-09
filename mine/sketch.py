@@ -1,18 +1,64 @@
-from mmm_src.MMMAudio import *
-from random import random
+import pyaudio
+import time
+import threading
+import multiprocessing
+import numpy as np
 
-from mmm_src.hid_devices import * 
+def simple_audio_passthrough():
+    # Audio configuration
+    CHUNK = 1024        # Buffer size
+    FORMAT = pyaudio.paFloat32  # 16-bit audio
+    CHANNELS = 1        # Mono
+    RATE = 44100        # Sample rate
 
-# list_audio_devices()
+    # Initialize PyAudio
+    p = pyaudio.PyAudio()
 
-mmm_audio = MMMAudio(128, graph_name="Torch_MLP", package_name="mine")
+    # Open input stream
+    input_stream = p.open(format=FORMAT,
+                         channels=2,
+                         rate=RATE,
+                         input=True,
+                         frames_per_buffer=CHUNK)
 
-list_hid_devices()
+    # Open output stream
+    output_stream = p.open(format=FORMAT,
+                          channels=2,
+                          rate=RATE,
+                          output=True,
+                          frames_per_buffer=CHUNK)
 
-mmm_audio.add_hid_device("Extreme 3D pro", 0x046d, 0xc215)
+    print("Starting audio passthrough... Press Ctrl+C to stop")
 
-mmm_audio.joysticks[0].verbose = True
+    def doit():
+        max = 0.0
+        while True:
+            # Read audio data from input
+            data = input_stream.read(CHUNK)
 
-mmm_audio.start_audio()
+            # Convert the mono input to stereo by interleaving with zeros
+            # Since the input is in int16 format, we need to interleave properly
+            in_data = np.frombuffer(data, dtype=np.float32)
+            print(in_data.shape)
+            # Interleave in_data (left channel) and mono_zeros (right channel)
+            stereo_data = in_data   # Left channel
+            print(stereo_data[:10])
+            
+            for sample in stereo_data:
+                if sample > max:
+                    max = sample
+            print("Max amplitude:", max)
+            # Right channel is already zeros
+            data = stereo_data.tobytes()
+            
+            # Write audio data to output
+            output_stream.write(data)
 
--2.5 % 1
+    # # threading.Thread(target=doit).start()
+    multiprocessing.Process(target=doit).start()
+
+# if __name__ == "__main__":
+#     simple_audio_passthrough()
+#     multiprocessing.Process(target=doit).start()
+
+    

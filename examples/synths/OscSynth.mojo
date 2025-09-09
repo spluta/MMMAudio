@@ -1,6 +1,6 @@
 from mmm_dsp.Osc import Osc
 from random import random_float64
-from mmm_dsp.Pan2 import Pan2
+from mmm_dsp.Pan import Pan2
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.OscBuffers import OscBuffers
 from mmm_utils.functions import *

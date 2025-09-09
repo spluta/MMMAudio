@@ -6,7 +6,7 @@ from mmm_src.MMMWorld import MMMWorld
 from .Osc import Impulse
 from mmm_utils.functions import *
 from .Env import Env
-from .Pan2 import Pan2
+from .Pan import Pan2
 from mmm_utils.Windows import hann_window
 
 
@@ -64,6 +64,7 @@ struct PlayBuf (Representable, Movable, Copyable):
         duration = buffer.get_duration()
 
         # this should happen on the first call if trig > 0.0
+        # or when any trig happens
         if trig > 0.0 and self.last_trig <= 0.0 and num_frames > 0:
             self.done = False  # Reset done flag on trigger
             self.start_frame = start_frame  # Set start frame
@@ -78,7 +79,7 @@ struct PlayBuf (Representable, Movable, Copyable):
             self.last_trig = trig
             for i in range(self.num_chans):
                 self.out_list[i] = 0.0
-            return self.out_list  # Return zeros if phase is out of bounds
+            return self.out_list.copy()  # Return zeros if done
         else:
             var freq = rate / duration  # Calculate step size based on rate and sample rate
 
@@ -99,7 +100,7 @@ struct PlayBuf (Representable, Movable, Copyable):
                     for i in range(self.num_chans):
                         self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             self.last_trig = trig  # Update last trigger time
-            return self.out_list
+            return self.out_list.copy()  # Return the output samples
 
 
 struct Grain(Representable, Movable, Copyable):
@@ -136,7 +137,7 @@ struct Grain(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Grain")
 
-    fn next[T: Buffable](mut self, mut buffer: T, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> List[Float64]:
+    fn next[T: Buffable](mut self, mut buffer: T, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
 
         if trig > 0.0 and self.last_trig <= 0.0:
             self.start_frame = start_frame
@@ -163,7 +164,7 @@ struct Grain(Representable, Movable, Copyable):
 
         self.sample = self.sample * win * self.gain  # Apply the window to the sample
 
-        return self.panner.next(self.sample, self.pan)  # Return the output samples
+        return self.panner.next_simd(self.sample, self.pan)  # Return the output samples
 
 struct TGrains(Representable, Movable, Copyable):
     """
@@ -217,11 +218,11 @@ struct TGrains(Representable, Movable, Copyable):
         else:
             self.trig = 0.0  # Reset trigger value if no trigger
 
-        zero(self.temp)  # Reset temp list to zeros
+        temp = SIMD[DType.float64, 2](0.0, 0.0)
         for i in range(self.num_grains):
             if i == self.counter and self.trig > 0.0:
-                mix(self.temp, self.grains[i].next(buffer, 1.0, rate, start_frame, duration, pan, gain))
+                temp += self.grains[i].next(buffer, 1.0, rate, start_frame, duration, pan, gain)
             else:
-                mix(self.temp, self.grains[i].next(buffer, 0.0, rate, start_frame, duration, pan, gain))
+                temp += self.grains[i].next(buffer, 0.0, rate, start_frame, duration, pan, gain)
 
-        return self.temp  # Return the output samples
+        return [temp[0], temp[1]]  # Return the output samples

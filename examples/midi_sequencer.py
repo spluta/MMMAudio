@@ -16,6 +16,7 @@ mido.get_input_names()
 
 # open your midi device - you may need to change the device name
 in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+in_port = mido.open_input('Fireface UFX+ (24082112) Port 2')
 
 def start_midi():
     while True:
@@ -27,7 +28,7 @@ def start_midi():
 midi_thread = threading.Thread(target=start_midi, daemon=True)
 # once you start the midi_thread, it should register note_on, note_off, cc, etc from your device and send them to mmm
 midi_thread.start()
-
+midi_thread.stop()
 
 # the scheduler can also sequence notes
 from mmm_src.Patterns import * # some sc style patterns
@@ -53,7 +54,6 @@ async def trig_synth(wait):
         if i == 0:
             fund = librosa.midi_to_hz(fund_seq.next())
             count_to = np.random.choice([7, 11, 13, 17]).item()
-            print("count to", count_to)
             mult_seq = Pseq(list(range(1, count_to + 1)))
 
 scheduler.sched(trig_synth(0.1))

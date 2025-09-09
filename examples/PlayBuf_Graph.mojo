@@ -45,7 +45,7 @@ struct BufSynth(Representable, Movable, Copyable):
         freq = self.lpf_freq_lag.next(self.lpf_freq, 0.1)
         for i in range(self.num_chans):
             out[i] = self.moog[i].next(out[i], freq, 1.0)
-        return out
+        return out^
 
     fn __repr__(self) -> String:
         return String("BufSynth")
@@ -66,26 +66,15 @@ struct BufSynth(Representable, Movable, Copyable):
 struct PlayBuf_Graph(Representable, Movable, Graphable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
-    var output: List[Float64]  # Output buffer for audio samples
-
     var buf_synth: BufSynth  # Instance of the GrainSynth
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        print("PlayBuf initialized with num_chans:", world_ptr[0].num_chans)
 
         self.buf_synth = BufSynth(world_ptr)  
-        self.output = List[Float64]()  
-
-        for _ in range(self.world_ptr[0].num_chans):
-            self.output.append(0.0)  # Initialize output list with zeros
 
     fn __repr__(self) -> String:
         return String("PlayBuf")
 
     fn next(mut self: PlayBuf_Graph) -> List[Float64]:
-        zero(self.output)
-
-        mix(self.output, self.buf_synth.next())
-
-        return self.output  # Return the combined output sample
+        return self.buf_synth.next()  # Return the combined output sample

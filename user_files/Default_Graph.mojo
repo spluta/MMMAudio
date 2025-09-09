@@ -1,5 +1,3 @@
-"""use this as a template for your own graphs"""
-
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
@@ -34,17 +32,23 @@ struct Default_Synth(Representable, Movable, Copyable):
 # a graph can have as many synths as you want
 struct Default_Graph(Representable, Movable, Graphable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
+
+    var output: List[Float64]
     var synth: Default_Synth
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
+        self.output = List[Float64](0.0, 0.0)
         self.synth = Default_Synth(self.world_ptr)
 
     fn __repr__(self) -> String:
-        return String("Defualt")
+        return String("Default")
 
     fn next(mut self) -> List[Float64]:
+        zero(self.output) # Clear the output buffer
 
         sample = self.synth.next()  # Get the next sample from the synth
 
-        return [sample]  # Return the combined output samples
+        mix(self.output, sample)  # mix any synth outputs into the output buffer
+
+        return self.output  # Return the combined output samples
