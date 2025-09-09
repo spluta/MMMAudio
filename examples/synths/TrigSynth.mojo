@@ -32,7 +32,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.freq = 100.0
 
     fn next(mut self) -> Float64:
-        if not self.env.go and self.trig <= 0.0:
+        if not self.env.isActive and self.trig <= 0.0:
             return 0.0  # Return 0 if the envelope is not active and no trigger
         else:
             var mod_value = self.mod.next(self.freq*1.5)  # Get the next value from the modulator

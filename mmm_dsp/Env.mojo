@@ -9,7 +9,7 @@ struct Env(Representable, Movable, Copyable):
 
     var sweep: Sweep  # Phasor for tracking time
     var last_trig: Float64  # Track the last trigger state
-    var go: Bool  # Flag to indicate if the envelope is active
+    var isActive: Bool  # Flag to indicate if the envelope is active
     var times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
@@ -20,7 +20,7 @@ struct Env(Representable, Movable, Copyable):
 
         self.sweep = Sweep(world_ptr)
         self.last_trig = 0.0  # Initialize last trigger state
-        self.go = False
+        self.isActive = False
         self.times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
@@ -50,10 +50,10 @@ struct Env(Representable, Movable, Copyable):
     fn next(mut self: Env, values: List[Float64] = List[Float64](0,1,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
 
-        if self.go==False:
+        if not self.isActive:
             if trig > 0.0 and self.last_trig <= 0.0:
                 self.sweep.phase = 0.0  # Reset phase on trigger
-                self.go = True  # Start the envelope
+                self.isActive = True  # Start the envelope
                 self.last_trig = trig  # Update last trigger state
                 self.reset_vals(times)
             else:
@@ -68,7 +68,7 @@ struct Env(Representable, Movable, Copyable):
             self.sweep.phase = 0.0  # Reset phase for looping
         elif loop <= 0 and phase >= 1.0: 
             if values[-1]==values[0]:
-                self.go = False  # Stop the envelope if not looping and last value is the same as first
+                self.isActive = False  # Stop the envelope if not looping and last value is the same as first
                 return values[0]  # Return the first value if not looping
             else:
                 return values[-1]  # Return the last value if not looping
