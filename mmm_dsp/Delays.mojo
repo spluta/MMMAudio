@@ -48,20 +48,25 @@ struct Delay(Representable, Movable, Copyable):
         var sample_delay = Int64(fsample_delay)
         var frac = fsample_delay - Float64(sample_delay)
 
-        var read_ptr = (self.write_ptr - sample_delay) % self.max_delay_samples
-        var delayed_sample = self.delay_line[read_ptr]
-        var read_ptr2 = (read_ptr + 1) % self.max_delay_samples
-        var delayed_sample2 = self.delay_line[read_ptr2]
-
-        # print((self.write_ptr - read_ptr) % self.max_delay_samples, frac)
-
         var out: Float64 = 0.0
         if (interp == 0):
+            # Linear interpolation
+            var read_ptr = (self.write_ptr - sample_delay) % self.max_delay_samples
+            var delayed_sample = self.delay_line[read_ptr]
+            var read_ptr2 = (read_ptr + 1) % self.max_delay_samples
+            var delayed_sample2 = self.delay_line[read_ptr2]
             out = lin_interp(delayed_sample, delayed_sample2, frac)
         else:
-            # read_ptr = (read_ptr + 1) % self.max_delay_samples
-            # delayed_sample3 = self.delay_line[read_ptr]
-            out = cubic_interpolation(delayed_sample, delayed_sample2, frac)
+            # Cubic interpolation
+            var i1 = (self.write_ptr - sample_delay) % self.max_delay_samples
+            var i0 = (i1 + (self.max_delay_samples - 1)) % self.max_delay_samples
+            var i2 = (i1 + 1) % self.max_delay_samples
+            var i3 = (i1 + 2) % self.max_delay_samples
+            var y0 = self.delay_line[i0]
+            var y1 = self.delay_line[i1]
+            var y2 = self.delay_line[i2]
+            var y3 = self.delay_line[i3]
+            out = cubic_interpolation(y0, y1, y2, y3, frac)
 
         self.delay_line[self.write_ptr] = input  
 
