@@ -2,6 +2,9 @@ from mmm_src.MMMWorld import MMMWorld
 from math import exp, sqrt, tan, pi, tanh
 from mmm_utils.functions import *
 
+from sys import simdwidthof
+from algorithm import vectorize
+
 struct Lag(Representable, Movable, Copyable):
     var val: Float64
     var b1: Float64
@@ -19,25 +22,43 @@ struct Lag(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Lag")
 
-    fn next(mut self: Lag, in_samp: Float64, lag: Float64) -> Float64:
-
-        var val = self.val
-        var b1 = self.b1
-
+    fn next_kr(mut self: Lag, in_samp: Float64, lag: Float64) -> Float64:
+        """Next a control rate sample through the lag processor."""
+        # For control rate, we can assume lag changes infrequently, so we can optimize for that case
         if lag == self.lag:
-            val = in_samp + b1 * (val - in_samp)
+            self.val = in_samp + self.b1 * (self.val - in_samp)
         else:
             if lag == 0.0:
-                b1 = 0.0
+                self.b1 = 0.0
             else:
                 # Calculate the lag coeficient based on the sample rate
-                b1 = exp(self.log001 / (lag * self.world_ptr[0].sample_rate))
+                self.b1 = exp(self.log001 / (lag * self.world_ptr[0].sample_rate/Float64(self.world_ptr[0].block_size)))
 
             self.lag = lag
-            val = in_samp + b1 * (val - in_samp)
-            self.b1 = b1
+            self.val = in_samp + self.b1 * (self.val - in_samp)
 
-        self.val = zapgremlins(val)
+        self.val = zapgremlins(self.val)
+
+        return self.val
+
+    fn next(mut self: Lag, in_samp: Float64, lag: Float64) -> Float64:
+
+        # var val = self.val
+        # var b1 = self.b1
+
+        if lag == self.lag:
+            self.val = in_samp + self.b1 * (self.val - in_samp)
+        else:
+            if lag == 0.0:
+                self.b1 = 0.0
+            else:
+                # Calculate the lag coeficient based on the sample rate
+                self.b1 = exp(self.log001 / (lag * self.world_ptr[0].sample_rate))
+
+            self.lag = lag
+            self.val = in_samp + self.b1 * (self.val - in_samp)
+
+        self.val = zapgremlins(self.val)
 
         return self.val
 
@@ -130,11 +151,8 @@ struct SVF(Representable, Movable, Copyable):
         var v2 = self.ic2eq + g * v1
         
         # Update internal state (2*v1 - ic1eq, 2*v2 - ic2eq)
-        var new_ic1eq = 2.0 * v1 - self.ic1eq
-        var new_ic2eq = 2.0 * v2 - self.ic2eq
-        
-        self.ic1eq = new_ic1eq
-        self.ic2eq = new_ic2eq
+        self.ic1eq = 2.0 * v1 - self.ic1eq
+        self.ic2eq = 2.0 * v2 - self.ic2eq
         
         # Mix the outputs: mix_a*v0 + mix_b*v1 + mix_c*v2
         return mix_a * input + mix_b * v1 + mix_c * v2
@@ -393,24 +411,82 @@ struct VAMoogLadder(Representable, Movable, Copyable):
 # All of the following is a translation of Julius Smith's Faust implementation of digital filters.
 # Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
+# struct FIR(Representable, Movable, Copyable):
+#     var buffer: List[Float64]
+#     var index: Int
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
+#         self.buffer = List[Float64]()
+#         for _ in range(num_coeffs):
+#             self.buffer.append(0.0)
+#         self.index = 0
+
+#     fn __repr__(self) -> String:
+#         return String("FIR")
+
+#     fn next(mut self: FIR, input: Float64, coeffs: List[Float64]) -> Float64:
+#         self.buffer[self.index] = input
+#         var output = 0.0
+#         for i in range(len(coeffs)):
+#             output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
+#         self.index = (self.index + 1) % len(self.buffer)
+#         return output
+
+
 struct FIR(Representable, Movable, Copyable):
     var buffer: List[Float64]
     var index: Int
+    var num_coeffs: Int
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
         self.buffer = List[Float64]()
         for _ in range(num_coeffs):
             self.buffer.append(0.0)
         self.index = 0
+        self.num_coeffs = num_coeffs
 
     fn __repr__(self) -> String:
         return String("FIR")
 
-    fn next(mut self: FIR, input: Float64, coeffs: List[Float64]) -> Float64:
+    fn next[simd_width: Int = 4](mut self, input: Float64, coeffs: List[Float64]) -> Float64:
+        """SIMD-optimized FIR filter processing."""
+        
+        # Update buffer
         self.buffer[self.index] = input
-        var output = 0.0
-        for i in range(len(coeffs)):
-            output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
+        
+        var output: Float64 = 0.0
+        var num_chunks = self.num_coeffs // simd_width
+        var remainder = self.num_coeffs % simd_width
+        
+        # Process SIMD chunks
+        for chunk in range(num_chunks):
+            var coeff_start = chunk * simd_width
+            
+            # Load coefficients into SIMD vector
+            var coeffs_simd = SIMD[DType.float64, simd_width]()
+            for i in range(simd_width):
+                coeffs_simd[i] = coeffs[coeff_start + i]
+            
+            # Load buffer samples with circular indexing
+            var samples_simd = SIMD[DType.float64, simd_width]()
+            for i in range(simd_width):
+                var buf_idx = (self.index - coeff_start - i + len(self.buffer)) % len(self.buffer)
+                samples_simd[i] = self.buffer[buf_idx]
+            
+            # SIMD multiply and accumulate
+            var products = coeffs_simd * samples_simd
+            
+            # Horizontal sum (reduce)
+            for i in range(simd_width):
+                output += products[i]
+        
+        # Handle remaining coefficients
+        for i in range(remainder):
+            var coeff_idx = num_chunks * simd_width + i
+            var buf_idx = (self.index - coeff_idx + len(self.buffer)) % len(self.buffer)
+            output += coeffs[coeff_idx] * self.buffer[buf_idx]
+        
+        # Update index
         self.index = (self.index + 1) % len(self.buffer)
         return output
 
@@ -429,8 +505,9 @@ struct IIR(Representable, Movable, Copyable):
 
     fn next(mut self: IIR, input: Float64, coeffsbv: List[Float64], coeffsav: List[Float64]) -> Float64:
         var temp = input - self.fb
-        var output1 = self.fir1.next(temp, coeffsav)
-        var output2 = self.fir2.next(temp, coeffsbv)
+        # calls the parallelized fir function, indicating the size of the simd vector to use
+        var output1 = self.fir1.next[2](temp, coeffsav)
+        var output2 = self.fir2.next[4](temp, coeffsbv)
         self.fb = output1
         return output2
 
@@ -447,41 +524,68 @@ struct tf2(Representable, Movable, Copyable):
         var output1 = self.iir.next(input, coeffs[:3], coeffs[3:])
         return output1
 
-struct tf2s(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
-    var tf2: tf2
+# struct tf2s(Representable, Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]
+#     var tf2: tf2
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.tf2 = tf2(world_ptr)
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         self.world_ptr = world_ptr
+#         self.tf2 = tf2(world_ptr)
 
-    fn __repr__(self) -> String:
-        return String("tf2s")
+#     fn __repr__(self) -> String:
+#         return String("tf2s")
 
-    fn next(mut self: tf2s, input: Float64, coeffs: List[Float64]) -> Float64:
-        var b2 = coeffs[0]
-        var b1 = coeffs[1]
-        var b0 = coeffs[2]
-        var a1 = coeffs[3]
-        var a0 = coeffs[4]
-        var w1 = coeffs[5]
+#     fn next(mut self: tf2s, input: Float64, coeffs: List[Float64]) -> Float64:
+#         var b2 = coeffs[0]
+#         var b1 = coeffs[1]
+#         var b0 = coeffs[2]
+#         var a1 = coeffs[3]
+#         var a0 = coeffs[4]
+#         var w1 = coeffs[5]
 
-        var c   = 1/tan(w1*0.5/self.world_ptr[0].sample_rate) # bilinear-transform scale-factor
-        var csq = c*c
-        var d   = a0 + a1 * c + csq
-        var b0d = (b0 + b1 * c + b2 * csq)/d
-        var b1d = 2 * (b0 - b2 * csq)/d
-        var b2d = (b0 - b1 * c + b2 * csq)/d
-        var a1d = 2 * (a0 - csq)/d
-        var a2d = (a0 - a1*c + csq)/d
+#         var c   = 1/tan(w1*0.5/self.world_ptr[0].sample_rate) # bilinear-transform scale-factor
+#         var csq = c*c
+#         var d   = a0 + a1 * c + csq
+#         var b0d = (b0 + b1 * c + b2 * csq)/d
+#         var b1d = 2 * (b0 - b2 * csq)/d
+#         var b2d = (b0 - b1 * c + b2 * csq)/d
+#         var a1d = 2 * (a0 - csq)/d
+#         var a2d = (a0 - a1*c + csq)/d
 
-        return self.tf2.next(input, [b0d, b1d, b2d, a1d, a2d])
+#         return self.tf2.next(input, [b0d, b1d, b2d, a1d, a2d])
+fn tf2s(coeffs: List[Float64], mut coeffs_out: List[Float64], sample_rate: Float64):
+    var b2 = coeffs[0]
+    var b1 = coeffs[1]
+    var b0 = coeffs[2]
+    var a1 = coeffs[3]
+    var a0 = coeffs[4]
+    var w1 = coeffs[5]
+
+    var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
+    var csq = c*c
+    var d   = a0 + a1 * c + csq
+    var b0d = (b0 + b1 * c + b2 * csq)/d
+    var b1d = 2 * (b0 - b2 * csq)/d
+    var b2d = (b0 - b1 * c + b2 * csq)/d
+    var a1d = 2 * (a0 - csq)/d
+    var a2d = (a0 - a1*c + csq)/d
+
+    coeffs_out[0] = b0d
+    coeffs_out[1] = b1d
+    coeffs_out[2] = b2d
+    coeffs_out[3] = a1d
+    coeffs_out[4] = a2d
+
 
 struct Reson(Representable, Movable, Copyable):
-    var tf2s: tf2s
+    var tf2: tf2
+    var coeffs: List[Float64]
+    var world_ptr: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.tf2s = tf2s(world_ptr)
+        self.tf2 = tf2(world_ptr)
+        self.coeffs = List[Float64](fill=0.0, length=5)
+        self.world_ptr = world_ptr
 
     fn __repr__(self) -> String:
         return String("Reson")
@@ -493,8 +597,11 @@ struct Reson(Representable, Movable, Copyable):
         var b2 = 0
         var b1 = 0
         var b0 = clip(gain, 0.0, 1.0)
-        return self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])
-    
+
+        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+
+        return self.tf2.next(input, self.coeffs)
+
     fn hpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
         var wc = 2*pi*freq
         var a1 = 1/q
@@ -502,7 +609,9 @@ struct Reson(Representable, Movable, Copyable):
         var b2 = 0
         var b1 = 0
         var b0 = clip(gain, 0.0, 1.0)
-        return gain*input - self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])
+
+        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+        return gain*input - self.tf2.next(input, self.coeffs)
 
     fn bpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
         var wc = 2*pi*freq
@@ -511,4 +620,6 @@ struct Reson(Representable, Movable, Copyable):
         var b2 = 0
         var b1 = clip(gain, 0.0, 1.0)
         var b0 = 0
-        return self.tf2s.next(input, [b2, b1, b0, a1, a0, wc])
+
+        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+        return self.tf2.next(input, self.coeffs)

@@ -1,9 +1,15 @@
+from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.functions import *
+from mmm_src.MMMTraits import *
+
 from mmm_dsp.Buffer import *
+from mmm_dsp.PlayBuf import *
+from mmm_dsp.Osc import *
 from mmm_dsp.Filters import VAMoogLadder
 from mmm_utils.functions import linexp
 from random import random_float64
-from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.PlayBuf import *
+
+# THE SYNTH
 
 struct GrainSynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
@@ -18,7 +24,6 @@ struct GrainSynth(Representable, Movable, Copyable):
     
     var moog: List[VAMoogLadder]
      
-
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
 
@@ -45,12 +50,33 @@ struct GrainSynth(Representable, Movable, Copyable):
         start_frame = linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.0, self.buffer.get_num_frames())
 
         var grains = self.tgrains.next(self.buffer, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4)  # Get grains from TGrains
-        # var mod_val = self.mod.next(osc_buffers, 0.1, 1)  # Get the modulation value from the Osc
-        
-        # for i in range(self.num_chans):
-        #     sample[i] = self.moog[i].next(sample[i], linexp(mod_val, -1.0, 1.0, 500.0, 20000.0), 0.5)
 
-        return grains
+        return grains^
 
     fn __repr__(self) -> String:
         return String("GrainSynth")
+
+# THE GRAPH
+
+struct Grains(Representable, Movable, Graphable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]
+
+    var output: List[Float64]  # Output buffer for audio samples
+
+    var grain_synth: GrainSynth  # Instance of the GrainSynth
+
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+
+        self.grain_synth = GrainSynth(world_ptr)  # Initialize the GrainSynth with the world instance
+
+        self.output = List[Float64](0.0, 0.0)  # Initialize output list
+
+    fn __repr__(self) -> String:
+        return String("TGrains")
+
+    fn next(mut self: Grains) -> List[Float64]:
+        sample = self.grain_synth.next()
+
+        return sample^  # Return the combined output sample

@@ -1,12 +1,12 @@
-# """
-# This outputs something, but it isn't right!
+# # """
+# # This outputs something, but it isn't right!
 
-# A translation of Miller Puckette's Mayer FFT implementation from Sigmund, etc.
+# # A translation of Miller Puckette's Mayer FFT implementation from Sigmund, etc.
 
-# In respect of the author's wishes, we thank Euler, Gauss, Hartley, Buneman, Mayer, and Puckette.
+# # In respect of the author's wishes, we thank Euler, Gauss, Hartley, Buneman, Mayer, and Puckette.
 
-# This should probably get replaced by an FFTW or RustFFT interface.
-# """
+# # This should probably get replaced by an FFTW or RustFFT interface.
+# # """
 # from python import PythonObject
 # from python.bindings import PythonModuleBuilder
 
@@ -131,6 +131,10 @@
 
 #     fn fht(mut self, mut fz: UnsafePointer[Float64], n: Int):
 #         """Fast Hartley Transform implementation."""
+#         if n <= 0 or (n & (n - 1)) != 0:  # Check if n is power of 2
+#             print("Error: n must be a positive power of 2")
+#             return
+
 #         var k: Int
 #         var k1: Int = 1
 #         var k2: Int = 0
@@ -141,15 +145,18 @@
         
 #         # Bit reversal
 #         while k1 < n:
-#             var aa: Float64
-#             k = n >> 1
-#             while (k2 ^ k) & k == 0:
+#             var k = n >> 1
+#             while True:
 #                 k2 ^= k
+#                 if (k2 & k) == 0:
+#                     break
 #                 k >>= 1
+#             k2 ^= k
+            
 #             if k1 > k2:
-#                 aa = fz[k1]
-#                 fz[k1] = fz[k2]
-#                 fz[k2] = aa
+#                 var temp = fz[k1]
+#                 fz[k1] = fz[k2] 
+#                 fz[k2] = temp
 #             k1 += 1
         
 #         # Find log2(n)
@@ -248,8 +255,6 @@
             
 #             # Remaining passes with trig
 #             t_lam = 0
-#             var c1: Float64 = 1.0
-#             var s1: Float64 = 0.0
             
 #             # Initialize trig values
 #             for i in range(2, k + 1):
@@ -279,10 +284,10 @@
                 
 #                 fi = ii
 #                 while fi < n:
-#                     var gi = k1 - ii + fi
+#                     var gi = fi + (k1 - ii)
                     
-#                     var a: Float64 = c2 * fz[fi + k1] + s2 * fz[gi + k1 - ii]
-#                     var b: Float64 = s2 * fz[fi + k1] - c2 * fz[gi + k1 - ii]
+#                     var a = c2 * fz[fi + k1] + s2 * fz[gi + k1]
+#                     var b = s2 * fz[fi + k1] - c2 * fz[gi + k1]
                     
 #                     var f0: Float64 = fz[fi] + a
 #                     var f1: Float64 = fz[fi] - a

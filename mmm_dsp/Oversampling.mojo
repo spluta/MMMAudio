@@ -24,19 +24,20 @@ struct Oversampling(Representable, Movable, Copyable):
         self.out = 0.0
 
     fn set_os_index(mut self, index: Int):
-        if index < 0:
-            self.index = 0
-        elif index > 4:
-            self.index = 4
-        else:
-            self.index = index
+        if self.index != index:
+            if index < 0:
+                self.index = 0
+            elif index > 4:
+                self.index = 4
+            else:
+                self.index = index
 
-        self.times_oversampling = 2.0 ** Float64(self.index)
-        self.times_os_int = Int64(self.times_oversampling)
-        self.counter = 0
-        self.lpf.set_sample_rate(self.lpf.svf1.sample_rate * self.times_oversampling)
-        self.filter_cutoff = 0.45 * self.lpf.svf1.sample_rate / self.times_oversampling
-        self.out = 0.0
+            self.times_oversampling = 2.0 ** Float64(self.index)
+            self.times_os_int = Int64(self.times_oversampling)
+            self.counter = 0
+            self.lpf.set_sample_rate(self.lpf.svf1.sample_rate * self.times_oversampling)
+            self.filter_cutoff = 0.45 * self.lpf.svf1.sample_rate / self.times_oversampling
+            self.out = 0.0
 
     fn __repr__(self) -> String:
         return String("Oversampling")

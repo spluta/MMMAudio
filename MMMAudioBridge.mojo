@@ -21,7 +21,8 @@ struct MMMAudioBridge(Representable, Movable):
 
     var graph: MMMGraph
 
-    var loc_wire_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for wire buffer
+    var loc_in_buffer: UnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
+    var loc_out_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
 
     var msg_dict: Dict[String, List[Float64]]
 
@@ -32,20 +33,26 @@ struct MMMAudioBridge(Representable, Movable):
 
         var sample_rate = Float64(args[0])
         var block_size: Int64 = Int64(args[1])
-        var num_chans: Int64 = Int64(args[2])
+        # var num_in_chans: Int64 = Int64(args[2])
+
+
+        # var num_out_chans: Int64 = Int64(args[3])
+        var num_out_chans: Int64 = 2
+        var num_in_chans: Int64 = 2
 
         # right now if you try to read args[3], shit gets really weird
 
-        self = Self(sample_rate, block_size, num_chans, [0])  # Initialize with sample rate, block size, and number of channels
+        self = Self(sample_rate, block_size, num_in_chans, num_out_chans, [0])  # Initialize with sample rate, block size, and number of channels
 
-    fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int64 = 512, num_chans: Int64 = 2, graphs: List[Int64] = List[Int64](0)):
+    fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int64 = 512, num_in_chans: Int64 = 12, num_out_chans: Int64 = 12, graphs: List[Int64] = List[Int64](0)):
         """Initialize the audio engine with sample rate, block size, and number of channels."""
 
-        print("MMMAudioBridge initialized with sample rate:", sample_rate, "block size:", block_size, "num chans:", num_chans)
+        print("MMMAudioBridge initialized with sample rate:", sample_rate, "block size:", block_size)
 
-        # it is way more efficient to use an UnsafePointer to write to the wire buffer directly
-        self.loc_wire_buffer = UnsafePointer[SIMD[DType.float64, 1]]()  # Placeholder for wire buffer
-        self.world = MMMWorld(sample_rate, block_size, num_chans)  # Initialize MMMWorld with sample rate and block size
+        # it is way more efficient to use an UnsafePointer to write to the output buffer directly
+        self.loc_in_buffer = UnsafePointer[SIMD[DType.float32, 1]]() 
+        self.loc_out_buffer = UnsafePointer[SIMD[DType.float64, 1]]()  
+        self.world = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)  # Initialize MMMWorld with sample rate and block size
         self.world_ptr = UnsafePointer(to=self.world)  # Pointer to the MMMWorld instance
 
         self.graph = MMMGraph(self.world_ptr)
@@ -54,8 +61,18 @@ struct MMMAudioBridge(Representable, Movable):
 
         print("AudioEngine initialized with sample rate:", self.world_ptr[0].sample_rate)
 
+    @staticmethod
+    fn set_channel_count(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
+        var num_in_chans = Int64(args[0])
+        var num_out_chans = Int64(args[1])
+        print("set_channel_count:", num_in_chans, num_out_chans)
+        py_self[0].world_ptr[0].set_channel_count(num_in_chans, num_out_chans)
+        py_self[0].graph.set_channel_count(num_in_chans, num_out_chans)
+
+        return PythonObject(None)
+
     fn __repr__(self) -> String:
-        return String("MMMAudioBridge(sample_rate: " + String(self.world_ptr[0].sample_rate) + ", block_size: " + String(self.world_ptr[0].block_size) + ", num_chans: " + String(self.world_ptr[0].num_chans) + ")")
+        return String("MMMAudioBridge(sample_rate: " + String(self.world_ptr[0].sample_rate) + ", block_size: " + String(self.world_ptr[0].block_size) + ", num_in_chans: " + String(self.world_ptr[0].num_in_chans) + ", num_out_chans: " + String(self.world_ptr[0].num_out_chans) + ")")
 
     # @staticmethod
     # fn set_active_graphs(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
@@ -75,7 +92,7 @@ struct MMMAudioBridge(Representable, Movable):
         dims_list.append(Float64(dims[1]))
         py_self[0].world_ptr[0].screen_dims = dims_list  # Set the screen size in the MMMWorld instance
 
-        return PythonObject(None)  # Return a PythonObject wrapping None
+        return PythonObject(None) 
 
     @staticmethod
     fn send_raw_hid(py_self: UnsafePointer[Self], info: PythonObject) raises -> PythonObject:
@@ -128,16 +145,17 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn next(py_self: UnsafePointer[Self], wire_buffer: PythonObject) raises -> PythonObject:
+    fn next(py_self: UnsafePointer[Self], in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 
-        py_self[0].loc_wire_buffer = wire_buffer.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
-        # zero the wire buffer
-        for j in range(py_self[0].world_ptr[0].num_chans):
+        py_self[0].loc_in_buffer = in_buffer.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float32]()
+
+        py_self[0].loc_out_buffer = out_buffer.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
+        # zero the output buffer
+        for j in range(py_self[0].world_ptr[0].num_out_chans):
             for i in range(py_self[0].world_ptr[0].block_size):
-                py_self[0].loc_wire_buffer[i * 2 + j] = 0.0  # Zero the wire buffer
+                py_self[0].loc_out_buffer[i * py_self[0].world_ptr[0].num_out_chans + j] = 0.0 
 
-
-        py_self[0].graph.next(py_self[0].loc_wire_buffer, py_self[0].msg_dict)  # Process the audio graphs
+        py_self[0].graph.next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer, py_self[0].msg_dict)  
 
         return PythonObject(None)  # Return a PythonObject wrapping the float value
 
@@ -156,6 +174,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             .def_method[MMMAudioBridge.send_text_msg]("send_text_msg")
             .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
             .def_method[MMMAudioBridge.send_midi]("send_midi")
+            .def_method[MMMAudioBridge.set_channel_count]("set_channel_count")
         )
 
         return m.finalize()

@@ -1,7 +1,6 @@
 import torch.nn as nn
 
-# Define your model architecture (should match the saved model)
-# This is just an example, replace with your actual model architecture
+
 class MLP(nn.Module):
     def __init__(self, input_size, layers_data: list):
         super(MLP, self).__init__()

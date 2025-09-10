@@ -16,6 +16,10 @@ fn linlin(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, ou
     Returns:
         The mapped value in the output range.
     """
+    if value < in_min:
+        return out_min
+    elif value > in_max:
+        return out_max
     # First scale to 0..1 range, then scale to output range
     var normalized = (value - in_min) / (in_max - in_min)
     return normalized * (out_max - out_min) + out_min
@@ -34,6 +38,10 @@ fn linexp(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, ou
         The exponentially mapped value in the output range
     """
     # First scale to 0..1 range linearly, then apply exponential scaling
+    if value < in_min:
+        return out_min
+    elif value > in_max:
+        return out_max
     var normalized = (value - in_min) / (in_max - in_min)
     return out_min * pow(out_max / out_min, normalized)
 
@@ -100,12 +108,19 @@ fn quadratic_interpolation(y0: Float64, y1: Float64, y2: Float64, x: Float64) ->
         The interpolated value at position x
     """
     # Calculate the coefficients of the quadratic polynomial
-    var a = ((x - 1) * (x - 2)) * 0.5 * y0
-    var b = (x * (x - 2)) * (-1.0) * y1
-    var c = (x * (x - 1)) * 0.5 * y2
+    var xm1 = x - 1.0
+    var xm2 = x - 2.0
+    var y_values = SIMD[DType.float64, 4](y0, y1, y2, 0.0)
+    var coeffs = SIMD[DType.float64, 4](
+        (xm1 * xm2) * 0.5,
+        (x * xm2) * (-1.0),
+        (x * xm1) * 0.5,
+        0.0
+        )
+    var prod = y_values * coeffs
 
     # Return the estimated value
-    return a + b + c
+    return prod[0] + prod[1] + prod[2]
 
 fn cubic_interpolation(p0: Float64, p1: Float64, p2: Float64, p3: Float64, t: Float64) -> Float64:
     """
@@ -152,11 +167,12 @@ fn cpsmidi(freq: Float64, reference_midi_note: Float64 = 69.0, reference_frequen
     return n
 
 fn mix(mut output: List[Float64], *lists: List[Float64]) -> None:
-
     for lst in lists:
         for i in range(len(output)):
             if i < len(lst):
                 output[i] += lst[i]  # Sum the samples
+
+    
 
 # fn mix_vectorized(mut output: List[Float64], *lists: List[Float64]) -> None:
 #     alias simd_width = simdwidthof[DType.float64]()
@@ -181,10 +197,36 @@ fn mix(mut output: List[Float64], *samples: Float64) -> None:
         if i < len(samples):
             output[i] += samples[i]  # Sum the samples
 
+fn mix(input: List[List[Float64]]) -> List[Float64]:
+    var output = List[Float64]()
+    for _ in range(len(input[0])):
+        output.append(0.0)  # Initialize output list with zeros
+    for lst in input:
+        for i in range(len(output)):
+            if i < len(lst):
+                output[i] += lst[i]
+    return output
+
 fn mul(mut output: List[Float64], factor: Float64):
     """Multiplies each element in the output list by a factor."""
     for i in range(len(output)):
         output[i] *= factor  # Multiply each sample by the factor
+
+# fn mul(output: List[Float64], factor: Float64) -> List[Float64]:
+#     """Returns a new list with each element multiplied by the factor."""
+#     var result = List[Float64](len(output), 0.0)
+#     for i in range(len(output)):
+#         result[i] = output[i] * factor  # Multiply each sample by the factor
+#     return result
+
+fn mul(left: List[Float64], right: List[Float64]) -> List[Float64]:
+    """Returns a new list with each element multiplied by the corresponding factor."""
+
+    var max_len = max(len(left), len(right))
+    var result = List[Float64](max_len, 0.0)
+    for i in range(max_len):
+        result[i % max_len] = left[i % len(left)] * right[i % len(right)]  # Multiply each sample by the corresponding factor
+    return result
 
 # not yet tested
 # fn mul_vectorized(mut output: List[Float64], factor: Float64):
