@@ -25,11 +25,11 @@ struct Phasor(Representable, Movable, Copyable):
     fn increment_phase(mut self: Phasor, freq: Float64, os_index: Int = 0):
         freq2 = clip(freq, -self.world_ptr[0].sample_rate, self.world_ptr[0].sample_rate) 
         self.phase += (freq2 * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
-        # self.phase = self.phase % 1.0
-        if self.phase >= 1.0:
-            self.phase -= 1.0
-        elif self.phase < 0.0:
-            self.phase += 1.0  # Ensure phase is always positive
+        
+        # Ensure phase is always positive
+        while self.phase < 0.0:
+            self.phase += 1.0
+        self.phase = self.phase % 1.0
 
     # not so sure about this pm
     fn next(mut self: Phasor, freq: Float64 = 100.0, phase_offset: Float64 = 0.0, trig: Float64 = 0.0, os_index: Int = 0) -> Float64:
