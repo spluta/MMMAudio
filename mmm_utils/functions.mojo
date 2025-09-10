@@ -245,7 +245,7 @@ fn zero(mut lst: List[Float64]) -> None:
     for i in range(len(lst)):
         lst[i] = 0.0  # Set each element to zero
 
-fn zapgremlins(x: Float64) -> Float64:
+fn sanitize(x: Float64) -> Float64:
         var absx = abs(x)
         # Avoid NaN or Inf values
         return x if (absx > 1e-15 and absx < 1e15) else 0.0

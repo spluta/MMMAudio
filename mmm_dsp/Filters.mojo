@@ -37,7 +37,7 @@ struct Lag(Representable, Movable, Copyable):
             self.lag = lag
             self.val = in_samp + self.b1 * (self.val - in_samp)
 
-        self.val = zapgremlins(self.val)
+        self.val = sanitize(self.val)
 
         return self.val
 
@@ -58,7 +58,7 @@ struct Lag(Representable, Movable, Copyable):
             self.lag = lag
             self.val = in_samp + self.b1 * (self.val - in_samp)
 
-        self.val = zapgremlins(self.val)
+        self.val = sanitize(self.val)
 
         return self.val
 
