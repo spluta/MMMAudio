@@ -1,0 +1,39 @@
+from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.functions import *
+from mmm_src.MMMTraits import *
+
+
+# this is the simplest possible
+struct In2Out(Representable, Movable, Graphable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]
+
+    var output: List[Float64]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+
+        # make a 12 channel output
+        self.output = List[Float64]()
+        for _ in range(12):
+            self.output.append(0.0)  # Initialize output list with zeros
+
+    fn __repr__(self) -> String:
+        return String("In2Out")
+
+    fn next(mut self) -> List[Float64]:
+        self.get_msgs()
+        zero(self.output) # Clear the output buffer
+
+        # # whichever is smaller, the output or the sound_in - that number of values are copied to the output
+        smaller  = min(len(self.output), len(self.world_ptr[0].sound_in))
+        for i in range(smaller):
+            self.output[i] = self.world_ptr[0].sound_in[i]
+
+        return self.output.copy()  # Return the combined output samples
+
+    fn get_msgs(mut self: Self):
+        # a "print_inputs" message prints the current values held in the sound_in list in the world_ptr
+        msg = self.world_ptr[0].get_msg("print_inputs")
+        if msg:
+            for i in range(self.world_ptr[0].num_in_chans):
+                print("input[", i, "] =", self.world_ptr[0].sound_in[i])

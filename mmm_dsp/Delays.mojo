@@ -79,25 +79,39 @@ struct Delay(Representable, Movable, Copyable):
         var sample_delay = Int64(fsample_delay)
         var frac = fsample_delay - Float64(sample_delay)
         var fd = o + frac
-        var fdm1 = fd - 1.0
-        var fdm2 = fd - 2.0
-        var fdm3 = fd - 3.0
-        var fdm4 = fd - 4.0
+
+        var fd_vec = SIMD[DType.float64, 4](fd, fd, fd, fd)
+        var offsets = SIMD[DType.float64, 4](1.0, 2.0, 3.0, 4.0)
+        var fd_minus_offsets = fd_vec - offsets  # [fd-1, fd-2, fd-3, fd-4] 
+
+        var fdm1 = fd_minus_offsets[0]
+        var fdm2 = fd_minus_offsets[1] 
+        var fdm3 = fd_minus_offsets[2]
+        var fdm4 = fd_minus_offsets[3]
 
         var read_ptr = (self.write_ptr - sample_delay) % self.max_delay_samples
-        self.delays[0] = self.delay_line[read_ptr]
-        self.delays[1] = self.delay_line[(read_ptr + 1) % self.max_delay_samples]
-        self.delays[2] = self.delay_line[(read_ptr + 2) % self.max_delay_samples]
-        self.delays[3] = self.delay_line[(read_ptr + 3) % self.max_delay_samples]
-        self.delays[4] = self.delay_line[(read_ptr + 4) % self.max_delay_samples]
 
-        var out = (self.delays[0] * fdm1 * fdm2 * fdm3 * fdm4 / 24.0) + \
-              (self.delays[1] * (0.0 - fd) * fdm2 * fdm3 * fdm4 / 6.0) + \
-              (self.delays[2] * fd * fdm1 * fdm3 * fdm4 / 4.0) + \
-              (self.delays[3] * (0.0 - fd * fdm1 * fdm2 * fdm4) / 6.0) + \
-              (self.delays[4] * fd * fdm1 * fdm2 * fdm3 / 24.0)
+        # simd optimized!
 
-        self.delay_line[self.write_ptr] = input  
+        var delays_simd = SIMD[DType.float64, 4](
+            self.delay_line[read_ptr],
+            self.delay_line[(read_ptr + 1) % self.max_delay_samples],
+            self.delay_line[(read_ptr + 2) % self.max_delay_samples], 
+            self.delay_line[(read_ptr + 3) % self.max_delay_samples],
+        )
+
+        var coeff0 = fdm1 * fdm2 * fdm3 * fdm4 / 24.0
+        var coeff1 = (0.0 - fd) * fdm2 * fdm3 * fdm4 / 6.0
+        var coeff2 = fd * fdm1 * fdm3 * fdm4 / 4.0
+        var coeff3 = (0.0 - fd * fdm1 * fdm2 * fdm4) / 6.0
+        var coeff4 = fd * fdm1 * fdm2 * fdm3 / 24.0
+
+        var coeffs = SIMD[DType.float64, 4](coeff0, coeff1, coeff2, coeff3, )
+        var products = delays_simd * coeffs
+
+        var out = products[0] + products[1] + products[2] + products[3] + (self.delay_line[(read_ptr + 4) % self.max_delay_samples] * coeff4)
+
+        self.delay_line[self.write_ptr] = input
 
         return out
 
@@ -133,13 +147,11 @@ struct Comb(Representable, Movable, Copyable):
 struct FBDelay(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var delay: Delay
-    # var svf: SVF
     var dc: DCTrap
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0, interp: Int64 = 0):
         self.world_ptr = world_ptr
         self.delay = Delay(self.world_ptr, max_delay, interp)
-        # self.svf = SVF(world_ptr)
         self.dc = DCTrap(world_ptr)
 
     fn next(mut self, input: Float64, delay_time: Float64 = 0.0, feedback: Float64 = 0.0, interp: Int64 = 0) -> Float64:

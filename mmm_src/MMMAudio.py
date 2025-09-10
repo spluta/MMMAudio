@@ -8,6 +8,9 @@ import asyncio
 from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 import threading
+import multiprocessing
+
+from zmq import RATE
 
 from mmm_src.hid_devices import Joystick
 
@@ -21,11 +24,37 @@ from math import ceil
     
 sys.path.insert(0, "mmm_src")
 
-
 class MMMAudio:
     
+    def get_device_info(self, p_temp, device_name, is_input=True):
 
-    def __init__(self, blocksize=64, channels=2, audio_device="default", graph_name="FeedbackDelays", package_name="examples"):
+        print(f"Looking for audio device: {device_name}")
+        
+        if device_name != "default":
+            device_index = None
+            for i in range(p_temp.get_device_count()):
+                dev_info = p_temp.get_device_info_by_index(i)
+                print(f"Checking device {i}: {dev_info['name']}")
+                if device_name in dev_info['name']:
+                    device_index = i
+                    print(f"Using audio device: {dev_info['name']}")
+                    break
+            if device_index is not None:
+                device_info = p_temp.get_device_info_by_index(device_index)
+                
+            else:
+                print(f"Audio device '{device_name}' not found. Using default device.")
+                device_info = p_temp.get_default_output_device_info()
+        else:
+            if is_input:
+                device_info = p_temp.get_default_input_device_info()
+            else:
+                device_info = p_temp.get_default_output_device_info()
+
+        return device_info
+
+
+    def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
         self.device_index = None
         # this makes the graph file that should work
         from mmm_src.make_solo_graph import make_solo_graph
@@ -34,7 +63,8 @@ class MMMAudio:
         import MMMAudioBridge
 
         self.blocksize = blocksize
-        self.channels = channels
+        self.num_input_channels = num_input_channels
+        self.num_output_channels = num_output_channels
         self.counter = 0
         self.joysticks = []
 
@@ -42,134 +72,120 @@ class MMMAudio:
 
         self.scheduler = Scheduler.Scheduler()
 
-        # Get default system sample rate from PyAudio
         p_temp = pyaudio.PyAudio()
-        if audio_device != "default":
-            device_index = None
-            for i in range(p_temp.get_device_count()):
-                dev_info = p_temp.get_device_info_by_index(i)
-                if audio_device in dev_info['name']:
-                    device_index = i
-                    self.audio_device_index = device_index
-                    print(f"Using audio device: {dev_info['name']}")
-                    break
-            if device_index is not None:
-                device_info = p_temp.get_device_info_by_index(device_index)
-                self.sample_rate = int(device_info['defaultSampleRate'])
-                print(f"Sample rate for {audio_device}: {self.sample_rate}")
-            else:
-                print(f"Audio device '{audio_device}' not found. Using default device.")
-                device_info = p_temp.get_default_output_device_info()
-                self.sample_rate = int(device_info['defaultSampleRate'])
-        else:
-            self.audio_device_index = p_temp.get_default_output_device_info()['index']
-            device_info = p_temp.get_default_output_device_info()
-            
-            self.sample_rate = int(device_info['defaultSampleRate'])
-            print(f"Sample rate for {audio_device}: {self.sample_rate}")
-
-        # print(f"Default sample rate: {self.sample_rate}")
+        in_device_info = self.get_device_info(p_temp, in_device, True)
+        out_device_info = self.get_device_info(p_temp, out_device, False)
         p_temp.terminate()
+
+
+        if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
+            print(f"Warning: Sample rates do not match ({in_device_info['defaultSampleRate']} vs {out_device_info['defaultSampleRate']})")
+            print("Exiting.")
+            return
         
-        self.wire_buffer = np.zeros((self.blocksize, self.channels), dtype=np.float64)
-        print(self.wire_buffer.shape)
-        
+        self.sample_rate = int(in_device_info['defaultSampleRate'])
+        self.in_device_index = in_device_info['index']
+        self.out_device_index = out_device_info['index']
+        self.num_input_channels = min(self.num_input_channels, int(in_device_info['maxInputChannels']))
+        self.num_output_channels = min(self.num_output_channels, int(out_device_info['maxOutputChannels']))
+
+        self.out_buffer = np.zeros((self.blocksize, self.num_output_channels), dtype=np.float64)
+
         # Initialize the Mojo module AudioEngine
 
-        # if active_graphs == None:
-        #     active_graphs = (0, )
-        # if isinstance(active_graphs, int):
-        #     active_graphs = (active_graphs,)  # this has to be one of the dumbest features of any programming language
-        # print("active_graphs:", active_graphs)
-        self.mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(self.sample_rate, self.blocksize, self.channels)
-        # self.mmm_audio_bridge.set_active_graphs(active_graphs)
+        self.mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(self.sample_rate, self.blocksize)
+        self.mmm_audio_bridge.set_channel_count((self.num_input_channels, self.num_output_channels))
 
-        # Get screen size
+        # # Get screen size
         screen_dims = pyautogui.size()
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
-        self.p = None
-        self.stream = None
-        self.data_index = 0
-
         # the mouse thread will always be running
         threading.Thread(target=asyncio.run, args=(self.get_mouse_position(0.01),)).start()
+
+        self.p = pyaudio.PyAudio()
+        format_code = pyaudio.paFloat32
+
+        self.audio_stopper = threading.Event()
+
+        self.input_stream = self.p.open(format=format_code,
+            channels= self.num_input_channels,
+            rate=self.sample_rate,
+            input=True,
+            input_device_index=self.in_device_index,
+            frames_per_buffer=self.blocksize)
+
+        self.output_stream = self.p.open(format=format_code,
+            channels= self.num_output_channels,
+            rate=self.sample_rate,
+            output=True,
+            output_device_index=self.out_device_index,
+            frames_per_buffer=self.blocksize)
+
 
     async def get_mouse_position(self, delay: float = 0.01):
         while True:
             x, y = pyautogui.position()
             self.mmm_audio_bridge.send_msg(["mouse_x", x])
             self.mmm_audio_bridge.send_msg(["mouse_y", y])
+            
             await asyncio.sleep(delay)
-
-    def callback(self, in_data, frame_count, time_info, status):
-        
-        current_time = time.time()
-        
-        # Pass wire_buffer to the Mojo audio engine. Mojo modifies the wire_buffer in place
-        self.mmm_audio_bridge.next(self.wire_buffer)
-
-        # if self.counter % 100 == 0:
-        #     duration = time.time() - current_time
-        #     print(duration / (self.blocksize/self.sample_rate))
-        # self.counter += 1
-
-        self.wire_buffer = np.clip(self.wire_buffer, -1.0, 1.0)
-        # Convert to bytes
-        chunk = self.wire_buffer.astype(np.float32).tobytes()
-
-        # Return empty data when we've reached the end
-        if len(chunk) == 0:
-            return (chunk, pyaudio.paComplete)
-        
-        return (chunk, pyaudio.paContinue)
     
-    def increment(self, samples):
-        blocks = ceil(samples / self.blocksize)
-        for i in range(blocks):
-            self.mmm_audio_bridge.next(self.wire_buffer)
+    # def increment(self, samples):
+    #     blocks = ceil(samples / self.blocksize)
+    #     for i in range(blocks):
+    #         self.mmm_audio_bridge.next(self.out_buffer)
 
     def plot(self, samples):
         blocks = ceil(samples / self.blocksize)
         # Create empty array to store the waveform data
-        waveform = np.zeros(samples*self.channels, dtype=np.float64)
+        waveform = np.zeros(samples*self.num_output_channels, dtype=np.float64).reshape(samples, self.num_output_channels)
+        in_buf = np.zeros((self.blocksize, self.num_input_channels), dtype=np.float64)
+
         for i in range(blocks):
-            self.mmm_audio_bridge.next(self.wire_buffer)
-            waveform[i*self.blocksize:(i+1)*self.blocksize] = self.wire_buffer[:, 0]
+            self.mmm_audio_bridge.next(in_buf, self.out_buffer)
+            for j in range(self.out_buffer.shape[0]):
+                waveform[i*self.blocksize + j] = self.out_buffer[j]
+
         return waveform
     
+    def audio_loop(self):
+        max = 0.0
+        while not self.audio_stopper.is_set():
+            data = self.input_stream.read(self.blocksize, exception_on_overflow=False)
+            in_data = np.frombuffer(data, dtype=np.float32)
+            # in_data = in_data.flatten()
+
+            self.mmm_audio_bridge.next(in_data, self.out_buffer)
+            self.out_buffer = np.clip(self.out_buffer, -1.0, 1.0)
+            chunk = self.out_buffer.astype(np.float32).tobytes()
+            self.output_stream.write(chunk)
+
+
     def start_audio(self):
         # Instantiate PyAudio
+        print("Starting audio...")
         if not self.running:
             self.running = True
-            self.p = pyaudio.PyAudio()
-            format_code = pyaudio.paFloat32
-            
-            # Open stream using callback
-            self.stream = self.p.open(
-                format=format_code,
-                channels=self.channels,
-                rate=self.sample_rate,
-                # input_device_index=self.audio_device_index,
-                output_device_index=self.audio_device_index,
-                # input=True,
-                output=True,
-                frames_per_buffer=self.blocksize,
-                stream_callback=self.callback
-            )
-
-        else:
-            print("Audio is already running.")
+            self.audio_stopper.clear()
+            print("Audio started with sample rate:", self.sample_rate, "block size:", self.blocksize, "input channels:", self.num_input_channels, "output channels:", self.num_output_channels)
+            # self.audio_loop()
+            self.audio_thread = threading.Thread(target=self.audio_loop)
+            self.audio_thread.start()
     
     def stop_audio(self):
         if self.running:
             self.running = False
-            if self.stream:
-                self.stream.close()
-            if self.p:
-                self.p.terminate()
-        else:
-            print("Audio is not running.")
+            print("Stopping audio...")
+            self.audio_stopper.set()
+        #     if self.input_stream:
+        #         self.input_stream.close()
+        #     if self.output_stream:
+        #         self.output_stream.close()
+        #     if self.p:
+        #         self.p.terminate()
+        # else:
+        #     print("Audio is not running.")
 
     def send_msg(self, key, *args):
         """

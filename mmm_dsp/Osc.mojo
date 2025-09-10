@@ -23,8 +23,9 @@ struct Phasor(Representable, Movable, Copyable):
         return String("Phasor")
 
     fn increment_phase(mut self: Phasor, freq: Float64, os_index: Int = 0):
-
-        self.phase += (freq * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+        freq2 = clip(freq, -self.world_ptr[0].sample_rate, self.world_ptr[0].sample_rate) 
+        self.phase += (freq2 * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+        # self.phase = self.phase % 1.0
         if self.phase >= 1.0:
             self.phase -= 1.0
         elif self.phase < 0.0:
@@ -38,7 +39,12 @@ struct Phasor(Representable, Movable, Copyable):
         else:
             self.increment_phase(freq, os_index)
         self.last_trig = trig
-        return wrap(self.phase + phase_offset, 0.0, 1.0)  # Wrap phase to [0, 1) range
+
+        # value = self.phase + phase_offset
+        # var wrapped_value = (value) % 1.0
+        # if wrapped_value < 0.0:
+        #     wrapped_value += 1.0  # Ensure the value is within the range
+        return (self.phase + phase_offset) % 1.0
 
 struct Osc(Representable, Movable, Copyable):
     """Oscillator structure for generating waveforms.
@@ -64,8 +70,9 @@ struct Osc(Representable, Movable, Copyable):
         )
 
     fn next(mut self: Osc, freq: Float64 = 100.0, phase_offset: Float64 = 0.0, trig: Float64 = 0.0, osc_type: Int64 = 0, interp: Int64 = 1, os_index: Int = 0) -> Float64:
-        if self.oversampling.index != os_index:
-            self.oversampling.set_os_index(os_index)
+        # if self.oversampling.index != os_index:
+        #     self.oversampling.set_os_index(os_index)
+        self.oversampling.set_os_index(os_index)
 
         for i in range(self.oversampling.times_os_int):
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
@@ -123,10 +130,10 @@ struct Osc(Representable, Movable, Copyable):
         if interp == 2:
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
             var phase = self.phasor.next(freq, phase_offset)  # Update the phase
-            self.sample = buffer.next_sinc(0, phase, last_phase)  # Get the next sample from the Oscillator buffer using sinc interpolation
+            self.sample = buffer.read_sinc(0, phase, last_phase)  # Get the next sample from the Oscillator buffer using sinc interpolation
         else:
             var phase = self.phasor.next(freq, phase_offset)  # Update the phase
-            self.sample = buffer.next(0, phase, interp)  # Get the next sample from the Oscillator buffer
+            self.sample = buffer.read(0, phase, interp)  # Get the next sample from the Oscillator buffer
         return self.sample
 
 struct SinOsc (Representable, Movable, Copyable):
@@ -211,7 +218,7 @@ struct Impulse(Representable, Movable, Copyable):
             self.last_trig = trig  # Update last trigger state
             return 1.0  # Return impulse value
 
-        if abs(phase - self.last_phase) >= 0.5:  # Check for an impulse (crossing the 0.5 threshold)
+        if phase < self.last_phase:  # Check for an impulse (crossing the 0.5 threshold)
             self.last_phase = phase 
             self.last_trig = trig 
             return 1.0  # Return impulse value
@@ -245,6 +252,21 @@ struct Dust(Representable, Movable, Copyable):
         var tick = self.impulse.next(self.freq)  # Update the phase
         if tick == 1.0:  # If an impulse is detected
             self.freq = random_exp_float64(freq*0.25, freq*4)
+            return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
+        else:
+            return 0.0  # Return zero if no impulse
+
+    fn next_r(mut self: Dust, low_freq: Float64 = 100.0, hi_freq: Float64 = 1000.0, trig: Float64 = 1.0) -> Float64:
+        """Generate the next dust noise sample."""
+        if trig > 0.0 and self.last_trig <= 0.0:
+            self.last_trig = trig
+            self.freq = random_exp_float64(low_freq, hi_freq)  # Update frequency if trig is greater than 0.0
+            self.impulse.phasor.phase = 0.0  # Reset phase
+            return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
+        self.last_trig = trig
+        var tick = self.impulse.next(self.freq)  # Update the phase
+        if tick == 1.0:  # If an impulse is detected
+            self.freq = random_exp_float64(low_freq, hi_freq)
             return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
         else:
             return 0.0  # Return zero if no impulse
