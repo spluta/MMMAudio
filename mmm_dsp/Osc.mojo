@@ -27,8 +27,8 @@ struct Phasor(Representable, Movable, Copyable):
         self.phase += (freq2 * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
         
         # Ensure phase is always positive
-        while self.phase < 0.0:
-            self.phase += 1.0
+        if self.phase < 0.0:
+            self.phase = 1.0 - (abs(self.phase) % 1.0)
         self.phase = self.phase % 1.0
 
     # not so sure about this pm
