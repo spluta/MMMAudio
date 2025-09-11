@@ -250,21 +250,6 @@ fn zapgremlins(x: Float64) -> Float64:
         # Avoid NaN or Inf values
         return x if (absx > 1e-15 and absx < 1e15) else 0.0
 
-from time import time
-
-fn postln[*Ts: Writable](
-    *values: *Ts
-) -> None:
-    """Prints elements to the text stream, each followed by a newline.
-    Args:
-        values: The elements to print.
-    """
-    if random_float64() < 0.01:  # Print timestamp with a 1% chance
-        @parameter
-        for i in range(values.__len__()):
-            print(values[i], end=" ")
-        print("", end="\n")
-
 fn random_exp_float64(min: Float64, max: Float64) -> Float64:
     """Generates a random float64 value from an exponential distribution.
     Args:
