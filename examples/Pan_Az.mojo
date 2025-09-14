@@ -2,7 +2,7 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
-from mmm_dsp.Osc import Osc
+from mmm_dsp.Osc import Phasor, Osc
 from mmm_dsp.Pan import PanAz
 
 struct PanAz_Synth(Representable, Movable, Copyable):
@@ -10,7 +10,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     var osc: Osc
     var freq: Float64
 
-    var pan_osc: Osc
+    var pan_osc: Phasor
     var pan_az: PanAz
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -18,7 +18,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.osc = Osc(self.world_ptr)
         self.freq = 440.0
 
-        self.pan_osc = Osc(self.world_ptr)
+        self.pan_osc = Phasor(self.world_ptr)
         self.pan_az = PanAz()
 
     fn __repr__(self) -> String:
@@ -28,7 +28,8 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         
         self.get_msgs()
 
-        panned = self.pan_az.next[8](self.osc.next(self.freq), self.pan_osc.next(0.1) * 0.5 + 0.5, 5) * 0.1
+        # PanAz needs to be given a SIMD size that is a power of 2, but the speaker size can be anything smaller than that
+        panned = self.pan_az.next[8](self.osc.next(self.freq), self.pan_osc.next(0.1), 5) * 0.1
 
         return panned
 

@@ -42,27 +42,29 @@ struct GrainSynth(Representable, Movable, Copyable):
 
         self.counter = 0
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
 
         imp_freq = linlin(self.world_ptr[0].mouse_y, 0.0, 1.0, 5.0, 40.0)
         var impulse = self.impulse.next(imp_freq, 1.0)  # Get the next impulse sample
 
         start_frame = linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.0, self.buffer.get_num_frames())
 
-        var grains = self.tgrains.next(self.buffer, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4)  # Get grains from TGrains
+        # use the first channel of the buffer
+        var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4)
 
-        return grains^
+        # if you want to use both channels of the buffer, uncomment this and comment the line above
+        # with the 2 channel version, there will be 2 channels of output (in stereo), but no panning
+        # var grains = self.tgrains.next[N=2](self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4) 
+
+        return grains
 
     fn __repr__(self) -> String:
         return String("GrainSynth")
 
 # THE GRAPH
 
-struct Grains(Representable, Movable, Graphable, Copyable):
+struct Grains(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-
-    var output: List[Float64]  # Output buffer for audio samples
-
     var grain_synth: GrainSynth  # Instance of the GrainSynth
 
 
@@ -71,12 +73,10 @@ struct Grains(Representable, Movable, Graphable, Copyable):
 
         self.grain_synth = GrainSynth(world_ptr)  # Initialize the GrainSynth with the world instance
 
-        self.output = List[Float64](0.0, 0.0)  # Initialize output list
-
     fn __repr__(self) -> String:
         return String("TGrains")
 
-    fn next(mut self: Grains) -> List[Float64]:
+    fn next(mut self: Grains) -> SIMD[DType.float64, 2]:
         sample = self.grain_synth.next()
 
-        return sample^  # Return the combined output sample
+        return sample  # Return the combined output sample

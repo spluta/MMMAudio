@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.Midi_Sequencer import Midi_Sequencer
+from mine.Torch_MLP import Torch_MLP
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Midi_Sequencer
+    var graph: Torch_MLP
     var num_out_chans: Int64
     var output: List[Float64]  # Output list for audio samples
 
@@ -20,7 +20,7 @@ struct MMMGraph(Representable, Movable):
         for _ in range(self.num_out_chans):
             self.output.append(0.0)  # Initialize output list with zeros
 
-        self.graph = Midi_Sequencer(self.world_ptr)
+        self.graph = Torch_MLP(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -44,16 +44,14 @@ struct MMMGraph(Representable, Movable):
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
-            zero(self.output)
-
-            mix(self.output, self.graph.next())  # mix any synth outputs into the output buffer
+            samples = self.graph.next()  # Get the next audio samples from the graph
 
             if i == 0:
                 self.world_ptr[0].clear_msgs()
 
             # Fill the wire buffer with the sample data
-            for j in range(self.num_out_chans):
-                loc_out_buffer[i * self.num_out_chans + j] += self.output[j]  
+            for j in range(min(self.num_out_chans, samples.__len__())):
+                loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
 
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64], mut msg_dict: Dict[String, List[Float64]]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
