@@ -19,10 +19,7 @@ struct GrainSynth(Representable, Movable, Copyable):
     
     var tgrains: TGrains
     var impulse: Impulse  
-    var start_frame: Float64  
-    var counter: Int64
-    
-    var moog: List[VAMoogLadder]
+    var start_frame: Float64
      
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
@@ -34,13 +31,8 @@ struct GrainSynth(Representable, Movable, Copyable):
         self.tgrains = TGrains(self.world_ptr, 20)  
         self.impulse = Impulse(self.world_ptr)  
 
-        self.moog = List[VAMoogLadder]()
-        for _ in range(self.num_chans):
-            self.moog.append(VAMoogLadder(self.world_ptr)) 
 
         self.start_frame = 0.0 
-
-        self.counter = 0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 

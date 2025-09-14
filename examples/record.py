@@ -7,7 +7,7 @@ mmm_audio.start_audio()
 
 mmm_audio.send_msg("print_inputs")
 
-# mmm_audio.send_msg("start_recording")
+# this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 
 import mido
 import time

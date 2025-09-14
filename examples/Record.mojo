@@ -78,7 +78,10 @@ struct Record_Synth(Representable, Movable, Copyable):
                 
         self.note_offs.clear()
 
+        # this code does the actual recording, placing the next sample into the buffer
+        # my audio interface has audio in on channel 9, so I use self.world_ptr[0].sound_in[8]
         if self.is_recording:
+            # the sound_in List in the world_ptr holds the audio in data for the current sample, so grab it from there.
             self.buffer.write(self.world_ptr[0].sound_in[8], self.write_pos)
             self.write_pos += 1
             if self.write_pos >= Int(self.buffer.num_frames):
@@ -88,7 +91,7 @@ struct Record_Synth(Representable, Movable, Copyable):
                 self.trig = 1.0
                 self.write_pos = 0
 
-        out = self.play_buf.next(self.buffer, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)
+        out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)
 
         out = out * self.is_playing * min_env(self.play_buf.get_win_phase(), self.note_time, 0.001)
 

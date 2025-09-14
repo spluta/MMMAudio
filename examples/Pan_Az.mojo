@@ -28,7 +28,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         
         self.get_msgs()
 
-        # PanAz needs to be given a SIMD size that is a power of 2, but the speaker size can be anything smaller than that
+        # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
         panned = self.pan_az.next[8](self.osc.next(self.freq), self.pan_osc.next(0.1), 5) * 0.1
 
         return panned
@@ -41,7 +41,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct Pan_Az(Representable, Movable, Graphable, Copyable):
+struct Pan_Az(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synth: PanAz_Synth
 
@@ -52,8 +52,10 @@ struct Pan_Az(Representable, Movable, Graphable, Copyable):
     fn __repr__(self) -> String:
         return String("PanAz")
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 8]:
 
         sample = self.synth.next()  # Get the next sample from the synth
 
-        return [sample[0],sample[1],sample[2],sample[3],sample[4]]  # Return the combined output samples
+        # the output will pan to the number of channels available 
+        # if there are fewer than 5 channels, only those channels will be output
+        return sample  # Return the combined output samples

@@ -26,7 +26,6 @@ struct Default_Synth(Representable, Movable, Copyable):
         
         self.get_msgs()
         freq = self.lag.next(self.freq, 3)
-        print(freq[0], self.freq)
         return self.osc.next(freq[0]) * 0.1
 
     fn get_msgs(mut self: Self):

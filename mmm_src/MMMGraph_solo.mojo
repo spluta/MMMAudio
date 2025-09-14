@@ -4,7 +4,7 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from mine.Torch_MLP import Torch_MLP
+from examples.Torch_MLP import Torch_MLP
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
