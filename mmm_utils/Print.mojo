@@ -1,6 +1,8 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.Osc import Impulse
 
+# this really needs to be a global object that everything can access
+
 struct Print(Representable, Copyable, Movable):
     var impulse: Impulse
     var world_ptr: UnsafePointer[MMMWorld]

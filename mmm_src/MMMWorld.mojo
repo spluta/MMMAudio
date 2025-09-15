@@ -2,6 +2,8 @@ from python import PythonObject
 from mmm_dsp.OscBuffers import OscBuffers
 from mmm_dsp.Buffer import Buffer
 from mmm_utils.Windows import *
+# from mmm_utils.Print import Print
+import time
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
@@ -28,6 +30,12 @@ struct MMMWorld(Representable, Movable, Copyable):
     var hann_window: Buffer
 
     var buffers: List[Buffer]
+
+    # var pointer_to_self: UnsafePointer[MMMWorld]
+    var last_print_time: Float64
+
+    # it does not like this, not sure why
+    # var printer: Print
 
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
@@ -57,6 +65,9 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.midi_dict = Dict[String, Int64]()
 
         self.buffers = List[Buffer]()  # Initialize the list of buffers
+        # self.pointer_to_self = UnsafePointer[MMMWorld]()  # Create a pointer to self
+        # self.printer = Print(self.pointer_to_self)  # Initialize the Print instance
+        self.last_print_time = 0.0
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
@@ -156,8 +167,9 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.midi_dict.clear()
         self.text_msg_dict.clear()
 
-    # fn reset_trigger_msgs(mut self):
-    #     for item in self.msg_dict.items():
-    #         var key = item.key
-    #         if key[:2] == "t_":
-    #             self.msg_dict[key] = List[Float64](0.0)  # Reset the value for "t_" keys
+    fn print[T: Writable](mut self, value: T, label: String = "", freq: Float64 = 10.0) -> None:
+
+        current_time = time.perf_counter()
+        if current_time - self.last_print_time >= 1.0 / freq:
+            self.last_print_time = current_time
+            print(label,value)

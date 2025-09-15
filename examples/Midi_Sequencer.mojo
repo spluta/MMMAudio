@@ -36,14 +36,14 @@ struct TrigSynthVoice(Movable, Copyable):
         self.vol = 1.0
 
     fn next(mut self) -> Float64:
-        if not self.env.go and self.trig <= 0.0:
+        if not self.env.is_active and self.trig <= 0.0:
             return 0.0  # Return 0 if the envelope is not active and no trigger
         else:
             var mod_value = self.mod.next(self.freq*1.5)  # Get the next value from the modulator
             var env = self.env.next([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0], 0, self.trig)
             var mod_mult = linlin(env, 0.0, 1.0, 0.0, 0.25) # self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, 8.0), 0.05)
             var car_value = self.car.next(self.freq, mod_value * mod_mult, osc_type=2, os_index=1)  # Get the next value from the carrier
-            car_value = car_value * 0.2 * env * self.vol
+            car_value = car_value * 0.1 * env * self.vol
 
             return car_value
 

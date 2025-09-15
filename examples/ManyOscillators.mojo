@@ -26,7 +26,7 @@ struct OscSynth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr
         self.oscs = Osc[2](world_ptr)  # Initialize two Osc instances
 
-        self.pan = Pan2()
+        self.pan = Pan2(world_ptr)
         self.pan_osc = Osc(world_ptr)
         self.pan_freq = random_float64(0.03, 0.1)
 
@@ -47,9 +47,10 @@ struct OscSynth(Representable, Movable, Copyable):
 
         temp = self.oscs.next(self.osc_freqs, interp = 0, os_index = 0) 
 
-        temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01) 
+        temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01)
+        temp2 = temp[0] + temp[1]
 
-        self.printer.next(self.osc_freqs[0],"freqs", freq=1.0)
+        self.printer.next(self.osc_freqs, "freqs", freq=1.0)
 
         pan_loc = self.pan_osc.next(self.pan_freq)  # Get pan position
 

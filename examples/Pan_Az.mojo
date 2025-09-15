@@ -19,7 +19,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.freq = 440.0
 
         self.pan_osc = Phasor(self.world_ptr)
-        self.pan_az = PanAz()
+        self.pan_az = PanAz(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -29,7 +29,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.get_msgs()
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
-        panned = self.pan_az.next[8](self.osc.next(self.freq), self.pan_osc.next(0.1), 5) * 0.1
+        panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), 2, 2) * 0.1
 
         return panned
 
