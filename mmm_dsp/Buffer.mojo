@@ -97,7 +97,7 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
         
         # this returns a pointer to an interleaved array of floats
         self.data = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
-        # print(len(self.data), "samples loaded from file:", filename)  # Print the number of samples loaded for debugging
+        
 
         return None
 
@@ -130,23 +130,38 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
     fn next_sinc(mut self, chan: Int64, phase: Float64, last_phase: Float64) -> Float64:
         return 0.0
 
-    fn read(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
+    fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
+
         if self.num_frames == 0 or self.num_chans == 0:
-            return 0.0  # Return zero if no frames or channels are available
+            return SIMD[DType.float64, N](0.0)  # Return zero if no frames or channels are available
         var f_idx = phase * self.num_frames
         var frac = f_idx - Float64(Int64(f_idx))
 
-        var idx = Int64(f_idx) * self.num_chans + chan
+        # print("InterleavedBuffer read called with phase:", phase, "f_idx:", f_idx, "frac:", frac, "idx:", idx)
 
-        var out = 0.0  
+        var out = SIMD[DType.float64, N](0.0)
+        if start_chan + 1 > self.num_chans:
+            return out  # Return zero if requested channels exceed available channels
 
-        if interp == 0:
-            out = self.linear_interp_loc(idx, idx + self.num_chans, frac)
-        elif interp == 1:
-            out = self.quadratic_interp_loc(idx, (idx + self.num_chans), (idx + (2 * self.num_chans)), frac)
+        for i in range(N):
+            var idx = Int64(f_idx) * self.num_chans + start_chan + i
+            if interp == 0:
+                out[i] = self.linear_interp_loc(idx, idx + self.num_chans, frac)
+            elif interp == 1:
+                out[i] = self.quadratic_interp_loc(idx, (idx + self.num_chans), (idx + (2 * self.num_chans)), frac)
+
         return out
 
 struct Buffer(Representable, Movable, Buffable, Copyable):
+    """Has 2 possible constructors: \n
+    1) Buffer(lists: List[List[Float64]], buf_sample_rate: Float64 = 48000.0).
+       - lists: List of channels, each channel is a List of Float64 samples.
+       - buf_sample_rate: Sample rate of the buffer (default is 48000.0).
+    2) Buffer(num_chans: Int64 = 2, samples: Int64 = 48000, buf_sample_rate: Float64 = 48000.0).
+       - num_chans: Number of channels (default is 2 for stereo).
+       - samples: Number of samples per channel (default is 48000 for 1 second at 48kHz).
+       - buf_sample_rate: Sample rate of the buffer (default is 48000.0)."""
+
     var num_frames: Float64  
     var buf_sample_rate: Float64  
     var duration: Float64 
@@ -165,16 +180,22 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         """Return the sample rate of the buffer."""
         return self.buf_sample_rate
 
-    fn __init__(out self, lists: List[List[Float64]] = List[List[Float64]](), sample_rate: Float64 = 48000.0):
-        print(len(lists), len(lists[0]) if len(lists) > 0 else 0)
-        self.data = lists
-        print(len(self.data), len(self.data[0]) if len(self.data) > 0 else 0)
+    fn __init__(out self, lists: List[List[Float64]] = List[List[Float64]](), buf_sample_rate: Float64 = 48000.0):
+        self.data = lists.copy()
         self.index = 0.0
         self.num_frames = len(self.data[0]) 
-        self.buf_sample_rate = sample_rate
+        self.buf_sample_rate = buf_sample_rate
 
         self.num_chans = len(self.data)  # Default number of channels (e.g., stereo)
         self.duration = self.num_frames / self.buf_sample_rate
+
+    fn __init__(out self, num_chans: Int64 = 2, samples: Int64 = 48000, buf_sample_rate: Float64 = 48000.0):
+        self.data = [[Float64(0.0) for _ in range(samples)] for _ in range(num_chans)]
+        self.buf_sample_rate = buf_sample_rate
+        self.index = 0.0
+        self.duration = Float64(samples) / buf_sample_rate
+        self.num_frames = Float64(samples)
+        self.num_chans = num_chans
 
 
     fn __repr__(self) -> String:
@@ -187,9 +208,9 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         var mod_idx2 = idx2 % (Int64(self.num_frames))
 
         # Get the 3 sample values
-        var y0 = self.data[mod_idx][chan]
-        var y1 = self.data[mod_idx1][chan]
-        var y2 = self.data[mod_idx2][chan]
+        var y0 = self.data[chan][mod_idx]
+        var y1 = self.data[chan][mod_idx1]
+        var y2 = self.data[chan][mod_idx2]
 
         return quadratic_interpolation(y0, y1, y2, frac)
 
@@ -206,28 +227,32 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
     fn read_sinc(mut self, chan: Int64, phase: Float64, last_phase: Float64) -> Float64:
         return 0.0
 
-    fn read(mut self, chan: Int64, phase: Float64, interp: Int64 = 0) -> Float64:
+    fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
 
         if self.num_frames == 0 or self.num_chans == 0:
-            return 0.0  # Return zero if no frames or channels are available
+            return SIMD[DType.float64, N](0.0)  # Return zero if no frames or channels are available
         var f_idx = phase * self.num_frames
         var frac = f_idx - Float64(Int64(f_idx))
 
         var idx = Int64(f_idx)
 
-        if interp == 0:
-            return self.linear_interp_loc(idx, idx + 1, frac, chan)
-        elif interp == 1:
-            return self.quadratic_interp_loc(idx, (idx + 1), (idx + 2), frac, chan)
-        else:
-            return self.linear_interp_loc(idx, idx + 1, frac, chan)  # default is linear interpolation
+        var out = SIMD[DType.float64, N](0.0)
+        for i in range(N):
+            if interp == 0:
+                out[i] = self.linear_interp_loc(idx, idx + 1, frac, start_chan + i)
+            elif interp == 1:
+                out[i] = self.quadratic_interp_loc(idx, (idx + 1), (idx + 2), frac, start_chan + i)
+            else:
+                out[i] = self.linear_interp_loc(idx, idx + 1, frac, start_chan + i)  # default is linear interpolation
 
-    fn write(mut self, index: Int64, value: Float64, channel: Int64 = 0):
+        return out
+
+    fn write(mut self, value: Float64, index: Int64, channel: Int64 = 0):
         if index < 0 or index >= Int64(self.num_frames):
             return  # Out of bounds
         self.data[channel][index] = value
 
-    fn write(mut self, index: Int64, value: List[Float64], start_channel: Int64 = 0):
+    fn write(mut self, value: List[Float64], index: Int64, start_channel: Int64 = 0):
         if index < 0 or index >= Int64(self.num_frames):
             return  # Out of bounds
         for i in range(len(value)):

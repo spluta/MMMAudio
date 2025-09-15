@@ -45,13 +45,14 @@ fn linexp(value: Float64, in_min: Float64, in_max: Float64, out_min: Float64, ou
     var normalized = (value - in_min) / (in_max - in_min)
     return out_min * pow(out_max / out_min, normalized)
 
-fn clip(val: Float64, lo: Float64, hi: Float64) -> Float64:
-    if val < lo:
-        return lo
-    elif val > hi:
-        return hi
-    else:
-        return val
+fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    var val2 = val
+    for i in range(N):
+        if val2[i] < lo[i]:
+            val2[i] = lo[i]
+        elif val2[i] > hi[i]:
+            val2[i] = hi[i]
+    return val2
 
 fn clip(mut lst: List[Float64], lo: Float64, hi: Float64) -> None:
     """Clips each element in the list to the specified range."""
@@ -122,27 +123,34 @@ fn quadratic_interpolation(y0: Float64, y1: Float64, y2: Float64, x: Float64) ->
     # Return the estimated value
     return prod[0] + prod[1] + prod[2]
 
-fn cubic_interpolation(p0: Float64, p1: Float64, t: Float64) -> Float64:
+fn cubic_interpolation(p0: Float64, p1: Float64, p2: Float64, p3: Float64, t: Float64) -> Float64:
     """
-    Performs cubic interpolation between two points using smoothstep function.
+    Performs cubic interpolation between.
+
+    Cubic Intepolation equation from *The Audio Programming Book* 
+    by Richard Boulanger and Victor Lazzarini. pg. 400
     
     Args:
-        p0: Starting point (can be a number or array-like)
-        p1: Ending point (can be a number or array-like)
+        p0: point to th left of p1
+        p1: point to the left of the float t
+        p2: point to the right of the float t
+        p3: point to the right of p2
         t: Interpolation parameter (0.0 to 1.0)
-           t=0 returns p0, t=1 returns p1
     
     Returns:
-        Interpolated value between p0 and p1
+        Interpolated value
     """
-    # Cubic smoothstep interpolation: 3t² - 2t³
-    var smooth_t = t * t * (3.0 - 2.0 * t)
-    
-    # Linear interpolation using the smooth parameter
-    return p0 + (p1 - p0) * smooth_t
+    return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
-fn lin_interp(p0: Float64, p1: Float64, t: Float64) -> Float64:
-    """Performs linear interpolation between two points.
+fn lin_interp[N: Int = 1](p0: SIMD[DType.float64, N], p1: SIMD[DType.float64, N], t: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    """
+    Performs linear interpolation between two points.
+    
+    lin_interp[N](p0, p1, t) -> Float64 or SIMD[Float64, N]
+
+    Parameters:
+        N: size of the SIMD vector - defaults to 1
+
     Args:
         p0: The starting point
         p1: The ending point
@@ -197,15 +205,15 @@ fn mix(mut output: List[Float64], *samples: Float64) -> None:
         if i < len(samples):
             output[i] += samples[i]  # Sum the samples
 
-fn mix(input: List[List[Float64]]) -> List[Float64]:
-    var output = List[Float64]()
-    for _ in range(len(input[0])):
-        output.append(0.0)  # Initialize output list with zeros
-    for lst in input:
-        for i in range(len(output)):
-            if i < len(lst):
-                output[i] += lst[i]
-    return output
+# fn mix(input: List[List[Float64]]) -> List[Float64]:
+#     var output = List[Float64]()
+#     for _ in range(len(input[0])):
+#         output.append(0.0)  # Initialize output list with zeros
+#     for lst in input:
+#         for i in range(len(output)):
+#             if i < len(lst):
+#                 output[i] += lst[i]
+#     return output
 
 fn mul(mut output: List[Float64], factor: Float64):
     """Multiplies each element in the output list by a factor."""
@@ -219,15 +227,7 @@ fn mul(mut output: List[Float64], factor: Float64):
 #         result[i] = output[i] * factor  # Multiply each sample by the factor
 #     return result
 
-fn mul(left: List[Float64], right: List[Float64]) -> List[Float64]:
-    """Returns a new list with each element multiplied by the corresponding factor."""
-
-    var max_len = max(len(left), len(right))
-    var result = List[Float64](max_len, 0.0)
-    for i in range(max_len):
-        result[i % max_len] = left[i % len(left)] * right[i % len(right)]  # Multiply each sample by the corresponding factor
-    return result
-
+# q
 # not yet tested
 # fn mul_vectorized(mut output: List[Float64], factor: Float64):
 #     alias simd_width = simdwidthof[DType.float64]()
@@ -245,27 +245,18 @@ fn zero(mut lst: List[Float64]) -> None:
     for i in range(len(lst)):
         lst[i] = 0.0  # Set each element to zero
 
-fn zapgremlins(x: Float64) -> Float64:
+fn sanitize[N: Int = 1](x: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         var absx = abs(x)
         # Avoid NaN or Inf values
-        return x if (absx > 1e-15 and absx < 1e15) else 0.0
+        safe = True
+        for i in range(N):
+            if absx[i] > 1e15 or absx[i] < 1e-15:
+                safe = False
+                break
+        return x if safe else 0.0
 
-from time import time
 
-fn postln[*Ts: Writable](
-    *values: *Ts
-) -> None:
-    """Prints elements to the text stream, each followed by a newline.
-    Args:
-        values: The elements to print.
-    """
-    if random_float64() < 0.01:  # Print timestamp with a 1% chance
-        @parameter
-        for i in range(values.__len__()):
-            print(values[i], end=" ")
-        print("", end="\n")
-
-fn random_exp_float64(min: Float64, max: Float64) -> Float64:
+fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Generates a random float64 value from an exponential distribution.
     Args:
         min: The minimum value (inclusive).
@@ -273,5 +264,8 @@ fn random_exp_float64(min: Float64, max: Float64) -> Float64:
     Returns:
         A random float64 value from the specified range.
     """
-    var u = random_float64()
-    return linexp(u, 0.0, 1.0, min, max)
+    var u = SIMD[DType.float64, N](0.0)
+    for i in range(N):
+        u[i] = linexp(random_float64(), 0.0, 1.0, min[i], max[i])
+    return u
+

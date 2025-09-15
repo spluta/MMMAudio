@@ -170,17 +170,17 @@ struct OscBuffers(Representable, Movable, Copyable):
 
     # Get the next sample from the buffer using linear interpolation
     # Needs to receive an unsafe pointer to the buffer being used
-    fn next_lin(self, phase: Float64, buf_num: Int64) -> Float64:
+    fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.lin_interp(f_index, buf_num)
         return value
 
-    fn next_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
+    fn read_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.quadratic_interp_loc(f_index, buf_num)
         return value
 
-    fn next_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
+    fn read_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
         # Sinc interpolation using the sinc table
         var phase_diff = phase - last_phase  
         var slope = wrap(phase_diff, -0.5, 0.5)  
@@ -275,10 +275,10 @@ struct OscBuffers(Representable, Movable, Copyable):
         
 #         return out
 
-    fn next(self, phase: Float64, osc_type: Int64 = 0, interp: Int64 = 0) -> Float64:
+    fn read(self, phase: Float64, osc_type: Int64 = 0, interp: Int64 = 0) -> Float64:
         if interp == 0:
-            return self.next_lin(phase, osc_type)  # Linear interpolation
+            return self.read_lin(phase, osc_type)  # Linear interpolation
         elif interp == 1:
-            return self.next_quadratic(phase, osc_type)  # Quadratic interpolation
+            return self.read_quadratic(phase, osc_type)  # Quadratic interpolation
         else:
-            return self.next_lin(phase, osc_type)  # Default to linear interpolation
+            return self.read_lin(phase, osc_type)  # Default to linear interpolation

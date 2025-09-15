@@ -13,6 +13,10 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 
 mmm_audio.stop_audio()  # stop/pause the mojo thread
 
+
+# below is the code to make a new training --------------------------------
+
+
 # if you make a new training below, you can load it into the synth
 mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced.pt")  
 

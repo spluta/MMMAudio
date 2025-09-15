@@ -21,24 +21,7 @@ struct Pan2 (Representable, Movable, Copyable):
 
     #     return self.output  # Return stereo output as List
 
-    fn next(mut self, sample: Float64, mut pan: Float64) -> List[Float64]:
-        # Calculate left and right channel samples based on pan value
-        pan = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
-
-        # Create SIMD vector with the sample duplicated
-        var samples = SIMD[DType.float64, 2](sample, sample)
-        
-        # Create gain vector [left_gain, right_gain]
-        var gains = SIMD[DType.float64, 2](
-            sqrt((1.0 - pan) * 0.5),  # left gain
-            sqrt((1.0 + pan) * 0.5)   # right gain
-        )
-        samples = samples * gains
-        
-        # Apply gains in parallel
-        return [samples[0], samples[1]]  # Return stereo output as List
-
-    fn next_simd(mut self, sample: Float64, mut pan: Float64) -> SIMD[DType.float64, 2]:
+    fn next(mut self, sample: Float64, mut pan: Float64) -> SIMD[DType.float64, 2]:
         # Calculate left and right channel samples based on pan value
         pan = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
 
@@ -66,33 +49,30 @@ struct PanAz (Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("PanAz")
 
-    fn next[num_simd: Int](mut self, sample: Float64, pan: Float64, num_speakers: Int) -> SIMD[DType.float64, num_simd]:
+    fn next[N: Int](mut self, sample: Float64, pan: Float64, num_speakers: Int) -> SIMD[DType.float64, N]:
         # Calculate left and right channel samples based on pan value
-        pan_clipped = clip(pan, 0.0, 1.0)  # Ensure pan is set and clipped before processing
+        pan_wrapped = wrap(pan, 0.0, 1.0)  # Ensure pan is set and wrapped between 0.0 and 1.0
 
-        num_speakers2 = max(2, num_speakers)
+        num_speakers_b = max(1, num_speakers)
 
-        pan_div = 1.0 / Float64(num_speakers2)
+        pan_div = 1.0 / Float64(num_speakers_b)
 
         # Create SIMD vector with the sample duplicated
-        var samples = SIMD[DType.float64, num_simd](sample)
+        var samples = SIMD[DType.float64, 2](sample)
 
         # Create gain vector [left_gain, right_gain]
-        var gains = SIMD[DType.float64, num_simd](0.0)
+        var gains = SIMD[DType.float64, 2](pan_wrapped % pan_div * Float64(num_speakers_b))
+        gains[0] = 1.0-gains[0]
+        # print("pan_wrapped: " + String(pan_wrapped) + " gains: " + String(gains))
 
-        which_div = floor(pan_clipped * Float64(num_speakers2))
+        sp1 = floor(pan_wrapped * Float64(num_speakers_b))
+        sp2 = Int(sp1 + 1) % num_speakers
 
-        if which_div >= Float64(num_speakers2):
-            gains[Int(num_speakers2 - 1)] = 1.0
-        else:
-            p0 = pan_div * which_div
-            p1 = pan_div * (which_div + 1)
+        samples = samples * sqrt(gains)
 
-            sp2 = Int(which_div + 1) % num_speakers2
-            gains[Int(which_div)] = linlin(pan_clipped, p0, p1, 1.0, 0.0) ** 0.5
-            gains[sp2] = linlin(pan_clipped, p0, p1, 0.0, 1.0) ** 0.5
-
-        samples = samples * gains
+        out = SIMD[DType.float64, N](0.0)
+        out[Int(sp1)] = samples[0]
+        out[Int(sp2)] = samples[1]
         
         # Apply gains in parallel
-        return samples  # Return stereo output as List
+        return out  # Return stereo output as List
