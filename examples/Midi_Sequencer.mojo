@@ -78,13 +78,12 @@ struct TrigSynth(Representable, Movable, Copyable):
 
         self.svf = SVF(self.world_ptr)
         self.filt_lag = Lag(self.world_ptr)
-
         self.filt_freq = 1000.0
 
     fn __repr__(self) -> String:
         return String("OscSynth")
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         self.get_msgs()
 
         var out = 0.0
@@ -116,7 +115,7 @@ struct TrigSynth(Representable, Movable, Copyable):
 
         out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq, 0.1), 2.0) * 0.6
 
-        return [out, out]
+        return out
 
     fn get_msgs(mut self: Self):
         # calls to get_msg and get_midi return an Optional type
@@ -137,7 +136,7 @@ struct TrigSynth(Representable, Movable, Copyable):
         if ccs:
             self.ccs = ccs.value().copy()
 
-struct Midi_Sequencer(Representable, Movable, Graphable, Copyable):
+struct Midi_Sequencer(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
     var output: List[Float64]  # Output buffer for audio samples
@@ -153,8 +152,6 @@ struct Midi_Sequencer(Representable, Movable, Graphable, Copyable):
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")
 
-    fn next(mut self: Midi_Sequencer) -> List[Float64]:
-        sample = self.trig_synth.next()
-
-        return sample^  # Return the combined output sample
+    fn next(mut self: Midi_Sequencer) -> SIMD[DType.float64, 2]: 
+        return self.trig_synth.next()  # Return the combined output sample
 

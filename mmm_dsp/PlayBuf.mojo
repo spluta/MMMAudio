@@ -8,14 +8,13 @@ from mmm_utils.functions import *
 from .Env import Env
 from .Pan import Pan2
 from mmm_utils.Windows import hann_window
+from mmm_dsp.Filters import DCTrap
 
 
 alias dtype = DType.float64
 
-struct PlayBuf (Representable, Movable, Copyable):
+struct PlayBuf(Representable, Movable, Copyable):
     var impulse: Impulse  # Current phase of the buffer
-    var num_chans: Int64  # Number of channels in the buffer
-    var out_list: List[Float64]  # Output list for samples
     var sample_rate: Float64
     var done: Bool
     var world_ptr: UnsafePointer[MMMWorld]  
@@ -24,17 +23,19 @@ struct PlayBuf (Representable, Movable, Copyable):
     var end_frame: Float64  
     var reset_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
+    # var dc_trap: DCTrap_N[N]  # DC trap filter for removing DC offset
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_chans: Int64 = 1):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        """ world_ptr: pointer to the MMMWorld instance.
+            num_chans: number of channels in the buffer.
+
+        """
         # Use the world instance directly instead of trying to copy it
         self.world_ptr = world_ptr
         # print("PlayBuf initialized with world sample rate:", self.world_ptr[0].sample_rate)  # Debug print
         self.impulse = Impulse(world_ptr)
-        self.num_chans = num_chans
+        # self.num_chans = num_chans
         self.sample_rate = self.world_ptr[0].sample_rate  # Sample rate from the MMMWorld instance
-        self.out_list = List[Float64]()  # Initialize output list
-        for _ in range(num_chans):
-            self.out_list.append(0.0)  # Initialize output list with zeros
         self.done = True
         self.last_trig = 0.0  # Initialize last trigger time
 
@@ -42,12 +43,13 @@ struct PlayBuf (Representable, Movable, Copyable):
         self.end_frame = 0.0  # Initialize end frame
         self.reset_point = 0.0  # Initialize reset point
         self.phase_offset = 0.0  # Initialize phase offset
+        # self.dc_trap = DCTrap_N[self.N](world_ptr)  # Initialize DCTrap filter
 
     fn __repr__(self) -> String:
         return String("PlayBuf")
 
 
-    fn next[T: Buffable](mut self: PlayBuf, mut buffer: T, rate: Float64, loop: Bool = True, trig: Float64 = 1.0, start_frame: Float64 = 0, end_frame: Float64 = -1) -> List[Float64]:
+    fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Float64 = 1.0, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
         """
         get the next sample from an audio buffer - can take both Buffer or InterleavedBuffer.
 
@@ -63,6 +65,10 @@ struct PlayBuf (Representable, Movable, Copyable):
         num_frames = buffer.get_num_frames()
         duration = buffer.get_duration()
 
+        out = SIMD[DType.float64, N](0.0)
+
+        # print("PlayBuf next called with rate:", rate, "trig:", trig, "start_frame:", start_frame, "end_frame:", end_frame, "phase:", self.get_phase())  # Debug print
+
         # this should happen on the first call if trig > 0.0
         # or when any trig happens
         if trig > 0.0 and self.last_trig <= 0.0 and num_frames > 0:
@@ -74,33 +80,45 @@ struct PlayBuf (Representable, Movable, Copyable):
                 self.end_frame = end_frame  # Use specified end frame
             self.reset_point = abs(self.end_frame - self.start_frame) / num_frames  # Calculate reset point based on end_frame and start_frame
             self.phase_offset = self.start_frame / num_frames  # Calculate phase offset based on start_frame
-            # print("PlayBuf start_frame:", self.start_frame, "end_frame:", self.end_frame, "reset_point:", self.reset_point, "phase_offset:", self.phase_offset)  # Debug print
+            # print("PlayBuf triggered: start_frame =", self.start_frame, "end_frame =", self.end_frame, "reset_point =", self.reset_point, "phase_offset =", self.phase_offset)  # Debug print
         if self.done:
             self.last_trig = trig
-            for i in range(self.num_chans):
-                self.out_list[i] = 0.0
-            return self.out_list.copy()  # Return zeros if done
+            # for i in range(self.num_chans):
+            #     self.out_list[i] = 0.0
+            return out  # Return zeros if done
         else:
             var freq = rate / duration  # Calculate step size based on rate and sample rate
 
             if loop:
                 _ = self.impulse.next(freq, trig = trig) 
-                if self.impulse.phasor.phase >= self.reset_point:
+                if self.get_phase() >= self.reset_point:
                     self.impulse.phasor.phase -= self.reset_point
-                for i in range(self.num_chans):
-                    self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                # for i in range(N):
+                out = buffer.read[N](start_chan, self.get_phase() + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                    # print("Reading buffer at phase:", self.get_phase(), out[i])  # Debug print
+                    # self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next(freq, trig = trig)
                 eor -= trig
-                if self.impulse.phasor.phase >= 1.0 or self.impulse.phasor.phase < 0.0 or eor > 0.0 or self.impulse.phasor.phase >= self.reset_point:
+                phase = self.get_phase()
+                if phase >= 1.0 or phase < 0.0 or eor > 0.0 or phase >= self.reset_point:
                     self.done = True  # Set done flag if phase is out of bounds
-                    for i in range(self.num_chans):
-                        self.out_list[i] = 0.0
+                    return out
                 else:
-                    for i in range(self.num_chans):
-                        self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                    out = buffer.read[N](start_chan, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             self.last_trig = trig  # Update last trigger time
-            return self.out_list.copy()  # Return the output samples
+
+            return out
+            # return self.dc_trap.next(out)
+
+    fn get_phase(mut self: PlayBuf) -> Float64:
+        return self.impulse.get_phase()
+    
+    fn get_win_phase(mut self: PlayBuf) -> Float64:
+        if self.reset_point > 0.0:
+            return self.impulse.get_phase() / self.reset_point  
+        else:
+            return 0.0  # Use the phase
 
 
 struct Grain(Representable, Movable, Copyable):
@@ -115,7 +133,6 @@ struct Grain(Representable, Movable, Copyable):
     var last_trig: Float64  
     var panner: Pan2 
     var play_buf: PlayBuf
-    var sample: Float64
     var win_phase: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_chans: Int64 = 2):
@@ -129,15 +146,15 @@ struct Grain(Representable, Movable, Copyable):
         self.gain = 1.0
         self.last_trig = 0.0 
         self.panner = Pan2()  
-        self.play_buf = PlayBuf(world_ptr, 1)
-        self.sample = 0.0
+        self.play_buf = PlayBuf(world_ptr)
         self.win_phase = 0.0
 
 
     fn __repr__(self) -> String:
         return String("Grain")
 
-    fn next[T: Buffable](mut self, mut buffer: T, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+    # N can only be 1 (default) or 2
+    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, start_chan: Int, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
 
         if trig > 0.0 and self.last_trig <= 0.0:
             self.start_frame = start_frame
@@ -150,9 +167,9 @@ struct Grain(Representable, Movable, Copyable):
 
             # TODO: user provides the buffer channel
 
-            self.sample = self.play_buf.next(buffer, self.rate, False, trig, self.start_frame, self.end_frame)[0]  # Get samples from PlayBuf
+            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, trig, self.start_frame, self.end_frame)  # Get samples from PlayBuf
         else:
-            self.sample = self.play_buf.next(buffer, self.rate, False, 0.0, self.start_frame, self.end_frame)[0]  # Call next on PlayBuf with no trigger
+            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, 0.0, self.start_frame, self.end_frame)  # Call next on PlayBuf with no trigger
 
         # Get the current phase of the PlayBuf
         if self.play_buf.reset_point > 0.0:
@@ -160,11 +177,15 @@ struct Grain(Representable, Movable, Copyable):
         else:
             self.win_phase = 0.0  # Use the phase
 
-        var win = self.world_ptr[0].hann_window.read(0, self.win_phase, 0)
+        win = self.world_ptr[0].hann_window.read(0, self.win_phase, 0)
 
-        self.sample = self.sample * win * self.gain  # Apply the window to the sample
 
-        return self.panner.next_simd(self.sample, self.pan)  # Return the output samples
+        # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
+        sample = sample * win * self.gain  # Apply the window to the sample
+        if N == 1:
+            return self.panner.next(sample[0], self.pan)  # Return the output samples
+        else:
+            return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
 
 struct TGrains(Representable, Movable, Copyable):
     """
@@ -173,7 +194,6 @@ struct TGrains(Representable, Movable, Copyable):
     var grains: List[Grain]  
     var world_ptr: UnsafePointer[MMMWorld]
     var num_grains: Int64  
-    var temp: List[Float64]  
     var counter: Int64  
     var last_trig: Float64  
     var trig: Float64
@@ -184,9 +204,6 @@ struct TGrains(Representable, Movable, Copyable):
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(max_grains):
             self.grains.append(Grain(world_ptr, 2))  
-        self.temp = List[Float64]()
-        for _ in range(chans):
-            self.temp.append(0.0)  # Initialize temp list with zeros
         self.counter = 0  
         self.trig = 0.0  
         self.last_trig = 0.0  
@@ -194,7 +211,7 @@ struct TGrains(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("TGrains")
 
-    fn next[T: Buffable](mut self, mut buffer: T, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> List[Float64]:
+    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, buf_chan: Int, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         """Generate the next set of grains.
         
         Arguments:.
@@ -221,8 +238,8 @@ struct TGrains(Representable, Movable, Copyable):
         temp = SIMD[DType.float64, 2](0.0, 0.0)
         for i in range(self.num_grains):
             if i == self.counter and self.trig > 0.0:
-                temp += self.grains[i].next(buffer, 1.0, rate, start_frame, duration, pan, gain)
+                temp += self.grains[i].next[N=N](buffer, buf_chan, 1.0, rate, start_frame, duration, pan, gain)
             else:
-                temp += self.grains[i].next(buffer, 0.0, rate, start_frame, duration, pan, gain)
+                temp += self.grains[i].next[N=N](buffer, buf_chan, 0.0, rate, start_frame, duration, pan, gain)
 
-        return [temp[0], temp[1]]  # Return the output samples
+        return temp
