@@ -40,6 +40,7 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
         return self.lagrange4(input, delay_time)
 
     fn lagrange4(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+
         """Perform Lagrange interpolation for 4 samples (from JOS Faust Model)."""
 
         # Write the current sample to the delay line
