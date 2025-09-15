@@ -25,13 +25,16 @@ struct Phasor[N: Int = 1](Representable, Movable, Copyable):
     fn increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.N], os_index: Int = 0):
         freq2 = clip(freq, -self.world_ptr[0].sample_rate, self.world_ptr[0].sample_rate) 
         self.phase += (freq2 * self.freq_mul * self.world_ptr[0].os_multiplier[os_index])
+        
+        # Ensure phase is always positive
+        if self.phase < 0.0:
+            self.phase = 1.0 - (abs(self.phase) % 1.0)
         self.phase = self.phase % 1.0
-        # elif self.phase < 0.0:
-        #     self.phase += 1.0  # Ensure phase is always positive
 
     # could change this to get trigs for each oscillator
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Float64 = 0.0, os_index: Int = 0) -> SIMD[DType.float64, self.N]:
         # Reset phase if trig has changed from 0 to positive value
+
         if trig > 0.0 and self.last_trig <= 0.0:
             self.phase = 0.0
         else:
