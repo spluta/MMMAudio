@@ -12,8 +12,8 @@ in_device = "Fireface UFX+ (24059506)"
 out_device = "Fireface UFX+ (24059506)"
 
 # or get some feedback
-# in_device = "MacBook Pro Microphone"
-# out_device = "MacBook Pro Speakers"
+in_device = "MacBook Pro Microphone"
+out_device = "External Headphones"
 
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=12, in_device=in_device, out_device=out_device, graph_name="In2Out", package_name="examples")

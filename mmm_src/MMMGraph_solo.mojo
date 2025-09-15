@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.Torch_MLP import Torch_MLP
+from examples.Pan_Az import Pan_Az
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Torch_MLP
+    var graph: Pan_Az
     var num_out_chans: Int64
     var output: List[Float64]  # Output list for audio samples
 
@@ -20,7 +20,7 @@ struct MMMGraph(Representable, Movable):
         for _ in range(self.num_out_chans):
             self.output.append(0.0)  # Initialize output list with zeros
 
-        self.graph = Torch_MLP(self.world_ptr)
+        self.graph = Pan_Az(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans

@@ -145,7 +145,7 @@ struct Grain(Representable, Movable, Copyable):
         self.pan = 0.5 
         self.gain = 1.0
         self.last_trig = 0.0 
-        self.panner = Pan2()  
+        self.panner = Pan2(world_ptr)  
         self.play_buf = PlayBuf(world_ptr)
         self.win_phase = 0.0
 
