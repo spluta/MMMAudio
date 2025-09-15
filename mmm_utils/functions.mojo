@@ -143,7 +143,14 @@ fn cubic_interpolation(p0: Float64, p1: Float64, p2: Float64, p3: Float64, t: Fl
     return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
 fn lin_interp[N: Int = 1](p0: SIMD[DType.float64, N], p1: SIMD[DType.float64, N], t: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-    """Performs linear interpolation between two points.
+    """
+    Performs linear interpolation between two points.
+    
+    lin_interp[N](p0, p1, t) -> Float64 or SIMD[Float64, N]
+
+    Parameters:
+        N: size of the SIMD vector - defaults to 1
+
     Args:
         p0: The starting point
         p1: The ending point
