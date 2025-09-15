@@ -1,78 +1,140 @@
 from mmm_src.MMMWorld import MMMWorld
-from math import exp, sqrt, tan, pi, tanh
+from math import exp, sqrt, tan, pi, tanh, ceil, floor
+from bit import next_power_of_two
 from mmm_utils.functions import *
 
-from sys import simdwidthof
+from sys import simd_width_of
 from algorithm import vectorize
+from .Oversampling import Oversampling
 
-struct Lag(Representable, Movable, Copyable):
-    var val: Float64
-    var b1: Float64
-    var lag: Float64
+
+# Lag is super vectorized for processing in parallel
+struct Lag[N: Int=1](Representable, Movable, Copyable):
+    alias SIMD_vec = SIMD[DType.float64, N]
+    var val: Self.SIMD_vec
+    var b1: Self.SIMD_vec
+    var lag: Self.SIMD_vec
     var log001: Float64
     var world_ptr: UnsafePointer[MMMWorld]
 
+    alias width = simd_width_of[DType.float64]()
+    var num_simds: Int
+    var in_simd: SIMD[DType.float64, Self.width]
+    var lag_simd: SIMD[DType.float64, Self.width]
+    var val_simd: SIMD[DType.float64, Self.width]
+    var b1_simd: SIMD[DType.float64, Self.width]
+
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.val = 0.0
-        self.b1 = 0.0
-        self.lag = 0.0
+        self.val = self.SIMD_vec(0.0)
+        self.b1 = self.SIMD_vec(0.0)
+        self.lag = self.SIMD_vec(0.0)
         self.world_ptr = world_ptr
         self.log001 = -6.907755278982137  # log(0.01) for lag calculations, precomputed for efficiency
+
+        self.num_simds = Int(ceil(self.N / self.width))
+        self.in_simd = SIMD[DType.float64, self.width](0.0)
+        self.lag_simd = SIMD[DType.float64, self.width](0.0)
+        self.val_simd = SIMD[DType.float64, self.width](0.0)
+        self.b1_simd = SIMD[DType.float64, self.width](0.0)
 
     fn __repr__(self) -> String:
         return String("Lag")
 
-    fn next_kr(mut self: Lag, in_samp: Float64, lag: Float64) -> Float64:
-        """Next a control rate sample through the lag processor."""
-        # For control rate, we can assume lag changes infrequently, so we can optimize for that case
-        if lag == self.lag:
-            self.val = in_samp + self.b1 * (self.val - in_samp)
-        else:
-            if lag == 0.0:
-                self.b1 = 0.0
+    fn get_small_simd(mut self, in_samp: self.SIMD_vec, j: Int):
+        for i in range(self.width):
+            var idx = j * self.width + i
+            if idx < self.N:
+                self.in_simd[i] = in_samp[idx]
+                self.lag_simd[i] = self.lag[idx]
+                self.val_simd[i] = self.val[idx]
+                self.b1_simd[i] = self.b1[idx]
             else:
-                # Calculate the lag coeficient based on the sample rate
-                self.b1 = exp(self.log001 / (lag * self.world_ptr[0].sample_rate/Float64(self.world_ptr[0].block_size)))
+                self.in_simd[i] = 0.0
+                self.lag_simd[i] = 0.0
+                self.val_simd[i] = 0.0
+                self.b1_simd[i] = 0.0
 
-            self.lag = lag
-            self.val = in_samp + self.b1 * (self.val - in_samp)
+    fn put_small_simd(mut self, j: Int):
+        for i in range(self.width):
+            var idx = j * self.width + i
+            if idx < self.N:
+                self.val[idx] = self.val_simd[i]
+                self.lag[idx] = self.lag_simd[i]
+                self.b1[idx] = self.b1_simd[i]
 
-        self.val = zapgremlins(self.val)
+    fn next(mut self: Lag, var in_samp: self.SIMD_vec, lag: self.SIMD_vec = self.SIMD_vec(0.05), num_lags: Int = self.N) -> self.SIMD_vec:
+        # the number of simd loops
 
-        return self.val
+        lower = min(num_lags, self.N)
+        num_SIMDs = Int(floor(Float64(lower) / Float64(self.width)))
+        carry = lower - num_SIMDs * self.width
 
-    fn next(mut self: Lag, in_samp: Float64, lag: Float64) -> Float64:
+        # print("num_SIMDs: " + String(num_SIMDs) + " carry: " + String(carry) + " lower: " + String(lower) + " self.N: " + String(self.N))
 
-        # var val = self.val
-        # var b1 = self.b1
+        for j in range(num_SIMDs):
+            self.get_small_simd(in_samp, j)
 
-        if lag == self.lag:
-            self.val = in_samp + self.b1 * (self.val - in_samp)
-        else:
-            if lag == 0.0:
-                self.b1 = 0.0
+            var change = False
+            for i in range(self.width): 
+                var idx = j * self.width + i
+                if self.lag_simd[i] != lag[idx]:
+                    self.lag_simd[i] = lag[idx]
+                    change = True
+            if not change:
+                self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
             else:
-                # Calculate the lag coeficient based on the sample rate
-                self.b1 = exp(self.log001 / (lag * self.world_ptr[0].sample_rate))
+                for i in range(self.width):
+                    if self.lag_simd[i] == 0.0:
+                        self.b1_simd[i] = 0.0
+                    else:
+                        # Calculate the lag coeficient based on the sample rate
+                        self.b1_simd[i] = exp(self.log001 / (self.lag_simd[i] * self.world_ptr[0].sample_rate))
 
-            self.lag = lag
-            self.val = in_samp + self.b1 * (self.val - in_samp)
+                # self.lag = self.lag_simd
+                self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
 
-        self.val = zapgremlins(self.val)
+            self.val_simd = sanitize(self.val_simd)
 
-        return self.val
+            self.put_small_simd(j)
+            for i in range(self.width):
+                var idx = j * self.width + i
+                if idx < self.N:
+                    in_samp[idx] = self.val_simd[i]
+        
+        # go through the carries one by one
+        start_at = num_SIMDs * self.width
+        for i in range(carry):
+            var change = False
+            var idx = start_at + i
+            if self.lag[idx] != lag[idx]:
+                self.lag[idx] = lag[idx]
+                change = True
+            if not change:
+                self.val[idx] = in_samp[idx] + self.b1[idx] * (self.val[idx] - in_samp[idx])
+            else:
+                if self.lag[idx] == 0.0:
+                    self.b1[idx] = 0.0
+                else:
+                    # Calculate the lag coeficient based on the sample rate
+                    self.b1[idx] = exp(self.log001 / (self.lag[idx] * self.world_ptr[0].sample_rate))
 
-struct SVF(Representable, Movable, Copyable):
+                self.val[idx] = in_samp[idx] + self.b1[idx] * (self.val[idx] - in_samp[idx])
+            self.val[idx] = sanitize(self.val[idx])
+            in_samp[idx] = self.val[idx]
+
+        return in_samp
+
+struct SVF[N: Int = 1](Representable, Movable, Copyable):
     """State Variable Filter implementation translated from Oleg Nesterov's Faust implementation"""
-    
-    var ic1eq: Float64  # Internal state 1
-    var ic2eq: Float64  # Internal state 2
+
+    var ic1eq: SIMD[DType.float64, N]  # Internal state 1
+    var ic2eq: SIMD[DType.float64, N]  # Internal state 2
     var sample_rate: Float64
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         """Initialize the SVF with given sample rate"""
-        self.ic1eq = 0.0
-        self.ic2eq = 0.0
+        self.ic1eq = SIMD[DType.float64, N](0.0)
+        self.ic2eq = SIMD[DType.float64, N](0.0)
         self.sample_rate = world_ptr[0].sample_rate
 
     fn __repr__(self) -> String:
@@ -80,18 +142,18 @@ struct SVF(Representable, Movable, Copyable):
 
     fn reset(mut self):
         """Reset internal state"""
-        self.ic1eq = 0.0
-        self.ic2eq = 0.0
-    
-    fn _compute_coeficients(self, filter_type: Int, frequency: Float64, q: Float64, gain_db: Float64) -> (Float64, Float64, Float64, Float64, Float64):
+        self.ic1eq = SIMD[DType.float64, N](0.0)
+        self.ic2eq = SIMD[DType.float64, N](0.0)
+
+    fn _compute_coeficients(self, filter_type: SIMD[DType.int32, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
         """Compute filter coeficients based on type and parameters"""
         
         # Compute A (gain factor)
-        var A: Float64 = pow(10.0, gain_db / 40.0)
+        var A: SIMD[DType.float64, self.N] = pow(SIMD[DType.float64, self.N](10.0), gain_db / 40.0)
 
         # Compute g (frequency warping)
         var base_g = tan(frequency * pi / self.sample_rate)
-        var g: Float64
+        var g: SIMD[DType.float64, self.N]
         if filter_type == 7:  # lowshelf
             g = base_g / sqrt(A)
         elif filter_type == 8:  # highshelf
@@ -100,7 +162,7 @@ struct SVF(Representable, Movable, Copyable):
             g = base_g
         
         # Compute k (resonance factor)
-        var k: Float64
+        var k: SIMD[DType.float64, self.N]
         if filter_type == 6:  # bell
             k = 1.0 / (q * A)
         else:
@@ -110,32 +172,60 @@ struct SVF(Representable, Movable, Copyable):
         var mix_coefs = self._get_mix_coeficients(filter_type, k, A)
         
         return (g, k, mix_coefs[0], mix_coefs[1], mix_coefs[2])
-    
-    fn _get_mix_coeficients(self, filter_type: Int, k: Float64, A: Float64) -> (Float64, Float64, Float64):
+
+    fn _get_mix_coeficients(self, filter_type: SIMD[DType.int32, self.N], k: SIMD[DType.float64, self.N], A: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
         """Get mixing coeficients for different filter types"""
         
-        if filter_type == 0:      # lowpass
-            return (0.0, 0.0, 1.0)
-        elif filter_type == 1:    # bandpass
-            return (0.0, 1.0, 0.0)
-        elif filter_type == 2:    # highpass
-            return (1.0, -k, -1.0)
-        elif filter_type == 3:    # notch
-            return (1.0, -k, 0.0)
-        elif filter_type == 4:    # peak
-            return (1.0, -k, -2.0)
-        elif filter_type == 5:    # allpass
-            return (1.0, -2.0*k, 0.0)
-        elif filter_type == 6:    # bell
-            return (1.0, k*(A*A - 1.0), 0.0)
-        elif filter_type == 7:    # lowshelf
-            return (1.0, k*(A - 1.0), A*A - 1.0)
-        elif filter_type == 8:    # highshelf
-            return (A*A, k*(1.0 - A)*A, 1.0 - A*A)
-        else:
-            return (1.0, 0.0, 0.0)  # default
-    
-    fn next(mut self, input: Float64, filter_type: Int, frequency: Float64, q: Float64, gain_db: Float64 = 0.0) -> Float64:
+        mc0 = SIMD[DType.float64, self.N](1.0)
+        mc1 = SIMD[DType.float64, self.N](0.0)
+        mc2 = SIMD[DType.float64, self.N](0.0)
+
+        for i in range(self.N):
+            if filter_type[i] == 0:      # lowpass
+                mc0[i], mc1[i], mc2[i] = 0.0, 0.0, 1.0
+            elif filter_type[i] == 1:    # bandpass
+                mc0[i], mc1[i], mc2[i] = 0.0, 1.0, 0.0
+            elif filter_type[i] == 2:    # highpass
+                mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -1.0
+            elif filter_type[i] == 3:    # notch
+                mc0[i], mc1[i], mc2[i] = 1.0, -k[i], 0.0
+            elif filter_type[i] == 4:    # peak
+                mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -2.0
+            elif filter_type[i] == 5:    # allpass
+                mc0[i], mc1[i], mc2[i] = 1.0, -2.0*k[i], 0.0
+            elif filter_type[i] == 6:    # bell
+                mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i]*A[i] - 1.0), 0.0
+            elif filter_type[i] == 7:    # lowshelf
+                mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i] - 1.0), A[i]*A[i] - 1.0
+            elif filter_type[i] == 8:    # highshelf
+                mc0[i], mc1[i], mc2[i] = A[i]*A[i], k[i]*(1.0 - A[i])*A[i], 1.0 - A[i]*A[i]
+            else:
+                mc0[i], mc1[i], mc2[i] = 1.0, 0.0, 0.0  # default
+
+        return (mc0, mc1, mc2)
+
+        # if filter_type == 0:      # lowpass
+        #     return (SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](1.0))
+        # elif filter_type == 1:    # bandpass
+        #     return (SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](1.0), SIMD[DType.float64, self.N](0.0))
+        # elif filter_type == 2:    # highpass
+        #     return (SIMD[DType.float64, self.N](1.0), -k, -SIMD[DType.float64, self.N](1.0))
+        # elif filter_type == 3:    # notch
+        #     return (SIMD[DType.float64, self.N](1.0), -k, SIMD[DType.float64, self.N](0.0))
+        # elif filter_type == 4:    # peak
+        #     return (SIMD[DType.float64, self.N](1.0), -k, -SIMD[DType.float64, self.N](2.0))
+        # elif filter_type == 5:    # allpass
+        #     return (SIMD[DType.float64, self.N](1.0), -2.0*k, SIMD[DType.float64, self.N](0.0))
+        # elif filter_type == 6:    # bell
+        #     return (SIMD[DType.float64, self.N](1.0), k*(A*A - 1.0), SIMD[DType.float64, self.N](0.0))
+        # elif filter_type == 7:    # lowshelf
+        #     return (SIMD[DType.float64, self.N](1.0), k*(A - 1.0), A*A - 1.0)
+        # elif filter_type == 8:    # highshelf
+        #     return (A*A, k*(1.0 - A)*A, 1.0 - A*A)
+        # else:
+        #     return (SIMD[DType.float64, self.N](1.0), SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](0.0))  # default
+
+    fn next(mut self, input: SIMD[DType.float64, self.N], filter_type: SIMD[DType.int32, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """next a single sample through the SVF"""
         
         var coefs = self._compute_coeficients(filter_type, frequency, q, gain_db)
@@ -158,49 +248,52 @@ struct SVF(Representable, Movable, Copyable):
         return mix_a * input + mix_b * v1 + mix_c * v2
     
     # Convenience methods for different filter types
-    fn lpf(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+    fn lpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Lowpass filter"""
         return self.next(input, 0, frequency, q)
-    
-    fn bpf(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+
+    fn bpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bandpass filter"""
         return self.next(input, 1, frequency, q)
-    
-    fn hpf(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+
+    fn hpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Highpass filter"""
         return self.next(input, 2, frequency, q)
-    
-    fn notch(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+
+    fn notch(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Notch filter"""
         return self.next(input, 3, frequency, q)
-    
-    fn peak(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+
+    fn peak(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Peak filter"""
         return self.next(input, 4, frequency, q)
-    
-    fn allpass(mut self, input: Float64, frequency: Float64, q: Float64) -> Float64:
+
+    fn allpass(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Allpass filter"""
         return self.next(input, 5, frequency, q)
-    
-    fn bell(mut self, input: Float64, frequency: Float64, q: Float64, gain_db: Float64) -> Float64:
+
+    fn bell(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bell filter (parametric EQ)"""
         return self.next(input, 6, frequency, q, gain_db)
-    
-    fn lowshelf(mut self, input: Float64, frequency: Float64, q: Float64, gain_db: Float64) -> Float64:
+
+    fn lowshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Low shelf filter"""
         return self.next(input, 7, frequency, q, gain_db)
-    
-    fn highshelf(mut self, input: Float64, frequency: Float64, q: Float64, gain_db: Float64) -> Float64:
+
+    fn highshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """High shelf filter"""
         return self.next(input, 8, frequency, q, gain_db)
 
-struct lpf_LR4(Representable, Movable, Copyable):
-    var svf1: SVF
-    var svf2: SVF
+struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
+    var svf1: SVF[N]
+    var svf2: SVF[N]
+    var q: Float64
+
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.svf1 = SVF(world_ptr)
-        self.svf2 = SVF(world_ptr)
+        self.svf1 = SVF[self.N](world_ptr)
+        self.svf2 = SVF[self.N](world_ptr)
+        self.q = 1.0 / sqrt(2.0)  # 1/sqrt(2) for Butterworth response
 
     fn __repr__(self) -> String:
         return String("lpf_LR4")
@@ -209,12 +302,12 @@ struct lpf_LR4(Representable, Movable, Copyable):
         self.svf1.sample_rate = sample_rate
         self.svf2.sample_rate = sample_rate
 
-    fn next(mut self, input: Float64, frequency: Float64) -> Float64:
-        """Next a single sample through the 4th order lowpass filter"""
+    fn next(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+        """a single sample through the 4th order lowpass filter."""
         # First stage
-        var cf = self.svf1.lpf(input, frequency, 1 / sqrt(2.0))  # First stage
+        var cf = self.svf1.lpf(input, frequency, self.q)  # First stage
         # Second stage
-        return self.svf2.lpf(cf, frequency, 1 / sqrt(2.0))  # Second stage
+        return self.svf2.lpf(cf, frequency, self.q)  # Second stage
 
 struct OnePole(Representable, Movable, Copyable):
     """
@@ -281,7 +374,7 @@ struct OneZero(Representable, Movable, Copyable):
         self.last_samp = output
         return output
 
-struct DCTrap(Representable, Movable, Copyable):
+struct DCTrap[N: Int=1](Representable, Movable, Copyable):
     """DC Trap from Digital Sound Generation by Beat Frei.
 
     Arguments:
@@ -289,39 +382,39 @@ struct DCTrap(Representable, Movable, Copyable):
     """
 
     var alpha: Float64
-    var last_samp: Float64
-    var last_inner: Float64
+    var last_samp: SIMD[DType.float64, N]
+    var last_inner: SIMD[DType.float64, N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         """Initialize the DC blocker filter"""
         self.alpha = 2 * pi * 5.0 / world_ptr[0].sample_rate  # 5 Hz cutoff frequency
-        self.last_samp = 0.0
-        self.last_inner = 0.0
+        self.last_samp = SIMD[DType.float64, N](0.0)
+        self.last_inner = SIMD[DType.float64, N](0.0)
 
     fn __repr__(self) -> String:
         return String("DCBlockerFilter")
-    
-    fn next(mut self, input: Float64) -> Float64:
+
+    fn next(mut self, in_: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         """Process one sample through the DC blocker filter"""
         var out = self.last_samp * self.alpha + self.last_inner
         
         self.last_inner = out
 
-        out = input - out
+        out = in_ - out
         self.last_samp = out
 
         return out
 
-struct VAOnePole(Representable, Movable, Copyable):
+struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     """
     Simple one-pole IIR filter that can be configured as lowpass or highpass}
     """
 
-    var last_1: Float64  # Previous output
+    var last_1: SIMD[DType.float64, N]  # Previous output
     var step_val: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.last_1 = 0.0
+        self.last_1 = SIMD[DType.float64, N](0.0)
         self.step_val = 1.0 / world_ptr[0].sample_rate
 
     fn __repr__(self) -> String:
@@ -329,7 +422,7 @@ struct VAOnePole(Representable, Movable, Copyable):
             "VAOnePole"
         )
 
-    fn lpf(mut self, input: Float64, freq: Float64) -> Float64:
+    fn lpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         """Process one sample through the filter"""
 
         # var omegaWarp = tan(pi * cf * self.step_val)
@@ -344,216 +437,195 @@ struct VAOnePole(Representable, Movable, Copyable):
         self.last_1 = v + output
         return output
 
-    fn hpf(mut self, input: Float64, freq: Float64) -> Float64:
+    fn hpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         return input - self.lpf(input, freq)
 
-struct VAMoogLadder(Representable, Movable, Copyable):
+struct VAMoogLadder[N: Int = 1](Representable, Movable, Copyable):
     var nyquist: Float64
     var step_val: Float64
-    var last_1: Float64
-    var last_2: Float64
-    var last_3: Float64
-    var last_4: Float64
+    var last_1: SIMD[DType.float64, N]
+    var last_2: SIMD[DType.float64, N]
+    var last_3: SIMD[DType.float64, N]
+    var last_4: SIMD[DType.float64, N]
+    var oversampling: Oversampling[N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.nyquist = world_ptr[0].sample_rate * 0.5
         self.step_val = 1.0 / world_ptr[0].sample_rate
-        self.last_1 = 0.0
-        self.last_2 = 0.0
-        self.last_3 = 0.0
-        self.last_4 = 0.0
+        self.last_1 = SIMD[DType.float64, N](0.0)
+        self.last_2 = SIMD[DType.float64, N](0.0)
+        self.last_3 = SIMD[DType.float64, N](0.0)
+        self.last_4 = SIMD[DType.float64, N](0.0)
+        self.oversampling = Oversampling[self.N](world_ptr)
 
     fn __repr__(self) -> String:
         return String(
             "VAMoogLadder"
         )
 
-    fn next(mut self, sig: Float64, freq: Float64, q_val: Float64) -> Float64:
-        var cf = clip(freq, 0.0, self.nyquist * 0.6)
+    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N], os_index: Int = 0) -> SIMD[DType.float64, self.N]:
         
-        # k is the feedback coefficient of the entire circuit
-        var k = 4.0 * q_val
-        
-        var omegaWarp = tan(pi * cf * self.step_val)
-        var g = omegaWarp / (1.0 + omegaWarp)
-        
-        var g4 = g * g * g * g
-        var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
-        
-        # internally clips the feedback signal to prevent the filter from blowing up
-        if s4 > 1.0:
-            s4 = tanh(s4 - 1.0) + 1.0
-        elif s4 < -2.0:
-            s4 = tanh(s4 + 1.0) - 1.0
-        
-        # input is the incoming signal minus the feedback from the last stage
-        var input = (sig - k * s4) / (1.0 + k * g4)
+        if self.oversampling.index != os_index:
+            self.oversampling.set_os_index(os_index)
 
-        var v1 = g * (input - self.last_1)
-        var lp1 = self.last_1 + v1
-        
-        var v2 = g * (lp1 - self.last_2)
-        var lp2 = self.last_2 + v2
-        
-        var v3 = g * (lp2 - self.last_3)
-        var lp3 = self.last_3 + v3
-        
-        var v4 = g * (lp3 - self.last_4)
-        var lp4 = self.last_4 + v4
-        
-        self.last_1 = lp1
-        self.last_2 = lp2
-        self.last_3 = lp3
-        self.last_4 = lp4
-        
-        return lp4
+        for _ in range(self.oversampling.times_os_int):
+            var cf = clip(freq, 0.0, self.nyquist * 0.6)
+            
+            # k is the feedback coefficient of the entire circuit
+            var k = 4.0 * q_val
+            
+            var omegaWarp = tan(pi * cf * self.step_val)
+            var g = omegaWarp / (1.0 + omegaWarp)
+            
+            var g4 = g * g * g * g
+            var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
+            
+            # internally clips the feedback signal to prevent the filter from blowing up
+            for i in range(self.N):
+                if s4[i] > 2.0:
+                    s4[i] = tanh(s4[i] - 1.0) + 1.0
+                elif s4[i] < -2.0:
+                    s4[i] = tanh(s4[i] + 1.0) - 1.0
+
+            # input is the incoming signal minus the feedback from the last stage
+            var input = (sig - k * s4) / (1.0 + k * g4)
+
+            var v1 = g * (input - self.last_1)
+            var lp1 = self.last_1 + v1
+            
+            var v2 = g * (lp1 - self.last_2)
+            var lp2 = self.last_2 + v2
+            
+            var v3 = g * (lp2 - self.last_3)
+            var lp3 = self.last_3 + v3
+            
+            var v4 = g * (lp3 - self.last_4)
+            var lp4 = self.last_4 + v4
+            
+            self.last_1 = lp1
+            self.last_2 = lp2
+            self.last_3 = lp3
+            self.last_4 = lp4
+            
+            if self.oversampling.index == 0:
+                return lp4
+            else:
+                self.oversampling.add_sample(lp4)
+        return self.oversampling.get_sample()
 
 # All of the following is a translation of Julius Smith's Faust implementation of digital filters.
 # Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
-# struct FIR(Representable, Movable, Copyable):
-#     var buffer: List[Float64]
-#     var index: Int
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
-#         self.buffer = List[Float64]()
-#         for _ in range(num_coeffs):
-#             self.buffer.append(0.0)
-#         self.index = 0
-
-#     fn __repr__(self) -> String:
-#         return String("FIR")
-
-#     fn next(mut self: FIR, input: Float64, coeffs: List[Float64]) -> Float64:
-#         self.buffer[self.index] = input
-#         var output = 0.0
-#         for i in range(len(coeffs)):
-#             output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
-#         self.index = (self.index + 1) % len(self.buffer)
-#         return output
-
-
-struct FIR(Representable, Movable, Copyable):
-    var buffer: List[Float64]
+struct FIR[N: Int = 1](Representable, Movable, Copyable):
+    var buffer: List[SIMD[DType.float64, N]]
     var index: Int
-    var num_coeffs: Int
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
-        self.buffer = List[Float64]()
-        for _ in range(num_coeffs):
-            self.buffer.append(0.0)
+        self.buffer = [SIMD[DType.float64, N](0.0) for _ in range(num_coeffs)]
         self.index = 0
-        self.num_coeffs = num_coeffs
 
     fn __repr__(self) -> String:
         return String("FIR")
 
-    fn next[simd_width: Int = 4](mut self, input: Float64, coeffs: List[Float64]) -> Float64:
-        """SIMD-optimized FIR filter processing."""
-        
-        # Update buffer
+    fn next(mut self: FIR, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         self.buffer[self.index] = input
-        
-        var output: Float64 = 0.0
-        var num_chunks = self.num_coeffs // simd_width
-        var remainder = self.num_coeffs % simd_width
-        
-        # Process SIMD chunks
-        for chunk in range(num_chunks):
-            var coeff_start = chunk * simd_width
-            
-            # Load coefficients into SIMD vector
-            var coeffs_simd = SIMD[DType.float64, simd_width]()
-            for i in range(simd_width):
-                coeffs_simd[i] = coeffs[coeff_start + i]
-            
-            # Load buffer samples with circular indexing
-            var samples_simd = SIMD[DType.float64, simd_width]()
-            for i in range(simd_width):
-                var buf_idx = (self.index - coeff_start - i + len(self.buffer)) % len(self.buffer)
-                samples_simd[i] = self.buffer[buf_idx]
-            
-            # SIMD multiply and accumulate
-            var products = coeffs_simd * samples_simd
-            
-            # Horizontal sum (reduce)
-            for i in range(simd_width):
-                output += products[i]
-        
-        # Handle remaining coefficients
-        for i in range(remainder):
-            var coeff_idx = num_chunks * simd_width + i
-            var buf_idx = (self.index - coeff_idx + len(self.buffer)) % len(self.buffer)
-            output += coeffs[coeff_idx] * self.buffer[buf_idx]
-        
-        # Update index
+        var output = SIMD[DType.float64, self.N](0.0)
+        for i in range(len(coeffs)):
+            output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
         self.index = (self.index + 1) % len(self.buffer)
         return output
 
-struct IIR(Representable, Movable, Copyable):
-    var fir1: FIR
-    var fir2: FIR
-    var fb: Float64
+
+# struct FIR[N: Int = 1](Representable, Movable, Copyable):
+#     var buffer: List[SIMD[DType.float64, N]]
+#     var index: Int
+#     var num_coeffs: Int
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_coeffs: Int):
+#         self.buffer = [SIMD[DType.float64, self.N](0.0) for _ in range(num_coeffs)]
+#         self.index = 0
+#         self.num_coeffs = num_coeffs
+
+#     fn __repr__(self) -> String:
+#         return String("FIR")
+
+#     fn next[simd_width: Int = 4](mut self, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
+#         """SIMD-optimized FIR filter processing."""
+        
+#         # Update buffer
+#         self.buffer[self.index] = input
+        
+#         var output: Float64 = 0.0
+#         var num_chunks = self.num_coeffs // simd_width
+#         var remainder = self.num_coeffs % simd_width
+        
+#         # Process SIMD chunks
+#         for chunk in range(num_chunks):
+#             var coeff_start = chunk * simd_width
+            
+#             # Load coefficients into SIMD vector
+#             var coeffs_simd = SIMD[DType.float64, simd_width]()
+#             for i in range(simd_width):
+#                 coeffs_simd[i] = coeffs[coeff_start + i]
+            
+#             # Load buffer samples with circular indexing
+#             var samples_simd = SIMD[DType.float64, simd_width]()
+#             for i in range(simd_width):
+#                 var buf_idx = (self.index - coeff_start - i + len(self.buffer)) % len(self.buffer)
+#                 samples_simd[i] = self.buffer[buf_idx]
+            
+#             # SIMD multiply and accumulate
+#             var products = coeffs_simd * samples_simd
+            
+#             # Horizontal sum (reduce)
+#             for i in range(simd_width):
+#                 output += products[i]
+        
+#         # Handle remaining coefficients
+#         for i in range(remainder):
+#             var coeff_idx = num_chunks * simd_width + i
+#             var buf_idx = (self.index - coeff_idx + len(self.buffer)) % len(self.buffer)
+#             output += coeffs[coeff_idx] * self.buffer[buf_idx]
+        
+#         # Update index
+#         self.index = (self.index + 1) % len(self.buffer)
+#         return output
+
+struct IIR[N: Int = 1](Representable, Movable, Copyable):
+    var fir1: FIR[N]
+    var fir2: FIR[N]
+    var fb: SIMD[DType.float64, N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.fir1 = FIR(world_ptr,2)
-        self.fir2 = FIR(world_ptr,3)
-        self.fb = 0.0
+        self.fir1 = FIR[N](world_ptr,2)
+        self.fir2 = FIR[N](world_ptr,3)
+        self.fb = SIMD[DType.float64, self.N](0.0)
 
     fn __repr__(self) -> String:
         return String("IIR")
 
-    fn next(mut self: IIR, input: Float64, coeffsbv: List[Float64], coeffsav: List[Float64]) -> Float64:
+    fn next(mut self: IIR, input: SIMD[DType.float64, self.N], coeffsbv: List[SIMD[DType.float64, self.N]], coeffsav: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         var temp = input - self.fb
         # calls the parallelized fir function, indicating the size of the simd vector to use
-        var output1 = self.fir1.next[2](temp, coeffsav)
-        var output2 = self.fir2.next[4](temp, coeffsbv)
+        var output1 = self.fir1.next(temp, coeffsav)
+        var output2 = self.fir2.next(temp, coeffsbv)
         self.fb = output1
         return output2
 
-struct tf2(Representable, Movable, Copyable):
-    var iir: IIR
+struct tf2[N: Int = 1](Representable, Movable, Copyable):
+    var iir: IIR[N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.iir = IIR(world_ptr)
+        self.iir = IIR[self.N](world_ptr)
 
     fn __repr__(self) -> String:
         return String("tf2")
 
-    fn next(mut self: tf2, input: Float64, coeffs: List[Float64]) -> Float64:
-        var output1 = self.iir.next(input, coeffs[:3], coeffs[3:])
-        return output1
+    fn next(mut self: tf2, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
+        return self.iir.next(input, coeffs[:3], coeffs[3:])
 
-# struct tf2s(Representable, Movable, Copyable):
-#     var world_ptr: UnsafePointer[MMMWorld]
-#     var tf2: tf2
 
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         self.world_ptr = world_ptr
-#         self.tf2 = tf2(world_ptr)
-
-#     fn __repr__(self) -> String:
-#         return String("tf2s")
-
-#     fn next(mut self: tf2s, input: Float64, coeffs: List[Float64]) -> Float64:
-#         var b2 = coeffs[0]
-#         var b1 = coeffs[1]
-#         var b0 = coeffs[2]
-#         var a1 = coeffs[3]
-#         var a0 = coeffs[4]
-#         var w1 = coeffs[5]
-
-#         var c   = 1/tan(w1*0.5/self.world_ptr[0].sample_rate) # bilinear-transform scale-factor
-#         var csq = c*c
-#         var d   = a0 + a1 * c + csq
-#         var b0d = (b0 + b1 * c + b2 * csq)/d
-#         var b1d = 2 * (b0 - b2 * csq)/d
-#         var b2d = (b0 - b1 * c + b2 * csq)/d
-#         var a1d = 2 * (a0 - csq)/d
-#         var a2d = (a0 - a1*c + csq)/d
-
-#         return self.tf2.next(input, [b0d, b1d, b2d, a1d, a2d])
-fn tf2s(coeffs: List[Float64], mut coeffs_out: List[Float64], sample_rate: Float64):
+fn tf2s[N: Int = 1](coeffs: List[SIMD[DType.float64, N]], mut coeffs_out: List[SIMD[DType.float64, N]], sample_rate: Float64):
     var b2 = coeffs[0]
     var b1 = coeffs[1]
     var b0 = coeffs[2]
@@ -576,50 +648,50 @@ fn tf2s(coeffs: List[Float64], mut coeffs_out: List[Float64], sample_rate: Float
     coeffs_out[3] = a1d
     coeffs_out[4] = a2d
 
-
-struct Reson(Representable, Movable, Copyable):
-    var tf2: tf2
-    var coeffs: List[Float64]
+struct Reson[N: Int = 1](Representable, Movable, Copyable):
+    var tf2: tf2[N]
+    var coeffs: List[SIMD[DType.float64, N]]
     var world_ptr: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.tf2 = tf2(world_ptr)
-        self.coeffs = List[Float64](fill=0.0, length=5)
+        self.tf2 = tf2[N](world_ptr)
+        self.coeffs = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
         self.world_ptr = world_ptr
 
     fn __repr__(self) -> String:
         return String("Reson")
 
-    fn lpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+    fn lpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = 1
-        var b2 = 0
-        var b1 = 0
-        var b0 = clip(gain, 0.0, 1.0)
+        var a0 = SIMD[DType.float64, self.N](1.0)
+        var b2 = SIMD[DType.float64, self.N](0.0)
+        var b1 = SIMD[DType.float64, self.N](0.0)
+        var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
 
-        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
 
         return self.tf2.next(input, self.coeffs)
 
-    fn hpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+    fn hpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = 1
-        var b2 = 0
-        var b1 = 0
-        var b0 = clip(gain, 0.0, 1.0)
+        var a0 = SIMD[DType.float64, self.N](1.0)
+        var b2 = SIMD[DType.float64, self.N](0.0)
+        var b1 = SIMD[DType.float64, self.N](0.0)
+        var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
 
-        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+
         return gain*input - self.tf2.next(input, self.coeffs)
 
-    fn bpf(mut self: Reson, input: Float64, freq: Float64, q: Float64, gain: Float64) -> Float64:
+    fn bpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = 1
-        var b2 = 0
-        var b1 = clip(gain, 0.0, 1.0)
-        var b0 = 0
+        var a0 = SIMD[DType.float64, self.N](1.0)
+        var b2 = SIMD[DType.float64, self.N](0.0)
+        var b1 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
+        var b0 = SIMD[DType.float64, self.N](0.0)
 
-        tf2s([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
         return self.tf2.next(input, self.coeffs)

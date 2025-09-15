@@ -92,8 +92,8 @@ class Joystick:
 
                 if data:
                     self.parse_report(data)
-                    # if self.verbose:
-                    #     print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}, Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
+                    if self.verbose:
+                        print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}, Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
                     destination.send_msg((name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons))
                     # destination.send_raw_hid((name, 10))
                 time.sleep(0.001)  # Small delay to prevent overwhelming output

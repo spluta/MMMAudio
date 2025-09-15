@@ -15,13 +15,12 @@ struct TorchSynth(Representable, Movable, Copyable):
     var osc2: Osc 
 
     var model_input: List[Float64]  # Input list for audio synthesis
-    var model_output: List[Float64]  # Placeholder for output data
+    var model_output: SIMD[DType.float64, 16]  # Output list from the neural network model
     var model: MLP  # Placeholder for the model
     var model_out_size: Int64
     var inference_trig: Impulse
 
-    var lags: List[Lag]
-    var lag_vals: List[Float64]
+    var lags: Lag[16] # needs to be a power of 2
 
     var fb: Float64
 
@@ -48,21 +47,15 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.model_input = List[Float64](0.0, 0.0)
 
         # initialize the output of the nn with self.model_out_size elements
-        self.model_output = List[Float64]()
-        for _ in range(self.model_out_size):
-            self.model_output.append(0.0)
+        self.model_output = SIMD[DType.float64, 16](0.0)
 
         # load the trained model
-        self.model = MLP("examples/nn_trainings/model_traced.pt", 2, self.model_out_size)  
+        self.model = MLP("examples/nn_trainings/model_traced.pt", 2, self.model_out_size)
 
         self.inference_trig = Impulse(self.world_ptr)
 
         # make a lag for each output of the nn
-        self.lags = List[Lag]()
-        self.lag_vals = List[Float64]()
-        for _ in range(self.model_out_size):
-            self.lags.append(Lag(self.world_ptr))
-            self.lag_vals.append(0.0)
+        self.lags = Lag[16](self.world_ptr)
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
@@ -81,52 +74,50 @@ struct TorchSynth(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("OscSynth")
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         infer = self.inference_trig.next(50)
         self.get_msgs(infer)
 
-        for i in range(self.model_out_size):
-            self.lag_vals[i] = self.lags[i].next(self.model_output[i], 0.1)
+        # 
+        lag_vals = self.lags.next(self.model_output, 0.1, 16)
 
         # oscillator 1
 
-        var freq1 = linexp(self.lag_vals[0], 0.0, 1.0, 1.0, 3000) + (linlin(self.lag_vals[1], 0.0, 1.0, 2.0, 5000.0) * self.fb)
-        var which_osc1 = self.lag_vals[2]
+        var freq1 = linexp(lag_vals[0], 0.0, 1.0, 1.0, 3000) + (linlin(lag_vals[1], 0.0, 1.0, 2.0, 5000.0) * self.fb)
+        # var which_osc1 = lag_vals[2] #not used...whoops
 
         # next2 implements a variable wavetable oscillator between the N provided wave types
         # in this case, we are using 0, 4, 5, 6 - Sine, BandLimited Tri, BL Saw, BL Square
-        osc_frac1 = linlin(self.lag_vals[3], 0.0, 1.0, 0.0, 1.0)
-        var osc1 = self.osc1.next2(freq1, 0.0, 0.0, [0,4,5,6], osc_frac1, 2, 4)
+        osc_frac1 = linlin(lag_vals[3], 0.0, 1.0, 0.0, 1.0)
+        var osc1 = self.osc1.next_interp(freq1, 0.0, 0.0, [0,4,5,6], osc_frac1, 2, 4)
 
         # samplerate reduction
-        osc1 = self.latch1.next(osc1, self.impulse1.next(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc1 = self.latch1.next(osc1, self.impulse1.next(linexp(lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
 
-        osc1 = self.filt1.lpf(osc1, linexp(self.lag_vals[5], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[6], 0.0, 1.0, 0.707, 4.0))
+        osc1 = self.filt1.lpf(osc1, linexp(lag_vals[5], 0.0, 1.0, 100.0, 20000.0), linlin(lag_vals[6], 0.0, 1.0, 0.707, 4.0))
 
-        tanh_gain = linlin(self.lag_vals[7], 0.0, 1.0, 0.5, 10.0)
-        osc1 = vtanh(osc1, tanh_gain, 0.0)
+        tanh_gain = linlin(lag_vals[7], 0.0, 1.0, 0.5, 10.0)
 
         # get rid of dc offset
-        osc1 = self.dc1.next(osc1)
+        osc1 = self.dc1.next(tanh(osc1*tanh_gain))
 
         # oscillator 2
 
-        var freq2 = linlin(self.lag_vals[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(self.lag_vals[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
-        var which_osc2 = self.lag_vals[10]
+        var freq2 = linlin(lag_vals[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(lag_vals[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
+        # var which_osc2 = lag_vals[10] #not used...whoops
 
-        osc_frac2 = linlin(self.lag_vals[11], 0.0, 1.0, 0.0, 1.0)
-        var osc2 = self.osc2.next2(freq2, 0.0, 0.0, [0,4,5,6], osc_frac2, 2, 4)
+        osc_frac2 = linlin(lag_vals[11], 0.0, 1.0, 0.0, 1.0)
+        var osc2 = self.osc2.next_interp(freq2, 0.0, 0.0, [0,4,5,6], osc_frac2, 2, 4)
 
-        osc2 = self.latch2.next(osc2, self.impulse2.next(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc2 = self.latch2.next(osc2, self.impulse2.next(linexp(lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
 
-        osc2 = self.filt2.lpf(osc2, linexp(self.lag_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[14], 0.0, 1.0, 0.707, 4.0))
+        osc2 = self.filt2.lpf(osc2, linexp(lag_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(lag_vals[14], 0.0, 1.0, 0.707, 4.0))
 
-        tanh_gain = linlin(self.lag_vals[15], 0.0, 1.0, 0.5, 10.0)
-        osc2 = vtanh(osc2, tanh_gain, 0.0)
-        osc2 = self.dc2.next(osc2)
+        tanh_gain = linlin(lag_vals[15], 0.0, 1.0, 0.5, 10.0)
+        osc2 = self.dc2.next(tanh(osc2*tanh_gain))
         self.fb = osc2
 
-        return [osc1 * 0.2, osc2 * 0.1]
+        return SIMD[DType.float64, 2](osc1, osc2) * 0.2
 
     fn get_msgs(mut self, infer: Float64):
         # only will grab messages at the top of the audio block
@@ -149,4 +140,4 @@ struct TorchSynth(Representable, Movable, Copyable):
             for i in range(self.model_out_size):
                 out = self.world_ptr[0].get_msg("model_output"+String(i))
                 if out:
-                    self.model_output[i] = out.value()[0]
+                    self.model_output[Int(i)] = out.value()[0]

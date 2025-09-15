@@ -4,8 +4,9 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
 mmm_audio.start_audio()
 
+# this next chunk of code is all about using a midi keyboard to control the synth---------------
 
-# start the midi thread for the current port
+# the python host grabs the midi and sends the midi messages to the mojo audio engine
 
 import mido
 import time
@@ -16,7 +17,6 @@ mido.get_input_names()
 
 # open your midi device - you may need to change the device name
 in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
-in_port = mido.open_input('Fireface UFX+ (24082112) Port 2')
 
 def start_midi():
     while True:
@@ -29,6 +29,8 @@ midi_thread = threading.Thread(target=start_midi, daemon=True)
 # once you start the midi_thread, it should register note_on, note_off, cc, etc from your device and send them to mmm
 midi_thread.start()
 midi_thread.stop()
+
+# this chunk of code shows how to use the sequencer to trigger notes in the mmm_audio engine
 
 # the scheduler can also sequence notes
 from mmm_src.Patterns import * # some sc style patterns

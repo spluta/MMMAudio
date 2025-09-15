@@ -47,16 +47,14 @@ struct MMMGraph(Representable, Movable):
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
-            zero(self.output)
-
-            mix(self.output, self.graph.next())  # mix any synth outputs into the output buffer
+            samples = self.graph.next()  # Get the next audio samples from the graph
 
             if i == 0:
                 self.world_ptr[0].clear_msgs()
 
             # Fill the wire buffer with the sample data
-            for j in range(self.num_out_chans):
-                loc_out_buffer[i * self.num_out_chans + j] += self.output[j]  
+            for j in range(min(self.num_out_chans, samples.__len__())):
+                loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
 
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64], mut msg_dict: Dict[String, List[Float64]]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
