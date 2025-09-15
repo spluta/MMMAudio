@@ -27,6 +27,8 @@ struct MMMWorld(Representable, Movable, Copyable):
     # windows
     var hann_window: Buffer
 
+    var buffers: List[Buffer]
+
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
         self.block_size = block_size
@@ -53,6 +55,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.msg_dict = Dict[String, List[Float64]]()
         self.text_msg_dict = Dict[String, List[String]]()
         self.midi_dict = Dict[String, Int64]()
+
+        self.buffers = List[Buffer]()  # Initialize the list of buffers
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
@@ -109,30 +113,31 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     fn get_midi(mut self: Self, key: String, chan: Int64 = -1, param: Int64 = -1) -> Optional[List[List[Int64]]]:
         if self.grab_messages == 1:
-            list = List[List[Int64]]()
-            for dict_item in self.midi_dict.items():
-                if dict_item.key.startswith(key):
-                    parts = dict_item.key.split("/")
-                    if len(parts) == 2:
-                        try:
-                            if (chan == -1 or Int64(parts[1]) == chan):
-                                lil_list = List[Int64]()
-                                lil_list.append(Int64(parts[1]))
-                                lil_list.append(Int64(dict_item.value))
-                                list.append(lil_list.copy())
-                        except:
-                            pass
-                    if len(parts) == 3:
-                        try:
-                            if (chan == -1 or Int64(parts[1]) == chan) and (param == -1 or Int64(parts[2]) == param):
-                                lil_list = List[Int64]()
-                                lil_list.append(Int64(parts[1]))
-                                lil_list.append(Int64(parts[2]))
-                                lil_list.append(Int64(dict_item.value))
-                                list.append(lil_list.copy())
-                        except:
-                            pass
-            return list.copy()
+            if len(self.midi_dict) > 0:
+                list = List[List[Int64]]()
+                for dict_item in self.midi_dict.items():
+                    if dict_item.key.startswith(key):
+                        parts = dict_item.key.split("/")
+                        if len(parts) == 2:
+                            try:
+                                if (chan == -1 or Int64(parts[1]) == chan):
+                                    lil_list = List[Int64]()
+                                    lil_list.append(Int64(parts[1]))
+                                    lil_list.append(Int64(dict_item.value))
+                                    list.append(lil_list.copy())
+                            except:
+                                pass
+                        if len(parts) == 3:
+                            try:
+                                if (chan == -1 or Int64(parts[1]) == chan) and (param == -1 or Int64(parts[2]) == param):
+                                    lil_list = List[Int64]()
+                                    lil_list.append(Int64(parts[1]))
+                                    lil_list.append(Int64(parts[2]))
+                                    lil_list.append(Int64(dict_item.value))
+                                    list.append(lil_list.copy())
+                            except:
+                                pass
+                return list.copy()
         return None
 
     fn clear_midi(mut self):
@@ -141,6 +146,8 @@ struct MMMWorld(Representable, Movable, Copyable):
     fn send_midi(mut self, msg: PythonObject) raises :
         if not msg:
             return
+
+        print(msg[0], msg[1])
 
         self.midi_dict[String(msg[0])] = Int64(msg[1])
     

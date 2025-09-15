@@ -12,34 +12,41 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     var buffer: InterleavedBuffer  # Interleaved buffer for audio samples
     var playBuf: PlayBuf
-    var delays: List[FBDelay]
-    var lag: Lag
+    var delays: FBDelay[2]  # FBDelay for feedback delay effect
+    var lag: Lag[2]
     var mouse_x: Float64
     var mouse_y: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
         self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr, self.buffer.num_chans)  # Initialize PlayBuf with the number of channels from the buffer
-        self.delays = List[FBDelay]()  # Initialize Delay with a maximum delay time of 1 second
-        for _ in range(self.buffer.num_chans):
-            self.delays.append(FBDelay(self.world_ptr, 1.0, 0))  # Append FBDelay instances for each channel
+        self.playBuf = PlayBuf(self.world_ptr) 
+        # FBDelay is initialized as 2 channel
+        self.delays = FBDelay[2](self.world_ptr) 
 
-        self.lag = Lag(self.world_ptr)  # Initialize Lag with a default time constant
+        self.lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
 
         self.mouse_x = 0.0
         self.mouse_y = 0.0
 
-    fn next(mut self) -> List[Float64]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         self.get_msgs()  # Get messages from the world
-        var sample = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        var sample = self.playBuf.next[N=2](self.buffer, 0, 1.0, True)  # Read samples from the buffer
 
-        var del_time = self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 0.5)
+        # sending one value to the 2 channel lag gives both lags the same parameters
+        # var del_time = self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 0.5)
 
-        for i in range(self.buffer.num_chans):
-            sample[i] = self.delays[i].next(sample[i], del_time, self.mouse_y*2.0, 2)*0.8
+        # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
+        var del_time = self.lag.next(SIMD[DType.float64, 2](
+            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 
+            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()*0.9)
+        ), SIMD[DType.float64, 2](0.5, 0.5))
 
-        return sample^
+        var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
+
+        sample = self.delays.next(sample, del_time, feedback)*0.8
+
+        return sample
 
     fn __repr__(self) -> String:
         return String("DelaySynth")
@@ -48,32 +55,16 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.mouse_x = self.world_ptr[0].mouse_x
         self.mouse_y = self.world_ptr[0].mouse_y
 
-struct FeedbackDelays(Representable, Movable, Graphable, Copyable):
+struct FeedbackDelays(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-
-    var output: List[Float64]  # Output buffer for audio samples
-
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-
         self.delay_synth = DelaySynth(world_ptr)  # Initialize the DelaySynth with the world instance
-
-        self.output = List[Float64]()  # Initialize output list
-
-        for _ in range(2):
-            self.output.append(0.0)  # Initialize output list with zeros
 
     fn __repr__(self) -> String:
         return String("FeedbackDelays")
 
-    fn next(mut self: FeedbackDelays) -> List[Float64]:
-        # sample = self.delay_synth.next()
-
-        # zero(self.output)  # Clear the output list
-
-        # mix(self.output, sample)  # Mix the DelaySynth sample into the output
-        sample = self.delay_synth.next()
-
-        return sample^  # Return the combined output sample
+    fn next(mut self: FeedbackDelays) -> SIMD[DType.float64, 2]:
+        return self.delay_synth.next()  # Return the combined output sample

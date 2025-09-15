@@ -88,3 +88,15 @@ struct Env(Representable, Movable, Copyable):
         self.last_out = lin_interp(values[segment], values[segment + 1], norm_seg)  # Update last output value
 
         return self.Lag.next(self.last_out, 0.001)
+
+fn min_env(ramp: Float64 = 0.01, dur: Float64 = 0.1, rise: Float64 = 0.001) -> Float64:
+    """Create a minimum envelope with specified ramp and duration."""
+    rise2 = rise
+    if rise2 > dur/2.0:
+        rise2 = dur/2.0
+    if ramp < rise2/dur:
+        return ramp*(dur/rise2)
+    elif ramp > 1.0 - rise2/dur:
+        return (1.0-ramp)*(dur/rise2)
+    else:
+        return 1.0

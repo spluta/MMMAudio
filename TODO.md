@@ -13,3 +13,11 @@ FFT
 UGens
 
 - Amplitude
+- Freeverb, Dattoro, GVerb
+
+Big Ones
+
+- replace pyaudio with Mojo PortAudio bindings
+- load and save wav files without numpy/scipy
+- Multiple graphs in one MMM instance
+- multiprocessor support
