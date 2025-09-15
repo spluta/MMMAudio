@@ -73,7 +73,7 @@ and contains the following function:
 fn next(mut self: FeedbackDelays) -> List[Float64]:
 ```
 These define it as a Graphable struct, thus something that can act as a Graph.
-
+```
 Graph
 |
 -- Synth
@@ -85,6 +85,7 @@ Graph
    |
    -- UGen
    -- UGen
+```
 
 Currently there can only be one Graph, but that will change in future versions.
 
