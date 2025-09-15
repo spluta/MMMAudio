@@ -248,20 +248,6 @@ fn sanitize[N: Int = 1](x: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
                 break
         return x if safe else 0.0
 
-from time import time
-
-fn postln[*Ts: Writable](
-    *values: *Ts
-) -> None:
-    """Prints elements to the text stream, each followed by a newline.
-    Args:
-        values: The elements to print.
-    """
-    if random_float64() < 0.01:  # Print timestamp with a 1% chance
-        @parameter
-        for i in range(values.__len__()):
-            print(values[i], end=" ")
-        print("", end="\n")
 
 fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Generates a random float64 value from an exponential distribution.
