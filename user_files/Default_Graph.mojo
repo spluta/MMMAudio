@@ -17,7 +17,7 @@ struct Default_Synth(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default")
 
-    fn next(mut self) -> Float64:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         
         self.get_msgs()
         return self.osc.next(self.freq) * 0.1
@@ -30,25 +30,18 @@ struct Default_Synth(Representable, Movable, Copyable):
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct Default_Graph(Representable, Movable, Graphable, Copyable):
+struct Default_Graph(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
-    var output: List[Float64]
     var synth: Default_Synth
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.output = List[Float64](0.0, 0.0)
         self.synth = Default_Synth(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
-    fn next(mut self) -> List[Float64]:
-        zero(self.output) # Clear the output buffer
+    fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        sample = self.synth.next()  # Get the next sample from the synth
-
-        mix(self.output, sample)  # mix any synth outputs into the output buffer
-
-        return self.output  # Return the combined output samples
+        return self.synth.next() * 0.1

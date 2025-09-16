@@ -85,11 +85,11 @@ struct Env(Representable, Movable, Copyable):
 
         norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
         
-        self.last_out = lin_interp(values[segment], values[segment + 1], norm_seg)  # Update last output value
+        self.last_out = lerp(values[segment], values[segment + 1], norm_seg)  # Update last output value
 
         return self.Lag.next(self.last_out, 0.001)
 
-fn min_env(ramp: Float64 = 0.01, dur: Float64 = 0.1, rise: Float64 = 0.001) -> Float64:
+fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
     """Create a minimum envelope with specified ramp and duration."""
     rise2 = rise
     if rise2 > dur/2.0:

@@ -164,7 +164,7 @@ struct Osc[N: Int = 1](Representable, Movable, Copyable):
                 for j in range(self.N):
                     sample0[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type0[j])
                     sample1[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type1[j])
-                self.oversampling.add_sample(lin_interp(sample0, sample1, osc_frac2))
+                self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))
  
             else:
                 var phase = self.phasor.next(freq, phase_offset, trig, self.oversampling.index)  # Update the phase
@@ -173,7 +173,7 @@ struct Osc[N: Int = 1](Representable, Movable, Copyable):
                 for j in range(self.N):
                     sample0[j] = self.world_ptr[0].osc_buffers.read(phase[j], osc_type0[j], interp[j])
                     sample1[j] = self.world_ptr[0].osc_buffers.read(phase[j], osc_type1[j], interp[j])
-                self.oversampling.add_sample(lin_interp(sample0, sample1, osc_frac2))  # Get the next sample from the Oscillator buffer
+                self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))  # Get the next sample from the Oscillator buffer
 
         sample = SIMD[DType.float64, self.N](0.0)
 
@@ -389,13 +389,13 @@ struct LFNoise(Representable, Movable, Copyable):
             # Linear interpolation between last and next value
             var p0 = self.history[self.history_index]
             var p1 = self.history[(self.history_index + 1) % len(self.history)]
-            return lin_interp(p0, p1, self.impulse.phasor.phase)
+            return lerp(p0, p1, self.impulse.phasor.phase)
         else:
             var p0: Float64 = self.history[(self.history_index + (len(self.history) - 1)) % len(self.history)]
             var p1: Float64 = self.history[self.history_index]
             var p2: Float64 = self.history[(self.history_index + 1) % len(self.history)]
             var p3: Float64 = self.history[(self.history_index + 2) % len(self.history)]
-            return cubic_interpolation(p0,p1,p2,p3, self.impulse.phasor.phase)  # Cubic interpolation
+            return cubic_interp(p0,p1,p2,p3, self.impulse.phasor.phase)  # Cubic interpolation
 
 
 struct Sweep(Representable, Movable, Copyable):

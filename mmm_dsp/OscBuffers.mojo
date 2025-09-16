@@ -31,7 +31,7 @@ struct Sinc_Interpolator(Representable, Movable, Copyable):
         var sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)  # Get sinc index from the sinc points
         var sinc_indexB = sinc_indexA + 1  # Get the next sinc index
         var sinc_indexC = sinc_indexA + 2  # Get the next sinc index
-        var sinc_value = quadratic_interpolation(
+        var sinc_value = quadratic_interp(
             self.table[sinc_indexA % self.table_size],
             self.table[sinc_indexB % self.table_size],
             self.table[sinc_indexC % self.table_size],
@@ -152,9 +152,9 @@ struct OscBuffers(Representable, Movable, Copyable):
         var y1 = self.buffers[buf_num][mod_idx1]
         var y2 = self.buffers[buf_num][mod_idx2]
 
-        return quadratic_interpolation(y0, y1, y2, frac)
+        return quadratic_interp(y0, y1, y2, frac)
 
-    fn lin_interp(self, x: Float64, buf_num: Int64) -> Float64:
+    fn lerp(self, x: Float64, buf_num: Int64) -> Float64:
         # Get indices for 2 adjacent points
         var index = Int64(x)
         var index_next = (index + 1) % self.size
@@ -172,7 +172,7 @@ struct OscBuffers(Representable, Movable, Copyable):
     # Needs to receive an unsafe pointer to the buffer being used
     fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
-        var value = self.lin_interp(f_index, buf_num)
+        var value = self.lerp(f_index, buf_num)
         return value
 
     fn read_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
@@ -204,9 +204,9 @@ struct OscBuffers(Representable, Movable, Copyable):
         var sinc1 = self.spaced_sinc(buf_num, index, frac, spacing1)  # Get the spaced sinc value
         if layer < 12:  # Check if layer is less than 12
             var sinc2 = self.spaced_sinc(buf_num, index, frac, spacing2)  # Get the spaced sinc value for double spacing
-            return lin_interp(sinc1, sinc2, sinc_crossfade)  # Linear interpolation between sinc1 and sinc2
+            return lerp(sinc1, sinc2, sinc_crossfade)  # Linear interpolation between sinc1 and sinc2
         else:
-            return lin_interp(sinc1, 0.0, sinc_crossfade)  # Use sinc1 directly if spacing exceeds maximum sinc offset
+            return lerp(sinc1, 0.0, sinc_crossfade)  # Use sinc1 directly if spacing exceeds maximum sinc offset
 
     fn spaced_sinc(self, buf_num: Int64, index: Int64, frac: Float64, spacing: Int64) -> Float64:
         var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing

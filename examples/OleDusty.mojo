@@ -43,7 +43,6 @@ struct OleDusty(Representable, Movable, Copyable):
         return String("OleDusty")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        # zero(self.out) # zero the output
 
         freq = linexp(self.world_ptr[0].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 

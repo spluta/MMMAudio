@@ -1,6 +1,6 @@
 FIX
 
-- threading the audio loop makes the CPU sit at 89.1% all the time
+- Mojo seems to be trying to free the numpy array inside of InterleavedBuffer without consent. I added a print statement in Grains.mojo to avoid this for now, but it's not a real fix.
 
 Documentation
 

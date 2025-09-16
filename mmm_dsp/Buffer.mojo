@@ -8,6 +8,11 @@ from mmm_src.MMMTraits import Buffable
 alias dtype = DType.float64
 
 struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
+    """
+    An audio buffer that loads data from a WAV file using SciPy and NumPy.
+    The data is stored in an interleaved format.
+    """
+
     var num_frames: Float64  
     var buf_sample_rate: Float64  
     var sys_sample_rate: Float64 
@@ -115,7 +120,7 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
         var y1 = self.data[mod_idx1]
         var y2 = self.data[mod_idx2]
 
-        return quadratic_interpolation(y0, y1, y2, frac)
+        return quadratic_interp(y0, y1, y2, frac)
 
     fn linear_interp_loc(self, idx: Int64, idx1: Int64, frac: Float64) -> Float64:
         # Ensure indices are within bounds
@@ -131,6 +136,20 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
         return 0.0
 
     fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
+        """
+        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N.
+
+        read(start_chan, phase, interp=0)
+
+        Parameters:
+            N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
+
+        Args:
+          start_chan: The starting channel index to read from (0-based).
+          phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
+          interp: The interpolation method to use (0 = linear, 1 = quadratic).
+
+        """
 
         if self.num_frames == 0 or self.num_chans == 0:
             return SIMD[DType.float64, N](0.0)  # Return zero if no frames or channels are available
@@ -153,14 +172,19 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
         return out
 
 struct Buffer(Representable, Movable, Buffable, Copyable):
-    """Has 2 possible constructors: \n
+    """
+    Has 2 possible constructors:
+
     1) Buffer(lists: List[List[Float64]], buf_sample_rate: Float64 = 48000.0).
        - lists: List of channels, each channel is a List of Float64 samples.
        - buf_sample_rate: Sample rate of the buffer (default is 48000.0).
+    
     2) Buffer(num_chans: Int64 = 2, samples: Int64 = 48000, buf_sample_rate: Float64 = 48000.0).
        - num_chans: Number of channels (default is 2 for stereo).
        - samples: Number of samples per channel (default is 48000 for 1 second at 48kHz).
-       - buf_sample_rate: Sample rate of the buffer (default is 48000.0)."""
+       - buf_sample_rate: Sample rate of the buffer (default is 48000.0).
+       
+    """
 
     var num_frames: Float64  
     var buf_sample_rate: Float64  
@@ -212,7 +236,7 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         var y1 = self.data[chan][mod_idx1]
         var y2 = self.data[chan][mod_idx2]
 
-        return quadratic_interpolation(y0, y1, y2, frac)
+        return quadratic_interp(y0, y1, y2, frac)
 
     fn linear_interp_loc(self, idx: Int64, idx1: Int64, frac: Float64, chan: Int64) -> Float64:
         # Ensure indices are within bounds
@@ -228,6 +252,19 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         return 0.0
 
     fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
+        """
+        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N. It will start reading from the channel specified by start_chan and read N channels from there.
+
+        read(start_chan, phase, interp=0)
+
+        Parameters:
+            N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
+
+        Args:
+          start_chan: The starting channel index to read from (0-based).
+          phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
+          interp: The interpolation method to use (0 = linear, 1 = quadratic).
+        """
 
         if self.num_frames == 0 or self.num_chans == 0:
             return SIMD[DType.float64, N](0.0)  # Return zero if no frames or channels are available
@@ -247,12 +284,12 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
         return out
 
-    fn write(mut self, value: Float64, index: Int64, channel: Int64 = 0):
-        if index < 0 or index >= Int64(self.num_frames):
-            return  # Out of bounds
-        self.data[channel][index] = value
+    # fn write(mut self, value: Float64, index: Int64, channel: Int64 = 0):
+    #     if index < 0 or index >= Int64(self.num_frames):
+    #         return  # Out of bounds
+    #     self.data[channel][index] = value
 
-    fn write(mut self, value: List[Float64], index: Int64, start_channel: Int64 = 0):
+    fn write[N: Int = 1](mut self, value: SIMD[DType.float64, N], index: Int64, start_channel: Int64 = 0):
         if index < 0 or index >= Int64(self.num_frames):
             return  # Out of bounds
         for i in range(len(value)):

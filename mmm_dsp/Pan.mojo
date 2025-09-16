@@ -89,6 +89,7 @@ struct PanAz (Representable, Movable, Copyable):
         out = SIMD[DType.float64, N](0.0)
 
         var constant = pan * 2.0 * aligned_pos_fac + aligned_pos_const
+        
         for i in range(num_speakers):
             var chanpos = (constant - Float64(i)) * rwidth
             chanpos = chanpos - frange * floor(rrange * chanpos)
@@ -99,8 +100,8 @@ struct PanAz (Representable, Movable, Copyable):
             else:
                 chanamp = self.world_ptr[0].osc_buffers.read_lin(chanpos/2.0, 0)
 
-            output_sample = sample * chanamp
+            out[Int(i)] = chanamp
 
-            out[Int(i)] = output_sample
-        
-        return out
+        # with more than 4 channels, this SIMD multiplication is inefficient
+
+        return out * sample

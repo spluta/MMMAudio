@@ -33,6 +33,8 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     # var pointer_to_self: UnsafePointer[MMMWorld]
     var last_print_time: Float64
+    var print_flag: Int64
+    var last_print_flag: Int64
 
     # it does not like this, not sure why
     # var printer: Print
@@ -68,6 +70,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         # self.pointer_to_self = UnsafePointer[MMMWorld]()  # Create a pointer to self
         # self.printer = Print(self.pointer_to_self)  # Initialize the Print instance
         self.last_print_time = 0.0
+        self.print_flag = 0
+        self.last_print_flag = 0
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
@@ -166,10 +170,17 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.msg_dict.clear()
         self.midi_dict.clear()
         self.text_msg_dict.clear()
+        self.grab_messages = 0
 
     fn print[T: Writable](mut self, value: T, label: String = "", freq: Float64 = 10.0) -> None:
 
         current_time = time.perf_counter()
-        if current_time - self.last_print_time >= 1.0 / freq:
-            self.last_print_time = current_time
+        # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+        if self.grab_messages == 1 and self.print_flag == 0:
+            if current_time - self.last_print_time >= 1.0 / freq:
+                self.last_print_time = current_time
+                self.print_flag = 1
+        elif self.grab_messages == 0 and self.print_flag == 1:
+            self.print_flag = 0
+        if self.print_flag == 1:
             print(label,value)

@@ -1,6 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_utils.Print import Print
 from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import Osc
@@ -20,7 +19,6 @@ struct OscSynth(Representable, Movable, Copyable):
     var vol_osc: Osc
     var vol_osc_freq: Float64
     var temp: Float64
-    var printer: Print
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], center_freq: Float64):
         self.world_ptr = world_ptr
@@ -38,8 +36,6 @@ struct OscSynth(Representable, Movable, Copyable):
         )
         self.temp = 0.0
 
-        self.printer = Print(world_ptr)
-
     fn __repr__(self) -> String:
         return String("OscSynth")
 
@@ -50,7 +46,7 @@ struct OscSynth(Representable, Movable, Copyable):
         temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01)
         temp2 = temp[0] + temp[1]
 
-        self.printer.next(self.osc_freqs, "freqs", freq=1.0)
+        self.world_ptr[0].print(self.osc_freqs, "freqs", freq=1.0)
 
         pan_loc = self.pan_osc.next(self.pan_freq)  # Get pan position
 
