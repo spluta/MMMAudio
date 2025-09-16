@@ -17,7 +17,7 @@ struct Lag[N: Int=1](Representable, Movable, Copyable):
     var log001: Float64
     var world_ptr: UnsafePointer[MMMWorld]
 
-    alias width = simd_width_of[DType.float64]()
+    alias width = 2 * simd_width_of[DType.float64]()
     var num_simds: Int
     var in_simd: SIMD[DType.float64, Self.width]
     var lag_simd: SIMD[DType.float64, Self.width]
@@ -71,36 +71,63 @@ struct Lag[N: Int=1](Representable, Movable, Copyable):
 
         # print("num_SIMDs: " + String(num_SIMDs) + " carry: " + String(carry) + " lower: " + String(lower) + " self.N: " + String(self.N))
 
-        for j in range(num_SIMDs):
-            self.get_small_simd(in_samp, j)
+        # for j in range(num_SIMDs):
+        #     self.get_small_simd(in_samp, j)
 
+        #     var change = False
+        #     for i in range(self.width): 
+        #         var idx = j * self.width + i
+        #         if self.lag_simd[i] != lag[idx]:
+        #             self.lag_simd[i] = lag[idx]
+        #             change = True
+        #     if not change:
+        #         self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
+        #     else:
+        #         for i in range(self.width):
+        #             if self.lag_simd[i] == 0.0:
+        #                 self.b1_simd[i] = 0.0
+        #             else:
+        #                 # Calculate the lag coeficient based on the sample rate
+        #                 self.b1_simd[i] = exp(self.log001 / (self.lag_simd[i] * self.world_ptr[0].sample_rate))
+
+        #         # self.lag = self.lag_simd
+        #         self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
+
+        #     self.val_simd = sanitize(self.val_simd)
+
+        #     self.put_small_simd(j)
+        #     for i in range(self.width):
+        #         var idx = j * self.width + i
+        #         if idx < self.N:
+        #             in_samp[idx] = self.val_simd[i]
+        
+        @parameter
+        fn process_block[simd_width: Int](j: Int):
+            self.get_small_simd(in_samp, j)
             var change = False
-            for i in range(self.width): 
-                var idx = j * self.width + i
+            for i in range(simd_width):
+                var idx = j * simd_width + i
                 if self.lag_simd[i] != lag[idx]:
                     self.lag_simd[i] = lag[idx]
                     change = True
             if not change:
                 self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
             else:
-                for i in range(self.width):
+                for i in range(simd_width):
                     if self.lag_simd[i] == 0.0:
                         self.b1_simd[i] = 0.0
                     else:
-                        # Calculate the lag coeficient based on the sample rate
                         self.b1_simd[i] = exp(self.log001 / (self.lag_simd[i] * self.world_ptr[0].sample_rate))
-
-                # self.lag = self.lag_simd
                 self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
-
             self.val_simd = sanitize(self.val_simd)
-
             self.put_small_simd(j)
-            for i in range(self.width):
-                var idx = j * self.width + i
+            for i in range(simd_width):
+                var idx = j * simd_width + i
                 if idx < self.N:
                     in_samp[idx] = self.val_simd[i]
         
+        vectorize[process_block, self.width](num_SIMDs)
+
         # go through the carries one by one
         start_at = num_SIMDs * self.width
         for i in range(carry):
@@ -351,28 +378,28 @@ struct Integrator(Representable, Movable, Copyable):
         self.last_samp = output
         return output
 
+# needs to be tested and updated to SIMD
+# struct OneZero(Representable, Movable, Copyable):
+#     """
+#     Simple one-zero filter
+#     """
+#     var last_samp: Float64  # Previous output
+#     var sample_rate: Float64
+    
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         """Initialize the one-zero filter"""
 
-struct OneZero(Representable, Movable, Copyable):
-    """
-    Simple one-zero filter
-    """
-    var last_samp: Float64  # Previous output
-    var sample_rate: Float64
+#         self.last_samp = 0.0
+#         self.sample_rate = world_ptr[0].sample_rate
     
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """Initialize the one-zero filter"""
-
-        self.last_samp = 0.0
-        self.sample_rate = world_ptr[0].sample_rate
+#     fn __repr__(self) -> String:
+#         return String("OnePoleFilter")
     
-    fn __repr__(self) -> String:
-        return String("OnePoleFilter")
-    
-    fn next(mut self, input: Float64, coef: Float64) -> Float64:
-        """Process one sample through the filter"""
-        var output = input - coef * self.last_samp
-        self.last_samp = output
-        return output
+#     fn next(mut self, input: Float64, coef: Float64) -> Float64:
+#         """Process one sample through the filter"""
+#         var output = input - coef * self.last_samp
+#         self.last_samp = output
+#         return output
 
 struct DCTrap[N: Int=1](Representable, Movable, Copyable):
     """DC Trap from Digital Sound Generation by Beat Frei.

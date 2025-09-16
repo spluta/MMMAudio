@@ -4,29 +4,22 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.Pan_Az import Pan_Az
+from examples.Grains import Grains
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Pan_Az
+    var graph: Grains
     var num_out_chans: Int64
-    var output: List[Float64]  # Output list for audio samples
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
         self.world_ptr = world_ptr  # Pointer to the MMMWorld instance
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
-        self.output = List[Float64]()
-        for _ in range(self.num_out_chans):
-            self.output.append(0.0)  # Initialize output list with zeros
 
-        self.graph = Pan_Az(self.world_ptr)
+        self.graph = Grains(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
-        self.output = List[Float64]()
-        for _ in range(self.num_out_chans):
-            self.output.append(0.0)  # Resize output list if number of output channels changes
 
     fn __repr__(self) -> String:
         return String("MMMGraph")

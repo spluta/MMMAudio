@@ -49,7 +49,7 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
 
     if size == 1:
         window.append(1.0)
-        return window
+        return window.copy()
     
     # Calculate the normalization factor
     var i0_beta = bessel_i0(beta)
@@ -64,7 +64,7 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
         var coeff = bessel_i0(arg) / i0_beta
         window.append(coeff)
 
-    return window
+    return window.copy()
 
 fn build_sinc_table(size: Int64, ripples: Int64 = 4) -> List[Float64]:
     """
@@ -107,7 +107,7 @@ fn build_sinc_table(size: Int64, ripples: Int64 = 4) -> List[Float64]:
     for i in range(len(sinc_table)):
         sinc_table[i] *= window[i]  # Apply the window to the sinc values
     
-    return sinc_table
+    return sinc_table.copy()
 
 fn hann_window(n: Int64) -> List[Float64]:
     """
@@ -125,7 +125,7 @@ fn hann_window(n: Int64) -> List[Float64]:
         var value = 0.5 * (1.0 - cos(2.0 * pi * Float64(i) / Float64(n - 1)))
         window.append(value)
     
-    return window
+    return window.copy()
 
 fn hamming_window(n: Int64) -> List[Float64]:
     """
@@ -135,7 +135,8 @@ fn hamming_window(n: Int64) -> List[Float64]:
     for i in range(n):
         var value = 0.54 - 0.46 * cos(2.0 * pi * Float64(i) / Float64(n - 1))
         window.append(value)
-    return window
+
+    return window.copy()
 
 fn blackman_window(n: Int64) -> List[Float64]:
     """Generate a Blackman window of length n.
@@ -149,4 +150,4 @@ fn blackman_window(n: Int64) -> List[Float64]:
         var value = 0.42 - 0.5 * cos(2.0 * pi * Float64(i) / Float64(n - 1)) + \
                     0.08 * cos(4.0 * pi * Float64(i) / Float64(n - 1))
         window.append(value)
-    return window
+    return window.copy()

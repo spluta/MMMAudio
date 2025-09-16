@@ -83,8 +83,6 @@ struct PlayBuf(Representable, Movable, Copyable):
             # print("PlayBuf triggered: start_frame =", self.start_frame, "end_frame =", self.end_frame, "reset_point =", self.reset_point, "phase_offset =", self.phase_offset)  # Debug print
         if self.done:
             self.last_trig = trig
-            # for i in range(self.num_chans):
-            #     self.out_list[i] = 0.0
             return out  # Return zeros if done
         else:
             var freq = rate / duration  # Calculate step size based on rate and sample rate
@@ -95,8 +93,6 @@ struct PlayBuf(Representable, Movable, Copyable):
                     self.impulse.phasor.phase -= self.reset_point
                 # for i in range(N):
                 out = buffer.read[N](start_chan, self.get_phase() + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
-                    # print("Reading buffer at phase:", self.get_phase(), out[i])  # Debug print
-                    # self.out_list[i] = buffer.read(i, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next(freq, trig = trig)
                 eor -= trig

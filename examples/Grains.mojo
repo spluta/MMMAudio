@@ -28,6 +28,9 @@ struct GrainSynth(Representable, Movable, Copyable):
         self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
+        # it will try to free the interleaved buffer if you don't print here. gotta figure this out. this is either a bug by me or by modular.
+        print("Loaded buffer with ", self.buffer.get_num_frames(), " frames and ", self.num_chans, " channels.")
+
         self.tgrains = TGrains(self.world_ptr, 20)  
         self.impulse = Impulse(self.world_ptr)  
 
@@ -49,6 +52,7 @@ struct GrainSynth(Representable, Movable, Copyable):
         # var grains = self.tgrains.next[N=2](self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4) 
 
         return grains
+
 
     fn __repr__(self) -> String:
         return String("GrainSynth")

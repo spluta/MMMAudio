@@ -28,6 +28,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var note_time: Float64
     var lag: Lag
     var end_frame: Float64
+    var input_chan: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -45,6 +46,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.note_time = 0.0
         self.end_frame = 0.0
         self.lag = Lag(world_ptr)
+        self.input_chan = 0 
 
     fn __repr__(self) -> String:
         return String("Record_Synth")
@@ -82,7 +84,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         # my audio interface has audio in on channel 9, so I use self.world_ptr[0].sound_in[8]
         if self.is_recording:
             # the sound_in List in the world_ptr holds the audio in data for the current sample, so grab it from there.
-            self.buffer.write(self.world_ptr[0].sound_in[8], self.write_pos)
+            self.buffer.write(self.world_ptr[0].sound_in[self.input_chan], self.write_pos)
             self.write_pos += 1
             if self.write_pos >= Int(self.buffer.num_frames):
                 self.is_recording = 0.0
@@ -93,7 +95,9 @@ struct Record_Synth(Representable, Movable, Copyable):
 
         out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)
 
-        out = out * self.is_playing * min_env(self.play_buf.get_win_phase(), self.note_time, 0.001)
+        self.world_ptr[0].print(String(self.play_buf.get_win_phase()), String(self.play_buf.get_phase()))
+
+        out = out * self.is_playing * min_env(self.play_buf.get_win_phase(), self.note_time, 0.01)
 
         return out
 
@@ -109,6 +113,12 @@ struct Record_Synth(Representable, Movable, Copyable):
             self.is_recording = 1.0
             self.is_playing = 0.0
             self.trig = 0.0
+        msg = self.world_ptr[0].get_msg("set_input_chan")
+        if msg:
+            chan = Int64(msg.value()[0])
+            if chan >= 0 and chan < self.world_ptr[0].num_in_chans:
+                self.input_chan = chan
+                print("Setting input channel to", chan)
         note_ons = self.world_ptr[0].get_midi("note_on",-1, -1)  # Get all note on messages
         if note_ons:
             self.note_ons = note_ons.value().copy()
@@ -121,14 +131,10 @@ struct Record_Synth(Representable, Movable, Copyable):
 struct Record(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
-    var output: List[Float64]
     var synth: Record_Synth
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.output = List[Float64]()
-        for _ in range(12):
-            self.output.append(0.0)  # Initialize output list with zeros
         self.synth = Record_Synth(self.world_ptr)
 
     fn __repr__(self) -> String:

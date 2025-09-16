@@ -1,9 +1,22 @@
 from mmm_src.MMMAudio import *
 list_audio_devices()
 
+in_device = "Fireface UFX+ (24059506)"
+out_device = "Fireface UFX+ (24059506)"
+
+in_device = "MacBook Pro Microphone"
+out_device = "External Headphones"
+
+
+
 # instantiate and load the graph
-mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=12, in_device="Fireface UFX+ (24059506)", out_device="Fireface UFX+ (24059506)", graph_name="Record", package_name="examples")
+mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=12, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
+
+# the default input channel (in the Record_Synth) is 0, but you can change it to 
+mmm_audio.send_msg("set_input_chan", 0) 
 mmm_audio.start_audio() 
+
+
 
 mmm_audio.send_msg("print_inputs")
 

@@ -13,23 +13,16 @@ struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var graph: """+graph_name+"""
     var num_out_chans: Int64
-    var output: List[Float64]  # Output list for audio samples
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
         self.world_ptr = world_ptr  # Pointer to the MMMWorld instance
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
-        self.output = List[Float64]()
-        for _ in range(self.num_out_chans):
-            self.output.append(0.0)  # Initialize output list with zeros
 
         self.graph = """+graph_name+"""(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
-        self.output = List[Float64]()
-        for _ in range(self.num_out_chans):
-            self.output.append(0.0)  # Resize output list if number of output channels changes
 
     fn __repr__(self) -> String:
         return String("MMMGraph")
