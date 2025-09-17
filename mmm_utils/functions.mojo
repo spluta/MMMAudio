@@ -1,13 +1,37 @@
+"""
+MMM Utility Functions
+
+This module provides essential utility functions for audio processing and mathematical
+operations in the MMMAudio framework. All functions are optimized for SIMD operations
+to achieve maximum performance on modern processors.
+
+The functions in this module include:
+- Range mapping functions (linear and exponential)
+- Clipping and wrapping utilities
+- Interpolation algorithms
+- MIDI/frequency conversion
+- Audio utility functions
+- Random number generation
+
+All functions support vectorized operations through SIMD types for processing
+multiple values simultaneously.
+"""
+
 from random import random_float64
 from math import log2
 from algorithm import vectorize
 from sys.info import simdwidthof
 
 fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64, N], in_max: SIMD[DType.float64, N], out_min: SIMD[DType.float64, N], out_max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-    """Maps values from one range to another range.
+    """Maps values from one range to another range linearly.
+
+    This function performs linear mapping from an input range to an output range.
+    Values outside the input range are clamped to the corresponding output boundaries.
+    This is commonly used for scaling control values, normalizing data, and 
+    converting between different parameter ranges.
 
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector (defaults to 1).
 
     Args:
         value: The values to map.
@@ -17,7 +41,20 @@ fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
         out_max: The maximum of the output range.
 
     Returns:
-        The mapped values in the output range.
+        The linearly mapped values in the output range.
+
+    Examples:
+        # Map MIDI velocity (0-127) to gain (0.0-1.0)
+        velocity = SIMD[DType.float64, 1](64.0)
+        gain = linlin(velocity, 0.0, 127.0, 0.0, 1.0)  # Returns 0.504
+        
+        # Map multiple control values simultaneously
+        controls = SIMD[DType.float64, 4](0.25, 0.5, 0.75, 1.0)
+        frequencies = linlin[4](controls, 0.0, 1.0, 20.0, 20000.0)
+        
+        # Invert a normalized range
+        normal_vals = SIMD[DType.float64, 2](0.3, 0.7)
+        inverted = linlin[2](normal_vals, 0.0, 1.0, 1.0, 0.0)
     """
     var result = SIMD[DType.float64, N](0.0)
     for i in range(N):
@@ -34,8 +71,12 @@ fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64, N], in_max: SIMD[DType.float64, N], out_min: SIMD[DType.float64, N], out_max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Maps values from one linear range to another exponential range.
 
+    This function performs exponential mapping from a linear input range to an
+    exponential output range. This is essential for musical applications where
+    frequency perception is logarithmic. Both output range values must be positive.
+
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector (defaults to 1).
 
     Args:
         value: The values to map.
@@ -46,6 +87,19 @@ fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 
     Returns:
         The exponentially mapped values in the output range.
+
+    Examples:
+        # Map linear slider (0-1) to frequency range (20Hz-20kHz)
+        slider_pos = SIMD[DType.float64, 1](0.5)
+        frequency = linexp(slider_pos, 0.0, 1.0, 20.0, 20000.0)  # ≈ 632 Hz
+        
+        # Map MIDI controller to filter cutoff frequencies
+        cc_values = SIMD[DType.float64, 4](0.0, 0.33, 0.66, 1.0)
+        cutoffs = linexp[4](cc_values, 0.0, 1.0, 100.0, 10000.0)
+        
+        # Create exponential envelope shape
+        linear_time = SIMD[DType.float64, 1](0.8)
+        exp_amplitude = linexp(linear_time, 0.0, 1.0, 0.001, 1.0)
     """
     var result = SIMD[DType.float64, N](0.0)
     for i in range(N):
