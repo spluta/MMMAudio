@@ -2,6 +2,8 @@ site_name: MMMAudio Documentation
 site_description: DSP library for Python and Mojo with audio processing capabilities
 site_author: Sam Pluta
 site_url: https://spluta.github.io/MMMAudio/
+docs_dir: doc_generation/docs_md
+site_dir: docs
 
 repo_name: spluta/MMMAudio
 repo_url: https://github.com/spluta/MMMAudio
@@ -113,6 +115,10 @@ plugins:
             show_source: true
             show_bases: true
             show_inheritance_diagram: true
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "doc_generation.generate_docs:main"
+        on_post_build: "doc_generation.generate_docs:clean_docs_md"
   - with-pdf:
       output_path: ./MMMAudio.pdf
       cover_title: MMMAudio Documentation

@@ -6,3 +6,4 @@ mkdocs-pdf>=0.1.0
 pymdown-extensions>=10.3.0
 Pygments>=2.16.0
 mkdocs-with-pdf>=0.9.3
+mkdocs-simple-hooks>=0.1.5

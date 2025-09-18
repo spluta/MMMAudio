@@ -32,7 +32,7 @@ HARDCODED_SOURCE_DIRS = [
     # Add/remove directory names here as needed
 ]
 
-TEMPLATES_DIR = REPO_ROOT / 'doc-generation' / 'templates'
+TEMPLATES_DIR = REPO_ROOT / 'doc_generation' / 'templates'
 
 _env: Environment | None = None
 def get_jinja_env() -> Environment:
@@ -249,7 +249,7 @@ def process_examples_dir():
         process_example_file(example_file)
 
 def copy_static_docs(output_dir: Path, args):
-    static_docs_src = Path('doc-generation/static-docs')
+    static_docs_src = Path('doc_generation/static-docs')
     if static_docs_src.exists() and static_docs_src.is_dir():
         try:
             for item in static_docs_src.iterdir():
@@ -284,16 +284,65 @@ def clean_output_dir(output_dir: Path, args):
     except Exception as e:  
         print(f"Error cleaning contents of output directory: {e}")
         sys.exit(1)
+        
+def clean_docs_md(config=None):
+    """MkDocs hook entry point - cleans up the generated docs_md directory contents."""
+    output_dir = Path('./doc_generation/docs_md').resolve()
+    if output_dir.exists() and output_dir.is_dir():
+        print(f"[MkDocs Hook] Cleaning up contents of docs_md directory: {output_dir}")
+        try:
+            for child in output_dir.iterdir():
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
+            print(f"[MkDocs Hook] Successfully cleaned contents of {output_dir}")
+        except Exception as e:
+            print(f"[MkDocs Hook] Error cleaning contents of {output_dir}: {e}")
+    else:
+        print(f"[MkDocs Hook] No docs_md directory to clean at: {output_dir}")
 
-def main():
-    """CLI entry point."""
+def generate_docs_hook(config=None):
+    """MkDocs hook entry point - generates docs with default settings."""
+    input_dir = Path('.').resolve()
+    output_dir = Path('./doc_generation/docs_md').resolve()
+    
+    print(f"[MkDocs Hook] Generating docs from {input_dir} to {output_dir}")
+    
+    if output_dir.exists():
+        clean_output_dir(output_dir, type('args', (), {'verbose': True})())
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy ONLY the contents of static_docs_src into output_dir (not the directory itself)
+    copy_static_docs(output_dir, type('args', (), {'verbose': True})())
+        
+    success = process_mojo_sources(
+        input_dir=input_dir,
+        output_dir=output_dir / 'api', # Place generated API docs under 'api' subdir
+        verbose=True,
+    )
+
+    process_examples_dir()
+
+    if not success:
+        print("[MkDocs Hook] Documentation generation failed")
+    else:
+        print("[MkDocs Hook] Documentation generation completed successfully")
+
+def main(config=None):
+    """CLI entry point or MkDocs hook."""
+    # If called as a hook (config passed), run the hook function
+    if config is not None:
+        return generate_docs_hook(config)
+    
     parser = argparse.ArgumentParser(
         description="Recursively generate Markdown from Mojo source using `mojo doc` and a Jinja2 template.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
   %(prog)s -i ./mmm_utils -o ./docs/api/mojo
-  %(prog)s --input-dir ./ --output-dir ./docs/api/mojo --template doc-generation/templates/mojo_doc_template_jinja.md
+  %(prog)s --input-dir ./ --output-dir ./docs/api/mojo --template doc_generation/templates/mojo_doc_template_jinja.md
   %(prog)s -i mmm_src -o docs/api/mojo -b /opt/mojo/bin/mojo -v
         """
     )
@@ -308,7 +357,7 @@ Examples:
     parser.add_argument(
         '-o', '--output-dir',
         type=str,
-        default='./docs',
+        default='./doc_generation/docs_md',
         required=False,
         help='Root directory where rendered Markdown will be written (mirrors source tree)'
     )
