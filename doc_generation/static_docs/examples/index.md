@@ -1,38 +1,23 @@
 # Examples
 
-This section contains practical examples demonstrating how to use MMMAudio for various audio processing tasks.
+There are many examples in the examples folder. Each example uses 2 different files. 
 
-## Basic Examples
+The .py file is the interface between python and mojo. Open a .py example from the examples folder. select a line or lines of code, press shift-enter to run that code.
 
-- **[Default Graph](Default_Graph.md)**: Basic audio graph setup
-- **[In2Out](In2Out.md)**: Simple input to output routing
+Each .py file has a corresponding .mojo file. This outlines the audio graph structure and the connections between different synths.
 
-## Synthesis Examples
+The examples all use just one Synth, but there can be any number of synths in a graph. The 'examples.synths' folder contains the definitions for each synth used in the examples.
 
-- **[Many Oscillators](ManyOscillators.md)**: Multiple oscillator management
-- **[Grains](Grains.md)**: Granular synthesis techniques
+All of the UGens are defined in mmm_dsp.
 
-## Effects Examples
-
-- **[Feedback Delays](FeedbackDelays.md)**: Delay-based effects
-- **[Pan Az](Pan_Az.md)**: Spatial audio panning
-
-## Advanced Examples
-
-- **[MIDI Sequencer](Midi_Sequencer.md)**: MIDI-controlled sequencing
-- **[Torch MLP](Torch_MLP.md)**: Neural network audio processing
-- **[Record](Record.md)**: Audio recording and playback
-
-## Running Examples
-
-Most examples can be run directly with Python:
-
-```bash
-python examples/default.py
+Mojo is a compiled language. any change to the audio graph means the entire graph needs to be recompiled. this takes about 4 seconds on my computer and will happen the first time you run an MMMAudio constructor, like:
 ```
-
-Or with Mojo for the .mojo examples:
-
-```bash
-mojo examples/Default_Graph.mojo
+mmm_audio = MMMAudio(128, graph_name="FeedbackDelays", package_name="examples")
 ```
+It will also run when you change the audio graph, so if you change "FeedbackDelays" to something else, it will recompile.
+
+## Stopping a Program
+
+Just close the python instance in the terminal
+
+This will stop the audio thread and release any resources used by the program.

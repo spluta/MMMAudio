@@ -1,5 +1,3 @@
-# {{ decl.name }}
-
 {% if decl.summary %}
 {{ decl.summary }}
 {% endif %}
@@ -9,10 +7,13 @@
 {% endif %}
 
 {% if decl.functions %}
-## Functions
+# Functions
 
 {% for function in decl.functions %}
-### {{ function.name }}
+
+---
+
+# `fn` {{ function.name }}
 
 {% for overload in function.overloads %}
 {% if overload.summary %}
@@ -23,14 +24,14 @@
 {{ overload.description }}
 {% endif %}
 
-#### Signature
+## Signature
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-#### Parameters
+## Parameters
 
 {% for param in overload.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
@@ -38,7 +39,7 @@
 {% endif %}
 
 {% if overload.args %}
-#### Arguments
+## Arguments
 
 {% for arg in overload.args %}
 - **{{ arg.name }}**{% if arg.type %}: `{{ arg.type }}`{% endif %}{% if arg.default %} = `{{ arg.default }}`{% endif %}{% if arg.description %} - {{ arg.description }}{% endif %}
@@ -46,7 +47,7 @@
 {% endif %}
 
 {% if overload.returns %}
-#### Returns
+## Returns
 
 {% if overload.returns.type %}**Type**: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
@@ -56,7 +57,7 @@
 {% endif %}
 
 {% if overload.raises %}
-#### Raises
+## Raises
 
 {% if overload.raisesDoc %}
 {{ overload.raisesDoc }}
@@ -64,7 +65,7 @@
 {% endif %}
 
 {% if overload.constraints %}
-#### Constraints
+## Constraints
 
 {{ overload.constraints }}
 {% endif %}
@@ -74,15 +75,15 @@
     {{ overload.deprecated }}
 {% endif %}
 
----
-
 {% endfor %}
 {% endfor %}
 {% endif %}
 
 {% if decl.structs %}
 {% for struct in decl.structs %}
+
 {% include 'struct.md' %}
+
 {% endfor %}
 {% endif %}
 
@@ -100,14 +101,14 @@
 {{ trait.description }}
 {% endif %}
 
-#### Signature
+## Signature
 
 ```mojo
 {{ trait.signature }}
 ```
 
 {% if trait.parameters %}
-#### Parameters
+## Parameters
 
 {% for param in trait.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
@@ -115,10 +116,10 @@
 {% endif %}
 
 {% if trait.functions %}
-#### Required Methods
+## Required Methods
 
 {% for function in trait.functions %}
-##### {{ function.name }}
+### {{ function.name }}
 
 {% for overload in function.overloads %}
 {% if overload.summary %}
@@ -129,14 +130,14 @@
 {{ overload.description }}
 {% endif %}
 
-###### Signature
+## Signature
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-###### Parameters
+## Parameters
 
 {% for param in overload.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
@@ -144,7 +145,7 @@
 {% endif %}
 
 {% if overload.args %}
-###### Arguments
+## Arguments
 
 {% for arg in overload.args %}
 - **{{ arg.name }}**{% if arg.type %}: `{{ arg.type }}`{% endif %}{% if arg.default %} = `{{ arg.default }}`{% endif %}{% if arg.description %} - {{ arg.description }}{% endif %}
@@ -152,7 +153,7 @@
 {% endif %}
 
 {% if overload.returns %}
-###### Returns
+## Returns
 
 {% if overload.returns.type %}**Type**: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
@@ -173,7 +174,7 @@
 {% endif %}
 
 {% if trait.constraints %}
-#### Constraints
+## Constraints
 
 {{ trait.constraints }}
 {% endif %}

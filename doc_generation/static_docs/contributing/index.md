@@ -22,9 +22,6 @@ See the README.md file in the repo's root directory for how to get MMMAudio up a
 
 ### Documentation
 
-- All public APIs must be documented
-- Include practical examples for each function
-- Update documentation when changing functionality
 - Consult the documentation examples/style-guides in `doc_generation/examples`
 
 ### Code of Conduct

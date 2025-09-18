@@ -10,36 +10,18 @@ Welcome to the MMMAudio documentation! MMMAudio is a high-performance audio proc
 - **Modular Design**: Composable DSP building blocks
 - **ML Integration**: Support for neural network audio processing
 
-## Quick Start
+## Why?
 
-```python
-
-```
-
-## Documentation Structure
-
-- **[Getting Started](getting-started.md)**: Installation and basic usage
-- **[API Reference](api/index.md)**: Complete API documentation
-- **[Examples](examples/index.md)**: Practical usage examples
-- **[Contributing](contributing/contributing.md)**: Contributing and development guide
-
-## Architecture
-
-MMMAudio is built around a graph-based processing model where audio flows through connected nodes. Each node can be implemented in either Python (for flexibility) or Mojo (for performance).
-
-### Core Components
-
-- **DSP Modules** (`mmm_dsp`): Basic audio processing building blocks
-- **Framework** (`mmm_src`): Audio engine and graph management
-- **Utilities** (`mmm_utils`): Mathematical and utility functions
-
-## Why
+Something something about writing DSP code and higher level control code in SuperCollider, Max, & Pd, unify "language syntax" via Python and Mojo. Learnability because Python is much more widely known, so moving to Mojo enables low-level DSP thinking that is mostly abstracted away in SuperCollider, Max (except gen~), & Pd.
 
 ### Why Python?
 
 ### Why Mojo?
 
+* Fast
+* Python-like syntax
+* Native SIMD access
+
 ## Community
 
-- **GitHub**: [https://github.com/spluta/MMMAudio](https://github.com/spluta/MMMAudio)
-- **Issues**: Report bugs and feature requests on GitHub
+Report bugs and pull requests on GitHub: [https://github.com/spluta/MMMAudio](https://github.com/spluta/MMMAudio)

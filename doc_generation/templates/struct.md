@@ -1,4 +1,5 @@
-### {{ struct.name }}
+
+# {{ struct.name }}
 
 {% if struct.summary %}
 {{ struct.summary }}
@@ -13,42 +14,42 @@
 {% endif %}
 
 {% if struct.parameters %}
-#### Parameters
+## Parameters
 {% for param in struct.parameters %}
 1. **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
 {% endfor %}
 {% endif %}
 
 {% if struct.functions %}
-# Functions
+## Functions
 {% for function in struct.functions %}
-## **`fn` {{ function.name }}**
+### **`fn` {{ function.name }}**
 
 {% for overload in function.overloads %}
 {% if overload.summary %}{{ overload.summary }}{% endif %}
 {% if overload.description %}{{ overload.description }}{% endif %}
 
-### Signature
+## Signature
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-### Parameters
+## Parameters
 {% for param in overload.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}  
 {% endfor %}
 {% endif %}
 
 {% if overload.args %}
-### Arguments
+## Arguments
 {% for arg in overload.args %}
 - **{{ arg.name }}**{% if arg.type %}: `{{ arg.type }}`{% endif %}{% if arg.default %} = `{{ arg.default }}`{% endif %}{% if arg.description %} - {{ arg.description }}{% endif %}  
 {% endfor %}
 {% endif %}
 
 {% if overload.returns %}
-### Returns
+## Returns
 {% if overload.returns.type %}**Type**: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
 
@@ -57,12 +58,12 @@
 {% endif %}
 
 {% if overload.raises %}
-### Raises
+## Raises
 {% if overload.raisesDoc %}{{ overload.raisesDoc }}{% endif %}
 {% endif %}
 
 {% if overload.constraints %}
-### Constraints
+## Constraints
 {{ overload.constraints }}
 {% endif %}
 
@@ -76,13 +77,12 @@
     This is a static method.
 {% endif %}
 
----
 {% endfor %}
 {% endfor %}
 {% endif %}
 
 {% if struct.constraints %}
-### Constraints
+## Constraints
 {{ struct.constraints }}
 {% endif %}
 
