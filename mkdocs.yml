@@ -9,7 +9,7 @@ repo_name: spluta/MMMAudio
 repo_url: https://github.com/spluta/MMMAudio
 
 theme:
-  name: readthedocs
+  name: material
   palette:
     - scheme: default
       primary: deep purple

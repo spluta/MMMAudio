@@ -182,7 +182,7 @@ def process_example_file(example_file: Path):
         return
 
     example_name = example_file.stem  # filename without suffix
-    output_md_path = REPO_ROOT / 'docs' / 'examples' / f"{example_name}.md"
+    output_md_path = REPO_ROOT / 'doc_generation' / 'docs_md' / 'examples' / f"{example_name}.md"
     output_md_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
@@ -232,12 +232,12 @@ def process_example_file(example_file: Path):
     print(f"Processed example '{example_file}' -> '{output_md_path}'")         
 
 def process_examples_dir():
-    example_files_dir = REPO_ROOT / 'examples'
-    if not example_files_dir.exists() or not example_files_dir.is_dir():
-        print(f"Examples directory '{example_files_dir}' does not exist or is not a directory, skipping examples processing.")
+    example_files_src_dir = REPO_ROOT / 'examples'
+    if not example_files_src_dir.exists() or not example_files_src_dir.is_dir():
+        print(f"Examples directory '{example_files_src_dir}' does not exist or is not a directory, skipping examples processing.")
         return
 
-    example_file_paths = list(example_files_dir.glob('*.py'))
+    example_file_paths = list(example_files_src_dir.glob('*.py'))
 
     print(f"Found {len(example_file_paths)} example files to process.")
     

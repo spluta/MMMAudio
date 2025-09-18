@@ -128,4 +128,48 @@
          <loc>https://spluta.github.io/MMMAudio/examples/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/FeedbackDelays/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/ManyOscillators/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/Midi_Sequencer/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/OleDusty/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/Pan_Az/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/PlayBuf/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/default/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/grains/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/in2out/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/record/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/torch_mlp/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
 </urlset>
