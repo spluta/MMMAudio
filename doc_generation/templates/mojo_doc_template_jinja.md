@@ -237,5 +237,5 @@
 {% if version %}
 ---
 
-*Documentation generated with `mojo doc' from Mojo version {{ version }}*
+*Documentation generated with `mojo doc` from Mojo version {{ version }}*
 {% endif %}
