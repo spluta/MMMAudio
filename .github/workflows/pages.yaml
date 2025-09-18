@@ -2,7 +2,7 @@ name: Build & Deploy MkDocs to GitHub Pages
 
 on:
   push:
-    branches: [ main ]
+    branches: [ render-in-line-docs ]
   workflow_dispatch:
 
 permissions:
