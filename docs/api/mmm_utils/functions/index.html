@@ -3181,7 +3181,7 @@ frequency perception is logarithmic. Both output range values must be positive.<
 The exponentially mapped values in the output range.</p>
 <hr />
 <h3 id="clip">clip<a class="headerlink" href="#clip" title="Permanent link">&para;</a></h3>
-<p>Clips each element in the SIMD vector to the specified range. Parameters:     N: size of the SIMD vector - defaults to 1 Args:     val: The SIMD vector to clip. Each element will be clipped individually.     lo: The minimum value.     hi: The maximum value. Returns:     The clipped SIMD vector.</p>
+<p>Clips each element in the SIMD vector to the specified range. Parameters:     N: Size of the SIMD vector - defaults to 1. Args:     val: The SIMD vector to clip. Each element will be clipped individually.     lo: The minimum value.     hi: The maximum value. Returns:     The clipped SIMD vector.</p>
 <h4 id="signature_2">Signature<a class="headerlink" href="#signature_2" title="Permanent link">&para;</a></h4>
 <div class="language-mojo highlight"><pre><span></span><code><span id="__span-4-1"><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">clip</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="w"> </span><span class="nb">Int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">](</span><span class="n">val</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">],</span><span class="w"> </span><span class="n">lo</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">],</span><span class="w"> </span><span class="n">hi</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">])</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">]</span>
 </span></code></pre></div>
@@ -3197,7 +3197,7 @@ The exponentially mapped values in the output range.</p>
 <p><strong>Type</strong>: <code>SIMD</code></p>
 <hr />
 <h3 id="wrap">wrap<a class="headerlink" href="#wrap" title="Permanent link">&para;</a></h3>
-<p>Wraps a value around a specified range. Parameters:     N: size of the SIMD vector - defaults to 1.</p>
+<p>Wraps a value around a specified range. Parameters:     N: Size of the SIMD vector - defaults to 1..</p>
 <h4 id="signature_3">Signature<a class="headerlink" href="#signature_3" title="Permanent link">&para;</a></h4>
 <div class="language-mojo highlight"><pre><span></span><code><span id="__span-5-1"><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">wrap</span><span class="p">[</span><span class="n">N</span><span class="p">:</span><span class="w"> </span><span class="nb">Int</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">1</span><span class="p">](</span><span class="n">value</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">],</span><span class="w"> </span><span class="n">min_val</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">],</span><span class="w"> </span><span class="n">max_val</span><span class="p">:</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">])</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="n">N</span><span class="p">]</span>
 </span></code></pre></div>
@@ -3366,7 +3366,7 @@ The interpolated value.</p>
 <!--  -->
 
 <hr />
-<p><em>Documentation generated with `mojo doc' from Mojo version 0.25.6.0.dev2025090605</em></p>
+<p><em>Documentation generated with <code>mojo doc</code> from Mojo version 0.25.6.0.dev2025090605</em></p>
 
 
 

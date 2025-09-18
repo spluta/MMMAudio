@@ -113,6 +113,10 @@ Just close the python instance in the terminal
 
 This will stop the audio thread and release any resources used by the program.
 
+## Documentation Generation
+
+For information on the documentation generation see `doc_generation/static_docs/contributing/documentation.md`.
+
 ## Credits
 
 Created by Sam Pluta.

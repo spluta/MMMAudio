@@ -145,7 +145,11 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
         print(f"Error: '{input_dir}' is not a directory")
         return False
 
+    # Only collect mojo files from directories that contain source files, 
+    # specified in the variable HARDCODED_SOURCE_DIRS. This avoids grabbing 
+    # Mojo files from the examples directory (not source code) or other various places.
     mojo_files = collect_whitelisted_mojo_files()
+    
     if not mojo_files:
         print(f"Warning: No .mojo files found in '{input_dir}'")
         return True
@@ -227,7 +231,7 @@ def process_example_file(example_file: Path):
         'code': code,
     }
 
-    rendered = render_template('python_example_jinja.md', context)
+    rendered = render_template('example_python_and_mojo_jinja.md', context)
     output_md_path.write_text(rendered, encoding='utf-8')
     print(f"Processed example '{example_file}' -> '{output_md_path}'")         
 
@@ -249,7 +253,7 @@ def process_examples_dir():
         process_example_file(example_file)
 
 def copy_static_docs(output_dir: Path, args):
-    static_docs_src = Path('doc_generation/static-docs')
+    static_docs_src = Path('doc_generation/static_docs')
     if static_docs_src.exists() and static_docs_src.is_dir():
         try:
             for item in static_docs_src.iterdir():
@@ -304,25 +308,35 @@ def clean_docs_md(config=None):
 
 def generate_docs_hook(config=None):
     """MkDocs hook entry point - generates docs with default settings."""
+    
+    # Repo root directory
     input_dir = Path('.').resolve()
+    
+    # Where all the generated markdown goes so that later mkdocs can pick it up
     output_dir = Path('./doc_generation/docs_md').resolve()
     
     print(f"[MkDocs Hook] Generating docs from {input_dir} to {output_dir}")
     
+    # If it exists, clear ./doc_generation/docs_md so that there isn't any stale content lingering 
     if output_dir.exists():
         clean_output_dir(output_dir, type('args', (), {'verbose': True})())
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy ONLY the contents of static_docs_src into output_dir (not the directory itself)
+    # Copy ONLY the *contents* of static_docs into output_dir (not the directory itself)
     copy_static_docs(output_dir, type('args', (), {'verbose': True})())
         
+    # use `mojo doc` to generate json files from Mojo source files
+    # (however the json files are never actually saved to disk, the json string is 
+    # passed to standard out and caught in Python to then be turned into a dict) 
+    # and then use the json to render to markdown
     success = process_mojo_sources(
         input_dir=input_dir,
         output_dir=output_dir / 'api', # Place generated API docs under 'api' subdir
         verbose=True,
     )
 
+    # Process all examples in the examples directory
     process_examples_dir()
 
     if not success:
@@ -335,6 +349,8 @@ def main(config=None):
     # If called as a hook (config passed), run the hook function
     if config is not None:
         return generate_docs_hook(config)
+    
+    # If not called as a hook, parse CLI arguments and run:
     
     parser = argparse.ArgumentParser(
         description="Recursively generate Markdown from Mojo source using `mojo doc` and a Jinja2 template.",

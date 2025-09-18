@@ -13,18 +13,7 @@ Welcome to the MMMAudio documentation! MMMAudio is a high-performance audio proc
 ## Quick Start
 
 ```python
-from mmm_src.MMMAudio import MMMAudio
-from mmm_dsp.Osc import SineOsc
 
-# Create audio engine
-audio = MMMAudio(sample_rate=44100, buffer_size=512)
-
-# Create and connect oscillator
-osc = SineOsc(frequency=440.0)
-audio.connect(osc, audio.output)
-
-# Start processing
-audio.start()
 ```
 
 ## Documentation Structure
@@ -32,7 +21,7 @@ audio.start()
 - **[Getting Started](getting-started.md)**: Installation and basic usage
 - **[API Reference](api/index.md)**: Complete API documentation
 - **[Examples](examples/index.md)**: Practical usage examples
-- **[Development](development/documentation.md)**: Contributing and development guide
+- **[Contributing](contributing/contributing.md)**: Contributing and development guide
 
 ## Architecture
 
@@ -44,7 +33,13 @@ MMMAudio is built around a graph-based processing model where audio flows throug
 - **Framework** (`mmm_src`): Audio engine and graph management
 - **Utilities** (`mmm_utils`): Mathematical and utility functions
 
+## Why
+
+### Why Python?
+
+### Why Mojo?
+
 ## Community
 
-- **GitHub**: [https://github.com/tedmoore/MMMAudio](https://github.com/tedmoore/MMMAudio)
+- **GitHub**: [https://github.com/spluta/MMMAudio](https://github.com/spluta/MMMAudio)
 - **Issues**: Report bugs and feature requests on GitHub
