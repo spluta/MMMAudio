@@ -26,6 +26,12 @@ See `root/requirements-docs.txt`.
 
 *Presented here in "chronological" order*
 
+There's really no need to *build* the docs locally, what is more useful is to "serve locally" (see below).
+
+The reason one doesn't need to full-on *build* locally is because the docs get built by GitHub on push via GitHub Actions and deployed to GitHub Pages. When iterating on designing the docs it's easier to serve locally and inspect in a browser.
+
+The process outlined here is also exactly (or almost exactly) what happens when the docs get built by GitHub Actions. To see more specifically the GitHub Actions script, see `./.github/workflows/pages.yml`.
+
 1. Make sure to install dependencies:
 
 ```bash
@@ -41,11 +47,19 @@ The `mkdocs.yml` file indicates that the `on_pre_build` hook should run, which i
 3. Finds all the Mojo files in directories that contain source files (specified in `generate_docs.py` with the variable `HARDCODED_SOURCE_DIRS`) and for each file: (a) uses `mojo doc` to get a `json` string from standard out, (b) turn that string in to `dict`, (c) removes information from that `dict` that isn't worth rendering in the documentation, such as the methods `__init__` and `__repr__` as well as the argument `self`, (d) uses the remaining contents of the `dict` as context for rendering a Markdown file to document what is in the file. The Markdown file has the same basename as the Mojo file. **Because the Mojo file basename corresponds to the way it appears in the documentation, each Mojo struct should live in its own file. This will make the documentation clearer to navigate on the documentation site.** 
 4. Looks in the `root/examples` directory and finds all the Python files. **It assumes there will be a Mojo file of the same name. The script also assumes that each example consists of just the two files and that any other code that is needed can be imported from the MMMAudio core.** This correspondence simplifies file management for rendering the examples into the documentation and makes the process of editing and creating examples clearer. The two files are both pasted into a Markdown file (using `example_python_and_mojo_jinja.md`) which is saved to the `docs_md/examples` directory.
 
-Once `generate_docs.py` is complete, `mkdocs` then build the site, putting all the HTML in the `docs` directory. 
+Once `generate_docs.py` is complete, `mkdocs` then build the site, putting all the HTML in the `site` directory. 
 
 ## Serve Locally
 
 To preview the documentation locally:
+
+Make sure to install dependencies:
+
+```bash
+pip install -r requirements-docs.txt
+```
+
+Then run:
 
 ```bash
 mkdocs serve

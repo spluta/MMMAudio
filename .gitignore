@@ -159,9 +159,6 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
-
 # mypy
 .mypy_cache/
 .dmypy.json
@@ -217,4 +214,4 @@ __marimo__/
 
 # MkDocs
 doc_generation/docs_md
-docs
+site
