@@ -28,6 +28,18 @@ jobs:
         run: |
           pip install mkdocs mkdocs-material
 
+      - name: Create docs_md dir
+        run: |
+          mkdir -p doc_generation/docs_md
+
+      - name: Debug workspace
+        run: |
+            pwd
+            ls -la
+            ls -la doc_generation || true
+            ls -la doc_generation/docs_md || true
+            cat mkdocs.yml || true  
+
       - name: Build site
         run: mkdocs build --strict
 
