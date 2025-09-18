@@ -1,7 +1,3 @@
-<!-- 
-The content in this block from the mojo doc is referring to the document.
-Since one document may contain many functions and/or structs, we won't
-
 # {{ decl.name }}
 
 {% if decl.summary %}
@@ -10,7 +6,7 @@ Since one document may contain many functions and/or structs, we won't
 
 {% if decl.description %}
 {{ decl.description }}
-{% endif %} -->
+{% endif %}
 
 {% if decl.functions %}
 ## Functions
@@ -105,8 +101,7 @@ Since one document may contain many functions and/or structs, we won't
 ```
 
 {% if struct.parentTraits %}
-#### Parent Traits
-
+**Parent Traits:** 
 {% for trait in struct.parentTraits %}
 - [`{{ trait.name }}`]({{ trait.path }})
 {% endfor %}
@@ -117,22 +112,6 @@ Since one document may contain many functions and/or structs, we won't
 
 {% for param in struct.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
-{% endfor %}
-{% endif %}
-
-{% if struct.fields %}
-#### Fields
-
-{% for field in struct.fields %}
-- **{{ field.name }}**{% if field.type %}: `{{ field.type }}`{% endif %}{% if field.description %} - {{ field.description }}{% endif %}
-{% endfor %}
-{% endif %}
-
-{% if struct.aliases %}
-#### Aliases
-
-{% for alias in struct.aliases %}
-- **{{ alias.name }}**{% if alias.value %} = `{{ alias.value }}`{% endif %}{% if alias.description %} - {{ alias.description }}{% endif %}
 {% endfor %}
 {% endif %}
 
