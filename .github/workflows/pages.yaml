@@ -26,7 +26,7 @@ jobs:
 
       - name: Install mkdocs and theme
         run: |
-          pip install mkdocs mkdocs-material
+          pip install mkdocs mkdocs-material mkdocstrings mkdocs-simple-hooks pymdown-extensions
 
       - name: Create docs_md dir
         run: |
