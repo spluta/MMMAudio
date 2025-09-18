@@ -28,6 +28,10 @@ jobs:
         run: |
           pip install mkdocs mkdocs-material "mkdocstrings[python]" mkdocs-simple-hooks pymdown-extensions
 
+      - name: Install Mojo for mojo docs
+        run: |
+          pip install --pre modular --index-url https://dl.modular.com/public/nightly/python/simple/
+
       - name: Create docs_md dir
         run: |
           mkdir -p doc_generation/docs_md
