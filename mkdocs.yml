@@ -69,8 +69,8 @@ nav:
     - Default Graph: examples/Default_Graph.md
     - In2Out: examples/In2Out.md
     - Pan Az: examples/Pan_Az.md
-    - Many Oscillators: examples/many_oscillators.md
-    - Feedback Delays: examples/feedback_delays.md
+    - Many Oscillators: examples/ManyOscillators.md
+    - Feedback Delays: examples/FeedbackDelays.md
     - Grains: examples/Grains.md
     - Record: examples/Record.md
     - PlayBuf Graph: examples/PlayBuf_Graph.md
@@ -118,7 +118,6 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_pre_build: "doc_generation.generate_docs:main"
-        on_post_build: "doc_generation.generate_docs:clean_docs_md"
   - with-pdf:
       output_path: ./MMMAudio.pdf
       cover_title: MMMAudio Documentation
