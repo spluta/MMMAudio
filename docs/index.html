@@ -475,6 +475,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Why">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Python?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-mojo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Mojo?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#community" class="md-nav__link">
     <span class="md-ellipsis">
       Community
@@ -1351,7 +1384,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/Default_Graph.md" class="md-nav__link">
+      <a href="examples/Default_Graph/" class="md-nav__link">
         
   
   
@@ -1374,7 +1407,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/In2Out.md" class="md-nav__link">
+      <a href="examples/In2Out/" class="md-nav__link">
         
   
   
@@ -1466,7 +1499,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/Grains.md" class="md-nav__link">
+      <a href="examples/Grains/" class="md-nav__link">
         
   
   
@@ -1489,7 +1522,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/Record.md" class="md-nav__link">
+      <a href="examples/Record/" class="md-nav__link">
         
   
   
@@ -1558,7 +1591,7 @@
   
   
     <li class="md-nav__item">
-      <a href="examples/Torch_MLP.md" class="md-nav__link">
+      <a href="examples/Torch_MLP/" class="md-nav__link">
         
   
   
@@ -1702,7 +1735,7 @@
   
   
     <li class="md-nav__item">
-      <a href="contributing/contributing/" class="md-nav__link">
+      <a href="contributing/contributing.md" class="md-nav__link">
         
   
   
@@ -1803,6 +1836,39 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#why" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Why">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Python?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-mojo" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why Mojo?
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#community" class="md-nav__link">
     <span class="md-ellipsis">
       Community
@@ -1841,25 +1907,14 @@
 <li><strong>ML Integration</strong>: Support for neural network audio processing</li>
 </ul>
 <h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMAudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">MMMAudio</span>
-</span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_dsp.Osc</span><span class="w"> </span><span class="kn">import</span> <span class="n">SineOsc</span>
-</span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-</span><span id="__span-0-4"><a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Create audio engine</span>
-</span><span id="__span-0-5"><a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">audio</span> <span class="o">=</span> <span class="n">MMMAudio</span><span class="p">(</span><span class="n">sample_rate</span><span class="o">=</span><span class="mi">44100</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="mi">512</span><span class="p">)</span>
-</span><span id="__span-0-6"><a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-</span><span id="__span-0-7"><a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="c1"># Create and connect oscillator</span>
-</span><span id="__span-0-8"><a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="n">osc</span> <span class="o">=</span> <span class="n">SineOsc</span><span class="p">(</span><span class="n">frequency</span><span class="o">=</span><span class="mf">440.0</span><span class="p">)</span>
-</span><span id="__span-0-9"><a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="n">audio</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">osc</span><span class="p">,</span> <span class="n">audio</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
-</span><span id="__span-0-10"><a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-</span><span id="__span-0-11"><a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Start processing</span>
-</span><span id="__span-0-12"><a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">audio</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>
 </span></code></pre></div>
 <h2 id="documentation-structure">Documentation Structure<a class="headerlink" href="#documentation-structure" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><a href="getting-started/">Getting Started</a></strong>: Installation and basic usage</li>
 <li><strong><a href="api/">API Reference</a></strong>: Complete API documentation</li>
 <li><strong><a href="examples/">Examples</a></strong>: Practical usage examples</li>
-<li><strong><a href="development/documentation.md">Development</a></strong>: Contributing and development guide</li>
+<li><strong><a href="contributing/contributing.md">Contributing</a></strong>: Contributing and development guide</li>
 </ul>
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <p>MMMAudio is built around a graph-based processing model where audio flows through connected nodes. Each node can be implemented in either Python (for flexibility) or Mojo (for performance).</p>
@@ -1869,9 +1924,12 @@
 <li><strong>Framework</strong> (<code>mmm_src</code>): Audio engine and graph management</li>
 <li><strong>Utilities</strong> (<code>mmm_utils</code>): Mathematical and utility functions</li>
 </ul>
+<h2 id="why">Why<a class="headerlink" href="#why" title="Permanent link">&para;</a></h2>
+<h3 id="why-python">Why Python?<a class="headerlink" href="#why-python" title="Permanent link">&para;</a></h3>
+<h3 id="why-mojo">Why Mojo?<a class="headerlink" href="#why-mojo" title="Permanent link">&para;</a></h3>
 <h2 id="community">Community<a class="headerlink" href="#community" title="Permanent link">&para;</a></h2>
 <ul>
-<li><strong>GitHub</strong>: <a href="https://github.com/tedmoore/MMMAudio">https://github.com/tedmoore/MMMAudio</a></li>
+<li><strong>GitHub</strong>: <a href="https://github.com/spluta/MMMAudio">https://github.com/spluta/MMMAudio</a></li>
 <li><strong>Issues</strong>: Report bugs and feature requests on GitHub</li>
 </ul>
 

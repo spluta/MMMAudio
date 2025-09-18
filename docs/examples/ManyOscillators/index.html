@@ -1254,7 +1254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Default_Graph.md" class="md-nav__link">
+      <a href="../Default_Graph/" class="md-nav__link">
         
   
   
@@ -1277,7 +1277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../In2Out.md" class="md-nav__link">
+      <a href="../In2Out/" class="md-nav__link">
         
   
   
@@ -1438,7 +1438,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Grains.md" class="md-nav__link">
+      <a href="../Grains/" class="md-nav__link">
         
   
   
@@ -1461,7 +1461,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Record.md" class="md-nav__link">
+      <a href="../Record/" class="md-nav__link">
         
   
   
@@ -1530,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Torch_MLP.md" class="md-nav__link">
+      <a href="../Torch_MLP/" class="md-nav__link">
         
   
   
@@ -1674,7 +1674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/contributing/" class="md-nav__link">
+      <a href="../../contributing/contributing.md" class="md-nav__link">
         
   
   
@@ -1769,8 +1769,9 @@
   
 
 
+<p><em>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></em></p>
 <h1 id="manyoscillators">ManyOscillators<a class="headerlink" href="#manyoscillators" title="Permanent link">&para;</a></h1>
-<p>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></p>
+<!-- Use mkdocs ":::" syntax to get docstring from Python file -->
 
 
 <div class="doc doc-object doc-module">
@@ -1810,6 +1811,7 @@
     </div>
 
 </div><h2 id="python-code">Python Code<a class="headerlink" href="#python-code" title="Permanent link">&para;</a></h2>
+<!-- Puts the remaining lines from the Python script here -->
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMAudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">MMMAudio</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">mmm_audio</span> <span class="o">=</span> <span class="n">MMMAudio</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">graph_name</span><span class="o">=</span><span class="s2">&quot;ManyOscillators&quot;</span><span class="p">,</span> <span class="n">package_name</span><span class="o">=</span><span class="s2">&quot;examples&quot;</span><span class="p">)</span>
@@ -1825,6 +1827,7 @@
 </span><span id="__span-0-13"><a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">mmm_audio</span><span class="o">.</span><span class="n">stop_audio</span><span class="p">()</span> <span class="c1"># stop/pause the audio thread</span>
 </span></code></pre></div>
 <h2 id="mojo-code">Mojo Code<a class="headerlink" href="#mojo-code" title="Permanent link">&para;</a></h2>
+<!-- Put the contents of the .mojo file *of the same name!* here -->
 <div class="language-mojo highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMWorld</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="n">MMMWorld</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_utils.functions</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMTraits</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>

@@ -117,10 +117,6 @@
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://spluta.github.io/MMMAudio/contributing/contributing/</loc>
-         <lastmod>2025-09-18</lastmod>
-    </url>
-    <url>
          <loc>https://spluta.github.io/MMMAudio/contributing/documentation/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
@@ -129,7 +125,19 @@
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/Default_Graph/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
          <loc>https://spluta.github.io/MMMAudio/examples/FeedbackDelays/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/Grains/</loc>
+         <lastmod>2025-09-18</lastmod>
+    </url>
+    <url>
+         <loc>https://spluta.github.io/MMMAudio/examples/In2Out/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
@@ -153,23 +161,11 @@
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://spluta.github.io/MMMAudio/examples/default/</loc>
+         <loc>https://spluta.github.io/MMMAudio/examples/Record/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
     <url>
-         <loc>https://spluta.github.io/MMMAudio/examples/grains/</loc>
-         <lastmod>2025-09-18</lastmod>
-    </url>
-    <url>
-         <loc>https://spluta.github.io/MMMAudio/examples/in2out/</loc>
-         <lastmod>2025-09-18</lastmod>
-    </url>
-    <url>
-         <loc>https://spluta.github.io/MMMAudio/examples/record/</loc>
-         <lastmod>2025-09-18</lastmod>
-    </url>
-    <url>
-         <loc>https://spluta.github.io/MMMAudio/examples/torch_mlp/</loc>
+         <loc>https://spluta.github.io/MMMAudio/examples/Torch_MLP/</loc>
          <lastmod>2025-09-18</lastmod>
     </url>
 </urlset>

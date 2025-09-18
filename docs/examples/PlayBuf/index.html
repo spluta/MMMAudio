@@ -1245,7 +1245,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Default_Graph.md" class="md-nav__link">
+      <a href="../Default_Graph/" class="md-nav__link">
         
   
   
@@ -1268,7 +1268,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../In2Out.md" class="md-nav__link">
+      <a href="../In2Out/" class="md-nav__link">
         
   
   
@@ -1360,7 +1360,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Grains.md" class="md-nav__link">
+      <a href="../Grains/" class="md-nav__link">
         
   
   
@@ -1383,7 +1383,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Record.md" class="md-nav__link">
+      <a href="../Record/" class="md-nav__link">
         
   
   
@@ -1452,7 +1452,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Torch_MLP.md" class="md-nav__link">
+      <a href="../Torch_MLP/" class="md-nav__link">
         
   
   
@@ -1596,7 +1596,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/contributing/" class="md-nav__link">
+      <a href="../../contributing/contributing.md" class="md-nav__link">
         
   
   
@@ -1691,8 +1691,9 @@
   
 
 
+<p><em>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></em></p>
 <h1 id="playbuf">PlayBuf<a class="headerlink" href="#playbuf" title="Permanent link">&para;</a></h1>
-<p>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></p>
+<!-- Use mkdocs ":::" syntax to get docstring from Python file -->
 
 
 <div class="doc doc-object doc-module">
@@ -1729,6 +1730,7 @@
     </div>
 
 </div><h2 id="python-code">Python Code<a class="headerlink" href="#python-code" title="Permanent link">&para;</a></h2>
+<!-- Puts the remaining lines from the Python script here -->
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMAudio</span><span class="w"> </span><span class="kn">import</span> <span class="n">MMMAudio</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
@@ -1756,7 +1758,88 @@
 </span><span id="__span-0-25"><a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a><span class="n">mmm_audio</span><span class="o">.</span><span class="n">stop_audio</span><span class="p">()</span> <span class="c1"># stop/pause the audio thread</span>
 </span></code></pre></div>
 <h2 id="mojo-code">Mojo Code<a class="headerlink" href="#mojo-code" title="Permanent link">&para;</a></h2>
-<div class="language-mojo highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>
+<!-- Put the contents of the .mojo file *of the same name!* here -->
+<div class="language-mojo highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMWorld</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="n">MMMWorld</span>
+</span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMTraits</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
+</span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_utils.functions</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
+</span><span id="__span-1-4"><a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_dsp.Filters</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="n">Lag</span>
+</span><span id="__span-1-5"><a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+</span><span id="__span-1-6"><a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_dsp.Buffer</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
+</span><span id="__span-1-7"><a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_dsp.PlayBuf</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
+</span><span id="__span-1-8"><a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_dsp.Filters</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="n">VAMoogLadder</span>
+</span><span id="__span-1-9"><a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+</span><span id="__span-1-10"><a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="k">struct</span><span class="w"> </span><span class="n n-Struct">BufSynth</span><span class="p">(</span><span class="n">Representable</span><span class="p">,</span><span class="w"> </span><span class="nb">Movable</span><span class="p">,</span><span class="w"> </span><span class="nb">Copyable</span><span class="p">):</span>
+</span><span id="__span-1-11"><a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">world_ptr</span><span class="p">:</span><span class="w"> </span><span class="n">UnsafePointer</span><span class="p">[</span><span class="n">MMMWorld</span><span class="p">]</span><span class="w"> </span>
+</span><span id="__span-1-12"><a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">buffer</span><span class="p">:</span><span class="w"> </span><span class="n">InterleavedBuffer</span>
+</span><span id="__span-1-13"><a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>
+</span><span id="__span-1-14"><a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">num_chans</span><span class="p">:</span><span class="w"> </span><span class="nb">Int64</span>
+</span><span id="__span-1-15"><a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>
+</span><span id="__span-1-16"><a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">play_buf</span><span class="p">:</span><span class="w"> </span><span class="n">PlayBuf</span>
+</span><span id="__span-1-17"><a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">playback_speed</span><span class="p">:</span><span class="w"> </span><span class="nb">Float64</span>
+</span><span id="__span-1-18"><a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
+</span><span id="__span-1-19"><a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">moog</span><span class="p">:</span><span class="w"> </span><span class="n">VAMoogLadder</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+</span><span id="__span-1-20"><a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">lpf_freq</span><span class="p">:</span><span class="w"> </span><span class="nb">Float64</span>
+</span><span id="__span-1-21"><a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">lpf_freq_lag</span><span class="p">:</span><span class="w"> </span><span class="n">Lag</span>
+</span><span id="__span-1-22"><a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
+</span><span id="__span-1-23"><a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="n">out</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">world_ptr</span><span class="p">:</span><span class="w"> </span><span class="n">UnsafePointer</span><span class="p">[</span><span class="n">MMMWorld</span><span class="p">]):</span>
+</span><span id="__span-1-24"><a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world_ptr</span><span class="w"> </span>
+</span><span id="__span-1-25"><a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
+</span><span id="__span-1-26"><a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="w">        </span><span class="c1"># load the audio buffer </span>
+</span><span id="__span-1-27"><a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">InterleavedBuffer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;resources/Shiverer.wav&quot;</span><span class="p">)</span>
+</span><span id="__span-1-28"><a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">num_chans</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">num_chans</span><span class="w">  </span>
+</span><span id="__span-1-29"><a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
+</span><span id="__span-1-30"><a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a><span class="w">        </span><span class="c1"># without printing this, the compiler wants to free the buffer for some reason</span>
+</span><span id="__span-1-31"><a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a><span class="w">        </span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loaded buffer with&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">num_chans</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;channels and&quot;</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">num_frames</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;frames.&quot;</span><span class="p">)</span>
+</span><span id="__span-1-32"><a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>
+</span><span id="__span-1-33"><a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">playback_speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">1.0</span>
+</span><span id="__span-1-34"><a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>
+</span><span id="__span-1-35"><a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">play_buf</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">PlayBuf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="p">)</span>
+</span><span id="__span-1-36"><a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
+</span><span id="__span-1-37"><a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">moog</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">VAMoogLadder</span><span class="p">[</span><span class="mi">2</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="p">)</span>
+</span><span id="__span-1-38"><a id="__codelineno-1-38" name="__codelineno-1-38" href="#__codelineno-1-38"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">lpf_freq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">20000.0</span>
+</span><span id="__span-1-39"><a id="__codelineno-1-39" name="__codelineno-1-39" href="#__codelineno-1-39"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">lpf_freq_lag</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Lag</span><span class="p">(</span><span class="n">world_ptr</span><span class="p">)</span>
+</span><span id="__span-1-40"><a id="__codelineno-1-40" name="__codelineno-1-40" href="#__codelineno-1-40"></a>
+</span><span id="__span-1-41"><a id="__codelineno-1-41" name="__codelineno-1-41" href="#__codelineno-1-41"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="n">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]:</span>
+</span><span id="__span-1-42"><a id="__codelineno-1-42" name="__codelineno-1-42" href="#__codelineno-1-42"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">get_msgs</span><span class="p">()</span>
+</span><span id="__span-1-43"><a id="__codelineno-1-43" name="__codelineno-1-43" href="#__codelineno-1-43"></a>
+</span><span id="__span-1-44"><a id="__codelineno-1-44" name="__codelineno-1-44" href="#__codelineno-1-44"></a><span class="w">        </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">play_buf</span><span class="o">.</span><span class="n">next</span><span class="p">[</span><span class="n">N</span><span class="o">=</span><span class="mi">2</span><span class="p">](</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">playback_speed</span><span class="p">,</span><span class="w"> </span><span class="kc">True</span><span class="p">)</span>
+</span><span id="__span-1-45"><a id="__codelineno-1-45" name="__codelineno-1-45" href="#__codelineno-1-45"></a>
+</span><span id="__span-1-46"><a id="__codelineno-1-46" name="__codelineno-1-46" href="#__codelineno-1-46"></a><span class="w">        </span><span class="n">freq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">lpf_freq_lag</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lpf_freq</span><span class="p">,</span><span class="w"> </span><span class="mf">0.1</span><span class="p">)</span>
+</span><span id="__span-1-47"><a id="__codelineno-1-47" name="__codelineno-1-47" href="#__codelineno-1-47"></a><span class="w">        </span><span class="n">out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">moog</span><span class="o">.</span><span class="n">next</span><span class="p">(</span><span class="n">out</span><span class="p">,</span><span class="w"> </span><span class="n">freq</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span>
+</span><span id="__span-1-48"><a id="__codelineno-1-48" name="__codelineno-1-48" href="#__codelineno-1-48"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="n">out</span>
+</span><span id="__span-1-49"><a id="__codelineno-1-49" name="__codelineno-1-49" href="#__codelineno-1-49"></a>
+</span><span id="__span-1-50"><a id="__codelineno-1-50" name="__codelineno-1-50" href="#__codelineno-1-50"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="p">:</span>
+</span><span id="__span-1-51"><a id="__codelineno-1-51" name="__codelineno-1-51" href="#__codelineno-1-51"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="s2">&quot;BufSynth&quot;</span><span class="p">)</span>
+</span><span id="__span-1-52"><a id="__codelineno-1-52" name="__codelineno-1-52" href="#__codelineno-1-52"></a>
+</span><span id="__span-1-53"><a id="__codelineno-1-53" name="__codelineno-1-53" href="#__codelineno-1-53"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">get_msgs</span><span class="p">(</span><span class="n">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">:</span><span class="w"> </span><span class="n">Self</span><span class="p">):</span>
+</span><span id="__span-1-54"><a id="__codelineno-1-54" name="__codelineno-1-54" href="#__codelineno-1-54"></a><span class="w">        </span><span class="c1"># calls to get_msg and get_midi return an Optional type</span>
+</span><span id="__span-1-55"><a id="__codelineno-1-55" name="__codelineno-1-55" href="#__codelineno-1-55"></a><span class="w">        </span><span class="c1"># so you must get the value, then test the value to see if it exists, before using the value</span>
+</span><span id="__span-1-56"><a id="__codelineno-1-56" name="__codelineno-1-56" href="#__codelineno-1-56"></a><span class="w">        </span><span class="c1"># get_msg returns a single list of values while get_midi returns a list of lists of values</span>
+</span><span id="__span-1-57"><a id="__codelineno-1-57" name="__codelineno-1-57" href="#__codelineno-1-57"></a>
+</span><span id="__span-1-58"><a id="__codelineno-1-58" name="__codelineno-1-58" href="#__codelineno-1-58"></a><span class="w">        </span><span class="n">fader1</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_msg</span><span class="p">(</span><span class="s2">&quot;/fader1&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1"># fader1 will be an Optional</span>
+</span><span id="__span-1-59"><a id="__codelineno-1-59" name="__codelineno-1-59" href="#__codelineno-1-59"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">fader1</span><span class="p">:</span><span class="w"> </span><span class="c1"># if fader1 is None, we do nothing</span>
+</span><span id="__span-1-60"><a id="__codelineno-1-60" name="__codelineno-1-60" href="#__codelineno-1-60"></a><span class="w">            </span><span class="bp">self</span><span class="o">.</span><span class="n">playback_speed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linexp</span><span class="p">(</span><span class="n">fader1</span><span class="o">.</span><span class="n">value</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">0.25</span><span class="p">,</span><span class="w"> </span><span class="mf">4.0</span><span class="p">)</span>
+</span><span id="__span-1-61"><a id="__codelineno-1-61" name="__codelineno-1-61" href="#__codelineno-1-61"></a><span class="w">        </span><span class="n">fader2</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_msg</span><span class="p">(</span><span class="s2">&quot;/fader2&quot;</span><span class="p">)</span><span class="w"> </span><span class="c1"># fader2 will be an Optional</span>
+</span><span id="__span-1-62"><a id="__codelineno-1-62" name="__codelineno-1-62" href="#__codelineno-1-62"></a><span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="n">fader2</span><span class="p">:</span><span class="w"> </span><span class="c1"># if fader2 is None, we do nothing</span>
+</span><span id="__span-1-63"><a id="__codelineno-1-63" name="__codelineno-1-63" href="#__codelineno-1-63"></a><span class="w">            </span><span class="n">freq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">linexp</span><span class="p">(</span><span class="n">fader2</span><span class="o">.</span><span class="n">value</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span><span class="w"> </span><span class="mf">0.0</span><span class="p">,</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span><span class="w"> </span><span class="mf">20.0</span><span class="p">,</span><span class="w"> </span><span class="mf">20000.0</span><span class="p">)</span>
+</span><span id="__span-1-64"><a id="__codelineno-1-64" name="__codelineno-1-64" href="#__codelineno-1-64"></a><span class="w">            </span><span class="bp">self</span><span class="o">.</span><span class="n">lpf_freq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">freq</span>
+</span><span id="__span-1-65"><a id="__codelineno-1-65" name="__codelineno-1-65" href="#__codelineno-1-65"></a>
+</span><span id="__span-1-66"><a id="__codelineno-1-66" name="__codelineno-1-66" href="#__codelineno-1-66"></a><span class="k">struct</span><span class="w"> </span><span class="n n-Struct">PlayBuf_Graph</span><span class="p">(</span><span class="n">Representable</span><span class="p">,</span><span class="w"> </span><span class="nb">Movable</span><span class="p">,</span><span class="w"> </span><span class="nb">Copyable</span><span class="p">):</span>
+</span><span id="__span-1-67"><a id="__codelineno-1-67" name="__codelineno-1-67" href="#__codelineno-1-67"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">world_ptr</span><span class="p">:</span><span class="w"> </span><span class="n">UnsafePointer</span><span class="p">[</span><span class="n">MMMWorld</span><span class="p">]</span>
+</span><span id="__span-1-68"><a id="__codelineno-1-68" name="__codelineno-1-68" href="#__codelineno-1-68"></a>
+</span><span id="__span-1-69"><a id="__codelineno-1-69" name="__codelineno-1-69" href="#__codelineno-1-69"></a><span class="w">    </span><span class="k">var</span><span class="w"> </span><span class="nv">buf_synth</span><span class="p">:</span><span class="w"> </span><span class="n">BufSynth</span><span class="w">  </span><span class="c1"># Instance of the GrainSynth</span>
+</span><span id="__span-1-70"><a id="__codelineno-1-70" name="__codelineno-1-70" href="#__codelineno-1-70"></a>
+</span><span id="__span-1-71"><a id="__codelineno-1-71" name="__codelineno-1-71" href="#__codelineno-1-71"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="n">out</span><span class="w"> </span><span class="bp">self</span><span class="p">,</span><span class="w"> </span><span class="n">world_ptr</span><span class="p">:</span><span class="w"> </span><span class="n">UnsafePointer</span><span class="p">[</span><span class="n">MMMWorld</span><span class="p">]):</span>
+</span><span id="__span-1-72"><a id="__codelineno-1-72" name="__codelineno-1-72" href="#__codelineno-1-72"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">world_ptr</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">world_ptr</span>
+</span><span id="__span-1-73"><a id="__codelineno-1-73" name="__codelineno-1-73" href="#__codelineno-1-73"></a>
+</span><span id="__span-1-74"><a id="__codelineno-1-74" name="__codelineno-1-74" href="#__codelineno-1-74"></a><span class="w">        </span><span class="bp">self</span><span class="o">.</span><span class="n">buf_synth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">BufSynth</span><span class="p">(</span><span class="n">world_ptr</span><span class="p">)</span><span class="w">  </span>
+</span><span id="__span-1-75"><a id="__codelineno-1-75" name="__codelineno-1-75" href="#__codelineno-1-75"></a>
+</span><span id="__span-1-76"><a id="__codelineno-1-76" name="__codelineno-1-76" href="#__codelineno-1-76"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">String</span><span class="p">:</span>
+</span><span id="__span-1-77"><a id="__codelineno-1-77" name="__codelineno-1-77" href="#__codelineno-1-77"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nb">String</span><span class="p">(</span><span class="s2">&quot;PlayBuf_Graph&quot;</span><span class="p">)</span>
+</span><span id="__span-1-78"><a id="__codelineno-1-78" name="__codelineno-1-78" href="#__codelineno-1-78"></a>
+</span><span id="__span-1-79"><a id="__codelineno-1-79" name="__codelineno-1-79" href="#__codelineno-1-79"></a><span class="w">    </span><span class="k">fn</span><span class="w"> </span><span class="nf">next</span><span class="p">(</span><span class="n">mut</span><span class="w"> </span><span class="bp">self</span><span class="p">:</span><span class="w"> </span><span class="n">PlayBuf_Graph</span><span class="p">)</span><span class="w"> </span><span class="o">-&gt;</span><span class="w"> </span><span class="nb">SIMD</span><span class="p">[</span><span class="nb">DType</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span><span class="w"> </span><span class="mi">2</span><span class="p">]:</span>
+</span><span id="__span-1-80"><a id="__codelineno-1-80" name="__codelineno-1-80" href="#__codelineno-1-80"></a><span class="w">        </span><span class="c1">#return SIMD[DType.float64, 2](0.0)</span>
+</span><span id="__span-1-81"><a id="__codelineno-1-81" name="__codelineno-1-81" href="#__codelineno-1-81"></a><span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">buf_synth</span><span class="o">.</span><span class="n">next</span><span class="p">()</span><span class="w">  </span><span class="c1"># Return the combined output sample</span>
 </span></code></pre></div>
 
 

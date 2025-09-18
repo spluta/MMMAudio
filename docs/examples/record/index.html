@@ -12,9 +12,13 @@
         <meta name="author" content="Sam Pluta">
       
       
-        <link rel="canonical" href="https://spluta.github.io/MMMAudio/examples/record/">
+        <link rel="canonical" href="https://spluta.github.io/MMMAudio/examples/Record/">
       
       
+        <link rel="prev" href="../Grains/">
+      
+      
+        <link rel="next" href="../Midi_Sequencer/">
       
       
       <link rel="icon" href="../../assets/images/favicon.png">
@@ -22,7 +26,7 @@
     
     
       
-        <title>record - MMMAudio Documentation</title>
+        <title>Record - MMMAudio Documentation</title>
       
     
     
@@ -110,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              record
+              Record
             
           </span>
         </div>
@@ -282,10 +286,12 @@
   
   
   
+    
+  
   
     
     
-      <li class="md-tabs__item">
+      <li class="md-tabs__item md-tabs__item--active">
         <a href="../" class="md-tabs__link">
           
   
@@ -1174,28 +1180,31 @@
       
   
   
+    
   
   
+  
     
     
     
     
+      
+        
+        
       
       
         
       
     
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
       
         
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
         
           
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
             
   
   
@@ -1208,7 +1217,7 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
           <label class="md-nav__title" for="__nav_4">
             <span class="md-nav__icon md-icon"></span>
             Examples
@@ -1245,7 +1254,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Default_Graph.md" class="md-nav__link">
+      <a href="../Default_Graph/" class="md-nav__link">
         
   
   
@@ -1268,7 +1277,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../In2Out.md" class="md-nav__link">
+      <a href="../In2Out/" class="md-nav__link">
         
   
   
@@ -1360,7 +1369,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Grains.md" class="md-nav__link">
+      <a href="../Grains/" class="md-nav__link">
         
   
   
@@ -1380,10 +1389,32 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../Record.md" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Record
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -1394,6 +1425,53 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#examples.Record" class="md-nav__link">
+    <span class="md-ellipsis">
+      Record
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#python-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Python Code
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mojo-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Mojo Code
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -1452,7 +1530,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../Torch_MLP.md" class="md-nav__link">
+      <a href="../Torch_MLP/" class="md-nav__link">
         
   
   
@@ -1596,7 +1674,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../contributing/contributing/" class="md-nav__link">
+      <a href="../../contributing/contributing.md" class="md-nav__link">
         
   
   
@@ -1646,9 +1724,9 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#examples.record" class="md-nav__link">
+  <a href="#examples.Record" class="md-nav__link">
     <span class="md-ellipsis">
-      record
+      Record
     </span>
   </a>
   
@@ -1691,15 +1769,16 @@
   
 
 
-<h1 id="record">record<a class="headerlink" href="#record" title="Permanent link">&para;</a></h1>
-<p>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></p>
+<p><em>For more information about the examples, such as how the Python and Mojo files interact with each other, see the <a href="../">Examples Overview</a></em></p>
+<h1 id="record">Record<a class="headerlink" href="#record" title="Permanent link">&para;</a></h1>
+<!-- Use mkdocs ":::" syntax to get docstring from Python file -->
 
 
 <div class="doc doc-object doc-module">
 
 
 
-<a id="examples.record"></a>
+<a id="examples.Record"></a>
     <div class="doc doc-contents first">
 
 
@@ -1729,6 +1808,7 @@
     </div>
 
 </div><h2 id="python-code">Python Code<a class="headerlink" href="#python-code" title="Permanent link">&para;</a></h2>
+<!-- Puts the remaining lines from the Python script here -->
 <div class="language-python highlight"><pre><span></span><code><span id="__span-0-1"><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMAudio</span><span class="w"> </span><span class="kn">import</span> <span class="o">*</span>
 </span><span id="__span-0-2"><a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="n">list_audio_devices</span><span class="p">()</span>
 </span><span id="__span-0-3"><a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
@@ -1780,6 +1860,7 @@
 </span><span id="__span-0-49"><a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a><span class="n">mmm_audio</span><span class="o">.</span><span class="n">stop_audio</span><span class="p">()</span>
 </span></code></pre></div>
 <h2 id="mojo-code">Mojo Code<a class="headerlink" href="#mojo-code" title="Permanent link">&para;</a></h2>
+<!-- Put the contents of the .mojo file *of the same name!* here -->
 <div class="language-mojo highlight"><pre><span></span><code><span id="__span-1-1"><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMWorld</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="n">MMMWorld</span>
 </span><span id="__span-1-2"><a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_utils.functions</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
 </span><span id="__span-1-3"><a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">mmm_src.MMMTraits</span><span class="w"> </span><span class="kn">import</span><span class="w"> </span><span class="o">*</span>
