@@ -121,7 +121,7 @@ fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Clips each element in the SIMD vector to the specified range.
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
     Args:
         val: The SIMD vector to clip. Each element will be clipped individually.
         lo: The minimum value.
@@ -141,7 +141,7 @@ fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi:
 fn wrap[N: Int=1](value: SIMD[DType.float64, N], min_val: SIMD[DType.float64, N], max_val: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Wraps a value around a specified range.
     Parameters:
-        N: size of the SIMD vector - defaults to 1.
+        N: Size of the SIMD vector - defaults to 1..
 
     Args:
         value: The value to wrap.
