@@ -40,7 +40,8 @@ nav:
     - Overview: api/index.md
     - Core DSP: 
       - Utilities: api/mmm_utils/functions.md
-      - Buffers: api/mmm_dsp/Buffer.md
+      - Buffer: api/mmm_dsp/Buffer.md
+      - InterleavedBuffer: api/mmm_dsp/InterleavedBuffer.md
       - Oscillators: api/mmm_dsp/Osc.md
       - Filters: api/mmm_dsp/Filters.md
       - Envelopes: api/mmm_dsp/Env.md
