@@ -10,6 +10,12 @@ from .Oversampling import Oversampling
 
 # Lag is super vectorized for processing in parallel
 struct Lag[N: Int=1](Representable, Movable, Copyable):
+    """A lag processor that smooths input values over time based on a specified lag time in seconds.
+
+    **Arguments:**
+        
+        **N:** Number of channels Lag will process. (This creates SIMD parallel processing.)
+    """
     alias SIMD_vec = SIMD[DType.float64, N]
     var val: Self.SIMD_vec
     var b1: Self.SIMD_vec

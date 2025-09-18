@@ -20,6 +20,8 @@ import subprocess
 from pathlib import Path
 from typing import Dict, Any, List
 
+from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+
 # ---------------- Hard‑coded whitelist of source directories ----------------
 # These are relative to the repository root (one level above this script's dir).
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,10 +32,27 @@ HARDCODED_SOURCE_DIRS = [
     # Add/remove directory names here as needed
 ]
 
-def render_template_str(template_str: str, context: Dict[str, Any]) -> str:
-    """Render a Jinja2 template string with the given context."""
-    template = Template(template_str)
-    return template.render(**context)
+TEMPLATES_DIR = REPO_ROOT / 'doc-generation' / 'templates'
+
+_env: Environment | None = None
+def get_jinja_env() -> Environment:
+    global _env
+    if _env is None:
+        _env = Environment(
+            loader=FileSystemLoader(str(TEMPLATES_DIR)),
+            autoescape=False,
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
+    return _env
+
+def render_template(template_name: str, context: dict) -> str:
+    env = get_jinja_env()
+    try:
+        tmpl = env.get_template(template_name)
+    except TemplateNotFound:
+        raise RuntimeError(f"Template '{template_name}' not found in {TEMPLATES_DIR}")
+    return tmpl.render(**context)
 
 def find_mojo_files(root: Path) -> List[Path]:
     """Return a list of all .mojo files under root (recursively)."""
@@ -87,8 +106,34 @@ def run_mojo_doc(file_path: Path, timeout: int = 30) -> Dict[str, Any]:
         snippet = stdout[:400]
         raise RuntimeError(f"Invalid JSON from mojo doc for {file_path}: {e}\nOutput snippet:\n{snippet}")
 
+def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    decl = data.get('decl', {})
+    structs = decl.get('structs', [])
+    for struct in structs:
+        functions = struct.get('functions', [])
+        # Drop unwanted functions first
+        struct['functions'] = [
+            f for f in functions
+            if f.get('name') not in ('__init__', '__repr__')
+        ]
+        for func in struct['functions']:
+            for ol in func.get('overloads', []):
+                # Remove self from args
+                args = ol.get('args', [])
+                # before = len(args)
+                ol['args'] = [a for a in args if a.get('name') != 'self']
+                # if before != len(ol['args']):
+                #     print(f"Removed 'self' arg from {func.get('name')} in struct {struct.get('name')}")
+                # Also handle 'parameters' if present
+                if 'parameters' in ol:
+                    params = ol['parameters']
+                    # p_before = len(params)
+                    ol['parameters'] = [p for p in params if p.get('name') != 'self']
+                    # if p_before != len(ol['parameters']):
+                    #     print(f"Removed 'self' parameter from {func.get('name')} in struct {struct.get('name')}")
+    return data
 
-def process_mojo_sources(input_dir: Path, output_dir: Path, template_path: Path, verbose: bool=False) -> bool:
+def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
     """Process all Mojo source files under input_dir and emit markdown into output_dir.
 
     Returns True if all files processed successfully.
@@ -98,15 +143,6 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, template_path: Path,
         return False
     if not input_dir.is_dir():
         print(f"Error: '{input_dir}' is not a directory")
-        return False
-    if not template_path.exists():
-        print(f"Error: Template file '{template_path}' does not exist")
-        return False
-
-    try:
-        template_content = template_path.read_text(encoding='utf-8')
-    except Exception as e:
-        print(f"Error reading template file '{template_path}': {e}")
         return False
 
     mojo_files = collect_whitelisted_mojo_files()
@@ -127,7 +163,8 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, template_path: Path,
             print(f"→ {src_file} -> {out_file}")
         try:
             data = run_mojo_doc(src_file)
-            rendered = render_template_str(template_content, data)
+            data = clean_mojo_doc_data(data)
+            rendered = render_template('mojo_doc_template_jinja.md', data)
             out_file.write_text(rendered, encoding='utf-8')
             processed += 1
         except Exception as e:
@@ -138,6 +175,115 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, template_path: Path,
     print(f"  Successfully processed: {processed} files")
     print(f"  Errors: {errors} files")
     return errors == 0
+
+def process_example_file(example_file: Path):
+    if not example_file.exists() or not example_file.is_file():
+        print(f"Example file '{example_file}' does not exist or is not a file, skipping.")
+        return
+
+    example_name = example_file.stem  # filename without suffix
+    output_md_path = REPO_ROOT / 'docs' / 'examples' / f"{example_name}.md"
+    output_md_path.parent.mkdir(parents=True, exist_ok=True)
+
+    try:
+        with open(example_file, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+    except Exception as e:
+        print(f"Error reading example file '{example_file}': {e}")
+        return
+    
+    # Find the code snippet, which is after the docstring, if there is a docstring
+    code_start = 0
+    code_end = len(lines)
+    in_docstring = False
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith('"""') or stripped.startswith("'''"):
+            if in_docstring:
+                # End of docstring
+                code_start = i + 1
+                break
+            else:
+                # Start of docstring
+                in_docstring = True
+                if stripped.count('"""') == 2 or stripped.count("'''") == 2:
+                    # Docstring starts and ends on the same line
+                    in_docstring = False
+                    code_start = i + 1
+        elif in_docstring and (stripped.endswith('"""') or stripped.endswith("'''")):
+            # End of multi-line docstring
+            in_docstring = False
+            code_start = i + 1
+            break
+        elif not in_docstring and stripped and not stripped.startswith('#'):
+            # First non-comment, non-blank line outside docstring
+            code_start = i
+            break
+        
+    code = ''.join(lines[code_start:code_end]).rstrip()
+    
+    context = {
+        'examplename': example_name,
+        'code': code,
+    }
+
+    rendered = render_template('python_example_jinja.md', context)
+    output_md_path.write_text(rendered, encoding='utf-8')
+    print(f"Processed example '{example_file}' -> '{output_md_path}'")         
+
+def process_examples_dir():
+    example_files_dir = REPO_ROOT / 'examples'
+    if not example_files_dir.exists() or not example_files_dir.is_dir():
+        print(f"Examples directory '{example_files_dir}' does not exist or is not a directory, skipping examples processing.")
+        return
+
+    example_file_paths = list(example_files_dir.glob('*.py'))
+
+    print(f"Found {len(example_file_paths)} example files to process.")
+    
+    for example_file in example_file_paths:
+        print(f"Found example file: {example_file} {example_file.name}")
+        if example_file.name == '__init__.py':
+            print(f"Skipping file in examples directory: {example_file} {example_file.name}")
+            continue
+        process_example_file(example_file)
+
+def copy_static_docs(output_dir: Path, args):
+    static_docs_src = Path('doc-generation/static-docs')
+    if static_docs_src.exists() and static_docs_src.is_dir():
+        try:
+            for item in static_docs_src.iterdir():
+                dest = output_dir / item.name
+                if item.is_dir():
+                    shutil.copytree(item, dest, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(item, dest)
+                if args.verbose:
+                    print(f"Copied {'dir' if item.is_dir() else 'file'}: {item} -> {dest}")
+        except Exception as e:
+            print(f"Error copying static docs contents: {e}")
+            sys.exit(1)
+    else:
+        if args.verbose:
+            print(f"No static docs directory at {static_docs_src}, skipping static content copy.")
+
+def clean_output_dir(output_dir: Path, args):
+    if args.verbose:
+        print(f"Cleaning contents of output directory (preserving root): {output_dir}")
+    try:
+        for child in output_dir.iterdir():
+            if child.is_dir():
+                shutil.rmtree(child)
+            else:
+                try:
+                    child.unlink()
+                except FileNotFoundError:
+                    continue
+        # ensure directory still exists
+        output_dir.mkdir(parents=True, exist_ok=True)
+    except Exception as e:  
+        print(f"Error cleaning contents of output directory: {e}")
+        sys.exit(1)
 
 def main():
     """CLI entry point."""
@@ -178,58 +324,26 @@ Examples:
 
     input_dir = Path(args.input_dir).resolve()
     output_dir = Path(args.output_dir).resolve()
-    template_path = Path('doc-generation/templates/mojo_doc_template_jinja.md').resolve()
-
+    
     if args.verbose:
         print(f"Source root: {input_dir}")
         print(f"Output root: {output_dir}")
-        print(f"Template: {template_path}")
 
     if args.clean and output_dir.exists():
-        if args.verbose:
-            print(f"Cleaning contents of output directory (preserving root): {output_dir}")
-        try:
-            for child in output_dir.iterdir():
-                if child.is_dir():
-                    shutil.rmtree(child)
-                else:
-                    try:
-                        child.unlink()
-                    except FileNotFoundError:
-                        continue
-            # ensure directory still exists
-            output_dir.mkdir(parents=True, exist_ok=True)
-        except Exception as e:  
-            print(f"Error cleaning contents of output directory: {e}")
-            sys.exit(1)
+        clean_output_dir(output_dir, args)
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Copy ONLY the contents of static_docs_src into output_dir (not the directory itself)
-    static_docs_src = Path('doc-generation/static-docs')
-    if static_docs_src.exists() and static_docs_src.is_dir():
-        try:
-            for item in static_docs_src.iterdir():
-                dest = output_dir / item.name
-                if item.is_dir():
-                    shutil.copytree(item, dest, dirs_exist_ok=True)
-                else:
-                    shutil.copy2(item, dest)
-                if args.verbose:
-                    print(f"Copied {'dir' if item.is_dir() else 'file'}: {item} -> {dest}")
-        except Exception as e:
-            print(f"Error copying static docs contents: {e}")
-            sys.exit(1)
-    else:
-        if args.verbose:
-            print(f"No static docs directory at {static_docs_src}, skipping static content copy.")
-
+    copy_static_docs(output_dir, args)
+        
     success = process_mojo_sources(
         input_dir=input_dir,
         output_dir=output_dir / 'api', # Place generated API docs under 'api' subdir
-        template_path=template_path,
         verbose=args.verbose,
     )
+
+    process_examples_dir()
 
     if not success:
         sys.exit(1)

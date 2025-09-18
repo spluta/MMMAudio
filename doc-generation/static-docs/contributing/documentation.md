@@ -12,7 +12,7 @@ Python files are documented using Google-style docstrings and processed by mkdoc
 
 ```python
 def example_function(param1: int, param2: str = "default") -> bool:
-    \"\"\"Brief description of the function.
+    """Brief description of the function.
     
     Longer description with more details about what the function does,
     its intended use cases, and any important behavior notes.
@@ -39,7 +39,7 @@ def example_function(param1: int, param2: str = "default") -> bool:
         ```python
         result = example_function(42)
         ```
-    \"\"\"
+    """
     return param1 > 0
 ```
 
@@ -52,7 +52,7 @@ fn example_function[N: Int = 1](
     param1: SIMD[DType.int32, N], 
     param2: SIMD[DType.float64, N] = 1.0
 ) -> SIMD[DType.bool, N]:
-    \"\"\"Brief description of the function.
+    """Brief description of the function.
     
     Longer description with details about the function's behavior,
     SIMD optimization, and usage patterns.
@@ -81,7 +81,7 @@ fn example_function[N: Int = 1](
         factors = SIMD[DType.float64, 4](1.0, 1.5, 2.0, 2.5)
         results = example_function[4](values, factors)
         ```
-    \"\"\"
+    """
     return param1 > 0
 ```
 
@@ -103,11 +103,11 @@ Run the documentation pipeline:
 python documentation/generate_docs.py
 ```
 
-This will:
-1. Process all Mojo files and extract documentation
-2. Create markdown stubs for Python files
-3. Generate example documentation
-4. Build the complete documentation site
+This will:  
+1. Process all Mojo files and extract documentation  
+2. Create markdown stubs for Python files  
+3. Generate example documentation  
+4. Build the complete documentation site  
 
 ### Serve Locally
 
