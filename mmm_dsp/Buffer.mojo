@@ -291,7 +291,7 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
     fn write[N: Int = 1](mut self, value: SIMD[DType.float64, N], index: Int64, start_channel: Int64 = 0):
         if index < 0 or index >= Int64(self.num_frames):
-            return  # Out of bounds
+            return  # Out of bounds TODO: throw warning
         for i in range(len(value)):
             # only write into the buffer if the channel exists
             if start_channel + i < self.num_chans:

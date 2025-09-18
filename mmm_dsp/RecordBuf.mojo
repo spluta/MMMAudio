@@ -16,14 +16,14 @@ struct RecordBuf (Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("RecordBuf")
     
-    fn write(mut self, input: Float64, mut buffer: Buffer):
-        buffer.write(self.index, input, 0)
+    fn write[N: Int = 1](mut self, value: SIMD[DType.float64, N], mut buffer: Buffer):
+        buffer.write(value, self.index, 0)
         self.index += 1
         if self.index >= Int64(buffer.num_frames):
             self.index = 0
 
-    fn write(mut self, input: List[Float64], mut buffer: Buffer):
-        buffer.write(self.index, input, 0)
-        self.index += 1
-        if self.index >= Int64(buffer.num_frames):
-            self.index = 0
+    # fn write(mut self, input: List[Float64], mut buffer: Buffer):
+    #     buffer.write(input, self.index, 0)
+    #     self.index += 1
+    #     if self.index >= Int64(buffer.num_frames):
+    #         self.index = 0
