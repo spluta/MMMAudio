@@ -46,9 +46,8 @@ nav:
       - Distortion: api/mmm_dsp/Distortion.md
       - Noise: api/mmm_dsp/Noise.md
       - Pan: api/mmm_dsp/Pan.md
-      - Play/Record: 
-        - PlayBuf: api/mmm_dsp/PlayBuf.md
-        - RecordBuf: api/mmm_dsp/RecordBuf.md
+      - PlayBuf: api/mmm_dsp/PlayBuf.md
+      - RecordBuf: api/mmm_dsp/RecordBuf.md
       - Oversampling: api/mmm_dsp/Oversampling.md
       - ML/Neural: api/mmm_dsp/MLP.md
     - Core Framework:
@@ -65,22 +64,21 @@ nav:
       - ML Training: api/mmm_utils/mlp_trainer.md
   - Examples:
     - Overview: examples/index.md
-    - Basic Examples:
-      - Default Graph: examples/Default_Graph.md
-      - In2Out: examples/In2Out.md
-      - Pan Az: examples/Pan_Az.md
-    - Advanced Examples:
-      - Many Oscillators: examples/ManyOscillators.md
-      - Feedback Delays: examples/FeedbackDelays.md
-      - Grains: examples/Grains.md
-      - Record: examples/Record.md
-      - PlayBuf Graph: examples/PlayBuf_Graph.md
-      - MIDI Sequencer: examples/Midi_Sequencer.md
-      - Torch MLP: examples/Torch_MLP.md
-      - Ole Dusty: examples/OleDusty.md
-  - Development:
-    - Documentation Guide: development/documentation.md
-    - Contributing: development/contributing.md
+    - Default Graph: examples/Default_Graph.md
+    - In2Out: examples/In2Out.md
+    - Pan Az: examples/Pan_Az.md
+    - Many Oscillators: examples/ManyOscillators.md
+    - Feedback Delays: examples/FeedbackDelays.md
+    - Grains: examples/Grains.md
+    - Record: examples/Record.md
+    - PlayBuf Graph: examples/PlayBuf_Graph.md
+    - MIDI Sequencer: examples/Midi_Sequencer.md
+    - Torch MLP: examples/Torch_MLP.md
+    - Ole Dusty: examples/OleDusty.md
+  - Contributing:
+    - Overview: contributing/index.md
+    - Documentation Guide: contributing/documentation.md
+    - Contributing: contributing/contributing.md
 
 markdown_extensions:
   - admonition
