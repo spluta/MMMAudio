@@ -434,7 +434,15 @@ struct DCTrap[N: Int=1](Representable, Movable, Copyable):
 
 struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     """
-    Simple one-pole IIR filter that can be configured as lowpass or highpass}
+    One-pole filter based on the Virtual Analog design by Vadim Zavalishin in "The Art of VA Filter Design"
+    (http://www.cytomic.com/files/Audio-EQ-Cookbook.txt)
+    This implementation supports both lowpass and highpass modes.
+
+    Parameters:
+        N: Number of channels to process in parallel.
+    Methods:
+        lpf(input, freq): Process input through a lowpass filter with cutoff frequency freq.
+        hpf(input, freq): Process input through a highpass filter with cutoff frequency freq.
     """
 
     var last_1: SIMD[DType.float64, N]  # Previous output
@@ -450,7 +458,14 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         )
 
     fn lpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-        """Process one sample through the filter"""
+        """
+        Process one sample through the VA one-pole lowpass filter.
+        
+        Parameters:
+            input: The input signal to process.
+            freq: The cutoff frequency of the lowpass filter.
+        
+        """
 
         # var omegaWarp = tan(pi * cf * self.step_val)
         # var g = omegaWarp / (1.0 + omegaWarp)

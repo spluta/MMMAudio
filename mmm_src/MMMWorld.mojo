@@ -184,3 +184,19 @@ struct MMMWorld(Representable, Movable, Copyable):
             self.print_flag = 0
         if self.print_flag == 1:
             print(label,value)
+
+    # fn print[T: Writable](mut self, *values: T, label: String = "", freq: Float64 = 10.0) -> None:
+
+    #     current_time = time.perf_counter()
+    #     # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+    #     if self.grab_messages == 1 and self.print_flag == 0:
+    #         if current_time - self.last_print_time >= 1.0 / freq:
+    #             self.last_print_time = current_time
+    #             self.print_flag = 1
+    #     elif self.grab_messages == 0 and self.print_flag == 1:
+    #         self.print_flag = 0
+    #     if self.print_flag == 1:
+    #         print(label, end=" ")
+    #         for value in values:
+    #             print(value, end=" ")
+    #         print()

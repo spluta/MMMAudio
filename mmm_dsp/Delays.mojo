@@ -33,7 +33,7 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], interp: Int64 = 2) -> SIMD[DType.float64, self.N]:
         """Process one sample through the delay line.
         This function computes the average of two values.
 
@@ -48,7 +48,23 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
 
         """
         # return input
-        return self.lagrange4(input, delay_time)
+        if interp == 0:
+            # no interpolation
+            self.write_ptr = (self.write_ptr + 1) % self.max_delay_samples
+            var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
+            var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
+            var read_ptr = (self.write_ptr - sample_delay) % self.max_delay_samples
+            var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+            for i in range(self.N):
+                out[i] = self.delay_line[i][read_ptr[i]]
+                self.delay_line[i][self.write_ptr] = input[i]
+          
+            return out
+            # # cubic interpolation
+            # return self.delay_line[0][(self.write_ptr - Int64(delay_time[0] * self.world_ptr[0].sample_rate)) % self.max_delay_samples]
+        else:
+            # Lagrange interpolation
+          return self.lagrange4(input, delay_time)
 
     fn lagrange4(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
 
@@ -148,6 +164,8 @@ struct Comb[N: Int = 1](Representable, Movable, Copyable):
         """
         var out = self.delay.next(input, delay_time)  # Get the delayed sample
         temp = input + out * clip(feedback, 0.0, 1.0)  # Apply feedback
+
+        # overwrite the samples...hmmm, not pretty
         for i in range(self.N):
             self.delay.delay_line[i][self.delay.write_ptr] = temp[i] # Apply feedback
 
@@ -177,7 +195,7 @@ struct LP_Comb[N: Int = 1](Representable, Movable, Copyable):
         self.delay = Delay[N](self.world_ptr, max_delay)
         self.one_pole = VAOnePole[N](self.world_ptr)
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
         """Process one sample through the comb filter.
         
         next(input, delay_time=0.0, feedback=0.0, interp=0)
@@ -187,17 +205,19 @@ struct LP_Comb[N: Int = 1](Representable, Movable, Copyable):
           delay_time: The amount of delay to apply (in seconds).
           feedback: The amount of feedback to apply (0.0 to 1.0).
           lp_freq: The cutoff frequency of the VAOnePole filter in the feedback loop.
+          interp: The interpolation method to use (0 = linear, 2 = Lagrange).
 
         Returns:
           The processed output sample.
 
         """
-        var out = self.delay.next(input, delay_time)  # Get the delayed sample
+        var out = self.delay.next(input, delay_time, interp)  # Get the delayed sample
 
         fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
 
         fb += input
         
+        # it is overwriting the sample it already wrote...can't be good
         for i in range(self.N):
             self.delay.delay_line[i][self.delay.write_ptr] = fb[i] # Apply feedback
 

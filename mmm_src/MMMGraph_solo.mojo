@@ -4,7 +4,7 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from mine.Freeverb_Graph import Freeverb_Graph
+from examples.Freeverb_Graph import Freeverb_Graph
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
