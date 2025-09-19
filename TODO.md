@@ -6,14 +6,16 @@ Documentation
 
 - make .md files for each of the structs in the codebase
 
+UGens
+
+- Shaper
+- Amplitude
+- Freeverb, Dattoro, GVerb
+
 FFT
 
 - we need it
 
-UGens
-
-- Amplitude
-- Freeverb, Dattoro, GVerb
 
 Big Ones
 

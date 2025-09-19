@@ -5,10 +5,14 @@ from mmm_dsp.Filters import *
 
 struct Delay[N: Int = 1](Representable, Movable, Copyable):
     """
-    A delay line with Lagrange interpolation.
+    A variable delay line with Lagrange interpolation.
     
     Parameters:
       N: size of the SIMD vector - defaults to 1
+
+    Args:
+      world_ptr: Pointer to the MMMWorld instance.
+      max_delay: The maximum delay time in seconds.
     """
 
     var world_ptr: UnsafePointer[MMMWorld]
@@ -18,10 +22,10 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
     var write_ptr: Int64
     var delays: List[SIMD[DType.float64, N]]  # For Lagrange interpolation
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.max_delay_time = max_delay
-        self.max_delay_samples = Int64(max_delay * self.world_ptr[0].sample_rate) + 1
+        self.max_delay_time = max_delay_time
+        self.max_delay_samples = Int64(max_delay_time * self.world_ptr[0].sample_rate) + 1
         self.delay_line = [[Float64(0.0) for _ in range(self.max_delay_samples)] for _ in range(N)]
         self.write_ptr = 0
         self.delays = [SIMD[DType.float64, N](0.0) for _ in range(5)]
@@ -115,6 +119,10 @@ struct Comb[N: Int = 1](Representable, Movable, Copyable):
     
     Parameters:
       N: size of the SIMD vector - defaults to 1
+
+    Args:
+      world_ptr: Pointer to the MMMWorld instance.
+      max_delay: The maximum delay time in seconds.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var delay: Delay[N]
@@ -147,6 +155,100 @@ struct Comb[N: Int = 1](Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return "CombFilter"
+
+struct LP_Comb[N: Int = 1](Representable, Movable, Copyable):
+    """
+    A simple comb filter with an integrated one-polelow-pass filter.
+    
+    Parameters:
+      N: size of the SIMD vector - defaults to 1
+
+    Args:
+      world_ptr: Pointer to the MMMWorld instance.
+
+      max_delay: The maximum delay time in seconds.
+    """
+    var world_ptr: UnsafePointer[MMMWorld]
+    var delay: Delay[N]
+    var one_pole: VAOnePole[N]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world_ptr = world_ptr
+        self.delay = Delay[N](self.world_ptr, max_delay)
+        self.one_pole = VAOnePole[N](self.world_ptr)
+
+    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+        """Process one sample through the comb filter.
+        
+        next(input, delay_time=0.0, feedback=0.0, interp=0)
+
+        Args:
+          input: The input sample to process.
+          delay_time: The amount of delay to apply (in seconds).
+          feedback: The amount of feedback to apply (0.0 to 1.0).
+          lp_freq: The cutoff frequency of the VAOnePole filter in the feedback loop.
+
+        Returns:
+          The processed output sample.
+
+        """
+        var out = self.delay.next(input, delay_time)  # Get the delayed sample
+
+        fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
+
+        fb += input
+        
+        for i in range(self.N):
+            self.delay.delay_line[i][self.delay.write_ptr] = fb[i] # Apply feedback
+
+        return out  # Return the delayed sample
+
+    fn __repr__(self) -> String:
+        return "LP_Comb"
+
+struct Allpass_Comb[N: Int = 1](Representable, Movable, Copyable):
+    """
+    A simple all-pass comb filter using a delay line with feedback.
+    
+    Parameters:
+      N: size of the SIMD vector - defaults to 1
+
+    Args:
+      world_ptr: Pointer to the MMMWorld instance.
+      max_delay: The maximum delay time in seconds.
+    """
+    var world_ptr: UnsafePointer[MMMWorld]
+    var delay: Delay[N]
+    var allpass_feedback: SIMD[DType.float64, N]
+    var last_delay: SIMD[DType.float64, N]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world_ptr = world_ptr
+        self.delay = Delay[N](self.world_ptr, max_delay)
+        self.allpass_feedback = 0.0
+        self.last_delay = SIMD[DType.float64, self.N](0.0)
+
+    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+        """Process one sample through the all-pass comb filter
+
+        next(input, delay_time=0.0)
+        Args:
+          input: The input sample to process.
+          delay_time: The amount of delay to apply (in seconds).
+        Returns:
+          The processed output sample.
+        """
+        temp = self.allpass_feedback + input
+        temp2 = self.delay.next(temp, delay_time)  # Get the delayed sample
+        self.allpass_feedback = (temp2 * 0.5)
+        
+        out2 = temp * -0.5 + self.last_delay
+        self.last_delay = temp2
+
+        return out2
+
+    fn __repr__(self) -> String:
+        return "Allpass_Comb"
 
 struct FBDelay[N: Int = 1](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function.

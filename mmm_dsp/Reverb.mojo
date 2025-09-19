@@ -1,0 +1,82 @@
+from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.functions import *
+from math import tanh
+from mmm_dsp.Filters import *
+from mmm_dsp.Delays import *
+from algorithm import vectorize
+from sys import simd_width_of
+
+
+struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
+    """
+    A simple comb filter with an integrated one-polelow-pass filter.
+    
+    Parameters:
+      N: size of the SIMD vector - defaults to 1
+    """
+    var world_ptr: UnsafePointer[MMMWorld]
+    var lp_combs: List[List[LP_Comb[4]]]
+    var del_times: List[SIMD[DType.float64, 4]]
+    var temp: List[SIMD[DType.float64, 4]]
+    var allpass_combs: List[Allpass_Comb[N]]
+    var allpass_del_times: List[Float64]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.lp_combs = [[LP_Comb[4](self.world_ptr, 0.046) for _ in range(2)] for _ in range(N)]
+        self.del_times = [SIMD[DType.float64, 4]([1116.0 / 44100.0, 1188.0 / 44100.0, 1277.0 / 44100.0, 1356.0 / 44100.0]), SIMD[DType.float64, 4]([1422.0 / 44100.0, 1491.0 / 44100.0, 1557.0 / 44100.0, 1617.0 / 44100.0])] # in seconds
+        self.temp = [SIMD[DType.float64, 4](0.0), SIMD[DType.float64, 4](0.0)]
+        self.allpass_combs = [Allpass_Comb[N](self.world_ptr, 0.02) for _ in range(4)]
+        self.allpass_del_times = [556.0 / 44100.0, 441.0 / 44100.0, 341.0 / 44100.0, 225.0 / 44100.0]
+
+
+    fn next(mut self, input: SIMD[DType.float64, self.N], room_size: SIMD[DType.float64, self.N] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.N] = 1000.0, added_space: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+        """Process one sample through the freeverb.
+        
+        next(input, delay_time=0.0, feedback=0.0, interp=0)
+
+        Args:
+          input: The input sample to process.
+          room_size: The size of the reverb room (0-1).
+          lp_comb_lpfreq: The cutoff frequency of the low-pass filter (in Hz).
+          added_space: The amount of added space (0-1).
+
+        Returns:
+          The processed output sample.
+
+        """
+        var out = SIMD[DType.float64, self.N](0.0)
+        room_size_clipped = clip(room_size, 0.0, 1.0)
+        added_space_clipped = clip(added_space, 0.0, 1.0)
+        feedback = 0.28 + (room_size_clipped * 0.7)
+
+        delay_offset = added_space_clipped * 0.0012
+
+        alias simd_width = simd_width_of[DType.float64]()  # e.g., 2 on 128-bit, 4 on 256-bit, etc.
+
+# We want to cover j in [0, 2).
+        alias size = 2
+
+        # for i in range(self.N):
+        @parameter
+        fn closure0[width: Int](i: Int):
+
+            # this is correct, but I am doing too much manually
+            # I should be able to make it work with just a vector of 8
+            @parameter
+            fn closure1[width: Int](j: Int):
+                var d_time: SIMD[DType.float64, 4] = self.del_times[j] + delay_offset[i]
+                self.temp[j] = self.lp_combs[i][j].next(input[i], d_time, feedback[i], lp_comb_lpfreq[i])
+            vectorize[closure1, simd_width](2)
+
+            self.temp[0] = self.temp[0] + self.temp[1]
+            out[i] = self.temp[0][0] + self.temp[0][1] + self.temp[0][2] + self.temp[0][3]
+        vectorize[closure0, simd_width](self.N)
+
+        for j in range(4):
+            out = self.allpass_combs[j].next(out, self.allpass_del_times[j])
+        
+        return out  # Return the delayed sample
+
+    fn __repr__(self) -> String:
+        return "LP_Comb"
