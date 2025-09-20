@@ -1,5 +1,5 @@
 site_name: MMMAudio Documentation
-site_description: DSP library for Python and Mojo with audio processing capabilities
+site_description: Creative Coding Environment leveraging Python/Mojo interop where python acts as a scripting language for Mojo acting as an audio processing engine
 site_author: Sam Pluta
 site_url: https://spluta.github.io/MMMAudio/
 docs_dir: doc_generation/docs_md

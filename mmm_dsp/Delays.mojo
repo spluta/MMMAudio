@@ -3,7 +3,7 @@ from mmm_utils.functions import *
 from math import tanh
 from mmm_dsp.Filters import *
 
-struct Delay[N: Int = 1](Representable, Movable, Copyable):
+struct Delay[N: Int = 1, write_to_buffer: Bool = True](Representable, Movable, Copyable):
     """
     A variable delay line with Lagrange interpolation.
     
@@ -57,7 +57,9 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
             var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
             for i in range(self.N):
                 out[i] = self.delay_line[i][read_ptr[i]]
-                self.delay_line[i][self.write_ptr] = input[i]
+                @parameter
+                if write_to_buffer:
+                  self.delay_line[i][self.write_ptr] = input[i]
           
             return out
             # # cubic interpolation
@@ -125,7 +127,9 @@ struct Delay[N: Int = 1](Representable, Movable, Copyable):
 
             out[i] = products[0] + products[1] + products[2] + products[3] + (self.delay_line[i][(read_ptr[i] - 4) % self.max_delay_samples] * coeff4[i])
 
-            self.delay_line[i][self.write_ptr] = input[i]
+            @parameter
+            if write_to_buffer:
+              self.delay_line[i][self.write_ptr] = input[i]
 
         return out
 
@@ -141,11 +145,11 @@ struct Comb[N: Int = 1](Representable, Movable, Copyable):
       max_delay: The maximum delay time in seconds.
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N]
+    var delay: Delay[N, False]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N](self.world_ptr, max_delay)
+        self.delay = Delay[N, False](self.world_ptr, max_delay)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
         """Process one sample through the comb filter.
@@ -162,10 +166,12 @@ struct Comb[N: Int = 1](Representable, Movable, Copyable):
           The processed output sample.
 
         """
-        var out = self.delay.next(input, delay_time)  # Get the delayed sample
+        # Get the delayed sample
+        # does not write to the buffer
+        var out = self.delay.next(input, delay_time)  
         temp = input + out * clip(feedback, 0.0, 1.0)  # Apply feedback
 
-        # overwrite the samples...hmmm, not pretty
+        # writes to the buffer here instead
         for i in range(self.N):
             self.delay.delay_line[i][self.delay.write_ptr] = temp[i] # Apply feedback
 
@@ -187,12 +193,12 @@ struct LP_Comb[N: Int = 1](Representable, Movable, Copyable):
       max_delay: The maximum delay time in seconds.
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N]
+    var delay: Delay[N, False]
     var one_pole: VAOnePole[N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N](self.world_ptr, max_delay)
+        self.delay = Delay[N, False](self.world_ptr, max_delay)
         self.one_pole = VAOnePole[N](self.world_ptr)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
@@ -216,8 +222,8 @@ struct LP_Comb[N: Int = 1](Representable, Movable, Copyable):
         fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
 
         fb += input
-        
-        # it is overwriting the sample it already wrote...can't be good
+
+        # writes to the buffer here instead of in the delay next() function
         for i in range(self.N):
             self.delay.delay_line[i][self.delay.write_ptr] = fb[i] # Apply feedback
 
@@ -277,12 +283,12 @@ struct FBDelay[N: Int = 1](Representable, Movable, Copyable):
           N: size of the SIMD vector - defaults to 1
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N]
+    var delay: Delay[N, False]
     var dc: DCTrap[N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N](self.world_ptr, max_delay)
+        self.delay = Delay[N, False](self.world_ptr, max_delay)
         self.dc = DCTrap[N](world_ptr)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], feedback: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -304,6 +310,7 @@ struct FBDelay[N: Int = 1](Representable, Movable, Copyable):
 
         temp = self.dc.next(tanh((input + out) * feedback))
 
+        # writes to the buffer here instead of in the delay next() function
         for i in range(self.N):
             self.delay.delay_line[i][self.delay.write_ptr] = temp[i] 
 

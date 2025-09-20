@@ -7,7 +7,7 @@ you can also train the synth by creating any number of input/output pairs and ma
 from mmm_src.MMMAudio import MMMAudio
 from random import random
 
-mmm_audio = MMMAudio(128, graph_name="Torch_MLP", package_name="examples")
+mmm_audio = MMMAudio(128, graph_name="Torch_Mlp", package_name="examples")
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
@@ -22,7 +22,7 @@ mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced
 
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_msg("toggle_inference", 1.0)
+mmm_audio.send_msg("toggle_inference", 0.0)
 
 out_size = 16
 

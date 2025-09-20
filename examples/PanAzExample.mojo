@@ -12,6 +12,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
     var pan_osc: Phasor
     var pan_az: PanAz
+    var num_speakers: Int
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -20,6 +21,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
         self.pan_osc = Phasor(self.world_ptr)
         self.pan_az = PanAz(self.world_ptr)
+        self.num_speakers = 2
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -29,7 +31,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.get_msgs()
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
-        panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), 2, 2) * 0.1
+        panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers, 2) * 0.1
 
         return panned
 
@@ -38,10 +40,13 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         msg = self.world_ptr[0].get_msg("osc_freq")
         if msg:
             self.freq = msg.value()[0]
+        msg = self.world_ptr[0].get_msg("set_num_speakers")
+        if msg:
+            self.num_speakers = Int(msg.value()[0])
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct Pan_Az(Representable, Movable, Copyable):
+struct PanAzExample(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synth: PanAz_Synth
 
@@ -50,7 +55,7 @@ struct Pan_Az(Representable, Movable, Copyable):
         self.synth = PanAz_Synth(self.world_ptr)
 
     fn __repr__(self) -> String:
-        return String("PanAz")
+        return String("PanAzExample")
 
     fn next(mut self) -> SIMD[DType.float64, 8]:
 

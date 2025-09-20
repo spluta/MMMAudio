@@ -33,7 +33,7 @@ struct AudioBuffer:
     var sample_rate: Int
     var channels: Int
     
-    fn __init__(inout self, size: Int, sample_rate: Int = 44100, channels: Int = 1):
+    fn __init__(out self, size: Int, sample_rate: Int = 44100, channels: Int = 1):
         """Initialize an audio buffer with specified parameters.
         
         Args:
@@ -50,7 +50,7 @@ struct AudioBuffer:
         for i in range(size):
             self.data.append(0.0)
     
-    fn clear(inout self):
+    fn clear(mut self):
         """Clear the buffer by setting all samples to zero.
         
         This method efficiently zeros out the entire buffer using vectorized
@@ -81,7 +81,7 @@ struct AudioBuffer:
             return self.data[index]
         return 0.0
     
-    fn set_sample(inout self, index: Int, value: Float64):
+    fn set_sample(mut self, index: Int, value: Float64):
         """Set a sample at the specified index with bounds checking.
         
         Args:
@@ -174,7 +174,7 @@ fn linear_interpolate[N: Int = 1](x0: SIMD[DType.float64, N],
     return y0 + dy * t
 
 
-fn apply_gain[N: Int = 1](inout signal: SIMD[DType.float64, N], 
+fn apply_gain[N: Int = 1](mut signal: SIMD[DType.float64, N], 
                           gain: SIMD[DType.float64, N]):
     """Apply gain to audio signal in-place using SIMD operations.
     

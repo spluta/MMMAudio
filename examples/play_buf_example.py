@@ -3,7 +3,7 @@ import asyncio
 import threading
 
 
-mmm_audio = MMMAudio(128, graph_name="PlayBuf_Graph", package_name="examples")
+mmm_audio = MMMAudio(128, graph_name="PlayBufExample", package_name="examples")
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 

@@ -36,7 +36,7 @@ struct Default_Synth(Representable, Movable, Copyable):
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct Default_Graph(Representable, Movable, Copyable):
+struct DefaultGraph(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synth: Default_Synth
 

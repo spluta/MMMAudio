@@ -95,8 +95,6 @@ struct Record_Synth(Representable, Movable, Copyable):
 
         out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)
 
-        self.world_ptr[0].print(String(self.play_buf.get_win_phase()), String(self.play_buf.get_phase()))
-
         out = out * self.is_playing * min_env(self.play_buf.get_win_phase(), self.note_time, 0.01)
 
         return out

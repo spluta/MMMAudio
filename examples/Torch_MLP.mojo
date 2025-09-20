@@ -7,7 +7,7 @@ from .TorchSynth import TorchSynth
 
 # THE GRAPH
 
-struct Torch_MLP(Representable, Movable, Copyable):
+struct Torch_Mlp(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 
@@ -17,8 +17,7 @@ struct Torch_MLP(Representable, Movable, Copyable):
         self.torch_synth = TorchSynth(world_ptr)  # Initialize the TorchSynth with the world instance
 
     fn __repr__(self) -> String:
-        return String("Torch_MLP")
+        return String("Torch_Mlp")
 
-    fn next(mut self: Torch_MLP) -> SIMD[DType.float64, 2]:
-
+    fn next(mut self: Torch_Mlp) -> SIMD[DType.float64, 2]:
         return self.torch_synth.next()

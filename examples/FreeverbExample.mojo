@@ -71,7 +71,7 @@ struct FreeverbSynth(Representable, Movable, Copyable):
             self.mix = fader4.value()[0]
 
 
-struct Freeverb_Graph(Representable, Movable, Copyable):
+struct FreeverbExample(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
     var freeverb_synth: FreeverbSynth  # Instance of the FreeverbSynth
@@ -84,6 +84,6 @@ struct Freeverb_Graph(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Freeverb_Graph")
 
-    fn next(mut self: Freeverb_Graph) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         #return SIMD[DType.float64, 2](0.0)
         return self.freeverb_synth.next()  # Return the combined output sample

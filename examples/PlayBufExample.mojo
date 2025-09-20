@@ -63,7 +63,7 @@ struct BufSynth(Representable, Movable, Copyable):
             freq = linexp(fader2.value()[0], 0.0, 1.0, 20.0, 20000.0)
             self.lpf_freq = freq
 
-struct PlayBuf_Graph(Representable, Movable, Copyable):
+struct PlayBufExample(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
     var buf_synth: BufSynth  # Instance of the GrainSynth
@@ -74,8 +74,8 @@ struct PlayBuf_Graph(Representable, Movable, Copyable):
         self.buf_synth = BufSynth(world_ptr)  
 
     fn __repr__(self) -> String:
-        return String("PlayBuf_Graph")
+        return String("PlayBufExample")
 
-    fn next(mut self: PlayBuf_Graph) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
         #return SIMD[DType.float64, 2](0.0)
         return self.buf_synth.next()  # Return the combined output sample

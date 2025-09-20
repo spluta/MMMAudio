@@ -128,6 +128,9 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     fn get_midi(mut self: Self, key: String, chan: Int64 = -1, param: Int64 = -1) -> Optional[List[List[Int64]]]:
         if self.grab_messages == 1:
+            # print("Getting MIDI for key:", key, "chan:", chan, "param:", param)
+            # for item in self.midi_dict.items():
+            #     print(item.key, item.value)
             if len(self.midi_dict) > 0:
                 list = List[List[Int64]]()
                 for dict_item in self.midi_dict.items():
@@ -165,6 +168,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         print(msg[0], msg[1])
 
         self.midi_dict[String(msg[0])] = Int64(msg[1])
+        # for item in self.midi_dict.items():
+        #     print(item.key, item.value)
     
     fn clear_msgs(mut self):
         self.msg_dict.clear()

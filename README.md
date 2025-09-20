@@ -16,15 +16,11 @@ MMMAudio is the interface from Python to the Mojo audio graph. The User should o
 
 MMM currently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
 
-All Graphs must conform to the Graphable Trait, which means they have next function that takes no arguments. For example, the FeedbackDelays example has the following struct definition:
-```
-struct FeedbackDelays(Representable, Movable, Graphable, Copyable):
-```
-and contains the following function:
+The only distinction between a Graph and a Synth is that a Graph contains a next function with no arguments other than self:
 ```
 fn next(mut self: FeedbackDelays) -> List[Float64]:
 ```
-These define it as a Graphable struct, thus something that can act as a Graph.
+This defines it as a Graphable struct, thus something that can act as a Graph.
 ```
 Graph
 |
