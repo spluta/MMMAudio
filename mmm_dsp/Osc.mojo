@@ -358,9 +358,10 @@ struct LFNoise(Representable, Movable, Copyable):
 
     # history_index: the index of the history list that the impulse's phase is moving *away* from
     # phase is moving *towards* history_index + 1
-    var history_index: Int8 = 0 
+    var history_index: Int8
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.history_index = 0
         self.impulse = Impulse(world_ptr)
         for ref h in self.history:
             h = random_float64(-1.0, 1.0)

@@ -1,13 +1,37 @@
+"""
+MMM Utility Functions
+
+This module provides essential utility functions for audio processing and mathematical
+operations in the MMMAudio framework. All functions are optimized for SIMD operations
+to achieve maximum performance on modern processors.
+
+The functions in this module include:
+- Range mapping functions (linear and exponential)
+- Clipping and wrapping utilities
+- Interpolation algorithms
+- MIDI/frequency conversion
+- Audio utility functions
+- Random number generation
+
+All functions support vectorized operations through SIMD types for processing
+multiple values simultaneously.
+"""
+
 from random import random_float64
 from math import log2
 from algorithm import vectorize
 from sys.info import simdwidthof
 
 fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64, N], in_max: SIMD[DType.float64, N], out_min: SIMD[DType.float64, N], out_max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-    """Maps values from one range to another range.
+    """Maps values from one range to another range linearly.
+
+    This function performs linear mapping from an input range to an output range.
+    Values outside the input range are clamped to the corresponding output boundaries.
+    This is commonly used for scaling control values, normalizing data, and 
+    converting between different parameter ranges.
 
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector (defaults to 1).
 
     Args:
         value: The values to map.
@@ -17,7 +41,22 @@ fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
         out_max: The maximum of the output range.
 
     Returns:
-        The mapped values in the output range.
+        The linearly mapped values in the output range.
+
+    Examples:
+        ```
+        # Map MIDI velocity (0-127) to gain (0.0-1.0)
+        velocity = SIMD[DType.float64, 1](64.0)
+        gain = linlin(velocity, 0.0, 127.0, 0.0, 1.0)  # Returns 0.504
+        
+        # Map multiple control values simultaneously
+        controls = SIMD[DType.float64, 4](0.25, 0.5, 0.75, 1.0)
+        frequencies = linlin[4](controls, 0.0, 1.0, 20.0, 20000.0)
+        
+        # Invert a normalized range
+        normal_vals = SIMD[DType.float64, 2](0.3, 0.7)
+        inverted = linlin[2](normal_vals, 0.0, 1.0, 1.0, 0.0)
+        ```
     """
     var result = SIMD[DType.float64, N](0.0)
     for i in range(N):
@@ -34,8 +73,12 @@ fn linlin[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64, N], in_max: SIMD[DType.float64, N], out_min: SIMD[DType.float64, N], out_max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Maps values from one linear range to another exponential range.
 
+    This function performs exponential mapping from a linear input range to an
+    exponential output range. This is essential for musical applications where
+    frequency perception is logarithmic. Both output range values must be positive.
+
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector (defaults to 1).
 
     Args:
         value: The values to map.
@@ -46,6 +89,21 @@ fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 
     Returns:
         The exponentially mapped values in the output range.
+
+    Examples:
+        ```
+        # Map linear slider (0-1) to frequency range (20Hz-20kHz)
+        slider_pos = SIMD[DType.float64, 1](0.5)
+        frequency = linexp(slider_pos, 0.0, 1.0, 20.0, 20000.0)  # ≈ 632 Hz
+        
+        # Map MIDI controller to filter cutoff frequencies
+        cc_values = SIMD[DType.float64, 4](0.0, 0.33, 0.66, 1.0)
+        cutoffs = linexp[4](cc_values, 0.0, 1.0, 100.0, 10000.0)
+        
+        # Create exponential envelope shape
+        linear_time = SIMD[DType.float64, 1](0.8)
+        exp_amplitude = linexp(linear_time, 0.0, 1.0, 0.001, 1.0)
+        ```
     """
     var result = SIMD[DType.float64, N](0.0)
     for i in range(N):
@@ -63,7 +121,7 @@ fn linexp[N: Int = 1](value: SIMD[DType.float64, N], in_min: SIMD[DType.float64,
 fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Clips each element in the SIMD vector to the specified range.
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
     Args:
         val: The SIMD vector to clip. Each element will be clipped individually.
         lo: The minimum value.
@@ -80,23 +138,15 @@ fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi:
             val2[i] = hi[i]
     return val2
 
-# fn clip(mut lst: List[Float64], lo: Float64, hi: Float64) -> None:
-#     """Clips each element in the list to the specified range."""
-#     for i in range(len(lst)):
-#         if lst[i] < lo:
-#             lst[i] = lo
-#         elif lst[i] > hi:
-#             lst[i] = hi
-
 fn wrap[N: Int=1](value: SIMD[DType.float64, N], min_val: SIMD[DType.float64, N], max_val: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """Wraps a value around a specified range.
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1..
 
     Args:
-        value: The value to wrap
-        min_val: The minimum of the range
-        max_val: The maximum of the range
+        value: The value to wrap.
+        min_val: The minimum of the range.
+        max_val: The maximum of the range.
     Returns:
         The wrapped value within the range [min_val, max_val]
     """
@@ -105,7 +155,7 @@ fn wrap[N: Int=1](value: SIMD[DType.float64, N], min_val: SIMD[DType.float64, N]
         return min_val  # If the range is invalid, return the minimum value
     var wrapped_value = (value - min_val) % range_size + min_val
     if wrapped_value < min_val:
-        wrapped_value += range_size  # Ensure the value is within the range
+        wrapped_value += range_size # Ensure the value is within the range
     return wrapped_value
 
 fn wrap[N: Int=1](value: SIMD[DType.int64, N], min_val: SIMD[DType.int64, N], max_val: SIMD[DType.int64, N]) -> SIMD[DType.int64, N]:
@@ -113,14 +163,14 @@ fn wrap[N: Int=1](value: SIMD[DType.int64, N], min_val: SIMD[DType.int64, N], ma
     Wraps a value around a specified range.
     
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
 
     Args:
-        value: The value to wrap
-        min_val: The minimum of the range
-        max_val: The maximum of the range
+        value: The value to wrap.
+        min_val: The minimum of the range.
+        max_val: The maximum of the range.
     Returns:
-        The wrapped value within the range [min_val, max_val]
+        The wrapped value within the range [min_val, max_val].
     """
     var range_size = max_val - min_val
     if range_size <= 0:
@@ -134,13 +184,13 @@ fn quadratic_interp(y0: Float64, y1: Float64, y2: Float64, x: Float64) -> Float6
     """Performs quadratic interpolation between three points.
     
     Args:
-        y0: The value at position 0
-        y1: The value at position 1
-        y2: The value at position 2
-        x: The interpolation position (typically between 0 and 2)
-        
+        y0: The value at position 0.
+        y1: The value at position 1.
+        y2: The value at position 2.
+        x: The interpolation position (typically between 0 and 2).
+
     Returns:
-        The interpolated value at position x
+        The interpolated value at position x.
     """
     # Calculate the coefficients of the quadratic polynomial
     var xm1 = x - 1.0
@@ -165,14 +215,14 @@ fn cubic_interp(p0: Float64, p1: Float64, p2: Float64, p3: Float64, t: Float64) 
     by Richard Boulanger and Victor Lazzarini. pg. 400
     
     Args:
-        p0: point to th left of p1
-        p1: point to the left of the float t
-        p2: point to the right of the float t
-        p3: point to the right of p2
-        t: Interpolation parameter (0.0 to 1.0)
+        p0: Point to the left of p1.
+        p1: Point to the left of the float t.
+        p2: Point to the right of the float t.
+        p3: Point to the right of p2.
+        t: Interpolation parameter (0.0 to 1.0).
     
     Returns:
-        Interpolated value
+        Interpolated value.
     """
     return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
@@ -185,18 +235,18 @@ fn lagrange4[N: Int = 1](sample0: SIMD[DType.float64, N], sample1: SIMD[DType.fl
     lagrange4[N](sample0, sample1, sample2, sample3, sample4, frac) -> SIMD[Float64, N]
 
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
 
     Args:
-        sample0: The first sample
-        sample1: The second sample
-        sample2: The third sample
-        sample3: The fourth sample
-        sample4: The fifth sample
-        frac: The fractional delay (0.0 to 1.0) which is the location between sample0 and sample1
+        sample0: The first sample.
+        sample1: The second sample.
+        sample2: The third sample.
+        sample3: The fourth sample.
+        sample4: The fifth sample.
+        frac: The fractional delay (0.0 to 1.0) which is the location between sample0 and sample1.
 
     Returns:
-        The interpolated value
+        The interpolated value.
     """
 
     var o = 1.49999 + frac
@@ -252,15 +302,15 @@ fn lerp[N: Int = 1](p0: SIMD[DType.float64, N], p1: SIMD[DType.float64, N], t: S
     lerp[N](p0, p1, t) -> Float64 or SIMD[Float64, N]
 
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
 
     Args:
-        p0: The starting point
-        p1: The ending point
-        t: The interpolation parameter (0.0 to 1.0)
-        curve: The curve parameter (0.0 for linear, 1.0 for exponential)
+        p0: The starting point.
+        p1: The ending point.
+        t: The interpolation parameter (0.0 to 1.0).
+    
     Returns:
-        The interpolated value
+        The interpolated value.
     """
     
     return p0 + (p1 - p0) * t
@@ -299,7 +349,7 @@ fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
     Generates a random float64 value from an exponential distribution.
 
     Parameters:
-        N: size of the SIMD vector - defaults to 1
+        N: Size of the SIMD vector - defaults to 1.
 
     Args:
         min: The minimum value (inclusive).
@@ -311,68 +361,3 @@ fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
     for i in range(N):
         u[i] = linexp(random_float64(), 0.0, 1.0, min[i], max[i])
     return u
-
-
-
-# fn zero(mut lst: List[Float64]) -> None:
-#     """Sets all elements of the list to zero."""
-#     for i in range(len(lst)):
-#         lst[i] = 0.0  # Set each element to zero
-
-# fn mix_vectorized(mut output: List[Float64], *lists: List[Float64]) -> None:
-#     alias simd_width = simdwidthof[DType.float64]()
-#     var size = len(output)
-#     for lst in lists:
-#         var lst_size = len(lst)
-#         var simd_end = lst_size - (lst_size % simd_width)
-#         @parameter
-#         fn closure[width: Int](i: Int):
-#             var out_vec = output.load[width](i)
-#             var in_vec = lst.load[width](i)
-#             output.store[width](i, out_vec + in_vec)
-#         # Vectorized loop for the part that fits SIMD width
-#         vectorize[closure, simd_width](simd_end)
-#         # Scalar loop for the remainder and for indices beyond lst_size
-#         for i in range(simd_end, size):
-#             if i < lst_size:
-#                 output[i] += lst[i]
-
-# fn mix(mut output: List[Float64], *samples: Float64) -> None:
-#     for i in range(len(output)):
-#         if i < len(samples):
-#             output[i] += samples[i]  # Sum the samples
-
-# fn mix(input: List[List[Float64]]) -> List[Float64]:
-#     var output = List[Float64]()
-#     for _ in range(len(input[0])):
-#         output.append(0.0)  # Initialize output list with zeros
-#     for lst in input:
-#         for i in range(len(output)):
-#             if i < len(lst):
-#                 output[i] += lst[i]
-#     return output
-
-# fn mul(mut output: List[Float64], factor: Float64):
-#     """Multiplies each element in the output list by a factor."""
-#     for i in range(len(output)):
-#         output[i] *= factor  # Multiply each sample by the factor
-
-# fn mul(output: List[Float64], factor: Float64) -> List[Float64]:
-#     """Returns a new list with each element multiplied by the factor."""
-#     var result = List[Float64](len(output), 0.0)
-#     for i in range(len(output)):
-#         result[i] = output[i] * factor  # Multiply each sample by the factor
-#     return result
-
-# q
-# not yet tested
-# fn mul_vectorized(mut output: List[Float64], factor: Float64):
-#     alias simd_width = simdwidthof[DType.float64]()
-#     var size = len(output)
-#     @parameter
-#     fn closure[width: Int](i: Int):
-#         # Load a SIMD vector from output, multiply by factor, and store back
-#         var vec = output.load[width](i)
-#         var result = vec * SIMD[DType.float64, width](factor)
-#         output.store[width](i, result)
-#     vectorize[closure, simd_width](size)

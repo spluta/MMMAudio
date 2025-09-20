@@ -1,0 +1,132 @@
+site_name: MMMAudio Documentation
+site_description: DSP library for Python and Mojo with audio processing capabilities
+site_author: Sam Pluta
+site_url: https://spluta.github.io/MMMAudio/
+docs_dir: doc_generation/docs_md
+site_dir: site
+
+repo_name: spluta/MMMAudio
+repo_url: https://github.com/spluta/MMMAudio
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: deep purple
+      accent: purple
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+    - Overview: api/index.md
+    - Core DSP: 
+      - Utilities: api/mmm_utils/functions.md
+      - Buffer: api/mmm_dsp/Buffer.md
+      - InterleavedBuffer: api/mmm_dsp/InterleavedBuffer.md
+      - Oscillators: api/mmm_dsp/Osc.md
+      - Filters: api/mmm_dsp/Filters.md
+      - Envelopes: api/mmm_dsp/Env.md
+      - Delays: api/mmm_dsp/Delays.md
+      - Distortion: api/mmm_dsp/Distortion.md
+      - Noise: api/mmm_dsp/Noise.md
+      - Pan: api/mmm_dsp/Pan.md
+      - PlayBuf: api/mmm_dsp/PlayBuf.md
+      - RecordBuf: api/mmm_dsp/RecordBuf.md
+      - Oversampling: api/mmm_dsp/Oversampling.md
+      - ML/Neural: api/mmm_dsp/MLP.md
+    - Core Framework:
+      - Audio Engine: api/mmm_src/MMMAudio.md
+      - Graph System: api/mmm_src/MMMGraphs.md
+      - Traits: api/mmm_src/MMMTraits.md
+      - World: api/mmm_src/MMMWorld.md
+      - Patterns: api/mmm_src/Patterns.md
+      - Scheduler: api/mmm_src/Scheduler.md
+    - Utilities:
+      - FFT: api/mmm_utils/MMM_FFT.md
+      - Windows: api/mmm_utils/Windows.md
+      - Print: api/mmm_utils/Print.md
+      - ML Training: api/mmm_utils/mlp_trainer.md
+  - Examples:
+    - Overview: examples/index.md
+    - Default Graph: examples/Default_Graph.md
+    - In2Out: examples/In2Out.md
+    - Pan Az: examples/Pan_Az.md
+    - Many Oscillators: examples/ManyOscillators.md
+    - Feedback Delays: examples/FeedbackDelays.md
+    - Grains: examples/Grains.md
+    - Record: examples/Record.md
+    - PlayBuf Graph: examples/PlayBuf_Graph.md
+    - MIDI Sequencer: examples/Midi_Sequencer.md
+    - Torch MLP: examples/Torch_MLP.md
+    - Ole Dusty: examples/OleDusty.md
+  - Contributing:
+    - Overview: contributing/index.md
+    - Documentation Guide: contributing/documentation.md
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
+  - pymdownx.arithmatex:
+      generic: true
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_bases: true
+            show_inheritance_diagram: true
+  - mkdocs-simple-hooks:
+      hooks:
+        on_pre_build: "doc_generation.generate_docs:main"
+  # - with-pdf:
+  #     output_path: ./MMMAudio.pdf
+  #     cover_title: MMMAudio Documentation
+  #     cover_subtitle: DSP library for Python and Mojo
+  #     author: Sam Pluta
+  #     toc_title: Table of Contents
+  #     copyright: "© 2025 Sam Pluta"
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/spluta/MMMAudio

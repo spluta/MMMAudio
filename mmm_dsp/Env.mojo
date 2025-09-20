@@ -1,3 +1,8 @@
+"""Envelope generator module.
+
+This module provides an envelope generator class that can create complex envelopes with multiple segments, curves, and looping capabilities.
+"""
+
 from .Osc import Sweep
 from .Filters import Lag
 from mmm_src.MMMWorld import MMMWorld
