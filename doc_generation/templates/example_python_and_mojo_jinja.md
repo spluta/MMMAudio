@@ -5,6 +5,10 @@
 <!-- Use mkdocs ":::" syntax to get docstring from Python file -->
 :::examples.{{python_file_stem}}
 
+{% if tosc is defined %}
+This example has a corresponding [TouchOSC file](https://github.com/spluta/MMMAudio/blob/main/examples/{{ tosc }}).
+{% endif %}
+
 ## Python Code
 <!-- Puts the remaining lines from the Python script here -->
 ```python
