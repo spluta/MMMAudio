@@ -180,20 +180,27 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     print(f"  Errors: {errors} files")
     return errors == 0
 
-def process_example_file(example_file: Path):
-    if not example_file.exists() or not example_file.is_file():
-        print(f"Example file '{example_file}' does not exist or is not a file, skipping.")
+def process_example_file(python_example_file_path: Path):
+    if not python_example_file_path.exists() or not python_example_file_path.is_file():
+        print(f"Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
         return
+    
+    print(f"Processing example file: {python_example_file_path}")
+    mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
+    print(f"Corresponding Mojo file: {mojo_example_file}")
 
-    example_name = example_file.stem  # filename without suffix
-    output_md_path = REPO_ROOT / 'doc_generation' / 'docs_md' / 'examples' / f"{example_name}.md"
+    example_name = ' '.join(word.capitalize() for word in python_example_file_path.stem.split('_'))
+    print(f"Example name: {example_name}")
+
+    python_file_stem = python_example_file_path.stem  # filename without suffix
+    output_md_path = REPO_ROOT / 'doc_generation' / 'docs_md' / 'examples' / f"{python_file_stem}.md"
     output_md_path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
-        with open(example_file, 'r', encoding='utf-8') as f:
+        with open(python_example_file_path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
     except Exception as e:
-        print(f"Error reading example file '{example_file}': {e}")
+        print(f"Error reading example file '{python_example_file_path}': {e}")
         return
     
     # Find the code snippet, which is after the docstring, if there is a docstring
@@ -227,13 +234,19 @@ def process_example_file(example_file: Path):
     code = ''.join(lines[code_start:code_end]).rstrip()
     
     context = {
-        'examplename': example_name,
+        'python_file_stem': python_file_stem,
+        'mojo_file_name': mojo_example_file,
+        'example_name': example_name,
         'code': code,
     }
 
     rendered = render_template('example_python_and_mojo_jinja.md', context)
     output_md_path.write_text(rendered, encoding='utf-8')
-    print(f"Processed example '{example_file}' -> '{output_md_path}'")         
+    print(f"Processed example '{python_example_file_path}' -> '{output_md_path}'")     
+    
+def snake_to_camel(snake_case: Path) -> Path:
+    camel_case = ''.join(word.capitalize() for word in snake_case.split('_'))
+    return camel_case
 
 def process_examples_dir():
     example_files_src_dir = REPO_ROOT / 'examples'
@@ -245,12 +258,11 @@ def process_examples_dir():
 
     print(f"Found {len(example_file_paths)} example files to process.")
     
-    for example_file in example_file_paths:
-        print(f"Found example file: {example_file} {example_file.name}")
-        if example_file.name == '__init__.py':
-            print(f"Skipping file in examples directory: {example_file} {example_file.name}")
+    for python_example_file_path in example_file_paths:
+        if python_example_file_path.name == '__init__.py':
+            print(f"Skipping file in examples directory: {python_example_file_path} {python_example_file_path.name}")
             continue
-        process_example_file(example_file)
+        process_example_file(python_example_file_path)
 
 def copy_static_docs(output_dir: Path, args):
     static_docs_src = Path('doc_generation/static_docs')

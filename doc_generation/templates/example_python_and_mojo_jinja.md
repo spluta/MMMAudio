@@ -1,9 +1,9 @@
 *For more information about the examples, such as how the Python and Mojo files interact with each other, see the [Examples Overview](index.md)*
 
-# {{ examplename }}
+# {{ example_name }}
 
 <!-- Use mkdocs ":::" syntax to get docstring from Python file -->
-:::examples.{{examplename}}
+:::examples.{{python_file_stem}}
 
 ## Python Code
 <!-- Puts the remaining lines from the Python script here -->
@@ -17,6 +17,6 @@
 <!-- Put the contents of the .mojo file *of the same name!* here -->
 ```mojo
 
---8<-- "examples/{{examplename}}.mojo"
+--8<-- "examples/{{mojo_file_name}}"
 
 ```
