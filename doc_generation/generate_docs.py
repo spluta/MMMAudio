@@ -243,6 +243,7 @@ def process_example_file(python_example_file_path: Path):
     if tosc_file.exists() and tosc_file.is_file():
         context['tosc'] = tosc_file.name
 
+    print(f'context: {context}')
     rendered = render_template('example_python_and_mojo_jinja.md', context)
     output_md_path.write_text(rendered, encoding='utf-8')
     print(f"Processed example '{python_example_file_path}' -> '{output_md_path}'")     

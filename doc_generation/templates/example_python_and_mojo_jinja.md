@@ -6,7 +6,7 @@
 :::examples.{{python_file_stem}}
 
 {% if tosc is defined %}
-This example has a corresponding [TouchOSC file](https://github.com/spluta/MMMAudio/blob/main/examples/freeverb_example.tosc/{{ tosc }}).
+This example has a corresponding [TouchOSC file](https://github.com/spluta/MMMAudio/blob/main/examples/{{ tosc }}).
 {% endif %}
 
 ## Python Code
