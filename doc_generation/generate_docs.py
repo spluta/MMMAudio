@@ -21,6 +21,11 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 from jinja2 import Environment, FileSystemLoader, TemplateNotFound
+try:
+    # MkDocs provides a Nav object at runtime; only type hint if available
+    from mkdocs.config.defaults import MkDocsConfig  # type: ignore
+except Exception:  # pragma: no cover - optional import
+    MkDocsConfig = Any  # type: ignore
 
 # ---------------- Hard‑coded whitelist of source directories ----------------
 # These are relative to the repository root (one level above this script's dir).
@@ -154,17 +159,16 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
         print(f"Warning: No .mojo files found in '{input_dir}'")
         return True
 
-    print(f"Found {len(mojo_files)} .mojo files to process")
     processed = 0
     errors = 0
 
     for src_file in mojo_files:
+        if src_file.stem == '__init__':
+            continue
         rel_path = src_file.relative_to(input_dir)
         # Mirror directory and replace suffix
         out_file = output_dir / rel_path.with_suffix('.md')
         out_file.parent.mkdir(parents=True, exist_ok=True)
-        if verbose:
-            print(f"→ {src_file} -> {out_file}")
         try:
             data = run_mojo_doc(src_file)
             data = clean_mojo_doc_data(data)
@@ -175,22 +179,17 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
             errors += 1
             print(f"  Error: {e}")
 
-    print("\nProcessing complete:")
-    print(f"  Successfully processed: {processed} files")
-    print(f"  Errors: {errors} files")
     return errors == 0
 
 def process_example_file(python_example_file_path: Path):
     if not python_example_file_path.exists() or not python_example_file_path.is_file():
         print(f"Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
         return
-    
-    print(f"Processing example file: {python_example_file_path}")
-    mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
-    print(f"Corresponding Mojo file: {mojo_example_file}")
 
-    example_name = ' '.join(word.capitalize() for word in python_example_file_path.stem.split('_'))
-    print(f"Example name: {example_name}")
+    mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
+
+    example_name_words = python_example_file_path.stem.split('_')
+    example_name = ' '.join(word.capitalize() for word in example_name_words if word != 'example')
 
     python_file_stem = python_example_file_path.stem  # filename without suffix
     output_md_path = REPO_ROOT / 'doc_generation' / 'docs_md' / 'examples' / f"{python_file_stem}.md"
@@ -264,6 +263,50 @@ def process_examples_dir():
             continue
         process_example_file(python_example_file_path)
 
+def build_examples_nav_entries() -> list[dict[str, str]]:
+    """Scan examples directory and build list of nav mappings for Examples section.
+
+    Returns a list like: [{'Overview': 'examples/index.md'}, {'Default Graph': 'examples/Default_Graph.md'}, ...]
+    Assumes that the corresponding generated markdown files already exist (or will exist) in docs_md/examples.
+    """
+    example_dir = REPO_ROOT / 'examples'
+    entries: list[dict[str, str]] = []
+    # Always keep Overview first if it exists (static doc copied from static_docs/examples/index.md or generated manually)
+    overview_md = Path('examples/index.md')
+    if (REPO_ROOT / 'doc_generation' / 'docs_md' / overview_md).exists() or True:
+        entries.append({'Overview': str(overview_md)})
+
+    py_files = sorted(p for p in example_dir.glob('*.py') if p.name not in {'__init__.py'})
+    for py in py_files:
+        stem = py.stem  # e.g. many_oscillators
+        # Convert to display name (similar to logic in process_example_file)
+        display = ' '.join(w.capitalize() for w in stem.split('_') if w != 'example')
+        # The generated markdown file uses CamelCase for some examples? Actually process_example_file writes docs_md/examples/{python_stem}.md preserving the python stem
+        md_name = stem + '.md'
+        entries.append({display: f'examples/{md_name}'})
+    return entries
+
+def update_examples_nav(config: MkDocsConfig):  # type: ignore
+    """Mutate config.nav to replace the Examples section with dynamically built entries.
+
+    If no Examples section is found, one is appended at the end.
+    """
+    if not hasattr(config, 'nav') or config.nav is None:
+        return
+    new_examples = build_examples_nav_entries()
+    # config.nav is a list of dict/sections
+    nav_list = config.nav
+    inserted = False
+    for i, item in enumerate(nav_list):
+        if isinstance(item, dict) and 'Examples' in item:
+            nav_list[i] = {'Examples': new_examples}
+            inserted = True
+            break
+    if not inserted:
+        nav_list.append({'Examples': new_examples})
+    config.nav = nav_list
+    print(f"[MkDocs Hook] Examples nav updated with {len(new_examples)-1} example pages.")
+
 def copy_static_docs(output_dir: Path, args):
     static_docs_src = Path('doc_generation/static_docs')
     if static_docs_src.exists() and static_docs_src.is_dir():
@@ -274,8 +317,6 @@ def copy_static_docs(output_dir: Path, args):
                     shutil.copytree(item, dest, dirs_exist_ok=True)
                 else:
                     shutil.copy2(item, dest)
-                if args.verbose:
-                    print(f"Copied {'dir' if item.is_dir() else 'file'}: {item} -> {dest}")
         except Exception as e:
             print(f"Error copying static docs contents: {e}")
             sys.exit(1)
@@ -300,26 +341,9 @@ def clean_output_dir(output_dir: Path, args):
     except Exception as e:  
         print(f"Error cleaning contents of output directory: {e}")
         sys.exit(1)
-        
-def clean_docs_md(config=None):
-    """MkDocs hook entry point - cleans up the generated docs_md directory contents."""
-    output_dir = Path('./doc_generation/docs_md').resolve()
-    if output_dir.exists() and output_dir.is_dir():
-        print(f"[MkDocs Hook] Cleaning up contents of docs_md directory: {output_dir}")
-        try:
-            for child in output_dir.iterdir():
-                if child.is_dir():
-                    shutil.rmtree(child)
-                else:
-                    child.unlink()
-            print(f"[MkDocs Hook] Successfully cleaned contents of {output_dir}")
-        except Exception as e:
-            print(f"[MkDocs Hook] Error cleaning contents of {output_dir}: {e}")
-    else:
-        print(f"[MkDocs Hook] No docs_md directory to clean at: {output_dir}")
 
 def generate_docs_hook(config=None):
-    """MkDocs hook entry point - generates docs with default settings."""
+    """MkDocs hook entry point - generates docs with default settings (on_pre_build compatibility)."""
     
     # Repo root directory
     input_dir = Path('.').resolve()
@@ -331,7 +355,7 @@ def generate_docs_hook(config=None):
     
     # If it exists, clear ./doc_generation/docs_md so that there isn't any stale content lingering 
     if output_dir.exists():
-        clean_output_dir(output_dir, type('args', (), {'verbose': True})())
+        clean_output_dir(output_dir, type('args', (), {'verbose': False})())
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -353,14 +377,27 @@ def generate_docs_hook(config=None):
 
     if not success:
         print("[MkDocs Hook] Documentation generation failed")
-    else:
-        print("[MkDocs Hook] Documentation generation completed successfully")
+
+def configure_and_generate(config: MkDocsConfig):  # type: ignore
+    """Combined on_config hook: generate docs early then inject dynamic Examples nav.
+
+    MkDocs calls on_config before nav is finalized; we can mutate config.nav safely here.
+    """
+    print("[MkDocs Hook] on_config: generating docs and building dynamic Examples nav")
+    # Run generation routine so example markdown exists before nav build
+    generate_docs_hook(config)
+    try:
+        update_examples_nav(config)
+    except Exception as e:
+        print(f"[MkDocs Hook] Failed to update Examples nav dynamically: {e}")
+    return config
 
 def main(config=None):
     """CLI entry point or MkDocs hook."""
     # If called as a hook (config passed), run the hook function
     if config is not None:
-        return generate_docs_hook(config)
+        generate_docs_hook(config)
+        return config
     
     # If not called as a hook, parse CLI arguments and run:
     
