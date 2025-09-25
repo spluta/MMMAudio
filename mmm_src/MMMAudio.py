@@ -10,7 +10,7 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 import threading
 import multiprocessing
 
-from zmq import RATE
+# from zmq import RATE
 
 from mmm_src.hid_devices import Joystick
 
