@@ -15,10 +15,9 @@ source venv/bin/activate
 
 pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi
 ```
-install modular's max/mojo library. this is the nightly install, though you may want to go with the stable
+install modular's max/mojo library
 ```
-pip install --pre modular \
-  --index-url https://dl.modular.com/public/nightly/python/simple/
+pip install mojo
 ```
 
 MMM uses pyAudio (portaudio) for audio input/output and hid for hid control.
