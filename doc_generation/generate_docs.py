@@ -40,6 +40,23 @@ HARDCODED_SOURCE_DIRS = [
 TEMPLATES_DIR = REPO_ROOT / 'doc_generation' / 'templates'
 
 _env: Environment | None = None
+
+def process_python_sources(output_dir: Path):
+    py_out = output_dir / 'api'
+    py_out.mkdir(parents=True, exist_ok=True)
+    for rel_dir in HARDCODED_SOURCE_DIRS:
+        print(f'rel_dir: {rel_dir}')
+        src_dir = REPO_ROOT / rel_dir
+        print(f'src_dir: {src_dir}')
+        for py in src_dir.rglob('*.py'):
+            if py.name == '__init__.py':
+                continue
+            # Module import path relative to repo root
+            module_path = py.relative_to(REPO_ROOT).with_suffix('')
+            dotted = '.'.join(module_path.parts)
+            md_path = py_out / module_path.parts[0] / (py.stem + '.md')
+            md_path.write_text(f"# {py.stem}\n\n::: {dotted}\n", encoding='utf-8')
+            
 def get_jinja_env() -> Environment:
     global _env
     if _env is None:
@@ -379,6 +396,7 @@ def generate_docs_hook(config=None):
 
     # Process all examples in the examples directory
     process_examples_dir()
+    process_python_sources(output_dir)
 
     if not success:
         print("[MkDocs Hook] Documentation generation failed")
