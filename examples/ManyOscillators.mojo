@@ -9,12 +9,12 @@ from mmm_dsp.OscBuffers import OscBuffers
 
 # THE SYNTH
 
-# The synth here is not yet the "graph" that MMMAudio will 
-# call upon to make sound with. StereoOscSynth is a struct that
+# The synth here, called StereoBeatingSines, is not yet the "graph" that MMMAudio will 
+# call upon to make sound with. StereoBeatingSines is a struct that
 # defines some DSP behavior that can be called upon by 
 # the ManyOscillators graph below.
 
-struct StereoOscSynth(Representable, Movable, Copyable):
+struct StereoBeatingSines(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var oscs: Osc[2] # two oscillators
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
@@ -50,7 +50,7 @@ struct StereoOscSynth(Representable, Movable, Copyable):
         self.temp = 0.0
 
     fn __repr__(self) -> String:
-        return String("StereoOscSynth")
+        return String("StereoBeatingSines")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
@@ -76,19 +76,16 @@ struct StereoOscSynth(Representable, Movable, Copyable):
 
 struct ManyOscillators(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-
-    var osc_synths: List[StereoOscSynth]  # Instances of the Oscillator
-    var num_pairs: Int
+    var synths: List[StereoBeatingSines]  # Instances of the StereoBeatingSines synth
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
 
-        # initialize the list of oscillator pairs
-        self.osc_synths = List[StereoOscSynth]()
-        # add 10 pairs to the list
-        self.num_pairs = 10
-        for _ in range(self.num_pairs):
-            self.osc_synths.append(StereoOscSynth(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
+        # initialize the list of synths
+        self.synths = List[StereoBeatingSines]()
+        # add 10 synths to the list
+        for _ in range(10): # by default start with 10 StereoBeatingSines synths
+            self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
 
     fn __repr__(self) -> String:
         return String("ManyOscillators")
@@ -96,10 +93,10 @@ struct ManyOscillators(Representable, Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.get_msgs()
 
-        # sum all the stereo outs from the N oscillator pairs
+        # sum all the stereo outs from the N synths
         sum = SIMD[DType.float64, 2](0.0, 0.0)
-        for i in range(self.num_pairs):
-            sum += self.osc_synths[i].next()
+        for i in range(len(self.synths)):
+            sum += self.synths[i].next()
 
         return sum
 
@@ -108,21 +105,20 @@ struct ManyOscillators(Representable, Movable, Copyable):
 
         # num here will be Type "None" if there is no message called "set_num_pairs"
         # if there is a message called "set_num_pairs", num will the contents of the message
-        # [TODO]: is the type and data structure known? I know lower we index in but I think
+        # [TODO]: is the type and data structure known? I know lower down the message is 
+        # "indexed into" in but I think
         # it would be valuable to explain what to expect here.
         num = self.world_ptr[0].get_msg("set_num_pairs")
 
-        # [TODO]: PICK UP HERE
         if num:
-            if num.value()[0] != self.num_pairs:
-                print("Changing number of osc pairs to:", Int(num.value()[0]))
-                # adjust the list of osc synths
-                if Int(num.value()[0]) > self.num_pairs:
+            if num.value()[0] != len(self.synths):
+                print("Changing number of synths to:", Int(num.value()[0]))
+                # adjust the list of synths
+                if Int(num.value()[0]) > len(self.synths):
                     # add more
-                    for _ in range(Int(num.value()[0]) - self.num_pairs):
-                        self.osc_synths.append(StereoOscSynth(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
+                    for _ in range(Int(num.value()[0]) - len(self.synths)):
+                        self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
                 else:
                     # remove some
-                    for _ in range(self.num_pairs - Int(num.value()[0])):
-                        _ = self.osc_synths.pop()
-            self.num_pairs = Int(num.value()[0])
+                    for _ in range(len(self.synths) - Int(num.value()[0])):
+                        _ = self.synths.pop()
