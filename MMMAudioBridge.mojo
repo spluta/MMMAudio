@@ -1,5 +1,5 @@
-"""you should not edit this file"""
-"""i don't want it to be in this directory, but it needs to be here due to a mojo compiler bug"""
+# you should not edit this file
+# i don't want it to be in this directory, but it needs to be here due to a mojo compiler bug
 
 from python import PythonObject
 from python.bindings import PythonModuleBuilder
@@ -87,10 +87,8 @@ struct MMMAudioBridge(Representable, Movable):
 
     @staticmethod
     fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
-        var dims_list = List[Float64]()
-        dims_list.append(Float64(dims[0]))
-        dims_list.append(Float64(dims[1]))
-        py_self[0].world_ptr[0].screen_dims = dims_list  # Set the screen size in the MMMWorld instance
+
+        py_self[0].world_ptr[0].screen_dims = [Float64(dims[0]), Float64(dims[1])]  # Set the screen size in the MMMWorld instance
 
         return PythonObject(None) 
 
