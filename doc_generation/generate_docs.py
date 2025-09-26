@@ -40,6 +40,21 @@ HARDCODED_SOURCE_DIRS = [
 TEMPLATES_DIR = REPO_ROOT / 'doc_generation' / 'templates'
 
 _env: Environment | None = None
+
+def process_python_sources(output_dir: Path):
+    py_out = output_dir / 'api'
+    py_out.mkdir(parents=True, exist_ok=True)
+    for rel_dir in HARDCODED_SOURCE_DIRS:
+        src_dir = REPO_ROOT / rel_dir
+        for py in src_dir.rglob('*.py'):
+            if py.name == '__init__.py':
+                continue
+            # Module import path relative to repo root
+            module_path = py.relative_to(REPO_ROOT).with_suffix('')
+            dotted = '.'.join(module_path.parts)
+            md_path = py_out / module_path.parts[0] / (py.stem + '.md')
+            md_path.write_text(f"# {py.stem}\n\n::: {dotted}\n", encoding='utf-8')
+            
 def get_jinja_env() -> Environment:
     global _env
     if _env is None:
@@ -77,12 +92,22 @@ def collect_whitelisted_mojo_files() -> List[Path]:
                 seen.add(f)
     return files
 
-def run_mojo_doc(file_path: Path, timeout: int = 30) -> Dict[str, Any]:
+def run_mojo_doc(file_path: Path, json_output_dir: Path, timeout: int = 30) -> Dict[str, Any]:
     """Execute `mojo doc <file>` and return parsed JSON.
+    
+    The JSON output is written to a file in json_output_dir for inspection,
+    then loaded and returned as a dictionary.
 
     Raises RuntimeError on non-zero exit or JSON parse error.
     """
-    cmd = ["mojo", "doc", str(file_path)]
+    # Create JSON output filename based on the source file path
+    json_filename = file_path.stem + ".json"
+    json_output_path = json_output_dir / json_filename
+    
+    # Ensure the output directory exists
+    json_output_dir.mkdir(parents=True, exist_ok=True)
+    
+    cmd = ["mojo", "doc", "-o", str(json_output_path), str(file_path)]
     try:
         completed = subprocess.run(
             cmd,
@@ -101,15 +126,20 @@ def run_mojo_doc(file_path: Path, timeout: int = 30) -> Dict[str, Any]:
             f"mojo doc failed for {file_path} (exit {completed.returncode}):\nSTDERR:\n{completed.stderr.strip()}\nSTDOUT:\n{completed.stdout.strip()}"
         )
 
-    stdout = completed.stdout.strip()
-    if not stdout:
-        raise RuntimeError(f"Empty output from mojo doc for {file_path}")
+    # Load JSON from the output file
     try:
-        return json.loads(stdout)
+        with open(json_output_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        raise RuntimeError(f"JSON output file not found: {json_output_path}")
     except json.JSONDecodeError as e:
-        # Keep a short prefix of the stdout for diagnostics
-        snippet = stdout[:400]
-        raise RuntimeError(f"Invalid JSON from mojo doc for {file_path}: {e}\nOutput snippet:\n{snippet}")
+        # Read first part of the file for diagnostics
+        try:
+            with open(json_output_path, 'r', encoding='utf-8') as f:
+                snippet = f.read(400)
+        except Exception:
+            snippet = "<unable to read file>"
+        raise RuntimeError(f"Invalid JSON in output file {json_output_path}: {e}\nFile snippet:\n{snippet}")
 
 def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
     decl = data.get('decl', {})
@@ -119,23 +149,16 @@ def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
         # Drop unwanted functions first
         struct['functions'] = [
             f for f in functions
-            if f.get('name') not in ('__init__', '__repr__')
+            if f.get('name') != '__repr__'
         ]
+        
         for func in struct['functions']:
             for ol in func.get('overloads', []):
-                # Remove self from args
                 args = ol.get('args', [])
-                # before = len(args)
                 ol['args'] = [a for a in args if a.get('name') != 'self']
-                # if before != len(ol['args']):
-                #     print(f"Removed 'self' arg from {func.get('name')} in struct {struct.get('name')}")
-                # Also handle 'parameters' if present
                 if 'parameters' in ol:
                     params = ol['parameters']
-                    # p_before = len(params)
                     ol['parameters'] = [p for p in params if p.get('name') != 'self']
-                    # if p_before != len(ol['parameters']):
-                    #     print(f"Removed 'self' parameter from {func.get('name')} in struct {struct.get('name')}")
     return data
 
 def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
@@ -149,6 +172,9 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     if not input_dir.is_dir():
         print(f"Error: '{input_dir}' is not a directory")
         return False
+
+    # Create JSON output directory for inspection
+    json_output_dir = output_dir.parent / 'json_output'
 
     # Only collect mojo files from directories that contain source files, 
     # specified in the variable HARDCODED_SOURCE_DIRS. This avoids grabbing 
@@ -170,7 +196,7 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
         out_file = output_dir / rel_path.with_suffix('.md')
         out_file.parent.mkdir(parents=True, exist_ok=True)
         try:
-            data = run_mojo_doc(src_file)
+            data = run_mojo_doc(src_file, json_output_dir)
             data = clean_mojo_doc_data(data)
             rendered = render_template('mojo_doc_template_jinja.md', data)
             out_file.write_text(rendered, encoding='utf-8')
@@ -183,7 +209,7 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
 
 def process_example_file(python_example_file_path: Path):
     if not python_example_file_path.exists() or not python_example_file_path.is_file():
-        print(f"Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
+        print(f"Error: Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
         return
 
     mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
@@ -243,10 +269,8 @@ def process_example_file(python_example_file_path: Path):
     if tosc_file.exists() and tosc_file.is_file():
         context['tosc'] = tosc_file.name
 
-    print(f'context: {context}')
     rendered = render_template('example_python_and_mojo_jinja.md', context)
     output_md_path.write_text(rendered, encoding='utf-8')
-    print(f"Processed example '{python_example_file_path}' -> '{output_md_path}'")     
     
 def snake_to_camel(snake_case: Path) -> Path:
     camel_case = ''.join(word.capitalize() for word in snake_case.split('_'))
@@ -255,16 +279,13 @@ def snake_to_camel(snake_case: Path) -> Path:
 def process_examples_dir():
     example_files_src_dir = REPO_ROOT / 'examples'
     if not example_files_src_dir.exists() or not example_files_src_dir.is_dir():
-        print(f"Examples directory '{example_files_src_dir}' does not exist or is not a directory, skipping examples processing.")
+        print(f"Error Examples directory '{example_files_src_dir}' does not exist or is not a directory, skipping examples processing.")
         return
 
     example_file_paths = list(example_files_src_dir.glob('*.py'))
-
-    print(f"Found {len(example_file_paths)} example files to process.")
     
     for python_example_file_path in example_file_paths:
         if python_example_file_path.name == '__init__.py':
-            print(f"Skipping file in examples directory: {python_example_file_path} {python_example_file_path.name}")
             continue
         process_example_file(python_example_file_path)
 
@@ -327,11 +348,9 @@ def copy_static_docs(output_dir: Path, args):
             sys.exit(1)
     else:
         if args.verbose:
-            print(f"No static docs directory at {static_docs_src}, skipping static content copy.")
+            print(f"Error No static docs directory at {static_docs_src}, skipping static content copy.")
 
 def clean_output_dir(output_dir: Path, args):
-    if args.verbose:
-        print(f"Cleaning contents of output directory (preserving root): {output_dir}")
     try:
         for child in output_dir.iterdir():
             if child.is_dir():
@@ -379,6 +398,7 @@ def generate_docs_hook(config=None):
 
     # Process all examples in the examples directory
     process_examples_dir()
+    process_python_sources(output_dir)
 
     if not success:
         print("[MkDocs Hook] Documentation generation failed")
@@ -443,10 +463,6 @@ Examples:
 
     input_dir = Path(args.input_dir).resolve()
     output_dir = Path(args.output_dir).resolve()
-    
-    if args.verbose:
-        print(f"Source root: {input_dir}")
-        print(f"Output root: {output_dir}")
 
     if args.clean and output_dir.exists():
         clean_output_dir(output_dir, args)

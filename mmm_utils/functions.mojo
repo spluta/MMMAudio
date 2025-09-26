@@ -139,14 +139,16 @@ fn clip[N: Int = 1](val: SIMD[DType.float64, N], lo: SIMD[DType.float64, N], hi:
     return val2
 
 fn wrap[N: Int=1](value: SIMD[DType.float64, N], min_val: SIMD[DType.float64, N], max_val: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-    """Wraps a value around a specified range.
+    """Wraps a value around a specified range. **(float64 version)**
+
     Parameters:
-        N: Size of the SIMD vector - defaults to 1..
+        N: Size of the SIMD vector - defaults to 1.
 
     Args:
         value: The value to wrap.
         min_val: The minimum of the range.
         max_val: The maximum of the range.
+
     Returns:
         The wrapped value within the range [min_val, max_val]
     """
@@ -160,7 +162,7 @@ fn wrap[N: Int=1](value: SIMD[DType.float64, N], min_val: SIMD[DType.float64, N]
 
 fn wrap[N: Int=1](value: SIMD[DType.int64, N], min_val: SIMD[DType.int64, N], max_val: SIMD[DType.int64, N]) -> SIMD[DType.int64, N]:
     """
-    Wraps a value around a specified range.
+    Wraps a value around a specified range. **(int64 version)**
     
     Parameters:
         N: Size of the SIMD vector - defaults to 1.
@@ -232,8 +234,6 @@ fn lagrange4[N: Int = 1](sample0: SIMD[DType.float64, N], sample1: SIMD[DType.fl
     """
     Perform Lagrange interpolation for 4th order case (from JOS Faust Model). This is extrapolated from the JOS Faust filter model.
     
-    lagrange4[N](sample0, sample1, sample2, sample3, sample4, frac) -> SIMD[Float64, N]
-
     Parameters:
         N: Size of the SIMD vector - defaults to 1.
 
@@ -299,8 +299,6 @@ fn lerp[N: Int = 1](p0: SIMD[DType.float64, N], p1: SIMD[DType.float64, N], t: S
     """
     Performs linear interpolation between two points.
     
-    lerp[N](p0, p1, t) -> Float64 or SIMD[Float64, N]
-
     Parameters:
         N: Size of the SIMD vector - defaults to 1.
 

@@ -1,69 +1,94 @@
 
-# {{ struct.name }}
+---
 
+# **{{ struct.name }}**
+
+<!-- SUMMARY -->
 {% if struct.summary %}
-{{ struct.summary }}
+
+**{{ struct.summary }}**
+
 {% endif %}
 
+<!-- DESCRIPTION -->
 {% if struct.description %}
 {{ struct.description }}
 {% endif %}
 
+<!-- PARENT TRAITS -->
 {% if struct.parentTraits %}
-**Parent Traits:** {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
+*Parent Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
 {% endif %}
 
+<!-- PARAMETERS -->
 {% if struct.parameters %}
-## Parameters
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
 {% for param in struct.parameters %}
-1. **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
+| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 
+<!-- FUNCTIONS -->
 {% if struct.functions %}
-## Functions
+## **Functions**
+
 {% for function in struct.functions %}
-### **`fn` {{ function.name }}**
 
 {% for overload in function.overloads %}
+
+### `fn` **`{{ function.name }}`**
+
+<div style="margin-left:3em;" markdown="1">
+
 {% if overload.summary %}{{ overload.summary }}{% endif %}
+
 {% if overload.description %}{{ overload.description }}{% endif %}
 
-## Signature
+**Signature**  
+
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-## Parameters
+**Parameters**
+
+| Name | Type | Description |
+|------|------|-------------|
 {% for param in overload.parameters %}
-- **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}  
+| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 
 {% if overload.args %}
-## Arguments
+**Arguments**
+
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
 {% for arg in overload.args %}
-- **{{ arg.name }}**{% if arg.type %}: `{{ arg.type }}`{% endif %}{% if arg.default %} = `{{ arg.default }}`{% endif %}{% if arg.description %} - {{ arg.description }}{% endif %}  
+| **{{ arg.name }}** | {% if arg.type %}`{{ arg.type }}`{% else %}—{% endif %} | {% if arg.default %}`{{ arg.default }}`{% else %}—{% endif %} | {% if arg.description %}{{ arg.description }}{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 
 {% if overload.returns %}
-## Returns
-{% if overload.returns.type %}**Type**: `{{ overload.returns.type }}`{% endif %}
+**Returns**
+{% if overload.returns.type %}: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
 
 {{ overload.returns.doc }}
-{% endif %}
+{% endif %} 
 {% endif %}
 
 {% if overload.raises %}
-## Raises
+**Raises**
 {% if overload.raisesDoc %}{{ overload.raisesDoc }}{% endif %}
 {% endif %}
 
 {% if overload.constraints %}
-## Constraints
+**Constraints**
 {{ overload.constraints }}
 {% endif %}
 
@@ -72,23 +97,26 @@
     {{ overload.deprecated }}
 {% endif %}
 
+<!-- STATIC METHOD WARNING -->
 {% if overload.isStatic %}
 !!! info "Static Method"
     This is a static method.
 {% endif %}
 
+</div>
+
 {% endfor %}
+
 {% endfor %}
 {% endif %}
 
 {% if struct.constraints %}
 ## Constraints
 {{ struct.constraints }}
-{% endif %}
+{% endif %} <!-- endif struct.constraints -->
 
+<!-- DEPRECATION WARNING -->
 {% if struct.deprecated %}
 !!! warning "Deprecated"
     {{ struct.deprecated }}
 {% endif %}
-
----
