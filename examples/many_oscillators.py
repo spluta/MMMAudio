@@ -5,6 +5,17 @@ You can change the number of oscillators dynamically by sending a 'set_num_pairs
 
 from mmm_src.MMMAudio import MMMAudio
 
+# MMMAudio is the main class for handling audio input and output, # so it needs to be created and told what 'graph' to use.
+# A 'graph' is a collection of audio processing modules 
+# connected together by the user into a signal chain to create the 
+# desired DSP. In this example, the user has created a
+# graph called "ManyOscillators" in the .mojo file called  
+# "ManyOscillators.mojo". (Currently the file and graph need to 
+# share the same name. This will likely change.) 
+# That file is in the "examples" directory.
+# It is called a "package" because Mojo can consider a directory 
+# as a package if it contains a __init__.mojo file (just like 
+# Python can if it contains a __init__.py file).
 mmm_audio = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
@@ -17,16 +28,25 @@ mmm_audio.send_msg("set_num_pairs", 50)  # change to 4 pairs of oscillators
 
 mmm_audio.stop_audio() # stop/pause the audio thread
 
-
 # ----------- running python in full priority mode -------------
-# if you are expericencing audio dropouts, these can be avoided by giving python the highest "nice" priority
-# unfortunately this can't be done from the terminal that vscode automatically launches
+# if you are experiencing audio dropouts, these can be avoided by 
+# giving python the highest "nice" priority
+# unfortunately this can't be done from the terminal that vscode 
+# automatically launches
 # it can only be done from a user made terminal
-# from a new terminal window and from the MMMAudio directory run "sudo nice -n -20 venv/bin/python" to run python in sudo mode with highest priority
-# then copy and paste your code, like the example below, into the terminal repl to run it
+# from a new terminal window and from the MMMAudio directory run 
+# "sudo nice -n -20 venv/bin/python" to run python in sudo mode 
+# with highest priority
+# then copy and paste your code, like the example below, into the 
+# terminal repl to run it
 
 from mmm_src.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 
-mmm_audio.start_audio() # start the audio thread - or restart it where it left off
+mmm_audio.start_audio() 
+
+# changing the pairs of oscillators or stopping the audio isn't 
+# included here because if it were all pasted in it would all run, 
+# *immediately* changing the number of oscillators and stopping 
+# the audio!
