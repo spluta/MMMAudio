@@ -8,18 +8,13 @@ from mmm_src.MMMTraits import Buffable
 alias dtype = DType.float64
 
 struct Buffer(Representable, Movable, Buffable, Copyable):
-    """
-    Has 2 possible constructors:
+    """Buffer for holding data (often audio data).
 
-    1) Buffer(lists: List[List[Float64]], buf_sample_rate: Float64 = 48000.0).
-       - lists: List of channels, each channel is a List of Float64 samples.
-       - buf_sample_rate: Sample rate of the buffer (default is 48000.0).
-    
-    2) Buffer(num_chans: Int64 = 2, samples: Int64 = 48000, buf_sample_rate: Float64 = 48000.0).
-       - num_chans: Number of channels (default is 2 for stereo).
-       - samples: Number of samples per channel (default is 48000 for 1 second at 48kHz).
-       - buf_sample_rate: Sample rate of the buffer (default is 48000.0).
-       
+    There are two ways to initialize a Buffer (see the two `__init__` methods below):
+
+    1. By providing a list of lists of Float64 samples, where each inner list represents a channel. You can also specify the sample rate of the buffer.
+
+    2. As an "empty" buffer (filled with zeros) by specifying the number of channels and the number of samples per channel.
     """
 
     var num_frames: Float64  
@@ -41,6 +36,13 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         return self.buf_sample_rate
 
     fn __init__(out self, lists: List[List[Float64]] = List[List[Float64]](), buf_sample_rate: Float64 = 48000.0):
+        """
+        Initialize a Buffer of data with channels.
+
+        Args:
+            lists: List of channels, each channel is a List of Float64 samples.
+            buf_sample_rate: Sample rate of the buffer (default is 48000.0).
+        """
         self.data = lists.copy()
         self.index = 0.0
         self.num_frames = len(self.data[0]) 
@@ -50,6 +52,15 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         self.duration = self.num_frames / self.buf_sample_rate
 
     fn __init__(out self, num_chans: Int64 = 2, samples: Int64 = 48000, buf_sample_rate: Float64 = 48000.0):
+        """
+        Initialize a Buffer filled with zeros.
+
+        Args:
+            num_chans: Number of channels (default is 2 for stereo).
+            samples: Number of samples per channel (default is 48000 for 1 second at 48kHz).
+            buf_sample_rate: Sample rate of the buffer (default is 48000.0).
+        """
+
         self.data = [[Float64(0.0) for _ in range(samples)] for _ in range(num_chans)]
         self.buf_sample_rate = buf_sample_rate
         self.index = 0.0
@@ -89,17 +100,16 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
     fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
         """
-        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N. It will start reading from the channel specified by start_chan and read N channels from there.
-
-        read(start_chan, phase, interp=0)
+        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N. 
+        It will start reading from the channel specified by start_chan and read N channels from there.
 
         Parameters:
             N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
 
         Args:
-          start_chan: The starting channel index to read from (0-based).
-          phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
-          interp: The interpolation method to use (0 = linear, 1 = quadratic).
+            start_chan: The starting channel index to read from (0-based).
+            phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
+            interp: The interpolation method to use (0 = linear, 1 = quadratic).
         """
 
         if self.num_frames == 0 or self.num_chans == 0:
@@ -264,16 +274,13 @@ struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
         """
         A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N.
 
-        read(start_chan, phase, interp=0)
-
         Parameters:
             N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
 
         Args:
-          start_chan: The starting channel index to read from (0-based).
-          phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
-          interp: The interpolation method to use (0 = linear, 1 = quadratic).
-
+            start_chan: The starting channel index to read from (0-based).
+            phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
+            interp: The interpolation method to use (0 = linear, 1 = quadratic).
         """
 
         if self.num_frames == 0 or self.num_chans == 0:
