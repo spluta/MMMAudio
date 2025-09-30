@@ -1,8 +1,8 @@
 from mmm_src.MMMAudio import *
 list_audio_devices()
 
-in_device = "Fireface UFX+ (24059506)"
-out_device = "Fireface UFX+ (24059506)"
+in_device = "Fireface UFX+ (24082112)"
+out_device = "Fireface UFX+ (24082112)"
 
 in_device = "MacBook Pro Microphone"
 out_device = "External Headphones"
