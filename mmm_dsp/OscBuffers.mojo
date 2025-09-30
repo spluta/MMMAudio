@@ -137,7 +137,7 @@ struct OscBuffers(Representable, Movable, Copyable):
         return String(
             "OscBuffers(size=" + String(self.size) + ")"
         )
-
+    @always_inline
     fn quadratic_interp_loc(self, x: Float64, buf_num: Int64) -> Float64:
         # Ensure indices are within bounds
         var mod_idx = Int64(x) % Int64(self.size)
@@ -153,7 +153,7 @@ struct OscBuffers(Representable, Movable, Copyable):
         var y2 = self.buffers[buf_num][mod_idx2]
 
         return quadratic_interp(y0, y1, y2, frac)
-
+    @always_inline
     fn lerp(self, x: Float64, buf_num: Int64) -> Float64:
         # Get indices for 2 adjacent points
         var index = Int64(x)
@@ -170,16 +170,19 @@ struct OscBuffers(Representable, Movable, Copyable):
 
     # Get the next sample from the buffer using linear interpolation
     # Needs to receive an unsafe pointer to the buffer being used
+    @always_inline
     fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.lerp(f_index, buf_num)
         return value
 
+    @always_inline
     fn read_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size)) % Float64(self.size)
         var value = self.quadratic_interp_loc(f_index, buf_num)
         return value
 
+    @always_inline
     fn read_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
         # Sinc interpolation using the sinc table
         var phase_diff = phase - last_phase  
@@ -275,7 +278,8 @@ struct OscBuffers(Representable, Movable, Copyable):
         
 #         return out
 
-    fn read(self, phase: Float64, osc_type: Int64 = 0, interp: Int64 = 0) -> Float64:
+    fn read[interp: Int = 0](self, phase: Float64, osc_type: Int64 = 0) -> Float64:
+        @parameter
         if interp == 0:
             return self.read_lin(phase, osc_type)  # Linear interpolation
         elif interp == 1:

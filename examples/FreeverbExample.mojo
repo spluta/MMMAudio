@@ -42,6 +42,7 @@ struct FreeverbSynth(Representable, Movable, Copyable):
         self.added_space = SIMD[DType.float64, 2](0.5, 0.5)
         self.mix = 0.1
 
+    @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.get_msgs()
 

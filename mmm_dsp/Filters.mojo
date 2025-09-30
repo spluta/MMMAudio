@@ -233,29 +233,11 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
 
         return (mc0, mc1, mc2)
 
-        # if filter_type == 0:      # lowpass
-        #     return (SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](1.0))
-        # elif filter_type == 1:    # bandpass
-        #     return (SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](1.0), SIMD[DType.float64, self.N](0.0))
-        # elif filter_type == 2:    # highpass
-        #     return (SIMD[DType.float64, self.N](1.0), -k, -SIMD[DType.float64, self.N](1.0))
-        # elif filter_type == 3:    # notch
-        #     return (SIMD[DType.float64, self.N](1.0), -k, SIMD[DType.float64, self.N](0.0))
-        # elif filter_type == 4:    # peak
-        #     return (SIMD[DType.float64, self.N](1.0), -k, -SIMD[DType.float64, self.N](2.0))
-        # elif filter_type == 5:    # allpass
-        #     return (SIMD[DType.float64, self.N](1.0), -2.0*k, SIMD[DType.float64, self.N](0.0))
-        # elif filter_type == 6:    # bell
-        #     return (SIMD[DType.float64, self.N](1.0), k*(A*A - 1.0), SIMD[DType.float64, self.N](0.0))
-        # elif filter_type == 7:    # lowshelf
-        #     return (SIMD[DType.float64, self.N](1.0), k*(A - 1.0), A*A - 1.0)
-        # elif filter_type == 8:    # highshelf
-        #     return (A*A, k*(1.0 - A)*A, 1.0 - A*A)
-        # else:
-        #     return (SIMD[DType.float64, self.N](1.0), SIMD[DType.float64, self.N](0.0), SIMD[DType.float64, self.N](0.0))  # default
-
     fn next(mut self, input: SIMD[DType.float64, self.N], filter_type: SIMD[DType.int32, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
-        """next a single sample through the SVF"""
+        """
+        process one sample through 
+        
+        """
         
         var coefs = self._compute_coeficients(filter_type, frequency, q, gain_db)
         var g = coefs[0]
@@ -423,16 +405,14 @@ struct DCTrap[N: Int=1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("DCBlockerFilter")
 
-    fn next(mut self, in_: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    fn next(mut self, input: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         """Process one sample through the DC blocker filter"""
-        var out = self.last_samp * self.alpha + self.last_inner
-        
-        self.last_inner = out
+        self.last_inner = self.last_samp * self.alpha + self.last_inner
 
-        out = in_ - out
-        self.last_samp = out
+        sample = input - self.last_inner
+        self.last_samp = sample
 
-        return out
+        return sample
 
 struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     """
@@ -469,8 +449,6 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         
         """
 
-        # var omegaWarp = tan(pi * cf * self.step_val)
-        # var g = omegaWarp / (1.0 + omegaWarp)
         var g =  tan(pi * freq * self.step_val)
 
         var G = g / (1.0 + g)
@@ -484,14 +462,14 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     fn hpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         return input - self.lpf(input, freq)
 
-struct VAMoogLadder[N: Int = 1](Representable, Movable, Copyable):
+struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var nyquist: Float64
     var step_val: Float64
     var last_1: SIMD[DType.float64, N]
     var last_2: SIMD[DType.float64, N]
     var last_3: SIMD[DType.float64, N]
     var last_4: SIMD[DType.float64, N]
-    var oversampling: Oversampling[N]
+    var oversampling: Oversampling[N, 2 ** os_index]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.nyquist = world_ptr[0].sample_rate * 0.5
@@ -500,62 +478,72 @@ struct VAMoogLadder[N: Int = 1](Representable, Movable, Copyable):
         self.last_2 = SIMD[DType.float64, N](0.0)
         self.last_3 = SIMD[DType.float64, N](0.0)
         self.last_4 = SIMD[DType.float64, N](0.0)
-        self.oversampling = Oversampling[self.N](world_ptr)
+        self.oversampling = Oversampling[self.N, 2 ** os_index](world_ptr)
 
     fn __repr__(self) -> String:
         return String(
             "VAMoogLadder"
         )
 
-    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N], os_index: Int = 0) -> SIMD[DType.float64, self.N]:
+    @always_inline
+    fn lp4(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+        var cf = clip(freq, 0.0, self.nyquist * 0.6)
+            
+        # k is the feedback coefficient of the entire circuit
+        var k = 4.0 * q_val
         
-        if self.oversampling.index != os_index:
-            self.oversampling.set_os_index(os_index)
+        var omegaWarp = tan(pi * cf * self.step_val)
+        var g = omegaWarp / (1.0 + omegaWarp)
+        
+        var g4 = g * g * g * g
+        var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
+        
+        # internally clips the feedback signal to prevent the filter from blowing up
+        for i in range(self.N):
+            if s4[i] > 2.0:
+                s4[i] = tanh(s4[i] - 1.0) + 1.0
+            elif s4[i] < -2.0:
+                s4[i] = tanh(s4[i] + 1.0) - 1.0
 
-        for _ in range(self.oversampling.times_os_int):
-            var cf = clip(freq, 0.0, self.nyquist * 0.6)
-            
-            # k is the feedback coefficient of the entire circuit
-            var k = 4.0 * q_val
-            
-            var omegaWarp = tan(pi * cf * self.step_val)
-            var g = omegaWarp / (1.0 + omegaWarp)
-            
-            var g4 = g * g * g * g
-            var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
-            
-            # internally clips the feedback signal to prevent the filter from blowing up
-            for i in range(self.N):
-                if s4[i] > 2.0:
-                    s4[i] = tanh(s4[i] - 1.0) + 1.0
-                elif s4[i] < -2.0:
-                    s4[i] = tanh(s4[i] + 1.0) - 1.0
+        # input is the incoming signal minus the feedback from the last stage
+        var input = (sig - k * s4) / (1.0 + k * g4)
 
-            # input is the incoming signal minus the feedback from the last stage
-            var input = (sig - k * s4) / (1.0 + k * g4)
+        var v1 = g * (input - self.last_1)
+        var lp1 = self.last_1 + v1
+        
+        var v2 = g * (lp1 - self.last_2)
+        var lp2 = self.last_2 + v2
+        
+        var v3 = g * (lp2 - self.last_3)
+        var lp3 = self.last_3 + v3
+        
+        var v4 = g * (lp3 - self.last_4)
+        var lp4 = self.last_4 + v4
+        
+        self.last_1 = lp1
+        self.last_2 = lp2
+        self.last_3 = lp3
+        self.last_4 = lp4
 
-            var v1 = g * (input - self.last_1)
-            var lp1 = self.last_1 + v1
-            
-            var v2 = g * (lp1 - self.last_2)
-            var lp2 = self.last_2 + v2
-            
-            var v3 = g * (lp2 - self.last_3)
-            var lp3 = self.last_3 + v3
-            
-            var v4 = g * (lp3 - self.last_4)
-            var lp4 = self.last_4 + v4
-            
-            self.last_1 = lp1
-            self.last_2 = lp2
-            self.last_3 = lp3
-            self.last_4 = lp4
-            
-            if self.oversampling.index == 0:
-                return lp4
-            else:
-                self.oversampling.add_sample(lp4)
-        return self.oversampling.get_sample()
+        return lp4
+
+    @always_inline
+    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+        @parameter
+        if os_index == 0:
+            return self.lp4(sig, freq, q_val)
+        else:
+            alias times_oversampling = 2 ** os_index
+
+            @parameter
+            for _ in range(times_oversampling):
+                var lp4 = self.lp4(sig, freq, q_val)
+                @parameter
+                if os_index == 0:
+                    return lp4
+                else:
+                    self.oversampling.add_sample(lp4)
+            return self.oversampling.get_sample()
 
 # All of the following is a translation of Julius Smith's Faust implementation of digital filters.
 # Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>

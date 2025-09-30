@@ -14,7 +14,7 @@ struct TrigSynthVoice(Movable, Copyable):
     var env: Env
 
     var mod: Osc
-    var car: Osc
+    var car: Osc[1, 0, 1]
     var lag: Lag
 
     var trig: Float64
@@ -26,7 +26,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.world_ptr = world_ptr
 
         self.mod = Osc(self.world_ptr)
-        self.car = Osc(self.world_ptr)
+        self.car = Osc[1, 0, 1](self.world_ptr)
         self.lag = Lag(self.world_ptr)
 
         self.env = Env(self.world_ptr)
@@ -42,7 +42,7 @@ struct TrigSynthVoice(Movable, Copyable):
             var mod_value = self.mod.next(self.freq*1.5)  # Get the next value from the modulator
             var env = self.env.next([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0], 0, self.trig)
             var mod_mult = linlin(env, 0.0, 1.0, 0.0, 0.25) # self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, 8.0), 0.05)
-            var car_value = self.car.next(self.freq, mod_value * mod_mult, osc_type=2, os_index=1)  # Get the next value from the carrier
+            var car_value = self.car.next(self.freq, mod_value * mod_mult, osc_type=2)  # Get the next value from the carrier
             car_value = car_value * 0.1 * env * self.vol
 
             return car_value
@@ -88,30 +88,36 @@ struct TrigSynth(Representable, Movable, Copyable):
 
         var out = 0.0
 
-        for note_on in self.note_ons:
-            print(note_on[0], note_on[1], note_on[2], end = "\n")
-            self.current_voice = (self.current_voice + 1) % self.num_voices
-            self.voices[self.current_voice].vol = Float64(note_on[2]) / 127.0
-            self.voices[self.current_voice].trig = 1.0
-            self.voices[self.current_voice].freq = midicps(note_on[1])
-        self.note_ons.clear()
+        # these messages are only processed on the first sample of the block, when grab_messages==1, so we should only do these things on the first sample of the block
+        if self.world_ptr[0].grab_messages == 1:
+            for note_on in self.note_ons:
+                # print(note_on[0], note_on[1], note_on[2], end = "\n")
+                self.current_voice = (self.current_voice + 1) % self.num_voices
+                self.voices[self.current_voice].vol = Float64(note_on[2]) / 127.0
+                self.voices[self.current_voice].trig = 1.0
+                self.voices[self.current_voice].freq = midicps(Float64(note_on[1]))
+            self.note_ons.clear()
 
-        # looking for midi cc on cc 34
-        # this will control the frequency of the filter
-        for cc in self.ccs:
-            if cc[1] == 34:  # Assuming CC 34 is for filter frequency
-                self.filt_freq = linlin(Float64(cc[2]), 0.0, 127.0, 20.0, 1000.0)  # Map CC value to frequency range
+            # looking for midi cc on cc 34
+            # this will control the frequency of the filter
+            for cc in self.ccs:
+                if cc[1] == 34:  # Assuming CC 34 is for filter frequency
+                    self.filt_freq = linlin(Float64(cc[2]), 0.0, 127.0, 20.0, 1000.0)  # Map CC value to frequency range
 
-        if self.trig > 0.0:
-            self.current_voice = (self.current_voice + 1) % self.num_voices
-            self.voices[self.current_voice].trig = self.trig
-            self.voices[self.current_voice].freq = self.freq
+            if self.trig > 0.0:
+                self.current_voice = (self.current_voice + 1) % self.num_voices
+                self.voices[self.current_voice].trig = self.trig
+                self.voices[self.current_voice].freq = self.freq
 
-        # get the output of all the synths and reset the of the current voice (after getting audio)
+        # get the output of all the synths
         for i in range(len(self.voices)):
             out += self.voices[i].next()
-            self.trig = 0.0
-            self.voices[i].trig = 0.0  # Reset the trigger for the next iteration
+
+        # reset the triggers on all the voices on the first sample of the block
+        if self.world_ptr[0].grab_messages == 1:
+            for i in range(len(self.voices)):
+                self.trig = 0.0
+                self.voices[i].trig = 0.0  # Reset the trigger for the next iteration
 
         out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq, 0.1), 2.0) * 0.6
 
@@ -121,20 +127,20 @@ struct TrigSynth(Representable, Movable, Copyable):
         # calls to get_msg and get_midi return an Optional type
         # so you must get the value, then test the value to see if it exists, before using the value
         # get_msg returns a single list of values while get_midi returns a list of lists of values
-
-        trig = self.world_ptr[0].get_msg("t_trig") # trig will be an Optional
-        if trig: # if it trig is None, we do nothing
-            self.trig = trig.value()[0]
-        freq = self.world_ptr[0].get_msg("trig_seq_freq")
-        if freq:
-            self.freq = freq.value()[0]
-        note_ons = self.world_ptr[0].get_midi("note_on",-1, -1)  # Get all note on messages
-        if note_ons:
-            self.note_ons = note_ons.value().copy()
-        
-        ccs = self.world_ptr[0].get_midi("control_change",-1, -1)
-        if ccs:
-            self.ccs = ccs.value().copy()
+        if self.world_ptr[0].grab_messages == 1:
+            trig = self.world_ptr[0].get_msg("t_trig") # trig will be an Optional
+            if trig: # if it trig is None, we do nothing
+                self.trig = trig.value()[0]
+            freq = self.world_ptr[0].get_msg("trig_seq_freq")
+            if freq:
+                self.freq = freq.value()[0]
+            note_ons = self.world_ptr[0].get_midi("note_on",-1, -1)  # Get all note on messages
+            if note_ons:
+                self.note_ons = note_ons.value().copy()
+            
+            ccs = self.world_ptr[0].get_midi("control_change",-1, -1)
+            if ccs:
+                self.ccs = ccs.value().copy()
 
 struct Midi_Sequencer(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

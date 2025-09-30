@@ -16,7 +16,7 @@ struct BufSynth(Representable, Movable, Copyable):
     var play_buf: PlayBuf
     var playback_speed: Float64
     
-    var moog: VAMoogLadder[2]
+    var moog: VAMoogLadder[2, 1] # 2 channels, os_index == 1 (2x oversampling)
     var lpf_freq: Float64
     var lpf_freq_lag: Lag
 
@@ -34,7 +34,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.play_buf = PlayBuf(self.world_ptr)
 
-        self.moog = VAMoogLadder[2](self.world_ptr)
+        self.moog = VAMoogLadder[2, 1](self.world_ptr)
         self.lpf_freq = 20000.0
         self.lpf_freq_lag = Lag(world_ptr)
 
@@ -44,7 +44,7 @@ struct BufSynth(Representable, Movable, Copyable):
         out = self.play_buf.next[N=2](self.buffer, 0, self.playback_speed, True)
 
         freq = self.lpf_freq_lag.next(self.lpf_freq, 0.1)
-        out = self.moog.next(out, freq, 1.0, 1)
+        out = self.moog.next(out, freq, 1.0)
         return out
 
     fn __repr__(self) -> String:

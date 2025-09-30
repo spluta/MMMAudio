@@ -12,7 +12,7 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 # it is looking for /fader1 and /fader2 on port 5005; these can be adjusted
 # Start the OSC server on its own thread
 # this is a bug, but this thread has to start after audio or audio won't start
-thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server(5005),), daemon=True)
+thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server("0.0.0.0",5005),), daemon=True)
 thread.start()
 
 # if touch_osc isn't available you can also send the messages directly

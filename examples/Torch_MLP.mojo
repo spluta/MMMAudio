@@ -12,8 +12,8 @@ from mmm_dsp.Distortion import *
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
 struct TorchSynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var osc1: Osc
-    var osc2: Osc 
+    var osc1: Osc[1, 3, 1]
+    var osc2: Osc[1, 3, 1]
 
     var model_input: List[Float64]  # Input list for audio synthesis
     var model_output: SIMD[DType.float64, 16]  # Output list from the neural network model
@@ -40,8 +40,8 @@ struct TorchSynth(Representable, Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.osc1 = Osc(world_ptr)
-        self.osc2 = Osc(world_ptr)
+        self.osc1 = Osc[1, 3, 1](world_ptr)
+        self.osc2 = Osc[1, 3, 1](world_ptr)
 
         self.model_out_size = 16
 
@@ -90,7 +90,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         # next2 implements a variable wavetable oscillator between the N provided wave types
         # in this case, we are using 0, 4, 5, 6 - Sine, BandLimited Tri, BL Saw, BL Square
         osc_frac1 = linlin(lag_vals[3], 0.0, 1.0, 0.0, 1.0)
-        var osc1 = self.osc1.next_interp(freq1, 0.0, 0.0, [0,4,5,6], osc_frac1, 2, 4)
+        osc1 = self.osc1.next_interp(freq1, 0.0, 0.0, [0,4,5,6], osc_frac1)
 
         # samplerate reduction
         osc1 = self.latch1.next(osc1, self.impulse1.next(linexp(lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
@@ -100,7 +100,8 @@ struct TorchSynth(Representable, Movable, Copyable):
         tanh_gain = linlin(lag_vals[7], 0.0, 1.0, 0.5, 10.0)
 
         # get rid of dc offset
-        osc1 = self.dc1.next(tanh(osc1*tanh_gain))
+        osc1 = tanh(osc1*tanh_gain)
+        osc1 = self.dc1.next(osc1)
 
         # oscillator 2
 
@@ -108,14 +109,15 @@ struct TorchSynth(Representable, Movable, Copyable):
         # var which_osc2 = lag_vals[10] #not used...whoops
 
         osc_frac2 = linlin(lag_vals[11], 0.0, 1.0, 0.0, 1.0)
-        var osc2 = self.osc2.next_interp(freq2, 0.0, 0.0, [0,4,5,6], osc_frac2, 2, 4)
+        var osc2 = self.osc2.next_interp(freq2, 0.0, 0.0, [0,4,5,6], osc_frac2)
 
         osc2 = self.latch2.next(osc2, self.impulse2.next(linexp(lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
 
         osc2 = self.filt2.lpf(osc2, linexp(lag_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(lag_vals[14], 0.0, 1.0, 0.707, 4.0))
 
         tanh_gain = linlin(lag_vals[15], 0.0, 1.0, 0.5, 10.0)
-        osc2 = self.dc2.next(tanh(osc2*tanh_gain))
+        osc2 = tanh(osc2*tanh_gain)
+        osc2 = self.dc2.next(osc2)
         self.fb = osc2
 
         return SIMD[DType.float64, 2](osc1, osc2) * 0.2

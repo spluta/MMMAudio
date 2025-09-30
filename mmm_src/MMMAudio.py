@@ -10,12 +10,12 @@ from pythonosc.osc_server import AsyncIOOSCUDPServer
 import threading
 import multiprocessing
 
-# from zmq import RATE
-
 from mmm_src.hid_devices import Joystick
 
 import mojo.importer
 import os
+
+import matplotlib.pyplot as plt
 
 import pyautogui
 import mmm_src.Scheduler as Scheduler
@@ -136,7 +136,7 @@ class MMMAudio:
     #     for i in range(blocks):
     #         self.mmm_audio_bridge.next(self.out_buffer)
 
-    def plot(self, samples):
+    def get_samples(self, samples):
         blocks = ceil(samples / self.blocksize)
         # Create empty array to store the waveform data
         waveform = np.zeros(samples*self.num_output_channels, dtype=np.float64).reshape(samples, self.num_output_channels)
@@ -148,6 +148,15 @@ class MMMAudio:
                 waveform[i*self.blocksize + j] = self.out_buffer[j]
 
         return waveform
+    
+    def plot(self, samples):
+        a = self.get_samples(samples)
+        plt.title("Channel 0")
+        plt.xlabel("Samples")
+        plt.ylabel("Amplitude")
+        plt.grid()
+        plt.plot(np.array(a))
+        plt.show()
     
     def audio_loop(self):
         max = 0.0
@@ -198,6 +207,8 @@ class MMMAudio:
 
         key_vals = [key]  # Start with the key
         key_vals.extend([float(arg) for arg in args])
+
+        # print(key_vals)
 
         self.mmm_audio_bridge.send_msg(key_vals)
 
@@ -251,15 +262,12 @@ class MMMAudio:
         else:
             print(f"Could not connect to {name}. Make sure the device is plugged in and drivers are installed.")
 
-    async def start_osc_server(self, port=5000):
+    async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
         # Create a dispatcher to handle incoming messages
         dispatcher = Dispatcher()
 
         dispatcher.set_default_handler(self.send_msg)
-
-        # Server configuration
-        ip = "127.0.0.1"  # localhost
 
         # Create and start the server
         server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())

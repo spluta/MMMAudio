@@ -17,7 +17,7 @@ struct GrainSynth(Representable, Movable, Copyable):
 
     var num_chans: Int64
     
-    var tgrains: TGrains
+    var tgrains: TGrains[10]
     var impulse: Impulse  
     var start_frame: Float64
      
@@ -31,15 +31,16 @@ struct GrainSynth(Representable, Movable, Copyable):
         # it will try to free the interleaved buffer if you don't print here. gotta figure this out. this is either a bug by me or by modular.
         print("Loaded buffer with ", self.buffer.get_num_frames(), " frames and ", self.num_chans, " channels.")
 
-        self.tgrains = TGrains(self.world_ptr, 20)  
-        self.impulse = Impulse(self.world_ptr)  
+        self.tgrains = TGrains[10](self.world_ptr)  
+        self.impulse = Impulse(self.world_ptr)
 
 
         self.start_frame = 0.0 
 
+    @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        imp_freq = linlin(self.world_ptr[0].mouse_y, 0.0, 1.0, 5.0, 40.0)
+        imp_freq = linlin(self.world_ptr[0].mouse_y, 0.0, 1.0, 1.0, 10.0)
         var impulse = self.impulse.next(imp_freq, 1.0)  # Get the next impulse sample
 
         start_frame = linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.0, self.buffer.get_num_frames())
@@ -72,6 +73,7 @@ struct Grains(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("TGrains")
 
+    @always_inline
     fn next(mut self: Grains) -> SIMD[DType.float64, 2]:
         sample = self.grain_synth.next()
 

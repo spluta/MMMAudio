@@ -9,6 +9,7 @@ from mmm_dsp.OscBuffers import OscBuffers
 
 # THE SYNTH
 
+
 # The synth here, called StereoBeatingSines, is not yet the "graph" that MMMAudio will 
 # call upon to make sound with. StereoBeatingSines is a struct that
 # defines some DSP behavior that can be called upon by 
@@ -16,7 +17,7 @@ from mmm_dsp.OscBuffers import OscBuffers
 
 struct StereoBeatingSines(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
-    var oscs: Osc[2] # two oscillators
+    var oscs: Osc[2, interp = 1, os_index = 0]  # An Osc instance with two internal Oscs
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
     var pan2: Pan2 # panning processor
     var pan2_osc: Osc # LFO for panning
@@ -34,9 +35,11 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # support, see: https://spluta.github.io/MMMAudio/api/ 
         # Just FYI, it's not 2 because this is a stereo synth, it's 2 to
         # create some nice beating patterns. The output is stereo because later
-        # the Pan2 processor positions the summed oscillators in the stereo field.
-        self.oscs = Osc[2](world_ptr)
-
+        # the Pan2 processor positions the summed oscillators in the stereo field
+        # the first 0 means the oscillator uses linear interpolation, as opposed to 1 (cubic) or 2 (sinc)
+        # the second 0 means no oversampling. a simple sine wave doesn't need expensive interpolation or oversampling
+        self.oscs = Osc[2, 0, 0](world_ptr)
+        
         self.pan2 = Pan2(world_ptr)
         self.pan2_osc = Osc(world_ptr)
         self.pan2_freq = random_float64(0.03, 0.1)
@@ -47,13 +50,14 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
             center_freq + random_float64(1.0, 5.0),
             center_freq - random_float64(1.0, 5.0)
         )
-        self.temp = 0.0
+        self.vol = 0.0
+        self.pan_loc = 0.5
 
     fn __repr__(self) -> String:
         return String("StereoBeatingSines")
 
+    @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-
         # calling .next on both oscillators gets both of their next samples
         # at the same time as a SIMD operation
         # [TODO] it seems that temp magically (multi-channel-expansion-ally) becomes a SIMD variable here. I think it would be good to be explained what's happening.
@@ -64,7 +68,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01)
         temp2 = temp[0] + temp[1]
 
-        self.world_ptr[0].print(self.osc_freqs, "freqs", freq=1.0)
+        self.vol = (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01)
 
         pan2_loc = self.pan2_osc.next(self.pan2_freq)  # Get pan position
 
@@ -83,13 +87,17 @@ struct ManyOscillators(Representable, Movable, Copyable):
 
         # initialize the list of synths
         self.synths = List[StereoBeatingSines]()
-        # add 10 synths to the list
-        for _ in range(10): # by default start with 10 StereoBeatingSines synths
-            self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
+
+        # add 10 pairs to the list
+        self.num_pairs = 10
+        for _ in range(self.num_pairs):
+            self.osc_synths.append(OscSynth(self.world_ptr, random_exp_float64(100.0, 1000.0)))
+
 
     fn __repr__(self) -> String:
         return String("ManyOscillators")
 
+    @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.get_msgs()
 

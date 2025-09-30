@@ -13,12 +13,13 @@ in the root of the downloaded repository, set up your virtual environment and in
 python3.13 -m venv venv
 source venv/bin/activate
 
-pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi
+pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib
 ```
 install modular's max/mojo library
 ```
 pip install mojo
 ```
+
 
 MMM uses pyAudio (portaudio) for audio input/output and hid for hid control.
 

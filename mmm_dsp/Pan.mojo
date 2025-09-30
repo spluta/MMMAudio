@@ -8,30 +8,27 @@ from mmm_utils.functions import *
 struct Pan2 (Representable, Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
     var world_ptr: UnsafePointer[MMMWorld]
+    var gains: SIMD[DType.float64, 2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
         self.world_ptr = world_ptr
+        self.gains = SIMD[DType.float64, 2](0.0, 0.0)
 
     fn __repr__(self) -> String:
         return String("Pan2")
 
-    fn next(mut self, sample: Float64, mut pan: Float64) -> SIMD[DType.float64, 2]:
+    @always_inline
+    fn next(mut self, samples: SIMD[DType.float64, 2], mut pan: Float64) -> SIMD[DType.float64, 2]:
         # Calculate left and right channel samples based on pan value
         pan = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
+        
+        self.gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
+        self.gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
 
-        # Create SIMD vector with the sample duplicated
-        var samples = SIMD[DType.float64, 2](sample, sample)
-        
-        # Create gain vector [left_gain, right_gain]
-        var gains = SIMD[DType.float64, 2](
-            sqrt((1.0 - pan) * 0.5),  # left gain
-            sqrt((1.0 + pan) * 0.5)   # right gain
-        )
-        samples = samples * gains
-        
-        # Apply gains in parallel
-        return samples  # Return stereo output as List
+        samples_out = samples * self.gains
+        return samples_out  # Return stereo output as List
+
 
 # I am sure there is a better way to do this
 # was trying to do it with SIMD
@@ -46,36 +43,7 @@ struct PanAz (Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("PanAz")
 
-    # fn next[N: Int](mut self, sample: Float64, pan: Float64, num_speakers: Int) -> SIMD[DType.float64, N]:
-    #     # Calculate left and right channel samples based on pan value
-    #     pan_wrapped = wrap(pan, 0.0, 1.0)  # Ensure pan is set and wrapped between 0.0 and 1.0
-
-    #     num_speakers_b = max(1, num_speakers)
-
-    #     pan_div = 1.0 / Float64(num_speakers_b)
-
-    #     # Create SIMD vector with the sample duplicated
-    #     var samples = SIMD[DType.float64, 2](sample)
-
-    #     # Create gain vector [left_gain, right_gain]
-    #     var gains = SIMD[DType.float64, 2](pan_wrapped % pan_div * Float64(num_speakers_b))
-    #     gains[0] = 1.0-gains[0]
-    #     # print("pan_wrapped: " + String(pan_wrapped) + " gains: " + String(gains))
-
-    #     sp1 = floor(pan_wrapped * Float64(num_speakers_b))
-    #     sp2 = Int(sp1 + 1) % num_speakers
-
-    #     samples = samples * sqrt(gains)
-
-    #     self.world_ptr[0].print("sp1: " + String(sp1) + " sp2: " + String(sp2) + " gains: " + String(gains))
-
-    #     out = SIMD[DType.float64, N](0.0)
-    #     out[Int(sp1)] = samples[0]
-    #     out[Int(sp2)] = samples[1]
-        
-    #     # Apply gains in parallel
-    #     return out  # Return stereo output as List
-
+    @always_inline
     fn next[N: Int](mut self, sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, N]:
         # translated from SuperCollider
 
@@ -86,22 +54,50 @@ struct PanAz (Representable, Movable, Copyable):
         var aligned_pos_fac = 0.5 * Float64(num_speakers)
         var aligned_pos_const = width * 0.5 + orientation
 
-        out = SIMD[DType.float64, N](0.0)
-
         var constant = pan * 2.0 * aligned_pos_fac + aligned_pos_const
+        chan_pos = SIMD[DType.float64, N](0.0)
+        chan_amp = SIMD[DType.float64, N](0.0)
         
         for i in range(num_speakers):
-            var chanpos = (constant - Float64(i)) * rwidth
-            chanpos = chanpos - frange * floor(rrange * chanpos)
+            chan_pos[Int(i)] = (constant - Float64(i)) * rwidth
 
-            var chanamp: Float64
-            if chanpos >= 1.0:
-                chanamp = 0.0
+        chan_pos = (chan_pos - frange * floor(rrange * chan_pos)) / 2.0
+
+        for i in range(num_speakers):
+            if chan_pos[Int(i)] >= 0.5:
+                chan_amp[Int(i)] = 0.0
             else:
-                chanamp = self.world_ptr[0].osc_buffers.read_lin(chanpos/2.0, 0)
-
-            out[Int(i)] = chanamp
+                chan_amp[Int(i)] = self.world_ptr[0].osc_buffers.read_lin(chan_pos[Int(i)], 0)
 
         # with more than 4 channels, this SIMD multiplication is inefficient
 
-        return out * sample
+        return sample * chan_amp
+
+@always_inline
+fn splay[
+    width: Int, //
+](samples: SIMD[DType.float64, width]) -> SIMD[DType.float64, 2]:
+    var gains = SIMD[DType.float64, 2](0.0, 0.0)
+    var out = SIMD[DType.float64, 2](0.0, 0.0)
+
+    @parameter
+    fn get_pans() -> SIMD[DType.float64, width]:
+        var pans = SIMD[DType.float64, width](0.0)
+        if width == 1:
+            return SIMD[DType.float64, width](0.0)
+        else:
+            for i in range(width):
+                pans[i] = i * 2.0 / Float64(width-1) - 1.0  # pan from -1.0 to 1.0
+            return pans
+
+    alias pans = get_pans()
+    
+    @parameter
+    for i in range(width):
+
+        gains[0] = sqrt((1.0 - pans[i]) * 0.5)  # left gain
+        gains[1] = sqrt((1.0 + pans[i]) * 0.5)   # right gain
+
+        out = out + samples[i] * gains 
+
+    return out

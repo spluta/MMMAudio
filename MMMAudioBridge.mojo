@@ -28,15 +28,10 @@ struct MMMAudioBridge(Representable, Movable):
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
-        # if len(args) != 4:
-        #     raise Error("MMMAudioBridge() takes exactly 4 arguments")
 
         var sample_rate = Float64(args[0])
         var block_size: Int64 = Int64(args[1])
-        # var num_in_chans: Int64 = Int64(args[2])
 
-
-        # var num_out_chans: Int64 = Int64(args[3])
         var num_out_chans: Int64 = 2
         var num_in_chans: Int64 = 2
 
@@ -74,16 +69,6 @@ struct MMMAudioBridge(Representable, Movable):
     fn __repr__(self) -> String:
         return String("MMMAudioBridge(sample_rate: " + String(self.world_ptr[0].sample_rate) + ", block_size: " + String(self.world_ptr[0].block_size) + ", num_in_chans: " + String(self.world_ptr[0].num_in_chans) + ", num_out_chans: " + String(self.world_ptr[0].num_out_chans) + ")")
 
-    # @staticmethod
-    # fn set_active_graphs(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
-    #     """Set the active graphs for the audio engine."""
-        
-    #     if len(args) == 0:
-    #         raise Error("MMMAudioBridge.set_active_graphs() takes at least 1 argument")
-
-    #     py_self[0].graphs.set_active_graphs(args)
-
-    #     return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
     fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
@@ -111,12 +96,6 @@ struct MMMAudioBridge(Representable, Movable):
         var key = String(key_vals[0])
         for i in range(1,len(key_vals)):     
             list.append(Float64(key_vals[i]))  # Convert each value to Float64 and append to the list
-        # if not key in "mouse_x" and not key in "mouse_y":
-        #     print("send_msg:", key, list[0], end="")
-        #     for i in range(1, len(list)):
-        #         print(",", list[i], end="")
-        #     print()
-        #     print()
 
         py_self[0].world_ptr[0].send_msg(key, list)
         

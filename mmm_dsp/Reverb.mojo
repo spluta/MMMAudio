@@ -29,7 +29,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         self.allpass_combs = [Allpass_Comb[N](self.world_ptr, 0.02) for _ in range(4)]
         self.allpass_del_times = [556.0 / 44100.0, 441.0 / 44100.0, 341.0 / 44100.0, 225.0 / 44100.0]
 
-
+    @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], room_size: SIMD[DType.float64, self.N] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.N] = 1000.0, added_space: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """
         Process one sample through the freeverb.
@@ -46,7 +46,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
           The processed output sample.
 
         """
-        var out = SIMD[DType.float64, self.N](0.0)
+        out = SIMD[DType.float64, self.N](0.0)
         room_size_clipped = clip(room_size, 0.0, 1.0)
         added_space_clipped = clip(added_space, 0.0, 1.0)
         feedback = 0.28 + (room_size_clipped * 0.7)
@@ -55,6 +55,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
 
         alias simd_width = simd_width_of[DType.float64]()  # e.g., 2 on 128-bit, 4 on 256-bit, etc.
 
+        @parameter
         for i in range(self.N):
             # this is correct - parallelizing stacks of 4 comb filters
             # there has to be a way to do all channels at the same time
@@ -65,12 +66,11 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
             vectorize[closure1, simd_width](2)
 
             temp = self.temp[0] + self.temp[1]
-            out[i] = temp[0] + temp[1] + temp[2] + temp[3]
-
+            out[i] = temp.reduce_add()
 
         for j in range(4):
             out = self.allpass_combs[j].next(out, self.allpass_del_times[j])
-        
+
         return out  # Return the delayed sample
 
     fn __repr__(self) -> String:
