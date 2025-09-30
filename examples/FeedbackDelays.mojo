@@ -12,7 +12,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     var buffer: InterleavedBuffer  # Interleaved buffer for audio samples
     var playBuf: PlayBuf
-    var delays: FBDelay[2]  # FBDelay for feedback delay effect
+    var delays: FBDelay[2, 3]  # FBDelay for feedback delay effect
     var lag: Lag[2]
     var mouse_x: Float64
     var mouse_y: Float64
@@ -22,7 +22,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         # FBDelay is initialized as 2 channel
-        self.delays = FBDelay[2](self.world_ptr) 
+        self.delays = FBDelay[2, 3](self.world_ptr) 
 
         self.lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
 

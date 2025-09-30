@@ -1,4 +1,4 @@
-from mmm_src.MMMAudio import MMMAudio
+from mmm_src.MMMAudio import MMMAudio 
 
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")

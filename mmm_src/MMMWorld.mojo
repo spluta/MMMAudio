@@ -2,7 +2,7 @@ from python import PythonObject
 from mmm_dsp.OscBuffers import OscBuffers
 from mmm_dsp.Buffer import Buffer
 from mmm_utils.Windows import *
-# from mmm_utils.Print import Print
+from mmm_utils.Print import Print
 import time
 
 struct MMMWorld(Representable, Movable, Copyable):
@@ -67,8 +67,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.midi_dict = Dict[String, Int64]()
 
         self.buffers = List[Buffer]()  # Initialize the list of buffers
-        # self.pointer_to_self = UnsafePointer[MMMWorld]()  # Create a pointer to self
-        # self.printer = Print(self.pointer_to_self)  # Initialize the Print instance
         self.last_print_time = 0.0
         self.print_flag = 0
         self.last_print_flag = 0
@@ -93,9 +91,6 @@ struct MMMWorld(Representable, Movable, Copyable):
             list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
             self.mouse_y = list[0]  # Update mouse y position in the world
 
-        # if key == "thrustmaster":
-        #     if list[5] == 1.0:
-        #         print("Thrustmaster joystick button pressed")
         else:
             self.msg_dict[key] = list.copy()  # Store a copy of the list to avoid reference issues
 
@@ -104,18 +99,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.grab_messages == 1:
             return self.msg_dict.get(key)
         return None
-
-    # fn print_msgs(mut self: Self):
-    #     try:
-    #         if self.grab_messages == 1:
-    #             for key in self.msg_dict.keys():
-    #                 print(key, end=": ")
-    #                 list = self.msg_dict[key]
-    #                 for val in list:
-    #                     print(String(val), end=", ")
-    #             print()
-    #     except Exception:
-    #         pass
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
         self.text_msg_dict[key] = list.copy()
@@ -165,11 +148,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         if not msg:
             return
 
-        print(msg[0], msg[1])
-
         self.midi_dict[String(msg[0])] = Int64(msg[1])
-        # for item in self.midi_dict.items():
-        #     print(item.key, item.value)
     
     fn clear_msgs(mut self):
         self.msg_dict.clear()
@@ -177,7 +156,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.text_msg_dict.clear()
         self.grab_messages = 0
 
-    fn print[T: Writable](mut self, value: T, label: String = "", freq: Float64 = 10.0) -> None:
+    fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
 
         current_time = time.perf_counter()
         # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
@@ -188,7 +167,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         elif self.grab_messages == 0 and self.print_flag == 1:
             self.print_flag = 0
         if self.print_flag == 1:
-            print(label,value)
+            print(label,String(value))
 
     # fn print[T: Writable](mut self, *values: T, label: String = "", freq: Float64 = 10.0) -> None:
 

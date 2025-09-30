@@ -46,7 +46,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.note_time = 0.0
         self.end_frame = 0.0
         self.lag = Lag(world_ptr)
-        self.input_chan = 0 
+        self.input_chan = 8
 
     fn __repr__(self) -> String:
         return String("Record_Synth")
@@ -101,28 +101,29 @@ struct Record_Synth(Representable, Movable, Copyable):
 
     fn get_msgs(mut self: Self):
         # Get messages from the world
-        msg = self.world_ptr[0].get_msg("print_inputs")
-        if msg:
-            for i in range(self.world_ptr[0].num_in_chans):
-                print("input[", i, "] =", self.world_ptr[0].sound_in[i])
-        msg = self.world_ptr[0].get_msg("start_recording")
-        if msg:
-            self.write_pos = 0
-            self.is_recording = 1.0
-            self.is_playing = 0.0
-            self.trig = 0.0
-        msg = self.world_ptr[0].get_msg("set_input_chan")
-        if msg:
-            chan = Int64(msg.value()[0])
-            if chan >= 0 and chan < self.world_ptr[0].num_in_chans:
-                self.input_chan = chan
-                print("Setting input channel to", chan)
-        note_ons = self.world_ptr[0].get_midi("note_on",-1, -1)  # Get all note on messages
-        if note_ons:
-            self.note_ons = note_ons.value().copy()
-        note_offs = self.world_ptr[0].get_midi("note_off",-1, -1)  # Get all note off messages
-        if note_offs:
-            self.note_offs = note_offs.value().copy()
+        if self.world_ptr[0].grab_messages == 1:
+            msg = self.world_ptr[0].get_msg("print_inputs")
+            if msg:
+                for i in range(self.world_ptr[0].num_in_chans):
+                    print("input[", i, "] =", self.world_ptr[0].sound_in[i])
+            msg = self.world_ptr[0].get_msg("start_recording")
+            if msg:
+                self.write_pos = 0
+                self.is_recording = 1.0
+                self.is_playing = 0.0
+                self.trig = 0.0
+            msg = self.world_ptr[0].get_msg("set_input_chan")
+            if msg:
+                chan = Int64(msg.value()[0])
+                if chan >= 0 and chan < self.world_ptr[0].num_in_chans:
+                    self.input_chan = chan
+                    print("Setting input channel to", chan)
+            note_ons = self.world_ptr[0].get_midi("note_on",-1, -1)  # Get all note on messages
+            if note_ons:
+                self.note_ons = note_ons.value().copy()
+            note_offs = self.world_ptr[0].get_midi("note_off",-1, -1)  # Get all note off messages
+            if note_offs:
+                self.note_offs = note_offs.value().copy()
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
@@ -139,6 +140,4 @@ struct Record(Representable, Movable, Copyable):
         return String("Record")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        sample = self.synth.next()
-        # print("sample:", sample)
-        return sample
+        return self.synth.next()

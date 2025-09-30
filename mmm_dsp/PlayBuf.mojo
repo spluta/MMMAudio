@@ -5,7 +5,6 @@ from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
 from .Osc import Impulse
 from mmm_utils.functions import *
-from .Env import Env
 from .Pan import Pan2
 from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
@@ -23,7 +22,6 @@ struct PlayBuf(Representable, Movable, Copyable):
     var end_frame: Float64  
     var reset_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
-    # var dc_trap: DCTrap_N[N]  # DC trap filter for removing DC offset
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         """ world_ptr: pointer to the MMMWorld instance.
@@ -43,12 +41,11 @@ struct PlayBuf(Representable, Movable, Copyable):
         self.end_frame = 0.0  # Initialize end frame
         self.reset_point = 0.0  # Initialize reset point
         self.phase_offset = 0.0  # Initialize phase offset
-        # self.dc_trap = DCTrap_N[self.N](world_ptr)  # Initialize DCTrap filter
 
     fn __repr__(self) -> String:
         return String("PlayBuf")
 
-
+    @always_inline
     fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Float64 = 1.0, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
         """
         get the next sample from an audio buffer - can take both Buffer or InterleavedBuffer.
@@ -67,8 +64,6 @@ struct PlayBuf(Representable, Movable, Copyable):
 
         out = SIMD[DType.float64, N](0.0)
 
-        # print("PlayBuf next called with rate:", rate, "trig:", trig, "start_frame:", start_frame, "end_frame:", end_frame, "phase:", self.get_phase())  # Debug print
-
         # this should happen on the first call if trig > 0.0
         # or when any trig happens
         if trig > 0.0 and self.last_trig <= 0.0 and num_frames > 0:
@@ -79,8 +74,7 @@ struct PlayBuf(Representable, Movable, Copyable):
             else:
                 self.end_frame = end_frame  # Use specified end frame
             self.reset_point = abs(self.end_frame - self.start_frame) / num_frames  # Calculate reset point based on end_frame and start_frame
-            self.phase_offset = self.start_frame / num_frames  # Calculate phase offset based on start_frame
-            # print("PlayBuf triggered: start_frame =", self.start_frame, "end_frame =", self.end_frame, "reset_point =", self.reset_point, "phase_offset =", self.phase_offset)  # Debug print
+            self.phase_offset = self.start_frame / num_frames  
         if self.done:
             self.last_trig = trig
             return out  # Return zeros if done
@@ -178,25 +172,24 @@ struct Grain(Representable, Movable, Copyable):
 
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
         sample = sample * win * self.gain  # Apply the window to the sample
+        @parameter
         if N == 1:
             return self.panner.next(sample[0], self.pan)  # Return the output samples
         else:
             return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
 
-struct TGrains(Representable, Movable, Copyable):
+struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     """
     Triggered granular synthesis. Each trigger starts a new grain.
     """
     var grains: List[Grain]  
     var world_ptr: UnsafePointer[MMMWorld]
-    var num_grains: Int64  
-    var counter: Int64  
+    var counter: Int 
     var last_trig: Float64  
     var trig: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_grains: Int64 = 5, chans: Int64 = 2):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  # Use the world instance directly
-        self.num_grains = max_grains
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(max_grains):
             self.grains.append(Grain(world_ptr, 2))  
@@ -207,6 +200,7 @@ struct TGrains(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("TGrains")
 
+    @always_inline
     fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, buf_chan: Int, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         """Generate the next set of grains.
         
@@ -226,16 +220,17 @@ struct TGrains(Representable, Movable, Copyable):
         if trig > 0.0 and self.last_trig <= 0.0:
             self.trig = trig  # Update trigger value
             self.counter += 1  # Increment the counter on trigger
-            if self.counter >= self.num_grains:
+            if self.counter >= max_grains:
                 self.counter = 0  # Reset counter if it exceeds the number of grains
         else:
             self.trig = 0.0  # Reset trigger value if no trigger
 
-        temp = SIMD[DType.float64, 2](0.0, 0.0)
-        for i in range(self.num_grains):
+        out = SIMD[DType.float64, 2](0.0, 0.0)
+        @parameter
+        for i in range(max_grains):
             if i == self.counter and self.trig > 0.0:
-                temp += self.grains[i].next[N=N](buffer, buf_chan, 1.0, rate, start_frame, duration, pan, gain)
+                out += self.grains[i].next[N=N](buffer, buf_chan, 1.0, rate, start_frame, duration, pan, gain)
             else:
-                temp += self.grains[i].next[N=N](buffer, buf_chan, 0.0, rate, start_frame, duration, pan, gain)
+                out += self.grains[i].next[N=N](buffer, buf_chan, 0.0, rate, start_frame, duration, pan, gain)
 
-        return temp
+        return out

@@ -52,7 +52,7 @@ struct Env(Representable, Movable, Copyable):
     # fn next(mut self, mut buffer: Buffer, phase: Float64, interp: Int64 = 0) -> Float64:
     #     return buffer.next(0, phase, interp)  
 
-    fn next(mut self: Env, values: List[Float64] = List[Float64](0,1,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
+    fn next(mut self: Env, ref values: List[Float64] = List[Float64](0,1,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
 
         if not self.is_active:
@@ -63,7 +63,8 @@ struct Env(Representable, Movable, Copyable):
                 self.reset_vals(times)
             else:
                 self.last_trig = trig  # Update last trigger state
-                return values[0]  # Return zero if not active
+
+                return values[0]
 
         var phase = self.sweep.next(self.freq * time_warp, trig)
         
@@ -97,11 +98,14 @@ struct Env(Representable, Movable, Copyable):
 fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
     """Create a minimum envelope with specified ramp and duration."""
     rise2 = rise
-    if rise2 > dur/2.0:
-        rise2 = dur/2.0
-    if ramp < rise2/dur:
-        return ramp*(dur/rise2)
-    elif ramp > 1.0 - rise2/dur:
-        return (1.0-ramp)*(dur/rise2)
-    else:
-        return 1.0
+    out = SIMD[DType.float64, N](1.0)
+    @parameter
+    for i in range(N):
+        if rise2[i] > dur[i]/2.0:
+            rise2[i] = dur[i]/2.0
+        if ramp[i] < rise2[i]/dur[i]:
+            out[i] = ramp[i]*(dur[i]/rise2[i])
+        elif ramp[i] > 1.0 - rise2[i]/dur[i]:
+            out[i] = (1.0-ramp[i])*(dur[i]/rise2[i])
+    
+    return out

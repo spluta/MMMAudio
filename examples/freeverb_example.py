@@ -9,7 +9,7 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 
 # this example uses open sound control to control Freeverb's parameters
 # there is a simple touchosc patch provided for control
-thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server(5005),), daemon=True)
+thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server("0.0.0.0", 5005),), daemon=True)
 thread.start()
 
 
