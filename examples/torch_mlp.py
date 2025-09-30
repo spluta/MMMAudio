@@ -9,7 +9,8 @@ from random import random
 
 mmm_audio = MMMAudio(128, graph_name="Torch_Mlp", package_name="examples")
 
-mmm_audio.start_audio() # start the audio thread - or restart it where it left off
+# this one is a bit intense, so maybe start with a low volume
+mmm_audio.start_audio()
 
 mmm_audio.stop_audio()  # stop/pause the mojo thread
 

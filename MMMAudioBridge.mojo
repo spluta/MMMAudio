@@ -72,6 +72,7 @@ struct MMMAudioBridge(Representable, Movable):
 
     @staticmethod
     fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
+
         py_self[0].world_ptr[0].screen_dims = [Float64(dims[0]), Float64(dims[1])]  # Set the screen size in the MMMWorld instance
 
         return PythonObject(None) 

@@ -41,43 +41,31 @@ nav:
     - Core DSP: 
       - Utilities: api/mmm_utils/functions.md
       - Buffer: api/mmm_dsp/Buffer.md
-      - InterleavedBuffer: api/mmm_dsp/InterleavedBuffer.md
-      - Oscillators: api/mmm_dsp/Osc.md
-      - Filters: api/mmm_dsp/Filters.md
-      - Envelopes: api/mmm_dsp/Env.md
       - Delays: api/mmm_dsp/Delays.md
       - Distortion: api/mmm_dsp/Distortion.md
+      - Env: api/mmm_dsp/Env.md
+      - Filters: api/mmm_dsp/Filters.md
+      - MLP: api/mmm_dsp/MLP.md
       - Noise: api/mmm_dsp/Noise.md
+      - Osc: api/mmm_dsp/Osc.md
+      - OscBuffers: api/mmm_dsp/OscBuffers.md
+      - Oversampling: api/mmm_dsp/Oversampling.md
       - Pan: api/mmm_dsp/Pan.md
       - PlayBuf: api/mmm_dsp/PlayBuf.md
       - RecordBuf: api/mmm_dsp/RecordBuf.md
-      - Oversampling: api/mmm_dsp/Oversampling.md
-      - ML/Neural: api/mmm_dsp/MLP.md
+      - Reverb: api/mmm_dsp/Reverb.md
     - Core Framework:
-      - Audio Engine: api/mmm_src/MMMAudio.md
-      - Graph System: api/mmm_src/MMMGraphs.md
-      - Traits: api/mmm_src/MMMTraits.md
       - World: api/mmm_src/MMMWorld.md
+      - Audio Engine: api/mmm_src/MMMAudio.md
+      - Graphs: api/mmm_src/MMMGraph_solo.md
+      - Traits: api/mmm_src/MMMTraits.md
       - Patterns: api/mmm_src/Patterns.md
       - Scheduler: api/mmm_src/Scheduler.md
     - Utilities:
-      - FFT: api/mmm_utils/MMM_FFT.md
       - Windows: api/mmm_utils/Windows.md
       - Print: api/mmm_utils/Print.md
       - ML Training: api/mmm_utils/mlp_trainer.md
-  - Examples:
-    - Overview: examples/index.md
-    - Default Graph: examples/Default_Graph.md
-    - In2Out: examples/In2Out.md
-    - Pan Az: examples/Pan_Az.md
-    - Many Oscillators: examples/ManyOscillators.md
-    - Feedback Delays: examples/FeedbackDelays.md
-    - Grains: examples/Grains.md
-    - Record: examples/Record.md
-    - PlayBuf Graph: examples/PlayBuf_Graph.md
-    - MIDI Sequencer: examples/Midi_Sequencer.md
-    - Torch MLP: examples/Torch_MLP.md
-    - Ole Dusty: examples/OleDusty.md
+  # - Examples nav tree is built dynamically from the examples directory
   - Contributing:
     - Overview: contributing/index.md
     - Documentation Guide: contributing/documentation.md
@@ -95,6 +83,7 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
+      toc_depth: 1
       permalink: true
   - attr_list
   - md_in_html
@@ -117,7 +106,7 @@ plugins:
             show_inheritance_diagram: true
   - mkdocs-simple-hooks:
       hooks:
-        on_pre_build: "doc_generation.generate_docs:main"
+        on_config: "doc_generation.generate_docs:configure_and_generate"
   # - with-pdf:
   #     output_path: ./MMMAudio.pdf
   #     cover_title: MMMAudio Documentation

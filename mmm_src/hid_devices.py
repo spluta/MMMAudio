@@ -2,7 +2,16 @@ import hid
 import time
 
 class Joystick:
+    """Connect a Joystick to control parameters.
+    """
     def __init__(self, name, vendor_id=0x046d, product_id=0xc215):
+        """Initialize connection with a Joystick.
+        
+        Arguments:
+            name: Joystick name.
+            vendor_id: Identification number of the vendor.
+            product_id: Identification number of the product.
+        """
         self.device = None
 
         self.verbose = False
@@ -76,7 +85,13 @@ class Joystick:
             # print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}")
 
     def read_continuous(self, name, destination, duration=None):
-        """Read joystick data continuously"""
+        """Read joystick data continuously.
+        
+        Arguments:
+            name: Joystick name
+            destination: 
+            duration: 
+        """
         if not self.device:
             print("Device not connected")
             return

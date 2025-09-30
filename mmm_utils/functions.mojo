@@ -147,6 +147,7 @@ fn wrap[
         input: The sample to wrap.
         min_val: The minimum of the range.
         max_val: The maximum of the range.
+
     Returns:
         The wrapped sample within the range [min_val, max_val]. Returns the sample if min_val >= max_val.
     """
@@ -294,8 +295,6 @@ fn lerp[
     """
     Performs linear interpolation between two points.
     
-    lerp[N](p0, p1, t) -> Float64 or SIMD[Float64, N]
-
     Parameters:
         N: Size of the SIMD vector - defaults to 1.
 
