@@ -49,3 +49,19 @@ the best way to run MMM is in repl mode in your editor. i run this in visual stu
 to set up the python repl correctly in VSCode: with the entire directory loaded into a workspace, go to View->Command Palette->Select Python Interpreter. Make sure to select the version of python that is in your venv directory, not the system-wide version. Then it should just work. 
 
 Before you run the code in a new REPL, make sure to close all terminal instances in the current workspace. This will ensure that a fresh REPL environment is created.
+
+## Running in high priority mode
+
+python might need to run in high priority mode to avoid audio dropouts. on mac/linux, you can do this by using the `nice` command.
+
+to run in high priority mode, you need to run the python interpreter with sudo. this is a bit tricky in a REPL environment, so the easiest way is to run the code from a terminal window.
+
+first, make sure your venv is activated in the terminal window:
+```
+source venv/bin/activate
+```
+then run the python interpreter with sudo:
+```
+sudo nice -n -20 venv/bin/python
+```
+then run the mmm_audio code from the terminal
