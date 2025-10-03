@@ -40,6 +40,7 @@ outputs = make_setting()
 X_train_list = []
 y_train_list = []
 
+# print out what you have so far
 for i in range(len(y_train_list)):
     print(f"Element {i}: {X_train_list[i]}")
     print(f"Element {i}: {y_train_list[i]}")
@@ -74,3 +75,9 @@ args = (X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_tra
 # Create a Thread object
 training_thread = threading.Thread(target=target_function, args=args)
 training_thread.start()
+
+# load the new training into the synth
+mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced.pt")  
+
+# toggle inference off so you can set the synth values directly
+mmm_audio.send_msg("toggle_inference", 1.0)
