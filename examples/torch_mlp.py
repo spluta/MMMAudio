@@ -63,8 +63,14 @@ epochs = 5000
 
 layers = [ [ 64, "relu" ], [ 64, "relu" ], [ out_size, "sigmoid" ] ]
 
+# train the network in a separate thread so the audio thread doesn't get interrupted
+
 from mmm_utils.mlp_trainer import train_nn
+import threading
 
-train_nn(X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_trainings/model_traced.pt")
+target_function = train_nn
+args = (X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_trainings/model_traced.pt")
 
-
+# Create a Thread object
+training_thread = threading.Thread(target=target_function, args=args)
+training_thread.start()
