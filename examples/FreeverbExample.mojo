@@ -11,7 +11,7 @@ from mmm_dsp.Reverb import Freeverb
 
 struct FreeverbSynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] 
-    var buffer: InterleavedBuffer
+    var buffer: Buffer
 
     var num_chans: Int64
 
@@ -28,7 +28,7 @@ struct FreeverbSynth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr 
 
         # load the audio buffer 
-        self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
+        self.buffer = Buffer("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason

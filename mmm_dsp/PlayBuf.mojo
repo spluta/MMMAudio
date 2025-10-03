@@ -48,10 +48,10 @@ struct PlayBuf(Representable, Movable, Copyable):
     @always_inline
     fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Float64 = 1.0, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
         """
-        get the next sample from an audio buffer - can take both Buffer or InterleavedBuffer.
+        get the next sample from an audio buffer (Buffer)
 
         Arguments:
-            buffer: The audio buffer to read from (can be Buffer or InterleavedBuffer).
+            buffer: The audio buffer to read from (Buffer struct).
             rate: The playback rate. 1 is the normal speed of the buffer.
             loop: Whether to loop the buffer (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).

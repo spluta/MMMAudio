@@ -167,6 +167,8 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     """
     A simple comb filter using a delay line with feedback.
     
+    """
+
     var world_ptr: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp, False]
 
@@ -300,7 +302,7 @@ struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyabl
         return "Allpass_Comb"
 
 struct FBDelay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
-    """Like a Comb filter but with any amount of feedback and a tanh function.
+    """Like a Comb filter but with any amount of feedback and a tanh function."""
 
     var world_ptr: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp, False]

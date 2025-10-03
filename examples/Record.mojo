@@ -1,4 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.Messengers import *
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 from mmm_dsp.Buffer import *
@@ -29,6 +30,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var lag: Lag
     var end_frame: Float64
     var input_chan: Int64
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -47,12 +49,14 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.end_frame = 0.0
         self.lag = Lag(world_ptr)
         self.input_chan = 8
+        self.messenger = Messenger(world_ptr)
 
     fn __repr__(self) -> String:
         return String("Record_Synth")
 
     fn next(mut self) -> SIMD[DType.float64, 1]:
         self.get_msgs()
+        messenger.get_msg("")
 
         for note_on in self.note_ons:
             print(note_on[0], note_on[1], note_on[2], end = "\n")

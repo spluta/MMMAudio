@@ -13,7 +13,7 @@ from random import random_float64
 
 struct GrainSynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var buffer: InterleavedBuffer
+    var buffer: Buffer
 
     var num_chans: Int64
     
@@ -24,12 +24,9 @@ struct GrainSynth(Representable, Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
 
-        # interleaved buffer uses numpy to load a buffer into an interleaved array
-        self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
+        # buffer uses numpy to load a buffer into an N channel array
+        self.buffer = Buffer("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
-
-        # it will try to free the interleaved buffer if you don't print here. gotta figure this out. this is either a bug by me or by modular.
-        print("Loaded buffer with ", self.buffer.get_num_frames(), " frames and ", self.num_chans, " channels.")
 
         self.tgrains = TGrains[10](self.world_ptr)  
         self.impulse = Impulse(self.world_ptr)
@@ -46,7 +43,7 @@ struct GrainSynth(Representable, Movable, Copyable):
         start_frame = linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.0, self.buffer.get_num_frames())
 
         # use the first channel of the buffer
-        var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.4)
+        var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.6)
 
         # if you want to use both channels of the buffer, uncomment this and comment the line above
         # with the 2 channel version, there will be 2 channels of output (in stereo), but no panning

@@ -10,7 +10,7 @@ from mmm_utils.functions import *
 struct DelaySynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
-    var buffer: InterleavedBuffer  # Interleaved buffer for audio samples
+    var buffer: Buffer
     var playBuf: PlayBuf
     var delays: FBDelay[2, 3]  # FBDelay for feedback delay effect
     var lag: Lag[2]
@@ -19,7 +19,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
-        self.buffer = InterleavedBuffer(self.world_ptr, "resources/Shiverer.wav")
+        self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         # FBDelay is initialized as 2 channel
         self.delays = FBDelay[2, 3](self.world_ptr) 

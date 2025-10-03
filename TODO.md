@@ -1,7 +1,5 @@
 FIX
 
-- Mojo seems to be trying to free the numpy array inside of InterleavedBuffer without consent. I added a print statement in Grains.mojo to avoid this for now, but it's not a real fix.
-
 Documentation
 
 - make .md files for each of the structs in the codebase

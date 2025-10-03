@@ -16,7 +16,7 @@ struct TrigSynthVoice(Movable, Copyable):
     var env: Env
 
     var mod: Osc
-    var car: Osc[1, 0, 1]
+    var car: Osc[1, 2, 0]
     var lag: Lag
 
     var trig: Float64
@@ -33,7 +33,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.world_ptr = world_ptr
 
         self.mod = Osc(self.world_ptr)
-        self.car = Osc[1, 0, 1](self.world_ptr)
+        self.car = Osc[1, 2, 0](self.world_ptr)
         self.lag = Lag(self.world_ptr)
 
         self.env = Env(self.world_ptr)
@@ -140,6 +140,7 @@ struct TrigSynth(Movable, Copyable):
                 self.current_voice = (self.current_voice + 1) % self.num_voices
                 self.voices[self.current_voice].trig = self.trig.value
                 self.voices[self.current_voice].freq = self.freq.value
+                self.voices[self.current_voice].vol = 1.0  # Set a default volume for the triggered voice
 
         # get the output of all the synths
         for i in range(len(self.voices)):
@@ -147,9 +148,9 @@ struct TrigSynth(Movable, Copyable):
 
         # reset the triggers on all the voices on the first sample of the block
         if self.world_ptr[0].grab_messages == 1:
+            self.trig.value = 0.0  # reset the trigger messenger value
             for i in range(len(self.voices)):
-                self.trig.value = 0.0
-                self.voices[i].trig = 0.0  # Reset the trigger for the next iteration
+                self.voices[i].trig = 0.0  # Reset the trigger for each voice
 
         out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq, 0.1), 2.0) * 0.6
 

@@ -136,6 +136,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.ccs.clear()
         self.bends.clear()
 
+        self.msg_dict.clear()
         self.text_msg_dict.clear()
         self.grab_messages = 0
 

@@ -115,6 +115,64 @@ fn linexp[
     return result
 
 @always_inline
+fn lincurve[width: Int, //
+](input: SIMD[DType.float64, width], in_min: SIMD[DType.float64, width], in_max: SIMD[DType.float64, width], out_min: SIMD[DType.float64, width], out_max: SIMD[DType.float64, width], curve: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
+    """Maps samples from one linear range to another curved range.
+
+    This function performs curved mapping from a linear input range to a
+    curved output range. The curve is exponential in nature, providing a smooth
+    transition between values.
+
+    Args:
+        input: The samples to map.
+        in_min: The minimum of the input range.
+        in_max: The maximum of the input range.
+        out_min: The minimum of the output range (must be > 0).
+        out_max: The maximum of the output range (must be > 0).
+
+    Returns:
+        The curved mapped samples in the output range.
+
+    Examples:
+        ```
+        # Map linear slider (0-1) to frequency range (20Hz-20kHz)
+        slider_pos = SIMD[DType.float64, 1](0.5)
+        frequency = lincurve(slider_pos, 0.0, 1.0, 20.0, 20000.0)  # ≈ 632 Hz
+
+        # Map MIDI controller to filter cutoff frequencies
+        cc_samples = SIMD[DType.float64, 4](0.0, 0.33, 0.66, 1.0)
+        cutoffs = lincurve[4](cc_samples, 0.0, 1.0, 100.0, 10000.0)
+
+        # Create curved envelope shape
+        linear_time = SIMD[DType.float64, 1](0.8)
+        curved_amplitude = lincurve(linear_time, 0.0, 1.0, 0.001, 1.0)
+        ```
+    """
+
+    result = SIMD[DType.float64, width](0.0)
+    a = SIMD[DType.float64, width](0.0)
+    b = SIMD[DType.float64, width](0.0)
+    grow = SIMD[DType.float64, width](0.0)
+    for i in range(width):
+        if input[i] < in_min[i]:
+            result[i] = out_min[i]
+        elif input[i] > in_max[i]:
+            result[i] = out_max[i]
+        else:
+            grow[i] = 2.71828182845904523536 ** curve[i]
+            a[i] = (out_max[i] - out_min[i]) / (1.0 - grow[i])
+            b[i] = out_min[i] + a[i]
+
+        # Scale input to 0-1 range with clipping
+    scaled = (input - in_min) / (in_max - in_min)
+
+    # Apply exponential curve
+    result = b - (a * pow(grow, scaled))
+
+    return result
+
+
+@always_inline
 fn clip[
     dtype: DType, width: Int, //
 ](x: SIMD[dtype, width], lo: SIMD[dtype, width], hi: SIMD[dtype, width]) -> SIMD[dtype, width]:

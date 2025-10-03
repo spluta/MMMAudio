@@ -303,11 +303,11 @@ struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
     @always_inline
     fn next(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """Generate the next impulse sample."""
-        phase = self.phasor.next(abs(freq), 0.0, trig)  # Update the phase
+        phase = self.phasor.next(freq, 0.0, trig)  # Update the phase
         out: SIMD[DType.float64, self.N] = 0.0
 
         for i in range(self.N):
-            if phase[i] < self.last_phase[i] or (trig[i] > 0.0 and self.last_trig[i] <= 0.0):  # Check for an impulse (crossing the 0.5 threshold)
+            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]) or (trig[i] > 0.0 and self.last_trig[i] <= 0.0):  # Check for an impulse (crossing the 0.5 threshold)
                 out[i] = 1.0
 
         self.last_phase = phase
