@@ -114,6 +114,13 @@ struct MMMAudioBridge(Representable, Movable):
         
         return PythonObject(None)  # Return a PythonObject wrapping None
 
+    # @staticmethod
+    # fn send_midi(py_self: UnsafePointer[Self], msg: PythonObject) raises -> PythonObject:
+
+    #     py_self[0].world_ptr[0].send_midi(msg)
+
+    #     return PythonObject(None)  # Return a PythonObject wrapping None
+    
     @staticmethod
     fn send_midi(py_self: UnsafePointer[Self], msg: PythonObject) raises -> PythonObject:
 

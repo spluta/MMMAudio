@@ -25,7 +25,12 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var msg_dict: Dict[String, List[Float64]]
     var text_msg_dict: Dict[String, List[String]]
-    var midi_dict: Dict[String, Int64]
+    var note_ons: List[List[Int64]]
+    var note_offs: List[List[Int64]]
+    var ccs: List[List[Int64]]
+    var bends: List[List[Int64]]
+    
+
     # windows
     var hann_window: Buffer
 
@@ -35,9 +40,6 @@ struct MMMWorld(Representable, Movable, Copyable):
     var last_print_time: Float64
     var print_flag: Int64
     var last_print_flag: Int64
-
-    # it does not like this, not sure why
-    # var printer: Print
 
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
@@ -64,7 +66,10 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.msg_dict = Dict[String, List[Float64]]()
         self.text_msg_dict = Dict[String, List[String]]()
-        self.midi_dict = Dict[String, Int64]()
+        self.note_ons = List[List[Int64]]()
+        self.note_offs = List[List[Int64]]()
+        self.ccs = List[List[Int64]]()
+        self.bends = List[List[Int64]]()
 
         self.buffers = List[Buffer]()  # Initialize the list of buffers
         self.last_print_time = 0.0
@@ -108,51 +113,30 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.grab_messages == 1:
             return self.text_msg_dict.get(key)
         return None
-
-    fn get_midi(mut self: Self, key: String, chan: Int64 = -1, param: Int64 = -1) -> Optional[List[List[Int64]]]:
-        if self.grab_messages == 1:
-            # print("Getting MIDI for key:", key, "chan:", chan, "param:", param)
-            # for item in self.midi_dict.items():
-            #     print(item.key, item.value)
-            if len(self.midi_dict) > 0:
-                list = List[List[Int64]]()
-                for dict_item in self.midi_dict.items():
-                    if dict_item.key.startswith(key):
-                        parts = dict_item.key.split("/")
-                        if len(parts) == 2:
-                            try:
-                                if (chan == -1 or Int64(parts[1]) == chan):
-                                    lil_list = List[Int64]()
-                                    lil_list.append(Int64(parts[1]))
-                                    lil_list.append(Int64(dict_item.value))
-                                    list.append(lil_list.copy())
-                            except:
-                                pass
-                        if len(parts) == 3:
-                            try:
-                                if (chan == -1 or Int64(parts[1]) == chan) and (param == -1 or Int64(parts[2]) == param):
-                                    lil_list = List[Int64]()
-                                    lil_list.append(Int64(parts[1]))
-                                    lil_list.append(Int64(parts[2]))
-                                    lil_list.append(Int64(dict_item.value))
-                                    list.append(lil_list.copy())
-                            except:
-                                pass
-                return list.copy()
-        return None
-
-    fn clear_midi(mut self):
-        self.midi_dict.clear()
-
+    
     fn send_midi(mut self, msg: PythonObject) raises :
         if not msg:
             return
+        if String(msg[0]) == "note_on":
+            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
+            self.note_ons.append(list^)
+        elif String(msg[0]) == "note_off":
+            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
+            self.note_ons.append(list^)
+        elif String(msg[0]) == "cc":
+            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
+            self.ccs.append(list^)
+        elif String(msg[0]) == "bend":
+            print("bend:", msg[1], msg[2])
+            list = List[Int64](Int64(msg[1]), Int64(msg[2]))
+            self.bends.append(list^)
 
-        self.midi_dict[String(msg[0])] = Int64(msg[1])
-    
     fn clear_msgs(mut self):
-        self.msg_dict.clear()
-        self.midi_dict.clear()
+        self.note_ons.clear()
+        self.note_offs.clear()
+        self.ccs.clear()
+        self.bends.clear()
+
         self.text_msg_dict.clear()
         self.grab_messages = 0
 
@@ -169,18 +153,76 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.print_flag == 1:
             print(label,String(value))
 
-    # fn print[T: Writable](mut self, *values: T, label: String = "", freq: Float64 = 10.0) -> None:
+struct Messenger(Floatable, Movable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var value: Float64
 
-    #     current_time = time.perf_counter()
-    #     # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-    #     if self.grab_messages == 1 and self.print_flag == 0:
-    #         if current_time - self.last_print_time >= 1.0 / freq:
-    #             self.last_print_time = current_time
-    #             self.print_flag = 1
-    #     elif self.grab_messages == 0 and self.print_flag == 1:
-    #         self.print_flag = 0
-    #     if self.print_flag == 1:
-    #         print(label, end=" ")
-    #         for value in values:
-    #             print(value, end=" ")
-    #         print()
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
+        self.world_ptr = world_ptr
+        self.value = default
+
+    fn get_msg(mut self: Self, str: String):
+        opt = self.world_ptr[0].get_msg(str) # trig will be an Optional
+        if opt: # if it trig is None, we do nothing
+            self.value = opt.value()[0]
+
+    fn __float__(self) -> Float64:
+        return self.value
+
+struct MIDIMessenger(Movable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var value: List[List[Int64]]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.value = List[List[Int64]]()
+
+    fn get_note_ons(mut self: Self, channel: Int64 = -1, note: Int64 = -1):
+        if self.world_ptr[0].grab_messages == 1:
+            if channel != -1 or note != -1:
+                filtered = List[List[Int64]]()
+                for item in self.world_ptr[0].note_ons:
+                    if (channel == -1 or item[0] == channel) and (note == -1 or item[1] == note):
+                        filtered.append(item.copy())
+                self.value = filtered^
+            else:
+                self.value = self.world_ptr[0].note_ons.copy()
+        else:
+            self.value.clear()
+
+    fn get_note_offs(mut self: Self, channel: Int64 = -1, note: Int64 = -1):
+        if self.world_ptr[0].grab_messages == 1:
+            self.value.clear()
+            if channel != -1 or note != -1:
+                filtered = List[List[Int64]]()
+                for item in self.world_ptr[0].note_offs:
+                    if (channel == -1 or item[0] == channel) and (note == -1 or item[1] == note):
+                        filtered.append(item.copy())
+                self.value = filtered^
+            else:
+                self.value = self.world_ptr[0].note_offs.copy()
+
+    fn get_ccs(mut self: Self, channel: Int64 = -1, cc: Int64 = -1):
+        if self.world_ptr[0].grab_messages == 1:
+            self.value.clear()
+            if channel != -1 or cc != -1:
+                filtered = List[List[Int64]]()
+                for item in self.world_ptr[0].ccs:
+                    if (channel == -1 or item[0] == channel) and (cc == -1 or item[1] == cc):
+                        filtered.append(item.copy())
+                self.value = filtered^
+            else:
+                self.value = self.world_ptr[0].ccs.copy()
+            
+
+    fn get_bends(mut self: Self, channel: Int64 = -1):
+        if self.world_ptr[0].grab_messages == 1:
+            self.value.clear()
+            if channel != -1:
+                filtered = List[List[Int64]]()
+                for item in self.world_ptr[0].bends:
+                    if item[0] == channel:
+                        filtered.append(item.copy())
+                self.value = filtered^
+            else:
+                self.value = self.world_ptr[0].bends.copy()

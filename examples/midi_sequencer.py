@@ -30,6 +30,7 @@ midi_thread = threading.Thread(target=start_midi, daemon=True)
 midi_thread.start()
 midi_thread.stop()
 
+
 # this chunk of code shows how to use the sequencer to trigger notes in the mmm_audio engine
 
 # the scheduler can also sequence notes

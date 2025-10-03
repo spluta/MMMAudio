@@ -226,20 +226,16 @@ class MMMAudio:
 
         self.mmm_audio_bridge.send_text_msg(key_vals)
 
+    # currently doesn't handle sysex or other complex midi messages
     def send_midi(self, msg):
         # encodes the midi message into a key val pair, where the key includes type/channel/etc in one string
-        key = str(msg.type) + "/" + str(msg.channel)
+        # send a midi clock message to keep things in sync
         if hasattr(msg, "note"):
-            key = key + "/" + str(msg.note)
+            self.mmm_audio_bridge.send_midi((str(msg.type), msg.channel, msg.note, msg.velocity))
         if hasattr(msg, "control"):
-            key = key + "/" + str(msg.control)
-        if hasattr(msg, "value"):
-            self.mmm_audio_bridge.send_midi((key, msg.value))
-
+            self.mmm_audio_bridge.send_midi(("cc", msg.channel, msg.control, msg.value))
         if hasattr(msg, "pitch"):
-            self.mmm_audio_bridge.send_midi((key, msg.pitch))
-        if hasattr(msg, "velocity"):
-            self.mmm_audio_bridge.send_midi((key, msg.velocity))
+            self.mmm_audio_bridge.send_midi(("bend", msg.channel, msg.pitch))
 
 
     def add_hid_device(self, name, vendor_id, product_id):
