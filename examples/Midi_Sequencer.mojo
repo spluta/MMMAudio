@@ -1,4 +1,5 @@
 from mmm_src.MMMWorld import *
+from mmm_utils.Messengers import *
 
 from mmm_utils.functions import *
 from mmm_dsp.Osc import *
@@ -70,12 +71,17 @@ struct TrigSynth(Movable, Copyable):
 
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
+
+    # the following 5 variables are messengers (imported from mmm_utils.Messengers.mojo)
+    # messengers get their values from the MMMWorld message system when told to, usually once per block
+    # they then store that value received internally, and you can access it as a normal variable
     var trig: Messenger
     var freq: Messenger
-    var num_voices: Int64
     var note_ons: MIDIMessenger
     var ccs: MIDIMessenger
     var bends: MIDIMessenger
+
+    var num_voices: Int64
 
     var svf: SVF
     var filt_lag: Lag
@@ -109,11 +115,11 @@ struct TrigSynth(Movable, Copyable):
             self.trig.get_msg("t_trig")
             self.freq.get_msg("trig_seq_freq")
             self.note_ons.get_note_ons(0, -1)  # Get all note ons on channel 0
-            self.ccs.get_ccs(-1, -1)  # Get all CCs on channel 0, CC 34
-            self.bends.get_bends(-1)  # Get all pitch bend messages on channel 0
+            self.ccs.get_ccs(0, 34)  # Get all CCs on channel 0, CC 34
+            self.bends.get_bends(0)  # Get all pitch bend messages on channel 0
 
             for bend in self.bends.value:
-                bend_mul = linlin(Float64(bend[1]), -8192.0, 8191.0, 0.875, 1.125)
+                bend_mul = linlin(Float64(bend[1]), -8192.0, 8191.0, 0.935, 1.065)  # Map bend value to a multiplier (up and down a semitone)
                 for i in range(len(self.voices)):
                     self.voices[i].bend_mul = bend_mul
 
