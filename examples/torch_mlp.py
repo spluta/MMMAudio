@@ -17,15 +17,15 @@ mmm_audio.stop_audio()  # stop/pause the mojo thread
 
 # below is the code to make a new training --------------------------------
 
-
-# if you make a new training below, you can load it into the synth
-mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced.pt")  
-
-
 # toggle inference off so you can set the synth values directly
 mmm_audio.send_msg("toggle_inference", 0.0)
 
+# how many outputs does your mlp have?
 out_size = 16
+
+# create lists to hold your training data
+X_train_list = []
+y_train_list = []
 
 def make_setting():
     setting = []
@@ -35,10 +35,8 @@ def make_setting():
 
     return setting
 
+# create an output setting to train on
 outputs = make_setting()
-
-X_train_list = []
-y_train_list = []
 
 # print out what you have so far
 for i in range(len(y_train_list)):
@@ -46,7 +44,7 @@ for i in range(len(y_train_list)):
     print(f"Element {i}: {y_train_list[i]}")
 
 # when you like a setting add an input and output pair
-# this is assuming you are training on 4 pairs of data points
+# this is assuming you are training on 4 pairs of data points - you do as many as you like
 X_train_list.append([0,0])
 y_train_list.append(outputs)
 
@@ -59,22 +57,28 @@ y_train_list.append(outputs)
 X_train_list.append([1,0])
 y_train_list.append(outputs)
 
-learn_rate = 0.001
-epochs = 5000
+# once you have filled the X_train_list and y_train_list, train the network on your data
 
-layers = [ [ 64, "relu" ], [ 64, "relu" ], [ out_size, "sigmoid" ] ]
+def do_it():
+    print("training the network")
+    learn_rate = 0.001
+    epochs = 5000
 
-# train the network in a separate thread so the audio thread doesn't get interrupted
+    layers = [ [ 64, "relu" ], [ 64, "relu" ], [ out_size, "sigmoid" ] ]
 
-from mmm_utils.mlp_trainer import train_nn
-import threading
+    # train the network in a separate thread so the audio thread doesn't get interrupted
 
-target_function = train_nn
-args = (X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_trainings/model_traced.pt")
+    from mmm_utils.mlp_trainer import train_nn
+    import threading
 
-# Create a Thread object
-training_thread = threading.Thread(target=target_function, args=args)
-training_thread.start()
+    target_function = train_nn
+    args = (X_train_list, y_train_list, layers, learn_rate, epochs, "examples/nn_trainings/model_traced.pt")
+
+    # Create a Thread object
+    training_thread = threading.Thread(target=target_function, args=args)
+    training_thread.start()
+
+do_it()
 
 # load the new training into the synth
 mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced.pt")  
