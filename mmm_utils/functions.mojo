@@ -18,9 +18,61 @@ multiple samples simultaneously.
 """
 
 from random import random_float64
-from math import log2
+from math import log2, log10
 from algorithm import vectorize
 from sys.info import simdwidthof
+
+@always_inline
+fn dbamp[width: Int = 1](db: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
+    """Converts decibel values to amplitude.
+
+    This function converts decibel (dB) values to linear amplitude values.
+    The conversion is based on the formula: amplitude = 10^(dB/20).
+
+    Args:
+        db: The decibel values to convert.
+
+    Returns:
+        The corresponding amplitude values.
+
+    Examples:
+        ```
+        # Convert a single dB value to amplitude
+        db_value = SIMD[DType.float64, 1](6.0)
+        amplitude = dbamp(db_value)  # Returns approximately 1.995
+
+        # Convert multiple dB values simultaneously
+        db_values = SIMD[DType.float64, 4](0.0, -6.0, -12.0, -24.0)
+        amplitudes = dbamp[4](db_values)  # Returns approximately [1.0, 0.501, 0.251, 0.063]
+        ```
+    """
+    return 10.0 ** (db / 20.0)
+
+@always_inline
+fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
+    """Converts amplitude values to decibels.
+
+    This function converts linear amplitude values to decibel (dB) values.
+    The conversion is based on the formula: dB = 20 * log10(amplitude).
+
+    Args:
+        amp: The amplitude values to convert.
+
+    Returns:
+        The corresponding decibel values.
+
+    Examples:
+        ```
+        # Convert a single amplitude value to dB
+        amp_value = SIMD[DType.float64, 1](1.0)
+        db_value = ampdb(amp_value)  # Returns 0.0
+
+        # Convert multiple amplitude values simultaneously
+        amp_values = SIMD[DType.float64, 4](1.0, 0.5, 0.25, 0.1)
+        db_values = ampdb[4](amp_values)  # Returns [0.0, -6.0206, -12.0412, -20.0000]
+        ```
+    """
+    return 20.0 * log10(amp)
 
 @always_inline
 fn linlin[
