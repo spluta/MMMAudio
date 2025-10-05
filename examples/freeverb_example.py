@@ -12,5 +12,4 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server("0.0.0.0", 5005),), daemon=True)
 thread.start()
 
-
 mmm_audio.stop_audio() # stop/pause the audio thread
