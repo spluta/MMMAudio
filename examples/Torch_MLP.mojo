@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
+from mmm_utils.Messengers import *
 
 from mmm_dsp.Osc import *
 from math import tanh
@@ -36,7 +37,8 @@ struct TorchSynth(Representable, Movable, Copyable):
     var dc1: DCTrap
     var dc2: DCTrap
 
-    var toggle_inference: Float64
+    var load_messenger: TextMessenger
+    var toggle_inference: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -51,7 +53,8 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.model_output = SIMD[DType.float64, 16](0.0)
 
         # load the trained model
-        self.model = MLP("examples/nn_trainings/model_traced.pt", 2, self.model_out_size)
+        self.load_messenger = TextMessenger(self.world_ptr, "examples/nn_trainings/model_traced.pt")
+        self.model = MLP(self.load_messenger.string, 2, self.model_out_size)
 
         self.inference_trig = Impulse(self.world_ptr)
 
@@ -70,19 +73,21 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.dc1 = DCTrap(self.world_ptr)
         self.dc2 = DCTrap(self.world_ptr)
 
-        self.toggle_inference = 1.0
+        
+        self.toggle_inference = Messenger(self.world_ptr, 1.0)
 
     fn __repr__(self) -> String:
         return String("OscSynth")
 
+    @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         infer = self.inference_trig.next(50)
-        self.get_msgs(infer)
+        self.do_inference(infer)
 
-        # 
+        # smooth the model output values with lags
         lag_vals = self.lags.next(self.model_output, 0.1, 16)
 
-        # oscillator 1
+        # oscillator 1 -----------------------
 
         var freq1 = linexp(lag_vals[0], 0.0, 1.0, 1.0, 3000) + (linlin(lag_vals[1], 0.0, 1.0, 2.0, 5000.0) * self.fb)
         # var which_osc1 = lag_vals[2] #not used...whoops
@@ -103,7 +108,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         osc1 = tanh(osc1*tanh_gain)
         osc1 = self.dc1.next(osc1)
 
-        # oscillator 2
+        # oscillator 2 -----------------------
 
         var freq2 = linlin(lag_vals[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(lag_vals[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
         # var which_osc2 = lag_vals[10] #not used...whoops
@@ -122,23 +127,23 @@ struct TorchSynth(Representable, Movable, Copyable):
 
         return SIMD[DType.float64, 2](osc1, osc2) * 0.2
 
-    fn get_msgs(mut self, infer: Float64):
-        # only will grab messages at the top of the audio block
-        toggle_inference = self.world_ptr[0].get_msg("toggle_inference")
-        if toggle_inference:
-            self.toggle_inference = toggle_inference.value()[0]
-        load_msg = self.world_ptr[0].get_text_msg("load_mlp_training")
-        if load_msg:
+    fn do_inference(mut self, infer: Float64):
+
+        # check if we need to load a new model
+        self.load_messenger.get_text_msg("load_mlp_training")
+        if self.load_messenger.changed:
             print("loading new model", end="\n")
-            self.model = MLP(load_msg.value()[0], 2, self.model_out_size)
-        if self.toggle_inference:
-            if infer > 0.0:
-                self.model_input[0] = self.world_ptr[0].mouse_x
-                self.model_input[1] = self.world_ptr[0].mouse_y
-                try:
-                    self.model_output = self.model.next(self.model_input)  # Process the input through the MLP model
-                except Exception:
-                    print("Inference error in MLP model", end="\n")
+            self.model = MLP(self.load_messenger.string, 2, self.model_out_size)
+
+        # check if we should do inference or get the model output from messages
+        self.toggle_inference.get_msg("toggle_inference")
+        if infer > 0.0 and self.toggle_inference.value > 0.0:
+            self.model_input[0] = self.world_ptr[0].mouse_x
+            self.model_input[1] = self.world_ptr[0].mouse_y
+            try:
+                self.model_output = self.model.next(self.model_input)  # Process the input through the MLP model
+            except Exception:
+                print("Inference error in MLP model", end="\n")
         else:
             for i in range(self.model_out_size):
                 out = self.world_ptr[0].get_msg("model_output"+String(i))

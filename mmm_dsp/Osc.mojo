@@ -475,7 +475,7 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
             if trig[i] > 0.0 and self.last_trig[i] <= 0.0:
                 self.phase[i] = 0.0
 
-        self.last_trig = trig
+            self.last_trig[i] = trig[i]
 
         return self.phase
 

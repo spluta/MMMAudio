@@ -3,11 +3,13 @@ from mmm_src.MMMWorld import MMMWorld
 
 struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var values: List[Float64]
     var value: Float64
     var int_value: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
         self.world_ptr = world_ptr
+        self.values = List[Float64]()
         self.value = default
         self.int_value = Int64(default)
 
@@ -21,7 +23,8 @@ struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
                 return  
         opt = self.world_ptr[0].get_msg(str) 
         if opt: 
-            self.value = opt.value()[0]
+            self.values = opt.value().copy()
+            self.value = self.values[0]
             self.int_value = Int64(self.value)
     
     fn set_value(mut self, val: Float64):
@@ -33,24 +36,25 @@ struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
 
 struct TextMessenger(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] 
-    var value: String
-    var changed: Bool = false
+    var changed: Bool
+    var string: String
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: String = ""):
         self.world_ptr = world_ptr
-        self.value = default
+        self.changed = False
+        self.string = default
 
     @always_inline
     fn get_text_msg(mut self: Self, str: String):
         opt = self.world_ptr[0].get_text_msg(str)
         if opt: 
-            self.value = String(opt.value()[0])
-            self.changed = true
+            self.changed = True
+            self.string = opt.value()[0]
         else:
-            self.changed = false
+            self.changed = False
     
     fn set_value(mut self, val: String):
-        self.value = val
+        self.string = val
 
 
 struct MIDIMessenger(Movable, Copyable):

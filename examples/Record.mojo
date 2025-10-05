@@ -76,18 +76,22 @@ struct Record_Synth(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 1]:
         
+        # here i am reusing the messenger to get three different messages
+        # set_input_chan, start_recording, stop_recording
+        # you could use three different messengers if you prefer
+        # the messenger value is reset to 0 after each message is processed
         self.messenger.get_msg("set_input_chan")
         if self.messenger.int_value >= 0 and self.messenger.int_value < self.world_ptr[0].num_in_chans:
             self.input_chan = self.messenger.int_value
             self.messenger.set_value(0.0)  # reset messenger value
         
         self.messenger.get_msg("start_recording")
-        if self.messenger.int_value == 1:
+        if self.messenger.int_value > 0:
             self.start_recording()
             self.messenger.set_value(0.0)  # reset messenger value
         
         self.messenger.get_msg("stop_recording")
-        if self.messenger.int_value == 1:
+        if self.messenger.int_value > 0:
             self.stop_recording()
             self.messenger.set_value(0.0)  # reset messenger value
         

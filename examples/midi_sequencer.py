@@ -50,7 +50,7 @@ async def trig_synth(wait):
     fund = librosa.midi_to_hz(fund_seq.next())
     while True:
         pitch = mult_seq.next() * fund
-        mmm_audio.send_msg("t_trig", 1.0)
+        mmm_audio.send_msg("trig", 1.0)
         mmm_audio.send_msg("trig_seq_freq", pitch)
         await asyncio.sleep(wait)
         i = (i + 1) % count_to

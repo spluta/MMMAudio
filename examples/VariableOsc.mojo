@@ -29,8 +29,6 @@ struct VariableOsc(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        
-        
         # freq = self.world_ptr[0].mouse_y
         freq = SIMD[DType.float64, 2](1-self.world_ptr[0].mouse_y, self.world_ptr[0].mouse_y)
         freq = self.lag.next(freq, 0.1)
