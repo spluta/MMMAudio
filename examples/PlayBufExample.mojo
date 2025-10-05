@@ -47,7 +47,7 @@ struct BufSynth(Representable, Movable, Copyable):
         # get the controller values at the top of the audio block
         if self.world_ptr[0].grab_messages == 1:
             self.fader1.get_msg("/fader1")
-            self.playback_speed = linexp(self.fader1.value, 0.0, 1.0, 0.25, 4.0)
+            self.playback_speed = lincurve(self.fader1.value, 0.0, 1.0, -4.0, 4.0, -1.0) # map fader1 value exponentially between -4 and 4, with 0.25 being 1.0 speed
             self.fader2.get_msg("/fader2")
             self.lpf_freq = linexp(self.fader2.value, 0.0, 1.0, 20.0, 20000.0)
 

@@ -146,7 +146,7 @@ struct TrigSynth(Movable, Copyable):
         for i in range(len(self.voices)):
             out += self.voices[i].next()
 
-        # reset the triggers on all the voices on the first sample of the block
+        # reset the triggers on all the voices at the end of the first sample of the block
         if self.world_ptr[0].grab_messages == 1:
             self.trig.value = 0.0  # reset the trigger messenger value
             for i in range(len(self.voices)):
