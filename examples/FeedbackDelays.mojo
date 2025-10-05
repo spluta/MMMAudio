@@ -30,7 +30,10 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.mouse_y = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.get_msgs()  # Get messages from the world
+        if self.world_ptr[0].grab_messages == 1:
+            self.mouse_x = self.world_ptr[0].mouse_x
+            self.mouse_y = self.world_ptr[0].mouse_y
+
         var sample = self.playBuf.next[N=2](self.buffer, 0, 1.0, True)  # Read samples from the buffer
 
         # sending one value to the 2 channel lag gives both lags the same parameters
@@ -44,16 +47,13 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
 
-        sample = self.delays.next(sample, del_time, feedback)*0.8
+        sample = self.delays.next(sample, del_time, feedback)*0.5
 
         return sample
 
     fn __repr__(self) -> String:
         return String("DelaySynth")
 
-    fn get_msgs(mut self):
-        self.mouse_x = self.world_ptr[0].mouse_x
-        self.mouse_y = self.world_ptr[0].mouse_y
 
 struct FeedbackDelays(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

@@ -1,17 +1,25 @@
 from mmm_src.MMMWorld import MMMWorld
 
+
 struct Messenger(Floatable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var value: Float64
+    var int_value: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
         self.world_ptr = world_ptr
         self.value = default
+        self.int_value = Int64(default)
 
     fn get_msg(mut self: Self, str: String):
         opt = self.world_ptr[0].get_msg(str) # trig will be an Optional
         if opt: # if it trig is None, we do nothing
             self.value = opt.value()[0]
+            self.int_value = Int64(self.value)
+    
+    fn set_value(mut self, val: Float64):
+        self.value = val
+        self.int_value = Int64(val)
 
     fn __float__(self) -> Float64:
         return self.value
@@ -48,6 +56,8 @@ struct MIDIMessenger(Movable, Copyable):
                 self.value = filtered^
             else:
                 self.value = self.world_ptr[0].note_offs.copy()
+        else:
+            self.value.clear()
 
     fn get_ccs(mut self: Self, channel: Int64 = -1, cc: Int64 = -1):
         if self.world_ptr[0].grab_messages == 1:

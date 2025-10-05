@@ -1,4 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.Messengers import Messenger
 from mmm_src.MMMTraits import *
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
@@ -18,13 +19,16 @@ struct FreeverbSynth(Representable, Movable, Copyable):
     var play_buf: PlayBuf
 
     var freeverb: Freeverb[2]
-    var room_size: Float64
+    var room_size: Messenger
+    var verb_lpf_fader: Messenger
     var verb_lpf: Float64
+    var added_space_fader: Messenger
     var added_space: SIMD[DType.float64, 2]
-    var mix: Float64
-    
+    var mix: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+
+
         self.world_ptr = world_ptr 
 
         # load the audio buffer 
@@ -37,39 +41,31 @@ struct FreeverbSynth(Representable, Movable, Copyable):
         self.play_buf = PlayBuf(self.world_ptr)
 
         self.freeverb = Freeverb[2](self.world_ptr)
-        self.room_size = 0.9
+        self.room_size = Messenger(self.world_ptr, 0.9)
+        self.verb_lpf_fader = Messenger(self.world_ptr, 1.0)
         self.verb_lpf = 1000.0
+        self.added_space_fader = Messenger(self.world_ptr, 0.5)
         self.added_space = SIMD[DType.float64, 2](0.5, 0.5)
-        self.mix = 0.1
+        self.mix = Messenger(self.world_ptr, 0.1)
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.get_msgs()
+        if self.world_ptr[0].grab_messages == 1:
+            self.room_size.get_msg("/fader1")
+            self.verb_lpf_fader.get_msg("/fader2")
+            self.verb_lpf = linexp(self.verb_lpf_fader.value, 0.0, 1.0, 200.0, 10000.0)
+            self.added_space_fader.get_msg("/fader3")
+            self.added_space = SIMD[DType.float64, 2](self.added_space_fader.value, self.added_space_fader.value*0.99)
+            self.mix.get_msg("/fader4")
 
         out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
 
-        out = self.freeverb.next(out, self.room_size, self.verb_lpf, self.added_space) * 0.2 * self.mix + out * (1.0 - self.mix)
+        out = self.freeverb.next(out, self.room_size.value, self.verb_lpf, self.added_space) * 0.2 * self.mix.value + out * (1.0 - self.mix.value)
 
         return out
 
     fn __repr__(self) -> String:
         return String("BufSynth")
-
-    fn get_msgs(mut self: Self):
-
-        fader1 = self.world_ptr[0].get_msg("/fader1") 
-        if fader1: 
-            self.room_size = fader1.value()[0]
-        fader2 = self.world_ptr[0].get_msg("/fader2") 
-        if fader2: 
-            freq = linexp(fader2.value()[0], 0.0, 1.0, 200.0, 10000.0)
-            self.verb_lpf = freq
-        fader3 = self.world_ptr[0].get_msg("/fader3") 
-        if fader3: 
-            self.added_space = SIMD[DType.float64, 2](fader3.value()[0], fader3.value()[0]*0.99)
-        fader4 = self.world_ptr[0].get_msg("/fader4")
-        if fader4: 
-            self.mix = fader4.value()[0]
 
 
 struct FreeverbExample(Representable, Movable, Copyable):

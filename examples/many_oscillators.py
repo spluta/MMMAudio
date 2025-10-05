@@ -45,8 +45,3 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 
 mmm_audio.start_audio() 
-
-# changing the pairs of oscillators or stopping the audio isn't 
-# included here because if it were all pasted in it would all run, 
-# *immediately* changing the number of oscillators and stopping 
-# the audio!

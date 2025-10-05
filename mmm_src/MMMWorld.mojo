@@ -122,7 +122,7 @@ struct MMMWorld(Representable, Movable, Copyable):
             self.note_ons.append(list^)
         elif String(msg[0]) == "note_off":
             list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.note_ons.append(list^)
+            self.note_offs.append(list^)
         elif String(msg[0]) == "cc":
             list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
             self.ccs.append(list^)

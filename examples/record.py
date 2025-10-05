@@ -13,12 +13,14 @@ out_device = "External Headphones"
 mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
 # the default input channel (in the Record_Synth) is 0, but you can change it
-mmm_audio.send_msg("set_input_chan", 8) 
+mmm_audio.send_msg("set_input_chan", 0) 
 mmm_audio.start_audio() 
 
 
-
 mmm_audio.send_msg("print_inputs")
+
+mmm_audio.send_msg("start_recording", 1)
+mmm_audio.send_msg("stop_recording", 1)
 
 # this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 
