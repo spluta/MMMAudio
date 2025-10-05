@@ -28,9 +28,9 @@ y_train_list = []
 
 def make_setting():
     setting = []
-    for i in range(out_size):
+    for _ in range(out_size):
         setting.append(random())
-        mmm_audio.send_msg("model_output" + str(i), setting[i])
+    mmm_audio.send_msg("model_outputs", setting)
 
     return setting
 

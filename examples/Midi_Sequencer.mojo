@@ -4,7 +4,7 @@ from mmm_utils.Messengers import *
 from mmm_utils.functions import *
 from mmm_dsp.Osc import *
 from mmm_dsp.Filters import *
-from mmm_dsp.Env import Env
+from mmm_dsp.Env import *
 
 from mmm_src.MMMTraits import *
 
@@ -13,11 +13,12 @@ from mmm_src.MMMTraits import *
 struct TrigSynthVoice(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
+    var env_params: EnvParams
     var env: Env
 
     var mod: Osc
     var car: Osc[1, 2, 1]
-    var sub: Osc[]
+    var sub: Osc
     var lag: Lag
 
     var trig: Float64
@@ -25,9 +26,6 @@ struct TrigSynthVoice(Movable, Copyable):
 
     var vol: Float64
 
-    var values: List[Float64]
-    var times: List[Float64]
-    var curves: List[Float64]
     var bend_mul: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -38,18 +36,13 @@ struct TrigSynthVoice(Movable, Copyable):
         self.sub = Osc(self.world_ptr)
         self.lag = Lag(self.world_ptr)
 
+        self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
         self.env = Env(self.world_ptr)
 
         self.trig = 0.0
         self.freq = 100.0
         self.vol = 1.0
 
-        # you may be tempted to make these lists inside the next() function, but that would be bad
-        # because it would create new lists every sample, which would be slow and cause memory issues
-        # instead, we make the lists once here in the __init__ function, and then just change their values in next() if you want to
-        self.values = [0.0, 1.0, 0.75, 0.75, 0.0]
-        self.times = [0.01, 0.1, 0.2, 0.5]
-        self.curves = [1.0]
         self.bend_mul = 1.0
 
     @always_inline
@@ -60,7 +53,7 @@ struct TrigSynthVoice(Movable, Copyable):
         else:
             bend_freq = self.freq * self.bend_mul
             var mod_value = self.mod.next(bend_freq * 1.5)  # Modulator frequency is 3 times the carrier frequency
-            var env = self.env.next(self.values, self.times, self.curves, 0, self.trig)
+            var env = self.env.next(self.env_params, self.trig)
 
             var mod_mult = env * 0.5
             var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=2)  

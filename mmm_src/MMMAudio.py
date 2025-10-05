@@ -130,11 +130,6 @@ class MMMAudio:
             self.mmm_audio_bridge.send_msg(["mouse_y", y])
             
             await asyncio.sleep(delay)
-    
-    # def increment(self, samples):
-    #     blocks = ceil(samples / self.blocksize)
-    #     for i in range(blocks):
-    #         self.mmm_audio_bridge.next(self.out_buffer)
 
     def get_samples(self, samples):
         blocks = ceil(samples / self.blocksize)
@@ -206,6 +201,9 @@ class MMMAudio:
         """
 
         key_vals = [key]  # Start with the key
+        # if it gets a list as the first argument, unpack it
+        if len(args) == 1 and isinstance(args[0], list):
+            args = args[0]
         key_vals.extend([float(arg) for arg in args])
 
         # print(key_vals)

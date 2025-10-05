@@ -10,6 +10,18 @@ from mmm_utils.functions import *
 # from .Buffer import Buffer
 
 struct EnvParams(Representable, Movable, Copyable):
+    """
+    Parameters for the Env class.
+    This struct holds the values, times, curves, loop flag, and time warp factor for the envelope generator.
+    
+    Attributes:
+        values (List[Float64]): List of envelope values at each segment.
+        times (List[Float64]): List of durations for each segment.
+        curves (List[Float64]): List of curve shapes for each segment.
+        loop (Bool): Flag to indicate if the envelope should loop.
+        time_warp (Float64): Time warp factor to speed up or slow down the envelope.
+    """
+
     var values: List[Float64]
     var times: List[Float64]
     var curves: List[Float64]
@@ -17,9 +29,9 @@ struct EnvParams(Representable, Movable, Copyable):
     var time_warp: Float64
 
     fn __init__(out self, values: List[Float64] = List[Float64](1,1), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
-        self.values = values
-        self.times = times
-        self.curves = curves
+        self.values = values.copy()  # Make a copy to avoid external modifications
+        self.times = times.copy()
+        self.curves = curves.copy()
         self.loop = loop
         self.time_warp = time_warp
 

@@ -6,11 +6,14 @@ struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
     var values: List[Float64]
     var value: Float64
     var int_value: Int64
+    var changed: Bool
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
         self.world_ptr = world_ptr
         self.values = List[Float64]()
         self.value = default
+        self.int_value = Int64(default)
+        self.changed = False
         self.int_value = Int64(default)
 
     fn get_msg(mut self: Self, str: String):
@@ -23,9 +26,14 @@ struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
                 return  
         opt = self.world_ptr[0].get_msg(str) 
         if opt: 
-            self.values = opt.value().copy()
+            self.values.clear()
+            for val in opt.value():
+                self.values.append(val)
             self.value = self.values[0]
             self.int_value = Int64(self.value)
+            self.changed = True
+        else:
+            self.changed = False
     
     fn set_value(mut self, val: Float64):
         self.value = val

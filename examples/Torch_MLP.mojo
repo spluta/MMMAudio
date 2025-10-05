@@ -39,6 +39,7 @@ struct TorchSynth(Representable, Movable, Copyable):
 
     var load_messenger: TextMessenger
     var toggle_inference: Messenger
+    var outputs_messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -75,6 +76,7 @@ struct TorchSynth(Representable, Movable, Copyable):
 
         
         self.toggle_inference = Messenger(self.world_ptr, 1.0)
+        self.outputs_messenger = Messenger(self.world_ptr, 0.0)
 
     fn __repr__(self) -> String:
         return String("OscSynth")
@@ -144,11 +146,15 @@ struct TorchSynth(Representable, Movable, Copyable):
                 self.model_output = self.model.next(self.model_input)  # Process the input through the MLP model
             except Exception:
                 print("Inference error in MLP model", end="\n")
-        else:
-            for i in range(self.model_out_size):
-                out = self.world_ptr[0].get_msg("model_output"+String(i))
-                if out:
-                    self.model_output[Int(i)] = out.value()[0]
+                
+        if self.toggle_inference.value <= 0.0:
+            self.outputs_messenger.get_msg("model_outputs")
+            if self.outputs_messenger.changed:
+                num = Int(min(self.model_out_size, len(self.outputs_messenger.values)))
+                for i in range(num):
+                    self.model_output[i] = self.outputs_messenger.values[i]
+                    print(self.model_output[i], end=", ")
+                print("")
 
 
 # THE GRAPH
