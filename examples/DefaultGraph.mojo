@@ -1,6 +1,7 @@
 """use this as a template for your own graphs"""
 
 from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.Messengers import Messenger
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
@@ -10,29 +11,23 @@ from mmm_dsp.Filters import Lag
 struct Default_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
     var osc: Osc
-    var freq: Float64
+    var freq: Messenger
     var lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
-        self.freq = 440.0
+        self.freq = Messenger(world_ptr, 440.0)
         self.lag = Lag(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> Float64:
-        
-        self.get_msgs()
-        freq = self.lag.next(self.freq, 3)
+        self.freq.get_msg("freq")
+        freq = self.lag.next(self.freq.value, 3)
         return self.osc.next(freq[0]) * 0.1
 
-    fn get_msgs(mut self: Self):
-        # Get messages from the world
-        msg = self.world_ptr[0].get_msg("osc_freq")
-        if msg:
-            self.freq = msg.value()[0]
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
