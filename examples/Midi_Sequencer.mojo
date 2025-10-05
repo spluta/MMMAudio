@@ -75,7 +75,7 @@ struct TrigSynth(Movable, Copyable):
     # the following 5 variables are messengers (imported from mmm_utils.Messengers.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
-    var trig: Messenger
+    var trig: Messenger[is_trigger=True]
     var freq: Messenger
     var note_ons: MIDIMessenger
     var ccs: MIDIMessenger
@@ -89,7 +89,7 @@ struct TrigSynth(Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
         self.world_ptr = world_ptr
-        self.trig = Messenger(world_ptr, 0.0)
+        self.trig = Messenger[is_trigger=True](world_ptr, 0.0)
         self.freq = Messenger(world_ptr, 100.0)
         self.num_voices = num_voices
         self.current_voice = 0
@@ -110,47 +110,41 @@ struct TrigSynth(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         var out = 0.0
 
-        # these messages are only processed on the first sample of the block, when grab_messages==1, so we should only do these things on the first sample of the block
-        if self.world_ptr[0].grab_messages == 1:
-            self.trig.get_msg("t_trig")
-            self.freq.get_msg("trig_seq_freq")
-            self.note_ons.get_note_ons(0, -1)  # Get all note ons on channel 0
-            self.ccs.get_ccs(0, 34)  # Get all CCs on channel 0, CC 34
-            self.bends.get_bends(0)  # Get all pitch bend messages on channel 0
+        # these messages are only processed on the first sample of the block, when block_state==0, so we should only do these things on the first sample of the block
+        self.trig.get_msg("t_trig")
+        self.freq.get_msg("trig_seq_freq")
+        self.note_ons.get_note_ons(0, -1)  # Get all note ons on channel 0
+        self.ccs.get_ccs(0, 34)  # Get all CCs on channel 0, CC 34
+        self.bends.get_bends(0)  # Get all pitch bend messages on channel 0
 
-            for bend in self.bends.value:
-                bend_mul = linlin(Float64(bend[1]), -8192.0, 8191.0, 0.935, 1.065)  # Map bend value to a multiplier (up and down a semitone)
-                for i in range(len(self.voices)):
-                    self.voices[i].bend_mul = bend_mul
+        for bend in self.bends.value:
+            bend_mul = linlin(Float64(bend[1]), -8192.0, 8191.0, 0.935, 1.065)  # Map bend value to a multiplier (up and down a semitone)
+            for i in range(len(self.voices)):
+                self.voices[i].bend_mul = bend_mul
 
-            # go through the list of note_ons received and play them
-            for note_on in self.note_ons.value:
-                self.current_voice = (self.current_voice + 1) % self.num_voices
-                self.voices[self.current_voice].vol = Float64(note_on[2]) / 127.0
-                self.voices[self.current_voice].trig = 1.0
-                self.voices[self.current_voice].freq = midicps(Float64(note_on[1]))
+        # go through the list of note_ons received and play them
+        for note_on in self.note_ons.value:
+            self.current_voice = (self.current_voice + 1) % self.num_voices
+            print(self.current_voice)
+            self.voices[self.current_voice].vol = Float64(note_on[2]) / 127.0
+            self.voices[self.current_voice].trig = 1.0
+            self.voices[self.current_voice].freq = midicps(Float64(note_on[1]))
 
-            # looking for midi cc on cc 34
-            # this will control the frequency of the filter
-            for cc in self.ccs.value:
-                if cc[1] == 34:  # Assuming CC 34 is for filter frequency
-                    self.filt_freq = linlin(Float64(cc[2]), 0.0, 127.0, 20.0, 1000.0)  # Map CC value to frequency range
+        # looking for midi cc on cc 34
+        # this will control the frequency of the filter
+        for cc in self.ccs.value:
+            if cc[1] == 34:  # Assuming CC 34 is for filter frequency
+                self.filt_freq = linlin(Float64(cc[2]), 0.0, 127.0, 20.0, 1000.0)  # Map CC value to frequency range
 
-            if self.trig.value > 0.0:
-                self.current_voice = (self.current_voice + 1) % self.num_voices
-                self.voices[self.current_voice].trig = self.trig.value
-                self.voices[self.current_voice].freq = self.freq.value
-                self.voices[self.current_voice].vol = 1.0  # Set a default volume for the triggered voice
+        if self.trig.value > 0.0:
+            self.current_voice = (self.current_voice + 1) % self.num_voices
+            self.voices[self.current_voice].trig = self.trig.value
+            self.voices[self.current_voice].freq = self.freq.value
+            self.voices[self.current_voice].vol = 1.0  # Set a default volume for the triggered voice
 
         # get the output of all the synths
         for i in range(len(self.voices)):
             out += self.voices[i].next()
-
-        # reset the triggers on all the voices at the end of the first sample of the block
-        if self.world_ptr[0].grab_messages == 1:
-            self.trig.value = 0.0  # reset the trigger messenger value
-            for i in range(len(self.voices)):
-                self.voices[i].trig = 0.0  # Reset the trigger for each voice
 
         out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq, 0.1), 2.0) * 0.6
 

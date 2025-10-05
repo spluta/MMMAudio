@@ -30,7 +30,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.mouse_y = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world_ptr[0].grab_messages == 1:
+        if self.world_ptr[0].block_state == 0:
             self.mouse_x = self.world_ptr[0].mouse_x
             self.mouse_y = self.world_ptr[0].mouse_y
 

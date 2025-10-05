@@ -21,7 +21,7 @@ struct MMMWorld(Representable, Movable, Copyable):
     var mouse_x: Float64
     var mouse_y: Float64
 
-    var grab_messages: Int64
+    var block_state: Int64
 
     var msg_dict: Dict[String, List[Float64]]
     var text_msg_dict: Dict[String, List[String]]
@@ -62,7 +62,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.mouse_x = 0.0
         self.mouse_y = 0.0
 
-        self.grab_messages = 0
+        self.block_state = 0
 
         self.msg_dict = Dict[String, List[Float64]]()
         self.text_msg_dict = Dict[String, List[String]]()
@@ -99,18 +99,19 @@ struct MMMWorld(Representable, Movable, Copyable):
         else:
             self.msg_dict[key] = list.copy()  # Store a copy of the list to avoid reference issues
 
+    @always_inline
     fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:
-
-        if self.grab_messages == 1:
+        if self.block_state == 0:
             return self.msg_dict.get(key)
         return None
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
         self.text_msg_dict[key] = list.copy()
 
+    @always_inline
     fn get_text_msg(mut self: Self, key: String) -> Optional[List[String]]:
 
-        if self.grab_messages == 1:
+        if self.block_state == 0:
             return self.text_msg_dict.get(key)
         return None
     
@@ -130,6 +131,7 @@ struct MMMWorld(Representable, Movable, Copyable):
             list = List[Int64](Int64(msg[1]), Int64(msg[2]))
             self.bends.append(list^)
 
+    @always_inline
     fn clear_msgs(mut self):
         self.note_ons.clear()
         self.note_offs.clear()
@@ -138,19 +140,21 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.msg_dict.clear()
         self.text_msg_dict.clear()
-        self.grab_messages = 0
+        self.block_state = 0
 
+    @always_inline
     fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
 
-        current_time = time.perf_counter()
-        # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-        if self.grab_messages == 1 and self.print_flag == 0:
-            if current_time - self.last_print_time >= 1.0 / freq:
-                self.last_print_time = current_time
-                self.print_flag = 1
-        elif self.grab_messages == 0 and self.print_flag == 1:
-            self.print_flag = 0
-        if self.print_flag == 1:
-            print(label,String(value))
+        if self.block_state == 0:
+            current_time = time.perf_counter()
+            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+            if self.print_flag == 0:
+                if current_time - self.last_print_time >= 1.0 / freq:
+                    self.last_print_time = current_time
+                    self.print_flag = 1
+            elif self.print_flag == 1:
+                self.print_flag = 0
+            if self.print_flag == 1:
+                print(label,String(value))
 
 

@@ -28,9 +28,8 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 8]:
-        if self.world_ptr[0].grab_messages == 1:
-            self.freq.get_msg("freq")
-            self.num_speakers.get_msg("num_speakers")
+        self.freq.get_msg("freq")
+        self.num_speakers.get_msg("num_speakers")
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
         panned = self.pan_az.next[8](self.osc.next(self.freq.value, osc_type=2), self.pan_osc.next(0.1), self.num_speakers.int_value) * 0.1

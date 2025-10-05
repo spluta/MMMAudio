@@ -50,13 +50,12 @@ struct FreeverbSynth(Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world_ptr[0].grab_messages == 1:
-            self.room_size.get_msg("/fader1")
-            self.verb_lpf_fader.get_msg("/fader2")
-            self.verb_lpf = linexp(self.verb_lpf_fader.value, 0.0, 1.0, 200.0, 10000.0)
-            self.added_space_fader.get_msg("/fader3")
-            self.added_space = SIMD[DType.float64, 2](self.added_space_fader.value, self.added_space_fader.value*0.99)
-            self.mix.get_msg("/fader4")
+        self.room_size.get_msg("/fader1")
+        self.verb_lpf_fader.get_msg("/fader2")
+        self.verb_lpf = linexp(self.verb_lpf_fader.value, 0.0, 1.0, 200.0, 10000.0)
+        self.added_space_fader.get_msg("/fader3")
+        self.added_space = SIMD[DType.float64, 2](self.added_space_fader.value, self.added_space_fader.value*0.99)
+        self.mix.get_msg("/fader4")
 
         out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
 

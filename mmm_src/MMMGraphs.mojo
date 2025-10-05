@@ -62,22 +62,22 @@
 #         for i in range(self.world_ptr[0].block_size):
             
 #             if i == 0:
-#                 self.world_ptr[0].grab_messages = 1  # Set grab_messages to True for the first sample
+#                 self.world_ptr[0].block_state = 1  # Set block_state to True for the first sample
 #                 # if self.world_ptr[0].block_size == 1:
 #                 #     # reset trigger messages to 0.0 after the messages have been sent
 #                 #     # self.world_ptr[0].reset_trigger_msgs()  # Reset trigger messages in
-#                 #     # self.world_ptr[0].grab_messages = -1
+#                 #     # self.world_ptr[0].block_state = -1
 #                 #     self.world_ptr[0].clear_msgs()
 #             # if self.world_ptr[0].block_size > 1:
 #             #     if i == 1:
 #             #         # reset trigger messages to 0.0 after the messages have been sent
 #             #         # self.world_ptr[0].reset_trigger_msgs()  # Reset trigger messages in
-#             #         # self.world_ptr[0].grab_messages = -1
+#             #         # self.world_ptr[0].block_state = -1
 #             #         self.world_ptr[0].clear_msgs()
-#             #         self.world_ptr[0].grab_messages = 0
+#             #         self.world_ptr[0].block_state = 0
 #             # if self.world_ptr[0].block_size > 2:
 #             #     if i == 2:
-#             #         self.world_ptr[0].grab_messages = 0
+#             #         self.world_ptr[0].block_state = 0
 
 #             zero(self.output)
 #             # Get the next sample from the AudioGraph
