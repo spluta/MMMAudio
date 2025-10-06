@@ -96,7 +96,7 @@ struct MMMWorld(Representable, Movable, Copyable):
             list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
             self.mouse_y = list[0]  # Update mouse y position in the world
         else:
-            self.msg_dict[key] = list.copy()  # Store a copy of the list to avoid reference issues
+            self.msg_dict[key] = list.copy()  
 
     @always_inline
     fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:

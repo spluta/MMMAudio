@@ -1,5 +1,78 @@
 from mmm_src.MMMWorld import MMMWorld
 
+# struct MessengerManager(Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]  
+#     var messengers: List[Messenger]
+#     var trig_messengers: List[TrigMessenger]
+#     var text_messengers: List[TextMessenger]
+#     var midi_messengers: List[MIDIMessenger]
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         self.world_ptr = world_ptr
+#         self.messengers = List[Messenger]()
+#         self.trig_messengers = List[TrigMessenger]()
+#         self.text_messengers = List[TextMessenger]()
+#         self.midi_messengers = List[MIDIMessenger]()
+
+#     fn add_messenger[is_trigger: Bool = False](mut self, key: String, default: Float64 = 0.0):
+#         messenger = Messenger(self.world_ptr, default)
+#         self.messengers.append(messenger.copy())
+    
+#     fn add_trig_messenger(mut self, key: String, default: Float64 = 0.0):
+#         messenger = TrigMessenger(self.world_ptr, default)
+#         self.trig_messengers.append(messenger.copy())
+
+#     fn add_text_messenger(mut self, key: String, default: String = ""):
+#         messenger = TextMessenger(self.world_ptr, default)
+#         self.text_messengers.append(messenger.copy())
+    
+#     fn add_midi_messenger(mut self, type: String = "note_on", channel: Int64 = -1, note: Int64 = -1):
+#         messenger = MIDIMessenger(self.world_ptr)
+#         messenger.type = type
+#         messenger.channel = channel
+#         messenger.note = note
+#         self.midi_messengers.append(messenger.copy())
+
+# struct TrigMessenger(Floatable, Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+#     var values: List[Float64]
+#     var value: Float64
+#     var int_value: Int64
+#     var changed: Bool
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
+#         self.world_ptr = world_ptr
+#         self.values = List[Float64]()
+#         self.value = default
+#         self.int_value = Int64(default)
+#         self.changed = False
+#         self.int_value = Int64(default)
+
+#     fn get_msg(mut self: Self, str: String):
+#         if self.world_ptr[0].block_state == 1:
+#             self.value = 0.0
+#             self.int_value = 0
+#             return  
+#         opt = self.world_ptr[0].get_msg(str) 
+#         if opt: 
+#             self.values.clear()
+#             for val in opt.value():
+#                 self.values.append(val)
+#             self.value = self.values[0]
+#             self.int_value = Int64(self.value)
+#             self.changed = True
+#         else:
+#             self.changed = False
+    
+#     fn set_value(mut self, val: Float64):
+#         self.value = val
+#         self.int_value = Int64(val)
+
+#     fn __float__(self) -> Float64:
+#         return self.value
+
+#     fn __as_float__(self) -> Float64:
+#         return self.value
 
 struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
@@ -40,6 +113,9 @@ struct Messenger[is_trigger: Bool = False](Floatable, Movable, Copyable):
         self.int_value = Int64(val)
 
     fn __float__(self) -> Float64:
+        return self.value
+
+    fn __as_float__(self) -> Float64:
         return self.value
 
 struct TextMessenger(Movable, Copyable):

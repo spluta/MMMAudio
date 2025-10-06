@@ -21,8 +21,12 @@ in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 def start_midi():
     while True:
         for msg in in_port.iter_pending():
-            # print(msg)
-            mmm_audio.send_midi(msg)
+            print(msg)
+            msg = ["note_on", msg.channel, msg.note, msg.velocity] if msg.type == "note_on" else \
+                  ["note_off", msg.channel, msg.note, msg.velocity] if msg.type == "note_off" else \
+                  ["cc", msg.channel, msg.control, msg.value] if msg.type == "control_change" else None
+            if msg:
+                mmm_audio.send_msg(msg)
         time.sleep(0.01) # Small delay to prevent busy-waiting
 
 midi_thread = threading.Thread(target=start_midi, daemon=True)
