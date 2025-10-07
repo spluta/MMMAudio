@@ -92,7 +92,7 @@ struct MMMWorld(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
-    fn send_msg(mut self, key_vals: PythonObject) raises :
+    fn send_msg_to_pool(mut self, key_vals: PythonObject) raises :
         """ puts a message into the message pool. key_vals is a list where the first item is the key (String) and the rest are Float64 values """
         key = String(key_vals[0])
         var list = List[Float64]()

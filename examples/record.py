@@ -27,6 +27,7 @@ mmm_audio.send_msg("stop_recording", 1)
 import mido
 import time
 import threading
+from mmm_utils.functions import *
 
 # find your midi devices
 mido.get_input_names()
@@ -34,18 +35,30 @@ mido.get_input_names()
 # open your midi device - you may need to change the device name
 in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
+# Create stop event
+stop_event = threading.Event()
 def start_midi():
-    while True:
+    while not stop_event.is_set():
         for msg in in_port.iter_pending():
+            if stop_event.is_set():  # Check if we should stop
+                return
+            print("Received MIDI message:", end=" ")
             print(msg)
-            mmm_audio.send_midi(msg)
-        time.sleep(0.01) # Small delay to prevent busy-waiting
 
+            # convert the mido message so that
+            msg2 = [msg.note] if msg.type == "note_on" else \
+                  [msg.note,] if msg.type == "note_off" else \
+                  [msg.channel, msg.control, linexp(msg.value, 0, 127, 100.0, 4000.0)] if msg.type == "control_change" else \
+                  [linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625)] if msg.type == "pitchwheel" else None
+
+            print("Sending MIDI message to MMMAudio:", msg.type, msg2)
+            if msg2:
+                mmm_audio.send_msg(msg.type, msg2)
+        time.sleep(0.01)
+
+# Start the thread
 midi_thread = threading.Thread(target=start_midi, daemon=True)
-# once you start the midi_thread, it should register note_on, note_off, cc, etc from your device and send them to mmm
 midi_thread.start()
 
-
-midi_thread.stop()
-
-mmm_audio.stop_audio()
+# To stop the thread:
+stop_event.set()
