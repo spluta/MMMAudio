@@ -3,10 +3,33 @@
 
 from mmm_src.MMMAudio import MMMAudio
 
-
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="DefaultGraph", package_name="examples")
 mmm_audio.start_audio() 
 
 from random import random
-mmm_audio.send_msg("freq", random() * 500 + 100 ) # set the frequency to a random value    
+for i in range(2):
+    mmm_audio.send_msg("freq", random() * 500 + 100, random() * 500 + 100, random() * 500 + 100) # set the frequency to a random value    
+mmm_audio.send_msg("freq", random() * 500 + 100, random() * 500 + 100, random() * 500 + 100) # set the frequency to a random value    
+
+import mido
+import time
+import threading
+
+# find your midi devices
+mido.get_input_names()
+
+# open your midi device - you may need to change the device name
+in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+
+def start_midi():
+    while True:
+        for msg in in_port.iter_pending():
+            print(msg)
+            mmm_audio.send_msg(msg.type, *msg.bytes())  # send the midi message to mmm
+        time.sleep(0.01) # Small delay to prevent busy-waiting
+
+midi_thread = threading.Thread(target=start_midi, daemon=True)
+# once you start the midi_thread, it should register note_on, note_off, cc, etc from your device and send them to mmm
+midi_thread.start()
+midi_thread.stop()

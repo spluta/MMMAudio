@@ -23,7 +23,9 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var block_state: Int64
 
-    var msg_dict: Dict[String, List[Float64]]
+    var msg_pool: Dict[String, List[List[Float64]]]
+    var msg_dict: Dict[String, List[List[Float64]]]
+
     var text_msg_dict: Dict[String, List[String]]
     var note_ons: List[List[Int64]]
     var note_offs: List[List[Int64]]
@@ -64,7 +66,9 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.block_state = 0
 
-        self.msg_dict = Dict[String, List[Float64]]()
+        self.msg_pool = Dict[String, List[List[Float64]]]()
+        self.msg_dict = Dict[String, List[List[Float64]]]()
+
         self.text_msg_dict = Dict[String, List[String]]()
         self.note_ons = List[List[Int64]]()
         self.note_offs = List[List[Int64]]()
@@ -88,7 +92,13 @@ struct MMMWorld(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
-    fn send_msg(mut self, key: String, mut list: List[Float64]):
+    fn send_msg(mut self, key_vals: PythonObject) raises :
+        """ puts a message into the message pool. key_vals is a list where the first item is the key (String) and the rest are Float64 values """
+        key = String(key_vals[0])
+        var list = List[Float64]()
+        for i in range(1, len(key_vals)):
+            list.append(Float64(key_vals[i]))
+        
         if key == "mouse_x":
             list[0] = list[0] / self.screen_dims[0]  # Normalize mouse x position
             self.mouse_x = list[0]  # Update mouse x position in the world
@@ -96,12 +106,18 @@ struct MMMWorld(Representable, Movable, Copyable):
             list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
             self.mouse_y = list[0]  # Update mouse y position in the world
         else:
-            self.msg_dict[key] = list.copy()  
+            # i wish you knew how difficult these 6 lines of code were
+            opt = self.msg_pool.get(key)
+            if opt:
+                self.msg_pool[key].append(list^)
+            else:
+                self.msg_pool[key] = List[List[Float64]]()
+                self.msg_pool[key].append(list^)
 
     @always_inline
-    fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:
+    fn get_msg(mut self: Self, key: String) -> Optional[List[List[Float64]]]:
         if self.block_state == 0:
-            return self.msg_dict.get(key)
+            return self.msg_pool.get(key)
         return None
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
@@ -113,22 +129,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.block_state == 0:
             return self.text_msg_dict.get(key)
         return None
-    
-    fn send_midi(mut self, msg: PythonObject) raises :
-        if not msg:
-            return
-        if String(msg[0]) == "note_on":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.note_ons.append(list^)
-        elif String(msg[0]) == "note_off":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.note_offs.append(list^)
-        elif String(msg[0]) == "cc":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.ccs.append(list^)
-        elif String(msg[0]) == "bend":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]))
-            self.bends.append(list^)
 
     @always_inline
     fn clear_msgs(mut self):
@@ -136,8 +136,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.note_offs.clear()
         self.ccs.clear()
         self.bends.clear()
-
-        self.msg_dict.clear()
+        self.msg_pool.clear()
         self.text_msg_dict.clear()
         self.block_state = 0
 

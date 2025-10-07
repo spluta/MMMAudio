@@ -15,12 +15,10 @@ struct BufSynth(Representable, Movable, Copyable):
     var num_chans: Int64
 
     var play_buf: PlayBuf
-    var playback_speed: Float64
-    var fader1: Messenger
+    var play_rate: Messenger
     
     var moog: VAMoogLadder[2, 1] # 2 channels, os_index == 1 (2x oversampling)
-    var fader2: Messenger
-    var lpf_freq: Float64
+    var lpf_freq: Messenger
     var lpf_freq_lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -33,26 +31,22 @@ struct BufSynth(Representable, Movable, Copyable):
         # without printing this, the compiler wants to free the buffer for some reason
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
 
-        self.playback_speed = 1.0
-        self.fader1 = Messenger(world_ptr, 0.5)
+        self.play_rate = Messenger(world_ptr, 1.0)
 
         self.play_buf = PlayBuf(self.world_ptr)
 
         self.moog = VAMoogLadder[2, 1](self.world_ptr)
-        self.fader2 = Messenger(world_ptr, 1.0)
-        self.lpf_freq = 20000.0
+        self.lpf_freq = Messenger(world_ptr, 20000.0)
         self.lpf_freq_lag = Lag(world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        self.fader1.get_msg("/fader1")
-        self.playback_speed = lincurve(self.fader1.value, 0.0, 1.0, -4.0, 4.0, -1.0) # map fader1 value exponentially between -4 and 4, with 0.25 being 1.0 speed
-        self.fader2.get_msg("/fader2")
-        self.lpf_freq = linexp(self.fader2.value, 0.0, 1.0, 20.0, 20000.0)
+        self.play_rate.get_msg("play_rate")
+        self.lpf_freq.get_msg("lpf_freq")
+    
+        out = self.play_buf.next[N=2](self.buffer, 0, self.play_rate.val, True)
 
-        out = self.play_buf.next[N=2](self.buffer, 0, self.playback_speed, True)
-
-        freq = self.lpf_freq_lag.next(self.lpf_freq, 0.1)
+        freq = self.lpf_freq_lag.next(self.lpf_freq.val, 0.1)
         out = self.moog.next(out, freq, 1.0)
         return out
 

@@ -12,14 +12,28 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 # it is looking for /fader1 and /fader2 on port 5005; these can be adjusted
 # Start the OSC server on its own thread
 # this is a bug, but this thread has to start after audio or audio won't start
-thread = threading.Thread(target=asyncio.run, args=(mmm_audio.start_osc_server("0.0.0.0",5005),), daemon=True)
-thread.start()
+from mmm_utils.osc_server import OSCServer
+from mmm_utils.functions import *
 
-# if touch_osc isn't available you can also send the messages directly
-mmm_audio.send_msg("/fader1", 0.5) # fader value is mapped exponentially between 0.25 and 4
-mmm_audio.send_msg("/fader1", 0.25) 
+# Usage:
+def osc_msg_handler(key, *args):
+    print(f"Received OSC message: {key} with arguments: {args}")
+    if key == "/fader1":
+        val = lincurve(args[0], 0.0, 1.0, -4.0, 4.0, -1.0)
+        print(f"Setting play_rate to {val}")
+        mmm_audio.send_msg("play_rate", val)
+    elif key == "/fader2":
+        val = linexp(args[0], 0.0, 1.0, 100.0, 20000.0)
+        print(f"Setting lpf_freq to {val}")
 
-mmm_audio.send_msg("/fader2", 0.5) # fader value is mapped exponentially between 20 and 20000
-mmm_audio.send_msg("/fader2", 1) 
+        mmm_audio.send_msg("lpf_freq", val)
 
-mmm_audio.stop_audio() # stop/pause the audio thread
+# Start server
+osc_server = OSCServer("0.0.0.0", 5005, osc_msg_handler)
+osc_server.start()
+
+# if you need to adjust and reset the handler function:
+osc_server.set_osc_msg_handler(osc_msg_handler)
+
+# Stop server when needed
+osc_server.stop()

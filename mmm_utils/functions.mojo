@@ -22,6 +22,27 @@ from math import log2, log10
 from algorithm import vectorize
 from sys.info import simdwidthof
 
+# @always_inline
+# fn list2SIMD[N: Int = 2](lst: List[Float64]) -> SIMD[DType.float64, N]:
+#     """Converts a list to a SIMD vector.
+
+#     This function takes a list of samples and converts it into a SIMD vector
+#     of the specified width. If the list has fewer elements than the SIMD width,
+#     the remaining elements are filled with zeros. If the list has more elements,
+#     only the first 'width' elements are used.
+
+#     Args:
+#         lst: The list of samples to convert.
+#         width: The desired width of the SIMD vector (default is 1).
+
+#     Returns:
+#         A SIMD vector containing the elements from the list.
+#     """
+#     var simd_vec = SIMD[DType.float64, N](0.0)
+#     for i in range(min(len(lst), N)):
+#         simd_vec[i] = lst[i]
+#     return simd_vec
+
 @always_inline
 fn dbamp[width: Int = 1](db: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
     """Converts decibel values to amplitude.

@@ -206,8 +206,6 @@ class MMMAudio:
             args = args[0]
         key_vals.extend([float(arg) for arg in args])
 
-        # print(key_vals)
-
         self.mmm_audio_bridge.send_msg(key_vals)
 
     def send_text_msg(self, key, *args):
@@ -260,7 +258,6 @@ class MMMAudio:
 
         # Create a dispatcher to handle incoming messages
         dispatcher = Dispatcher()
-
         dispatcher.set_default_handler(self.send_msg)
 
         # Create and start the server
@@ -271,16 +268,7 @@ class MMMAudio:
         print("Press Ctrl+C to stop the server")
 
         await asyncio.Future()  # Run forever
-
-        # with this commented out, the OSC server survives ctl-c 
-
-        # try:
-        #     # Keep the server running
-        #     await asyncio.Future()  # Run forever
-        # except KeyboardInterrupt:
-        #     print("\nShutting down server...")
-        # finally:
-        #     transport.close()    
+ 
 
 def list_audio_devices():
     p_temp = pyaudio.PyAudio()

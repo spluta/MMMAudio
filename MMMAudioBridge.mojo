@@ -91,13 +91,13 @@ struct MMMAudioBridge(Representable, Movable):
     @staticmethod
     fn send_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
-        var list = List[Float64]()
+        # var list = List[Float64]()
 
-        var key = String(key_vals[0])
-        for i in range(1,len(key_vals)):  
-            list.append(Float64(key_vals[i]))  # Convert each value to Float64 and append to the list
+        # var key = String(key_vals[0])
+        # for i in range(1,len(key_vals)):  
+        #     list.append(Float64(key_vals[i]))  # Convert each value to Float64 and append to the list
 
-        py_self[0].world_ptr[0].send_msg(key, list)
+        py_self[0].world_ptr[0].send_msg(key_vals)
         
         return PythonObject(None)  # Return a PythonObject wrapping None
 
