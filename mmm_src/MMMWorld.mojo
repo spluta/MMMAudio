@@ -5,6 +5,24 @@ from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time
 
+struct MiniMessenger(Movable, Copyable):
+    var lists: List[List[Float64]]
+    var trigger: Bool
+    var key: String
+
+    fn __init__(out self, key: String):
+        self.key = key
+        self.lists = List[List[Float64]]()
+        self.trigger = False
+    
+    fn print_if_triggered(mut self):
+        if self.trigger:
+            print("Messenger", self.key, "triggered with values:", end=" ")
+            for val in self.lists:
+                for v in val:
+                    print(v, end=" ")
+                print()
+
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
     var block_size: Int64
@@ -24,15 +42,10 @@ struct MMMWorld(Representable, Movable, Copyable):
     var block_state: Int64
 
     var msg_pool: Dict[String, List[List[Float64]]]
-    var msg_dict: Dict[String, List[List[Float64]]]
+    var msg_dict: Dict[String, MiniMessenger]
 
     var text_msg_dict: Dict[String, List[String]]
-    var note_ons: List[List[Int64]]
-    var note_offs: List[List[Int64]]
-    var ccs: List[List[Int64]]
-    var bends: List[List[Int64]]
     
-
     # windows
     var hann_window: Buffer
 
@@ -67,13 +80,9 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.block_state = 0
 
         self.msg_pool = Dict[String, List[List[Float64]]]()
-        self.msg_dict = Dict[String, List[List[Float64]]]()
+        self.msg_dict = Dict[String, MiniMessenger]()
 
         self.text_msg_dict = Dict[String, List[String]]()
-        self.note_ons = List[List[Int64]]()
-        self.note_offs = List[List[Int64]]()
-        self.ccs = List[List[Int64]]()
-        self.bends = List[List[Int64]]()
 
         self.buffers = List[Buffer]()  # Initialize the list of buffers
         self.last_print_time = 0.0
@@ -115,6 +124,75 @@ struct MMMWorld(Representable, Movable, Copyable):
                 self.msg_pool[key].append(list^)
 
     @always_inline
+    fn transfer_pooled_messages(mut self):
+        """ transfers messages from the message pool to the message dict, clearing the pool afterwards """
+        # for ref pool_item in self.msg_pool.items():
+        for pool_item in self.msg_pool.take_items():
+            print("Transferring message for key:", pool_item.key, "with values:", end=" ")
+            for ref val in pool_item.value:
+                for v in val:
+                    print(v, end=" ")
+                print()
+            if pool_item.key in self.msg_dict:
+                try:
+                    ref messenger = self.msg_dict[pool_item.key]
+                    messenger.trigger = True
+                    messenger.lists.clear()
+                    messenger.lists = pool_item.value.copy()
+                except Exception:
+                    pass
+            else:
+                print(" - key does not exist, creating new entry")
+                messenger = MiniMessenger(pool_item.key)
+                messenger.trigger = True
+                for val in pool_item.value:
+                    messenger.lists.append(val.copy())
+                self.msg_dict[pool_item.key] = messenger^
+
+        for ref item in self.msg_dict.items():
+            item.value.print_if_triggered()
+
+    fn get_messenger(mut self, key: String) -> UnsafePointer[MiniMessenger]:
+        if key in self.msg_dict:
+            try:
+                pointer = UnsafePointer(to=self.msg_dict[key])
+            except Exception:
+                messenger = MiniMessenger(key)
+                pointer = UnsafePointer(to=messenger)
+                self.msg_dict[key] = messenger^
+        else:
+            messenger = MiniMessenger(key)
+            pointer = UnsafePointer(to=messenger)
+            self.msg_dict[key] = messenger^
+        return pointer
+
+    # fn get_messenger(mut self, key: String) -> Pointer[mut = True, MiniMessenger, __origin_of(self.msg_dict[key])]:
+    #     try:
+    #         pointer = Pointer(to=self.msg_dict[key])
+    #     except Exception:
+    #         messenger = MiniMessenger(key)
+    #         self.msg_dict[key] = messenger^
+    #         try:
+    #             pointer = Pointer(to=self.msg_dict[key])
+    #         except Exception:
+    #             pointer = Pointer(to=None)
+
+    #     return pointer
+        #     else:
+        #         messenger = MiniMessenger(key)
+        #         self.msg_dict[key] = messenger^
+        #         pointer = Pointer(to=self.msg_dict[key])
+        #         self.msg_dict[key] = messenger^
+        #     return pointer
+        # except Exception:
+        #     pass
+
+    
+    fn untrigger_all_messengers(mut self):
+        for ref item in self.msg_dict.items():
+            item.value.trigger = False
+
+    @always_inline
     fn get_msg(mut self: Self, key: String) -> Optional[List[List[Float64]]]:
         if self.block_state == 0:
             return self.msg_pool.get(key)
@@ -129,16 +207,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         if self.block_state == 0:
             return self.text_msg_dict.get(key)
         return None
-
-    @always_inline
-    fn clear_msgs(mut self):
-        self.note_ons.clear()
-        self.note_offs.clear()
-        self.ccs.clear()
-        self.bends.clear()
-        self.msg_pool.clear()
-        self.text_msg_dict.clear()
-        self.block_state = 0
 
     @always_inline
     fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:

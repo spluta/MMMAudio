@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 
 # struct MessengerManager(Movable, Copyable):
 #     var world_ptr: UnsafePointer[MMMWorld]  
@@ -69,52 +69,79 @@ from mmm_src.MMMWorld import MMMWorld
 #                 return opt.value().trig()
 #             else:
 #                 return 0
-    
+
 struct Messenger(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var val_lists: List[List[Float64]]
-    var val_list: List[Float64]
-    var val: Float64
-    var trigger: Bool
+    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
+    var default_dict: Dict[String, Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], *default: Float64):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.val_lists = List[List[Float64]]()
+        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
+        self.default_dict = Dict[String, Float64]()
 
-        if len(default) == 0:
-            temp = [0.0]  # Default to a single zero if no default is provided
-        else:
-            temp = [x for x in default]  # Expand the default values
-        self.val_lists.append(temp.copy())
-        self.val_list = self.val_lists[0].copy()
-        self.val = self.val_lists[0][0]
-        self.trigger = False
+    fn add_key(mut self, key: String, default: Float64 = 0.0):
+        ptr = self.world_ptr[0].get_messenger(key)
+        self.msg_dict[key] = ptr
+        self.default_dict[key] = default
 
-    @always_inline
-    fn get_msg(mut self: Self, key: String):
-        opt = self.world_ptr[0].get_msg(key)
-        if opt: 
-            self.val_lists.clear()
-            for val in opt.value():
-                self.val_lists.append(val.copy())
-            self.val_list = self.val_lists[0].copy()
-            self.val = self.val_lists[0][0]
-            self.trigger = True
+    fn val(mut self, key: String) -> Float64:
+        if key in self.msg_dict:
+            try:
+                return self.msg_dict[key][0].lists[0][0]
+            except IndexError:
+                return 0.0
         else:
-            self.trigger = False
+            try:
+                return self.default_dict[key]
+            except KeyError:
+                return 0.0
+
+# struct Messenger(Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+#     var val_lists: List[List[Float64]]
+#     var val_list: List[Float64]
+#     var val: Float64
+#     var trigger: Bool
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], *default: Float64):
+#         self.world_ptr = world_ptr
+#         self.val_lists = List[List[Float64]]()
+
+#         if len(default) == 0:
+#             temp = [0.0]  # Default to a single zero if no default is provided
+#         else:
+#             temp = [x for x in default]  # Expand the default values
+#         self.val_lists.append(temp.copy())
+#         self.val_list = self.val_lists[0].copy()
+#         self.val = self.val_lists[0][0]
+#         self.trigger = False
+
+#     @always_inline
+#     fn get_msg(mut self: Self, key: String):
+#         ref opt = self.world_ptr[0].get_msg(key)
+#         if opt: 
+#             self.val_lists.clear()
+#             for val in opt.value():
+#                 self.val_lists.append(val.copy())
+#             self.val_list = self.val_lists[0].copy()
+#             self.val = self.val_lists[0][0]
+#             self.trigger = True
+#         else:
+#             self.trigger = False
     
-    fn set_value(mut self, val: List[List[Float64]]):
-        self.val_lists = val.copy()
-        self.val_list = val[0].copy()
-        self.val = val[0][0]
-        self.trigger = True
+#     fn set_value(mut self, val: List[List[Float64]]):
+#         self.val_lists = val.copy()
+#         self.val_list = val[0].copy()
+#         self.val = val[0][0]
+#         self.trigger = True
     
-    fn set_value(mut self, val: Float64):
-        self.val_list = [val]
-        self.val = val
-        self.val_lists.clear()
-        self.val_lists.append([val])
-        self.trigger = True
+#     fn set_value(mut self, val: Float64):
+#         self.val_list = [val]
+#         self.val = val
+#         self.val_lists.clear()
+#         self.val_lists.append([val])
+#         self.trigger = True
 
 
 # struct TextMessenger(Movable, Copyable):

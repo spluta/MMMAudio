@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.PlayBufExample import PlayBufExample
+from examples.DefaultGraph import DefaultGraph
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: PlayBufExample
+    var graph: DefaultGraph
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,7 +16,7 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = PlayBufExample(self.world_ptr)
+        self.graph = DefaultGraph(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -29,14 +29,16 @@ struct MMMGraph(Representable, Movable):
         for i in range(self.world_ptr[0].block_size):
             self.world_ptr[0].block_state = i  # Update the block state
 
+            if i == 0:
+                self.world_ptr[0].transfer_pooled_messages()
+
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
             samples = self.graph.next()  # Get the next audio samples from the graph
 
-            if i == 0:
-                self.world_ptr[0].clear_msgs()
+            self.world_ptr[0].untrigger_all_messengers()
 
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):

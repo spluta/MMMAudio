@@ -11,21 +11,21 @@ from mmm_dsp.Filters import Lag
 struct Default_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
     var osc: Osc
-    var freq: Messenger
+    var messenger: Messenger
     var lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
-        self.freq = Messenger(self.world_ptr, 440.0)
+        self.messenger = Messenger(self.world_ptr)
+        self.messenger.add_key("freq")
         self.lag = Lag(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> Float64:
-        self.freq.get_msg("freq")
-        freq = self.freq.val
+        freq = self.messenger.val("freq")
         return self.osc.next(freq) * 0.1
 
 
