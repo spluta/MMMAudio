@@ -1,4 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.Messengers import *
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
@@ -75,7 +76,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 struct ManyOscillators(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synths: List[StereoBeatingSines]  # Instances of the StereoBeatingSines synth
-    var num_pairs: Int
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -83,11 +84,11 @@ struct ManyOscillators(Representable, Movable, Copyable):
         # initialize the list of synths
         self.synths = List[StereoBeatingSines]()
 
-        # add 10 pairs to the list
-        self.num_pairs = 10
-        for _ in range(self.num_pairs):
-            self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
+        self.messenger = Messenger(self.world_ptr)
 
+        # add 10 pairs to the list
+        for _ in range(10):
+            self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
 
     fn __repr__(self) -> String:
         return String("ManyOscillators")
@@ -106,22 +107,18 @@ struct ManyOscillators(Representable, Movable, Copyable):
     fn get_msgs(mut self):
         # get any messages sent from Python to the Mojo program
 
-        # num here will be Type "None" if there is no message called "set_num_pairs"
-        # if there is a message called "set_num_pairs", num will the contents of the message
-        # [TODO]: is the type and data structure known? I know lower down the message is 
-        # "indexed into" in but I think
-        # it would be valuable to explain what to expect here.
-        num = self.world_ptr[0].get_msg("set_num_pairs")
+        # if there is a message called "set_num_pairs", num will either return the value sent with "set_num_pairs" or if no value has been sent, it will return the default value of 10
+        if self.world_ptr[0].block_state == 0:
+            num = self.messenger.val("set_num_pairs", 10)
 
-        if num:
-            if num.value()[0] != len(self.synths):
-                print("Changing number of synths to:", Int(num.value()[0]))
+            if num != len(self.synths):
+                print("Changing number of synths to:", Int(num))
                 # adjust the list of synths
-                if Int(num.value()[0]) > len(self.synths):
+                if Int(num) > len(self.synths):
                     # add more
-                    for _ in range(Int(num.value()[0]) - len(self.synths)):
-                        self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))  
+                    for _ in range(Int(num) - len(self.synths)):
+                        self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
                 else:
                     # remove some
-                    for _ in range(len(self.synths) - Int(num.value()[0])):
+                    for _ in range(len(self.synths) - Int(num)):
                         _ = self.synths.pop()

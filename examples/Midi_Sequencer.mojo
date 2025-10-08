@@ -75,9 +75,7 @@ struct TrigSynth(Movable, Copyable):
     # the following 5 variables are messengers (imported from mmm_utils.Messengers.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
-    var note_ons: Messenger
-    var ccs: Messenger
-    var bends: Messenger
+    var messenger: Messenger
 
     var num_voices: Int64
 
@@ -90,9 +88,7 @@ struct TrigSynth(Movable, Copyable):
         self.num_voices = num_voices
         self.current_voice = 0
 
-        self.note_ons = Messenger(world_ptr)
-        self.ccs = Messenger(world_ptr)
-        self.bends = Messenger(world_ptr)
+        self.messenger = Messenger(self.world_ptr)
 
         self.voices = List[TrigSynthVoice]()
         for _ in range(self.num_voices):
@@ -104,32 +100,33 @@ struct TrigSynth(Movable, Copyable):
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        var out = 0.0
+        if self.world_ptr[0].block_state == 0:
+        #     # these messages are only processed on the first sample of the block, when block_state==0, so we should only do these things on the first sample of the block
+            notes = self.messenger.val_lists("note_on")  # get the lists of note_on messages received this block
 
-        # these messages are only processed on the first sample of the block, when block_state==0, so we should only do these things on the first sample of the block
-        self.note_ons.get_msg("note_on")  # Get all note ons on channel 0
-        self.ccs.get_msg("control_change")  # Get all CCs on channel 0, CC 34
-        self.bends.get_msg("pitchwheel")  # Get all pitch bend messages on channel 0
 
-        if self.bends.trigger:
-            for i in range(len(self.voices)):
-                self.voices[i].bend_mul = self.bends.val
-
-        # go through the list of note_ons received and play them
-        if self.note_ons.trigger:
-            for note_on in self.note_ons.val_lists:
+        #     # go through the list of note_ons received and play them
+        #     # if no note ons were received, the list will be empty and this loop will be skipped
+            for ref note_on in notes:
                 self.current_voice = (self.current_voice + 1) % self.num_voices
                 self.voices[self.current_voice].vol = note_on[2] / 127.0
                 self.voices[self.current_voice].trig = 1.0
                 self.voices[self.current_voice].freq = midicps(note_on[1])
 
-        # looking for midi cc on cc 34
-        # this will control the frequency of the filter
-        if self.ccs.trigger:
-            for cc in self.ccs.val_lists:
-                if Int(cc[1]) == 34:  # Assuming CC 34 is for filter frequency
-                    self.filt_freq = cc[2]
+        #     ccs = self.messenger.val_lists("control_change")
+        #     for cc in ccs:
+        #         if cc[1] == 34:
+        #             self.filt_freq = cc[2]
 
+        #     # # i am only expecting one pitch bend message per block, so just get the first list in the lists of lists
+        #     bends = self.messenger.val_list("pitchwheel")  
+
+        #     if len(bends) > 0:
+        #         for i in range(len(self.voices)):
+        #             self.voices[i].bend_mul = bends[0]
+
+
+        var out = 0.0
         # get the output of all the synths
         for i in range(len(self.voices)):
             out += self.voices[i].next()

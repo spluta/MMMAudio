@@ -18,14 +18,20 @@ struct Default_Synth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
         self.messenger = Messenger(self.world_ptr)
-        self.messenger.add_key("freq")
         self.lag = Lag(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> Float64:
-        freq = self.messenger.val("freq")
+        if self.world_ptr[0].block_state == 0:
+            ccs = self.messenger.val_lists("control_change")
+            for cc in ccs:
+                if cc[1] == 34:
+                    print("cc 34:", cc[2])
+
+        freq = self.messenger.val("freq", 440.0)
+
         return self.osc.next(freq) * 0.1
 
 

@@ -25,7 +25,7 @@ in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 def start_midi():
     while True:
         for msg in in_port.iter_pending():
-            print(msg)
+            print(msg.type, *msg.bytes())
             mmm_audio.send_msg(msg.type, *msg.bytes())  # send the midi message to mmm
         time.sleep(0.01) # Small delay to prevent busy-waiting
 
@@ -33,3 +33,5 @@ midi_thread = threading.Thread(target=start_midi, daemon=True)
 # once you start the midi_thread, it should register note_on, note_off, cc, etc from your device and send them to mmm
 midi_thread.start()
 midi_thread.stop()
+
+mmm_audio.stop_audio()

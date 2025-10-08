@@ -1,5 +1,71 @@
 from mmm_src.MMMWorld import *
 
+
+
+struct Messenger(Movable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
+    var default_dict: Dict[String, Float64]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
+        self.default_dict = Dict[String, Float64]()
+
+    fn val(mut self, key: String, default: Float64) -> Float64:
+        ptr = self.world_ptr[0].get_messenger(key)
+        if ptr:
+            return ptr.value()[0].lists[0][0]
+        else:
+            return default
+
+    fn trig(mut self, key: String) -> Float64:
+        ptr = self.world_ptr[0].get_messenger(key)
+
+        if ptr:
+            return ptr.value()[0].trigger
+        else:
+            return 0
+
+    fn val_list(mut self, key: String) -> List[Float64]:
+        ptr = self.world_ptr[0].get_messenger(key)
+
+        if ptr:
+            if ptr.value()[0].trigger > 0:
+                for val in ptr.value()[0].lists[0]:
+                    print(val, end=" ")
+                print()    
+                return ptr.value()[0].lists[0].copy()
+            else:
+                return List[Float64]().copy()
+        else:
+            return List[Float64]().copy()
+
+    
+    # fn val_lists(mut self, key: String) -> Optional[UnsafePointer[MiniMessenger]]:
+    #     return self.world_ptr[0].get_messenger(key)
+
+        # if ptr:
+        #     if ptr.value()[0].trigger > 0:
+        #         return ptr.value()[0].lists.copy()
+        #     else:
+        #         return List[List[Float64]]().copy()
+        # else:
+        #     return List[List[Float64]]().copy()
+
+    fn val_lists(mut self, key: String) -> List[List[Float64]]:
+        ptr = self.world_ptr[0].get_messenger(key)
+
+        if ptr:
+            if ptr.value()[0].trigger > 0:
+                return ptr.value()[0].lists.copy()
+            else:
+                return List[List[Float64]]().copy()
+        else:
+            return List[List[Float64]]().copy()
+
+
+
 # struct MessengerManager(Movable, Copyable):
 #     var world_ptr: UnsafePointer[MMMWorld]  
 #     var messengers: Dict[String, Messenger]
@@ -69,33 +135,6 @@ from mmm_src.MMMWorld import *
 #                 return opt.value().trig()
 #             else:
 #                 return 0
-
-struct Messenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
-    var default_dict: Dict[String, Float64]
-
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
-        self.default_dict = Dict[String, Float64]()
-
-    fn add_key(mut self, key: String, default: Float64 = 0.0):
-        ptr = self.world_ptr[0].get_messenger(key)
-        self.msg_dict[key] = ptr
-        self.default_dict[key] = default
-
-    fn val(mut self, key: String) -> Float64:
-        if key in self.msg_dict:
-            try:
-                return self.msg_dict[key][0].lists[0][0]
-            except IndexError:
-                return 0.0
-        else:
-            try:
-                return self.default_dict[key]
-            except KeyError:
-                return 0.0
 
 # struct Messenger(Movable, Copyable):
 #     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance

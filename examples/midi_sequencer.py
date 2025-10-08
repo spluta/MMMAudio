@@ -1,8 +1,18 @@
-from mmm_src.MMMAudio import MMMAudio 
+from mmm_src.MMMAudio import MMMAudio
 
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
 mmm_audio.start_audio()
+
+mmm_audio.send_msg("control_change", 0, 60, 100)
+
+mmm_audio.send_msg("note_on", 0, 60.0, 100.0)
+
+
+
+
+
+
 
 # this next chunk of code is all about using a midi keyboard to control the synth---------------
 
@@ -26,8 +36,6 @@ def start_midi():
         for msg in in_port.iter_pending():
             if stop_event.is_set():  # Check if we should stop
                 return
-            print("Received MIDI message:", end=" ")
-            print(msg)
 
             # convert the mido message to a list of floats for mojo
             msg2 = [msg.channel, msg.note, msg.velocity] if msg.type == "note_on" else \
@@ -35,9 +43,8 @@ def start_midi():
                   [msg.channel, msg.control, linexp(msg.value, 0, 127, 100.0, 4000.0)] if msg.type == "control_change" else \
                   [linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625)] if msg.type == "pitchwheel" else None
 
-            print("Sending MIDI message to MMMAudio:", msg.type, msg2)
             if msg2:
-                mmm_audio.send_msg(msg.type, msg2)
+                mmm_audio.send_msg(msg.type, *msg2)
         time.sleep(0.01)
 
 # Start the thread
@@ -81,3 +88,5 @@ scheduler.stop_routs()
 
 mmm_audio.stop_audio()
 mmm_audio.start_audio()
+
+mmm_audio.send_msg("note_on", 0.0, 60.0, 100.0)
