@@ -17,9 +17,8 @@ struct TrigSynthVoice(Movable, Copyable):
     var env: Env
 
     var mod: Osc
-    var car: Osc[1, 2, 1]
+    var car: Osc[1, 0, 1]
     var sub: Osc
-    var lag: Lag
 
     var trig: Float64
     var freq: Float64
@@ -32,9 +31,8 @@ struct TrigSynthVoice(Movable, Copyable):
         self.world_ptr = world_ptr
 
         self.mod = Osc(self.world_ptr)
-        self.car = Osc[1, 2, 1](self.world_ptr)
+        self.car = Osc[1, 0, 1](self.world_ptr)
         self.sub = Osc(self.world_ptr)
-        self.lag = Lag(self.world_ptr)
 
         self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
         self.env = Env(self.world_ptr)
