@@ -9,6 +9,23 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 # from .Buffer import Buffer
 
+struct EnvParams(Representable, Movable, Copyable):
+    var values: List[Float64]
+    var times: List[Float64]
+    var curves: List[Float64]
+    var loop: Int64
+    var time_warp: Float64
+
+    fn __init__(out self, values: List[Float64] = List[Float64](1,1), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Int64 = 0, time_warp: Float64 = 1.0):
+        self.values = values
+        self.times = times
+        self.curves = curves
+        self.loop = loop
+        self.time_warp = time_warp
+
+    fn __repr__(self) -> String:
+        return String("EnvParams")
+
 struct Env(Representable, Movable, Copyable):
     """Envelope generator."""
 
@@ -51,6 +68,10 @@ struct Env(Representable, Movable, Copyable):
 
     # fn next(mut self, mut buffer: Buffer, phase: Float64, interp: Int64 = 0) -> Float64:
     #     return buffer.next(0, phase, interp)  
+
+    fn next(mut self, ref params: EnvParams, trig: Float64 = 1.0) -> Float64:
+        """Generate the next envelope sample."""
+        return self.next(params.values, params.times, params.curves, params.loop, trig, params.time_warp)
 
     fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
