@@ -9,39 +9,10 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 # from .Buffer import Buffer
 
-struct EnvParams(Representable, Movable, Copyable):
-    """
-    Parameters for the Env class.
-    This struct holds the values, times, curves, loop flag, and time warp factor for the envelope generator.
-    
-    Attributes:
-        values (List[Float64]): List of envelope values at each segment.
-        times (List[Float64]): List of durations for each segment.
-        curves (List[Float64]): List of curve shapes for each segment.
-        loop (Bool): Flag to indicate if the envelope should loop.
-        time_warp (Float64): Time warp factor to speed up or slow down the envelope.
-    """
-
-    var values: List[Float64]
-    var times: List[Float64]
-    var curves: List[Float64]
-    var loop: Bool
-    var time_warp: Float64
-
-    fn __init__(out self, values: List[Float64] = List[Float64](1,1), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
-        self.values = values.copy()  # Make a copy to avoid external modifications
-        self.times = times.copy()
-        self.curves = curves.copy()
-        self.loop = loop
-        self.time_warp = time_warp
-
-    fn __repr__(self) -> String:
-        return String("EnvParams")
-
 struct Env(Representable, Movable, Copyable):
     """Envelope generator."""
 
-    var sweep: Sweep  # Sweep for tracking time
+    var sweep: Sweep  # Phasor for tracking time
     var last_trig: Float64  # Track the last trigger state
     var is_active: Bool  # Flag to indicate if the envelope is active
     var times: List[Float64]  # List of segment durations
@@ -81,11 +52,7 @@ struct Env(Representable, Movable, Copyable):
     # fn next(mut self, mut buffer: Buffer, phase: Float64, interp: Int64 = 0) -> Float64:
     #     return buffer.next(0, phase, interp)  
 
-    fn next(mut self, ref params: EnvParams, trig: Float64 = 1.0) -> Float64:
-        """Generate the next envelope sample."""
-        return self.next(params.values, params.times, params.curves, params.loop, trig, params.time_warp)
-
-    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
+    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
 
         if not self.is_active:
@@ -103,9 +70,9 @@ struct Env(Representable, Movable, Copyable):
         
         self.last_trig = trig
 
-        if loop and phase >= 1.0:  # Check if the envelope has completed
+        if loop > 0 and phase >= 1.0:  # Check if the envelope has completed
             self.sweep.phase = 0.0  # Reset phase for looping
-        elif not loop and phase >= 1.0: 
+        elif loop <= 0 and phase >= 1.0: 
             if values[-1]==values[0]:
                 self.is_active = False  # Stop the envelope if not looping and last value is the same as first
                 return values[0]  # Return the first value if not looping

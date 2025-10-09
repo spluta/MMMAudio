@@ -19,16 +19,9 @@ struct FreeverbSynth(Representable, Movable, Copyable):
     var play_buf: PlayBuf
 
     var freeverb: Freeverb[2]
-    var room_size: Messenger
-    var verb_lpf_fader: Messenger
-    var verb_lpf: Float64
-    var added_space_fader: Messenger
-    var added_space: SIMD[DType.float64, 2]
-    var mix: Messenger
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-
-
         self.world_ptr = world_ptr 
 
         # load the audio buffer 
@@ -39,28 +32,21 @@ struct FreeverbSynth(Representable, Movable, Copyable):
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
 
         self.play_buf = PlayBuf(self.world_ptr)
-
         self.freeverb = Freeverb[2](self.world_ptr)
-        self.room_size = Messenger(self.world_ptr, 0.9)
-        self.verb_lpf_fader = Messenger(self.world_ptr, 1.0)
-        self.verb_lpf = 1000.0
-        self.added_space_fader = Messenger(self.world_ptr, 0.5)
-        self.added_space = SIMD[DType.float64, 2](0.5, 0.5)
-        self.mix = Messenger(self.world_ptr, 0.1)
+        self.messenger = Messenger(self.world_ptr)
+
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world_ptr[0].grab_messages == 1:
-            self.room_size.get_msg("/fader1")
-            self.verb_lpf_fader.get_msg("/fader2")
-            self.verb_lpf = linexp(self.verb_lpf_fader.value, 0.0, 1.0, 200.0, 10000.0)
-            self.added_space_fader.get_msg("/fader3")
-            self.added_space = SIMD[DType.float64, 2](self.added_space_fader.value, self.added_space_fader.value*0.99)
-            self.mix.get_msg("/fader4")
+        room_size = self.messenger.val("room_size", 0.9)
+        lpf_comb = self.messenger.val("lpf_comb", 1000.0)
+        added_space = self.messenger.val("added_space", 0.5)
+        added_space_simd = SIMD[DType.float64, 2](added_space, added_space * 0.99)
+        mix = self.messenger.val("mix", 0.1)
 
         out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
 
-        out = self.freeverb.next(out, self.room_size.value, self.verb_lpf, self.added_space) * 0.2 * self.mix.value + out * (1.0 - self.mix.value)
+        out = self.freeverb.next(out, room_size, lpf_comb, added_space_simd) * 0.2 * mix + out * (1.0 - mix)
 
         return out
 

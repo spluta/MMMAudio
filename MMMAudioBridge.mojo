@@ -89,15 +89,9 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn send_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn send_msg_to_pool(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
-        var list = List[Float64]()
-
-        var key = String(key_vals[0])
-        for i in range(1,len(key_vals)):     
-            list.append(Float64(key_vals[i]))  # Convert each value to Float64 and append to the list
-
-        py_self[0].world_ptr[0].send_msg(key, list)
+        py_self[0].world_ptr[0].send_msg_to_pool(key_vals)
         
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -112,20 +106,6 @@ struct MMMAudioBridge(Representable, Movable):
 
         py_self[0].world_ptr[0].send_text_msg(key, list)
         
-        return PythonObject(None)  # Return a PythonObject wrapping None
-
-    # @staticmethod
-    # fn send_midi(py_self: UnsafePointer[Self], msg: PythonObject) raises -> PythonObject:
-
-    #     py_self[0].world_ptr[0].send_midi(msg)
-
-    #     return PythonObject(None)  # Return a PythonObject wrapping None
-    
-    @staticmethod
-    fn send_midi(py_self: UnsafePointer[Self], msg: PythonObject) raises -> PythonObject:
-
-        py_self[0].world_ptr[0].send_midi(msg)
-
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
@@ -153,11 +133,9 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             m.add_type[MMMAudioBridge]("MMMAudioBridge").def_py_init[MMMAudioBridge.py_init]()
             .def_method[MMMAudioBridge.next]("next")
             .def_method[MMMAudioBridge.set_screen_dims]("set_screen_dims")
-            # .def_method[MMMAudioBridge.set_active_graphs]("set_active_graphs")
-            .def_method[MMMAudioBridge.send_msg]("send_msg")
+            .def_method[MMMAudioBridge.send_msg_to_pool]("send_msg")
             .def_method[MMMAudioBridge.send_text_msg]("send_text_msg")
             .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
-            .def_method[MMMAudioBridge.send_midi]("send_midi")
             .def_method[MMMAudioBridge.set_channel_count]("set_channel_count")
         )
 

@@ -30,11 +30,10 @@ struct MMMGraph(Representable, Movable):
     fn get_audio_samples(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]):
 
         for i in range(self.world_ptr[0].block_size):
-            
+            self.world_ptr[0].block_state = i  # Update the block state
+
             if i == 0:
-                # Set grab_messages to True for the first sample
-                # this way objects only grab messages on the first sample
-                self.world_ptr[0].grab_messages = 1  
+                self.world_ptr[0].transfer_pooled_messages()
 
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):
@@ -42,8 +41,7 @@ struct MMMGraph(Representable, Movable):
 
             samples = self.graph.next()  # Get the next audio samples from the graph
 
-            if i == 0:
-                self.world_ptr[0].clear_msgs()
+            self.world_ptr[0].untrigger_all_messengers()
 
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):

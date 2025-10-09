@@ -24,8 +24,8 @@ struct Record_Synth(Representable, Movable, Copyable):
     var write_pos: Int64 
     var record_buf: RecordBuf
     var play_buf: PlayBuf
-    var note_ons: MIDIMessenger
-    var note_offs: MIDIMessenger
+    var note_ons: Messenger
+    var note_offs: Messenger
     var note_time: Float64
     var lag: Lag
     var end_frame: Float64
@@ -43,8 +43,8 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.record_buf = RecordBuf(world_ptr)
         self.play_buf = PlayBuf(world_ptr)
         self.write_pos = 0
-        self.note_ons = MIDIMessenger(world_ptr)
-        self.note_offs = MIDIMessenger(world_ptr)
+        self.note_ons = Messenger(world_ptr)
+        self.note_offs = Messenger(world_ptr)
         self.note_time = 0.0
         self.end_frame = 0.0
         self.lag = Lag(world_ptr)
@@ -76,30 +76,38 @@ struct Record_Synth(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 1]:
         
+        # here i am reusing the messenger to get three different messages
+        # set_input_chan, start_recording, stop_recording
+        # you could use three different messengers if you prefer
+        # the messenger value is reset to 0 after each message is processed
         self.messenger.get_msg("set_input_chan")
-        if self.messenger.int_value >= 0 and self.messenger.int_value < self.world_ptr[0].num_in_chans:
-            self.input_chan = self.messenger.int_value
+        if self.messenger.val >= 0 and Int64(self.messenger.val) < self.world_ptr[0].num_in_chans:
+            self.input_chan = Int64(self.messenger.val)
             self.messenger.set_value(0.0)  # reset messenger value
         
         self.messenger.get_msg("start_recording")
-        if self.messenger.int_value == 1:
+        if self.messenger.val > 0:
             self.start_recording()
             self.messenger.set_value(0.0)  # reset messenger value
         
         self.messenger.get_msg("stop_recording")
-        if self.messenger.int_value == 1:
+        if self.messenger.val > 0:
             self.stop_recording()
             self.messenger.set_value(0.0)  # reset messenger value
         
-        self.note_ons.get_note_ons(-1, 48)
-        self.note_offs.get_note_offs(-1, 48)
+        self.note_ons.get_msg("note_on")
+        self.note_offs.get_msg("note_off")
 
         # note_ons and note_offs are lists of lists, so if there is anything in them, we start or stop recording
-        for _ in self.note_ons.value:  
-            self.start_recording()
+        for val_list in self.note_ons.val_lists:
+            # only record if the note is MIDI 48 (C3)
+            if Int64(val_list[0]) == 48:
+                self.start_recording()
 
-        for _ in self.note_offs.value:
-            self.stop_recording()
+        for val_list in self.note_offs.val_lists:
+            # only stop recording if the note is MIDI 48 (C3)
+            if Int64(val_list[0]) == 48:
+                self.stop_recording()
 
 
         # this code does the actual recording, placing the next sample into the buffer

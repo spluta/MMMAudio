@@ -5,6 +5,25 @@ from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time
 
+struct MiniMessenger(Movable, Copyable):
+    var lists: List[List[Float64]]
+    var trigger: Float64
+    var key: String
+
+    fn __init__(out self, key: String):
+        self.key = key
+        self.lists = List[List[Float64]]()
+
+        self.trigger = 0.0
+
+    fn print_if_triggered(mut self):
+        if self.trigger > 0.0:
+            print("Messenger", self.key, "triggered with values:", end=" ")
+            for val in self.lists:
+                for v in val:
+                    print(v, end=" ")
+                print()
+
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
     var block_size: Int64
@@ -21,16 +40,13 @@ struct MMMWorld(Representable, Movable, Copyable):
     var mouse_x: Float64
     var mouse_y: Float64
 
-    var grab_messages: Int64
+    var block_state: Int64
 
-    var msg_dict: Dict[String, List[Float64]]
+    var msg_pool: Dict[String, List[List[Float64]]]
+    var msg_dict: Dict[String, MiniMessenger]
+
     var text_msg_dict: Dict[String, List[String]]
-    var note_ons: List[List[Int64]]
-    var note_offs: List[List[Int64]]
-    var ccs: List[List[Int64]]
-    var bends: List[List[Int64]]
     
-
     # windows
     var hann_window: Buffer
 
@@ -62,14 +78,12 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.mouse_x = 0.0
         self.mouse_y = 0.0
 
-        self.grab_messages = 0
+        self.block_state = 0
 
-        self.msg_dict = Dict[String, List[Float64]]()
+        self.msg_pool = Dict[String, List[List[Float64]]]()
+        self.msg_dict = Dict[String, MiniMessenger]()
+
         self.text_msg_dict = Dict[String, List[String]]()
-        self.note_ons = List[List[Int64]]()
-        self.note_offs = List[List[Int64]]()
-        self.ccs = List[List[Int64]]()
-        self.bends = List[List[Int64]]()
 
         self.buffers = List[Buffer]()  # Initialize the list of buffers
         self.last_print_time = 0.0
@@ -88,69 +102,166 @@ struct MMMWorld(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
-    fn send_msg(mut self, key: String, mut list: List[Float64]):
+    fn send_msg_to_pool(mut self, key_vals: PythonObject) raises :
+        """ puts a message into the message pool. key_vals is a list where the first item is the key (String) and the rest are Float64 values """
+        key = String(key_vals[0])
+        var list = List[Float64]()
+        for i in range(1, len(key_vals)):
+            list.append(Float64(key_vals[i]))
+        
         if key == "mouse_x":
             list[0] = list[0] / self.screen_dims[0]  # Normalize mouse x position
             self.mouse_x = list[0]  # Update mouse x position in the world
         elif key == "mouse_y":
             list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
             self.mouse_y = list[0]  # Update mouse y position in the world
-
         else:
-            self.msg_dict[key] = list.copy()  # Store a copy of the list to avoid reference issues
+            # i wish you knew how difficult these 6 lines of code were
+            opt = self.msg_pool.get(key)
+            if opt:
+                self.msg_pool[key].append(list^)
+            else:
+                self.msg_pool[key] = List[List[Float64]]()
+                self.msg_pool[key].append(list^)
 
-    fn get_msg(mut self: Self, key: String) -> Optional[List[Float64]]:
+    # @always_inline
+    # fn transfer_pooled_messages(mut self):
+    #     """ transfers messages from the message pool to the message dict, clearing the pool afterwards """
+    #     # for ref pool_item in self.msg_pool.items():
+    #     for pool_item in self.msg_pool.take_items():
+    #         print("Transferring message for key:", pool_item.key, "with values:", end=" ")
+    #         for ref val in pool_item.value:
+    #             for v in val:
+    #                 print(v, end=" ")
+    #             print()
+    #         if pool_item.key in self.msg_dict:
+    #             try:
+    #                 ref messenger = self.msg_dict[pool_item.key]
+    #                 messenger.trigger = True
+    #                 messenger.lists.clear()
+    #                 messenger.lists = pool_item.value.copy()
+    #             except Exception:
+    #                 pass
+    #         else:
+    #             print(" - key does not exist, creating new entry")
+    #             messenger = MiniMessenger(pool_item.key)
+    #             messenger.trigger = True
+    #             for val in pool_item.value:
+    #                 messenger.lists.append(val.copy())
+    #             self.msg_dict[pool_item.key] = messenger^
 
-        if self.grab_messages == 1:
-            return self.msg_dict.get(key)
+    #     for ref item in self.msg_dict.items():
+    #         item.value.print_if_triggered()
+
+    @always_inline
+    fn transfer_pooled_messages(mut self):
+        """ transfers messages from the message pool to the message dict, clearing the pool afterwards """
+        # for ref pool_item in self.msg_pool.items():
+        for pool_item in self.msg_pool.take_items():
+            if pool_item.key in self.msg_dict:
+                try:
+                    ref messenger = self.msg_dict[pool_item.key]
+                    messenger.trigger = 1.0
+                    messenger.lists.clear()
+                    messenger.lists = pool_item.value.copy() # if this could move instead of copy that would be great
+                except Exception:
+                    pass
+            else:
+                messenger = MiniMessenger(pool_item.key)
+                messenger.trigger = 1.0  # set trigger to 1.0
+                for val in pool_item.value:
+                    messenger.lists.append(val.copy())
+                self.msg_dict[pool_item.key] = messenger^
+
+    @always_inline
+    fn get_messenger(mut self, key: String, default: Float64 = 0.0) -> Optional[UnsafePointer[MiniMessenger]]:
+        if key in self.msg_dict:
+            try:
+                pointer = UnsafePointer(to=self.msg_dict[key])
+                pointer2 = Optional[UnsafePointer[MiniMessenger]](pointer)
+            except Exception:
+                pointer2 = None
+            return pointer2
+        else:
+            return None
+
+    # @always_inline
+    # fn get_ptr(mut self, key: String, default: Float64) -> UnsafePointer[MiniMessenger]:
+    #     if key in self.msg_dict:
+    #         print("key found in msg_dict:", key)
+    #         try:
+    #             pointer = UnsafePointer(to=self.msg_dict[key])
+    #         except Exception:
+    #             messenger = MiniMessenger(key)
+    #             messenger.lists.append([default])
+    #             pointer = UnsafePointer(to=messenger)
+    #             self.msg_dict[key] = messenger^
+    #         return pointer
+    #     else:
+    #         print("key not found in msg_dict, creating new key:", key)
+    #         messenger = MiniMessenger(key)
+    #         messenger.lists.append([default])
+    #         print("default1 ", messenger.lists[0][0])    
+    #         pointer = UnsafePointer(to=messenger)
+    #         print("default2 ", pointer[0].lists[0][0])
+    #         self.msg_dict[key] = messenger^
+    #         print("default3 ", pointer[0].lists[0][0])
+    #         return pointer
+    # fn get_messenger(mut self, key: String) -> Pointer[mut = True, MiniMessenger, __origin_of(self.msg_dict[key])]:
+    #     try:
+    #         pointer = Pointer(to=self.msg_dict[key])
+    #     except Exception:
+    #         messenger = MiniMessenger(key)
+    #         self.msg_dict[key] = messenger^
+    #         try:
+    #             pointer = Pointer(to=self.msg_dict[key])
+    #         except Exception:
+    #             pointer = Pointer(to=None)
+
+    #     return pointer
+        #     else:
+        #         messenger = MiniMessenger(key)
+        #         self.msg_dict[key] = messenger^
+        #         pointer = Pointer(to=self.msg_dict[key])
+        #         self.msg_dict[key] = messenger^
+        #     return pointer
+        # except Exception:
+        #     pass
+
+    
+    fn untrigger_all_messengers(mut self):
+        for ref item in self.msg_dict.items():
+            item.value.trigger = 0.0
+
+    @always_inline
+    fn get_msg(mut self: Self, key: String) -> Optional[List[List[Float64]]]:
+        if self.block_state == 0:
+            return self.msg_pool.get(key)
         return None
 
     fn send_text_msg(mut self, key: String, mut list: List[String]):
         self.text_msg_dict[key] = list.copy()
 
+    @always_inline
     fn get_text_msg(mut self: Self, key: String) -> Optional[List[String]]:
 
-        if self.grab_messages == 1:
+        if self.block_state == 0:
             return self.text_msg_dict.get(key)
         return None
-    
-    fn send_midi(mut self, msg: PythonObject) raises :
-        if not msg:
-            return
-        if String(msg[0]) == "note_on":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.note_ons.append(list^)
-        elif String(msg[0]) == "note_off":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.note_offs.append(list^)
-        elif String(msg[0]) == "cc":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]), Int64(msg[3]))
-            self.ccs.append(list^)
-        elif String(msg[0]) == "bend":
-            list = List[Int64](Int64(msg[1]), Int64(msg[2]))
-            self.bends.append(list^)
 
-    fn clear_msgs(mut self):
-        self.note_ons.clear()
-        self.note_offs.clear()
-        self.ccs.clear()
-        self.bends.clear()
-
-        self.msg_dict.clear()
-        self.text_msg_dict.clear()
-        self.grab_messages = 0
-
+    @always_inline
     fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
 
-        current_time = time.perf_counter()
-        # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-        if self.grab_messages == 1 and self.print_flag == 0:
-            if current_time - self.last_print_time >= 1.0 / freq:
-                self.last_print_time = current_time
-                self.print_flag = 1
-        elif self.grab_messages == 0 and self.print_flag == 1:
-            self.print_flag = 0
-        if self.print_flag == 1:
-            print(label,String(value))
+        if self.block_state == 0:
+            current_time = time.perf_counter()
+            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+            if self.print_flag == 0:
+                if current_time - self.last_print_time >= 1.0 / freq:
+                    self.last_print_time = current_time
+                    self.print_flag = 1
+            elif self.print_flag == 1:
+                self.print_flag = 0
+            if self.print_flag == 1:
+                print(label,String(value))
 
 

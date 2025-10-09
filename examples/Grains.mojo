@@ -43,7 +43,7 @@ struct GrainSynth(Representable, Movable, Copyable):
         start_frame = linlin(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.0, self.buffer.get_num_frames())
 
         # use the first channel of the buffer
-        var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 0.6)
+        var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
 
         # if you want to use both channels of the buffer, uncomment this and comment the line above
         # with the 2 channel version, there will be 2 channels of output (in stereo), but no panning

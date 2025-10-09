@@ -130,11 +130,6 @@ class MMMAudio:
             self.mmm_audio_bridge.send_msg(["mouse_y", y])
             
             await asyncio.sleep(delay)
-    
-    # def increment(self, samples):
-    #     blocks = ceil(samples / self.blocksize)
-    #     for i in range(blocks):
-    #         self.mmm_audio_bridge.next(self.out_buffer)
 
     def get_samples(self, samples):
         blocks = ceil(samples / self.blocksize)
@@ -206,9 +201,10 @@ class MMMAudio:
         """
 
         key_vals = [key]  # Start with the key
+        # if it gets a list as the first argument, unpack it
+        if len(args) == 1 and isinstance(args[0], list):
+            args = args[0]
         key_vals.extend([float(arg) for arg in args])
-
-        # print(key_vals)
 
         self.mmm_audio_bridge.send_msg(key_vals)
 
@@ -262,7 +258,6 @@ class MMMAudio:
 
         # Create a dispatcher to handle incoming messages
         dispatcher = Dispatcher()
-
         dispatcher.set_default_handler(self.send_msg)
 
         # Create and start the server
@@ -273,16 +268,7 @@ class MMMAudio:
         print("Press Ctrl+C to stop the server")
 
         await asyncio.Future()  # Run forever
-
-        # with this commented out, the OSC server survives ctl-c 
-
-        # try:
-        #     # Keep the server running
-        #     await asyncio.Future()  # Run forever
-        # except KeyboardInterrupt:
-        #     print("\nShutting down server...")
-        # finally:
-        #     transport.close()    
+ 
 
 def list_audio_devices():
     p_temp = pyaudio.PyAudio()

@@ -1,85 +1,206 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 
 
-struct Messenger(Floatable, Movable, Copyable):
+
+struct Messenger(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var value: Float64
-    var int_value: Int64
-
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], default: Float64 = 0.0):
-        self.world_ptr = world_ptr
-        self.value = default
-        self.int_value = Int64(default)
-
-    fn get_msg(mut self: Self, str: String):
-        opt = self.world_ptr[0].get_msg(str) # trig will be an Optional
-        if opt: # if it trig is None, we do nothing
-            self.value = opt.value()[0]
-            self.int_value = Int64(self.value)
-    
-    fn set_value(mut self, val: Float64):
-        self.value = val
-        self.int_value = Int64(val)
-
-    fn __float__(self) -> Float64:
-        return self.value
-
-struct MIDIMessenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var value: List[List[Int64]]
+    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
+    var default_dict: Dict[String, Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.value = List[List[Int64]]()
+        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
+        self.default_dict = Dict[String, Float64]()
 
-    fn get_note_ons(mut self: Self, channel: Int64 = -1, note: Int64 = -1):
-        if self.world_ptr[0].grab_messages == 1:
-            if channel != -1 or note != -1:
-                filtered = List[List[Int64]]()
-                for item in self.world_ptr[0].note_ons:
-                    if (channel == -1 or item[0] == channel) and (note == -1 or item[1] == note):
-                        filtered.append(item.copy())
-                self.value = filtered^
-            else:
-                self.value = self.world_ptr[0].note_ons.copy()
+    fn val(mut self, key: String, default: Float64) -> Float64:
+        ptr = self.world_ptr[0].get_messenger(key)
+        if ptr:
+            return ptr.value()[0].lists[0][0]
         else:
-            self.value.clear()
+            return default
 
-    fn get_note_offs(mut self: Self, channel: Int64 = -1, note: Int64 = -1):
-        if self.world_ptr[0].grab_messages == 1:
-            self.value.clear()
-            if channel != -1 or note != -1:
-                filtered = List[List[Int64]]()
-                for item in self.world_ptr[0].note_offs:
-                    if (channel == -1 or item[0] == channel) and (note == -1 or item[1] == note):
-                        filtered.append(item.copy())
-                self.value = filtered^
-            else:
-                self.value = self.world_ptr[0].note_offs.copy()
+    fn trig(mut self, key: String) -> Float64:
+        ptr = self.world_ptr[0].get_messenger(key)
+
+        if ptr:
+            return ptr.value()[0].trigger
         else:
-            self.value.clear()
+            return 0
 
-    fn get_ccs(mut self: Self, channel: Int64 = -1, cc: Int64 = -1):
-        if self.world_ptr[0].grab_messages == 1:
-            self.value.clear()
-            if channel != -1 or cc != -1:
-                filtered = List[List[Int64]]()
-                for item in self.world_ptr[0].ccs:
-                    if (channel == -1 or item[0] == channel) and (cc == -1 or item[1] == cc):
-                        filtered.append(item.copy())
-                self.value = filtered^
-            else:
-                self.value = self.world_ptr[0].ccs.copy()
-            
+    fn val_list(mut self, key: String) -> List[Float64]:
+        ptr = self.world_ptr[0].get_messenger(key)
 
-    fn get_bends(mut self: Self, channel: Int64 = -1):
-        if self.world_ptr[0].grab_messages == 1:
-            self.value.clear()
-            if channel != -1:
-                filtered = List[List[Int64]]()
-                for item in self.world_ptr[0].bends:
-                    if item[0] == channel:
-                        filtered.append(item.copy())
-                self.value = filtered^
+        if ptr:
+            if ptr.value()[0].trigger > 0:
+                for val in ptr.value()[0].lists[0]:
+                    print(val, end=" ")
+                print()    
+                return ptr.value()[0].lists[0].copy()
             else:
-                self.value = self.world_ptr[0].bends.copy()
+                return List[Float64]().copy()
+        else:
+            return List[Float64]().copy()
+
+    
+    # fn val_lists(mut self, key: String) -> Optional[UnsafePointer[MiniMessenger]]:
+    #     return self.world_ptr[0].get_messenger(key)
+
+        # if ptr:
+        #     if ptr.value()[0].trigger > 0:
+        #         return ptr.value()[0].lists.copy()
+        #     else:
+        #         return List[List[Float64]]().copy()
+        # else:
+        #     return List[List[Float64]]().copy()
+
+    fn val_lists(mut self, key: String) -> List[List[Float64]]:
+        ptr = self.world_ptr[0].get_messenger(key)
+
+        if ptr:
+            if ptr.value()[0].trigger > 0:
+                return ptr.value()[0].lists.copy()
+            else:
+                return List[List[Float64]]().copy()
+        else:
+            return List[List[Float64]]().copy()
+
+
+
+# struct MessengerManager(Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]  
+#     var messengers: Dict[String, Messenger]
+#     # var text_messengers: Dict[String, TextMessenger]
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         self.world_ptr = world_ptr
+#         self.messengers = Dict[String, Messenger]()
+#         # self.text_messengers = Dict[String, TextMessenger]()
+
+#     fn add_messenger[is_trigger: Bool = False](mut self, key: String, default: Float64 = 0.0):
+#         messenger = Messenger(self.world_ptr, key, default)
+#         self.messengers[key] = messenger.copy()
+
+#     # fn add_text_messenger(mut self, key: String, default: String = ""):
+#     #     messenger = TextMessenger(self.world_ptr, default)
+#     #     self.text_messengers[key] = messenger.copy()
+
+#     fn get_messages(mut self):
+#         if self.world_ptr[0].block_state == 0:
+#             for ref item in self.messengers.items():
+#                 item.value.get_msg()  # Update each messenger
+#             # for value in self.text_messengers.lists():
+#             #     value.get_text_msg()  # Update each text messenger
+#         if self.world_ptr[0].block_state == 1:
+#             for ref item in self.messengers.items():
+#                 item.value.trig = False
+#             # for value in self.text_messengers.lists():
+#             #     value.trig = False
+
+#     fn lists(self, key: String) -> List[List[Float64]]:
+#         if key not in self.messengers:
+#             return List[List[Float64]]()
+#         else:
+#             opt = self.messengers.get(key)
+#             if opt:
+#                 return opt.value().lists.copy()
+#             else:
+#                 return List[List[Float64]]()
+
+#     fn list(self, key: String) -> List[Float64]:
+#         if key not in self.messengers:
+#             return List[Float64]()
+#         else:
+#             opt = self.messengers.get(key)
+#             if opt:
+#                 return opt.value().lists[0].copy()
+#             else:
+#                 return List[Float64]()
+
+#     fn value(self, key: String) -> Float64:
+#         if key not in self.messengers:
+#             return 0.0
+#         else:
+#             opt = self.messengers.get(key)
+#             if opt:
+#                 return opt.value().lists[0][0]
+#             else:
+#                 return 0.0
+
+#     fn trig(self, key: String) -> Int:
+#         if key not in self.messengers:
+#             return 0
+#         else:
+#             opt = self.messengers.get(key)
+#             if opt:
+#                 return opt.value().trig()
+#             else:
+#                 return 0
+
+# struct Messenger(Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+#     var val_lists: List[List[Float64]]
+#     var val_list: List[Float64]
+#     var val: Float64
+#     var trigger: Bool
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], *default: Float64):
+#         self.world_ptr = world_ptr
+#         self.val_lists = List[List[Float64]]()
+
+#         if len(default) == 0:
+#             temp = [0.0]  # Default to a single zero if no default is provided
+#         else:
+#             temp = [x for x in default]  # Expand the default values
+#         self.val_lists.append(temp.copy())
+#         self.val_list = self.val_lists[0].copy()
+#         self.val = self.val_lists[0][0]
+#         self.trigger = False
+
+#     @always_inline
+#     fn get_msg(mut self: Self, key: String):
+#         ref opt = self.world_ptr[0].get_msg(key)
+#         if opt: 
+#             self.val_lists.clear()
+#             for val in opt.value():
+#                 self.val_lists.append(val.copy())
+#             self.val_list = self.val_lists[0].copy()
+#             self.val = self.val_lists[0][0]
+#             self.trigger = True
+#         else:
+#             self.trigger = False
+    
+#     fn set_value(mut self, val: List[List[Float64]]):
+#         self.val_lists = val.copy()
+#         self.val_list = val[0].copy()
+#         self.val = val[0][0]
+#         self.trigger = True
+    
+#     fn set_value(mut self, val: Float64):
+#         self.val_list = [val]
+#         self.val = val
+#         self.val_lists.clear()
+#         self.val_lists.append([val])
+#         self.trigger = True
+
+
+# struct TextMessenger(Movable, Copyable):
+#     var world_ptr: UnsafePointer[MMMWorld] 
+#     var trig: Bool
+#     var key: String
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], key: String = ""):
+#         self.world_ptr = world_ptr
+#         self.trig = False
+#         self.key = key
+
+#     @always_inline
+#     fn get_text_msg(mut self: Self, str: String):
+#         opt = self.world_ptr[0].get_text_msg(str)
+#         if opt: 
+#             self.trig = True
+#             self.string = opt.value()[0]
+#         else:
+#             self.trig = False
+    
+#     fn set_value(mut self, val: String):
+#         self.string = val
