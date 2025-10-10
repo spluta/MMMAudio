@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.Midi_Sequencer import Midi_Sequencer
+from examples.VariableOsc import VariableOsc
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Midi_Sequencer
+    var graph: VariableOsc
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,7 +16,7 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = Midi_Sequencer(self.world_ptr)
+        self.graph = VariableOsc(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -30,7 +30,11 @@ struct MMMGraph(Representable, Movable):
             self.world_ptr[0].block_state = i  # Update the block state
 
             if i == 0:
+                self.world_ptr[0].top_of_block = True
                 self.world_ptr[0].transfer_pooled_messages()
+            elif i == 1:
+                self.world_ptr[0].top_of_block = False
+                self.world_ptr[0].text_msg_dict.clear()
 
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):

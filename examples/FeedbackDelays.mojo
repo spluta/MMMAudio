@@ -22,7 +22,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         # FBDelay is initialized as 2 channel
-        self.delays = FBDelay[2, 3](self.world_ptr) 
+        self.delays = FBDelay[2, 3](self.world_ptr, 1.0) 
 
         self.lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
 
@@ -30,7 +30,8 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.mouse_y = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world_ptr[0].block_state == 0:
+        # grab the mouse position at the start of the block
+        if self.world_ptr[0].top_of_block:
             self.mouse_x = self.world_ptr[0].mouse_x
             self.mouse_y = self.world_ptr[0].mouse_y
 

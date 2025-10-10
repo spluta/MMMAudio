@@ -4,65 +4,66 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
 mmm_audio.start_audio()
 
-mmm_audio.send_msg("control_change", 0, 60, 100)
-
-mmm_audio.send_msg("note_on", 0, 60.0, 100.0)
-
-
-
-
-
-
-
 # this next chunk of code is all about using a midi keyboard to control the synth---------------
 
 # the python host grabs the midi and sends the midi messages to the mojo audio engine
 
-import mido
-import time
-import threading
-from mmm_utils.functions import *
+def midi_func():
+    import threading
+    import mido
+    import time
+    from mmm_utils.functions import linexp, linlin
 
-# find your midi devices
-mido.get_input_names()
+    # find your midi devices
+    mido.get_input_names()
 
-# open your midi device - you may need to change the device name
-in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+    # open your midi device - you may need to change the device name
+    in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
-# Create stop event
-stop_event = threading.Event()
-def start_midi():
-    while not stop_event.is_set():
-        for msg in in_port.iter_pending():
-            if stop_event.is_set():  # Check if we should stop
-                return
+    # Create stop event
+    global stop_event
+    stop_event = threading.Event()
+    def start_midi():
+        while not stop_event.is_set():
+            for msg in in_port.iter_pending():
+                if stop_event.is_set():  # Check if we should stop
+                    return
 
-            # convert the mido message to a list of floats for mojo
-            msg2 = [msg.channel, msg.note, msg.velocity] if msg.type == "note_on" else \
-                  [msg.channel, msg.note, msg.velocity] if msg.type == "note_off" else \
-                  [msg.channel, msg.control, linexp(msg.value, 0, 127, 100.0, 4000.0)] if msg.type == "control_change" else \
-                  [linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625)] if msg.type == "pitchwheel" else None
+                if msg.type in ["note_on", "control_change", "pitchwheel"]:
+                    if msg.type == "note_on":
+                        msg2 = [1, msg.note, msg.velocity]
+                    
+                    elif msg.type == "control_change":
+                        if msg.control == 34:  # Mod wheel
+                            # on the desired cc, scale the value exponentially from 100 to 4000
+                            # it is best practice to scale midi cc values in the host, rather than in the audio engine
+                            msg2 = [msg.channel, msg.control, linexp(msg.value, 0, 127, 100, 4000)]
+                        else:
+                            msg2 = [msg.channel, msg.control, msg.value]
+                    elif msg.type == "pitchwheel":
+                        msg2 = [msg.channel, linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625)]
+                    mmm_audio.send_msg(msg.type, *msg2)
+            time.sleep(0.01)
 
-            if msg2:
-                mmm_audio.send_msg(msg.type, *msg2)
-        time.sleep(0.01)
+    # Start the thread
+    midi_thread = threading.Thread(target=start_midi, daemon=True)
+    midi_thread.start()
 
-# Start the thread
-midi_thread = threading.Thread(target=start_midi, daemon=True)
-midi_thread.start()
+midi_func()
 
-# To stop the thread:
+# To stop the midi thread defined above:
 stop_event.set()
-# midi_thread.join(timeout=1.0)  # Wait up to 1 second for clean shutdown
+
 
 # this chunk of code shows how to use the sequencer to trigger notes in the mmm_audio engine
 
 # the scheduler can also sequence notes
-from mmm_src.Patterns import * # some sc style patterns
+from mmm_src.Patterns import Pseq, Pxrand
 import numpy as np
 import asyncio
-from mmm_utils.functions import *
+from mmm_utils.functions import midicps, cpsmidi
 
+global scheduler
 scheduler = mmm_audio.scheduler
 
 async def trig_synth(wait):
@@ -82,11 +83,11 @@ async def trig_synth(wait):
             count_to = np.random.choice([7, 11, 13, 17]).item()
             mult_seq = Pseq(list(range(1, count_to + 1)))
 
-scheduler.sched(trig_synth(0.1))
+rout = scheduler.sched(trig_synth(0.1))
+rout.cancel() # stop just this routine
 
-scheduler.stop_routs()
+# stop all routines
+scheduler.stop_routs() # you can also stop the routines with ctl-C in the terminal
 
 mmm_audio.stop_audio()
 mmm_audio.start_audio()
-
-mmm_audio.send_msg("note_on", 0.0, 60.0, 100.0)

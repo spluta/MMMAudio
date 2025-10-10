@@ -12,27 +12,26 @@ struct Default_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
     var osc: Osc
     var messenger: Messenger
+    var freq: Float64
     var lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
         self.messenger = Messenger(self.world_ptr)
+        self.freq = 440.0
         self.lag = Lag(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> Float64:
-        if self.world_ptr[0].block_state == 0:
-            ccs = self.messenger.val_lists("control_change")
-            for cc in ccs:
-                if cc[1] == 34:
-                    print("cc 34:", cc[2])
+        # get the frequency from the messenger, default to 440 Hz if not set
+        # get_val can be called every sample, but is more efficient if called once per block
+        if self.world_ptr[0].top_of_block:
+            self.freq = self.messenger.get_val("freq", 440.0)
 
-        freq = self.messenger.val("freq", 440.0)
-
-        return self.osc.next(freq) * 0.1
+        return self.osc.next(self.freq) * 0.1
 
 
 # there can only be one graph in an MMMAudio instance

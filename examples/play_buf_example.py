@@ -1,6 +1,4 @@
 from mmm_src.MMMAudio import MMMAudio
-import asyncio
-import threading
 
 
 mmm_audio = MMMAudio(128, graph_name="PlayBufExample", package_name="examples")
@@ -20,12 +18,9 @@ def osc_msg_handler(key, *args):
     print(f"Received OSC message: {key} with arguments: {args}")
     if key == "/fader1":
         val = lincurve(args[0], 0.0, 1.0, -4.0, 4.0, -1.0)
-        print(f"Setting play_rate to {val}")
         mmm_audio.send_msg("play_rate", val)
     elif key == "/fader2":
         val = linexp(args[0], 0.0, 1.0, 100.0, 20000.0)
-        print(f"Setting lpf_freq to {val}")
-
         mmm_audio.send_msg("lpf_freq", val)
 
 # Start server

@@ -9,8 +9,10 @@ from sys import simd_width_of
 
 struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
     """
-    A simple comb filter with an integrated one-polelow-pass filter.
+    A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
     
+    ``Freeverb[N](world_ptr)``
+
     Parameters:
       N: size of the SIMD vector - defaults to 1
     """

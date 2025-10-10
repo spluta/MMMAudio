@@ -464,6 +464,24 @@ fn sanitize[
             x[i] = 0.0
     return x
 
+fn random_lin_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    """
+    Generates a random float64 sample from a linear distribution.
+
+    Parameters:
+        N: Size of the SIMD vector - defaults to 1.
+
+    Args:
+        min: The minimum sample (inclusive).
+        max: The maximum sample (inclusive).
+    Returns:
+        A random float64 sample from the specified range.
+    """
+    var u = SIMD[DType.float64, N](0.0)
+    for i in range(N):
+        u[i] = random_float64()
+    return u
+
 
 fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """

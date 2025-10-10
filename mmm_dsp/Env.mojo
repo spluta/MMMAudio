@@ -129,7 +129,18 @@ struct Env(Representable, Movable, Copyable):
         return self.Lag.next(self.last_out, 0.001)
 
 fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
-    """Create a minimum envelope with specified ramp and duration."""
+        """
+        Create a simple envelope with specified ramp and duration. The rise and fall will be of length 'rise'.
+
+        Args:
+            ramp: (SIMD[DType.float64, N]): Current ramp position (0 to 1).
+            dur: (SIMD[DType.float64, N]): Total duration of the envelope.
+            rise: (SIMD[DType.float64, N]): Duration of the rise and fall segments.
+
+        Returns:
+            SIMD[DType.float64, N]: Envelope value at the current ramp position.
+        """
+
     rise2 = rise
     out = SIMD[DType.float64, N](1.0)
     @parameter

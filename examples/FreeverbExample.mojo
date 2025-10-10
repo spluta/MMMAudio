@@ -38,11 +38,11 @@ struct FreeverbSynth(Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        room_size = self.messenger.val("room_size", 0.9)
-        lpf_comb = self.messenger.val("lpf_comb", 1000.0)
-        added_space = self.messenger.val("added_space", 0.5)
+        room_size = self.messenger.get_val("room_size", 0.9)
+        lpf_comb = self.messenger.get_val("lpf_comb", 1000.0)
+        added_space = self.messenger.get_val("added_space", 0.5)
         added_space_simd = SIMD[DType.float64, 2](added_space, added_space * 0.99)
-        mix = self.messenger.val("mix", 0.1)
+        mix = self.messenger.get_val("mix", 0.1)
 
         out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
 
