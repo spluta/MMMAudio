@@ -9,30 +9,32 @@ from mmm_dsp.Pan import PanAz
 struct PanAz_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
     var osc: Osc
-    var freq: Messenger
+    var freq: Float64
 
     var pan_osc: Phasor
     var pan_az: PanAz # set the number of speakers in the constructor
-    var num_speakers: Messenger
+    var num_speakers: Int64
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
-        self.freq = Messenger(self.world_ptr, 440.0)
+        self.freq = 440.0
 
         self.pan_osc = Phasor(self.world_ptr)
         self.pan_az = PanAz(self.world_ptr)
-        self.num_speakers = Messenger(self.world_ptr, 2)  # default to 2 speakers
+        self.num_speakers = 2  # default to 2 speakers
+        self.messenger = Messenger(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 8]:
-        self.freq.get_msg("freq")
-        self.num_speakers.get_msg("num_speakers")
+        self.freq = self.messenger.get_val("freq", 440.0)
+        self.num_speakers = Int64(self.messenger.get_val("num_speakers", 2))
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
-        panned = self.pan_az.next[8](self.osc.next(self.freq.value, osc_type=2), self.pan_osc.next(0.1), self.num_speakers.int_value) * 0.1
+        panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers) * 0.1
 
         return panned
 

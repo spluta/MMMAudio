@@ -108,8 +108,8 @@ struct ManyOscillators(Representable, Movable, Copyable):
         # get any messages sent from Python to the Mojo program
 
         # if there is a message called "set_num_pairs", num will either return the value sent with "set_num_pairs" or if no value has been sent, it will return the default value of 10
-        if self.world_ptr[0].block_state == 0:
-            num = self.messenger.val("set_num_pairs", 10)
+        if self.world_ptr[0].top_of_block:
+            num = self.messenger.get_val("set_num_pairs", 10)
 
             if num != len(self.synths):
                 print("Changing number of synths to:", Int(num))

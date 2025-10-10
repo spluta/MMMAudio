@@ -8,11 +8,11 @@ What was encouraging is that writing dsp code in Mojo is incredibly straight-for
 
 ## Getting Started
 
-See `doc_generation/static_docs/getting-started.md`.
+[See the Getting Started guide](doc_generation/static_docs/getting-started.md).
 
 ## Program structure
 
-MMMAudio is the interface from Python to the Mojo audio graph. The User should only have to interact with this module and should never have to edit this file. import this module, like in the examples, and then interact with it.
+MMMAudio is a python Class that is the interface from Python to the Mojo audio graph. The User should only have to interact with this module and should never have to edit this file. To get started, from mmm_src.MMMAudio import MMMAudio, like in the examples, and then interact with it.
 
 MMM currently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
 
@@ -20,7 +20,7 @@ The only distinction between a Graph and a Synth is that a Graph contains a next
 ```
 fn next(mut self: FeedbackDelays) -> List[Float64]:
 ```
-This defines it as a Graphable struct, thus something that can act as a Graph.
+This defines it as a struct that can act as a Graph. Currently there can only be one Graph, but that will change in future versions.
 ```
 Graph
 |
@@ -35,7 +35,13 @@ Graph
    -- UGen
 ```
 
-Currently there can only be one Graph, but that will change in future versions.
+At the current time, the struct that represents the Graph has to have the same name as the file that it is in, so the struct/Graph FeedbackDelays has to be in the file FeedbackDelays.mojo. This file only needs to be in Mojo package, but otherwise can be anywhere. You tell the compiler where this file is when you declare the MMMAudio python class, as such:
+
+mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
+
+This means that we are running the "Record" graph from the Record.mojo file in the examples folder. 
+
+There is a user_files directory/Mojo package where users can make their own graphs. You can also make your own directory for this. Just make sure the __init__.mojo file is in the directory (it can be empty), otherwise Mojo will not be able to find the files.
 
 ## Running Examples
 

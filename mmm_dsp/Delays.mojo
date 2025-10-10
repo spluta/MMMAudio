@@ -207,7 +207,7 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
 
 struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """
-    A simple comb filter with an integrated one-polelow-pass filter.
+    A simple comb filter with an integrated one-pole low-pass filter.
     
     Parameters:
       N: size of the SIMD vector - defaults to 1

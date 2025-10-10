@@ -4,13 +4,14 @@ to play the synth, just hang out in the top 4 lines of code and play with the mo
 you can also train the synth by creating any number of input/output pairs and making a new training
 """
 
-from mmm_src.MMMAudio import MMMAudio
-from random import random
+if True:
+    from mmm_src.MMMAudio import MMMAudio
+    from random import random
 
-mmm_audio = MMMAudio(128, graph_name="Torch_Mlp", package_name="examples")
+    mmm_audio = MMMAudio(128, graph_name="Torch_Mlp", package_name="examples")
 
-# this one is a bit intense, so maybe start with a low volume
-mmm_audio.start_audio()
+    # this one is a bit intense, so maybe start with a low volume
+    mmm_audio.start_audio()
 
 # below is the code to make a new training --------------------------------
 
@@ -28,7 +29,7 @@ def make_setting():
     setting = []
     for _ in range(out_size):
         setting.append(random())
-    mmm_audio.send_msg("model_outputs", setting)
+    mmm_audio.send_msg("model_output", setting)
 
     return setting
 
@@ -56,7 +57,7 @@ y_train_list.append(outputs)
 
 # once you have filled the X_train_list and y_train_list, train the network on your data
 
-def do_it():
+def do_the_training():
     print("training the network")
     learn_rate = 0.001
     epochs = 5000
@@ -75,7 +76,7 @@ def do_it():
     training_thread = threading.Thread(target=target_function, args=args)
     training_thread.start()
 
-do_it()
+do_the_training()
 
 # load the new training into the synth
 mmm_audio.send_text_msg("load_mlp_training", "examples/nn_trainings/model_traced.pt")  

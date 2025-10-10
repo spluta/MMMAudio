@@ -33,7 +33,11 @@ struct MMMGraph(Representable, Movable):
             self.world_ptr[0].block_state = i  # Update the block state
 
             if i == 0:
+                self.world_ptr[0].top_of_block = True
                 self.world_ptr[0].transfer_pooled_messages()
+            elif i == 1:
+                self.world_ptr[0].top_of_block = False
+                self.world_ptr[0].text_msg_dict.clear()
 
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):

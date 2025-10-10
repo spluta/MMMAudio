@@ -38,8 +38,22 @@ struct MLP(Representable, Movable, Copyable):
         return String("MLP_Ugen(input_size: " + String(self.input_size) + ", output_size: " + String(self.output_size) + ")")
 
     fn next[N: Int = 16](mut self: MLP, input: List[Float64]) raises -> SIMD[DType.float64, N]:
+        """
+        Process the input through the MLP model.
+            
+        Parameters:
+            N: (Int): Size of the output SIMD vector. Default is 16.
+
+        Args:
+            input: (List[Float64]): Input list of Float64 values.
+
+        Returns:
+            SIMD[DType.float64, N]: Output SIMD vector of N Float64 values.
+        """
+
+
         var output = SIMD[DType.float64, N](0.0)  # Initialize output SIMD vector with zeros
-        """Process the input through the MLP model."""
+        
         if self.torch is None:
             return output  # Return the output if torch is not available
 

@@ -68,9 +68,8 @@ class Scheduler:
         """Add a coroutine to the running event loop"""
 
         # any time a new event is scheduled, clear the routs list of finished coroutines
-        print(len(self.routines))
+
         for i in range(len(self.routines)-1,-1,-1):
-            print(self.routines[i].done())
             if self.routines[i].done():
                 del self.routines[i]
 

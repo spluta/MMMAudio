@@ -37,9 +37,11 @@ struct TorchSynth(Representable, Movable, Copyable):
     var dc1: DCTrap
     var dc2: DCTrap
 
-    var load_messenger: TextMessenger
-    var toggle_inference: Messenger
-    var outputs_messenger: Messenger
+    var text_messenger: TextMessenger
+    var toggle_inference: Float64
+    var received_outputs: List[Float64]
+    var toggle_receive_outputs: Float64
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -54,8 +56,8 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.model_output = SIMD[DType.float64, 16](0.0)
 
         # load the trained model
-        self.load_messenger = TextMessenger(self.world_ptr, "examples/nn_trainings/model_traced.pt")
-        self.model = MLP(self.load_messenger.string, 2, self.model_out_size)
+        self.text_messenger = TextMessenger(world_ptr)
+        self.model = MLP("examples/nn_trainings/model_traced.pt", 2, self.model_out_size)
 
         self.inference_trig = Impulse(self.world_ptr)
 
@@ -74,17 +76,43 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.dc1 = DCTrap(self.world_ptr)
         self.dc2 = DCTrap(self.world_ptr)
 
-        
-        self.toggle_inference = Messenger(self.world_ptr, 1.0)
-        self.outputs_messenger = Messenger(self.world_ptr, 0.0)
+        self.toggle_inference = 1.0
+        self.received_outputs = List[Float64]()
+        self.toggle_receive_outputs = 0
+        self.messenger = Messenger(world_ptr)
 
     fn __repr__(self) -> String:
         return String("OscSynth")
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
+        if self.world_ptr[0].top_of_block:
+            # this will return a tuple (model_path(String), triggered(Bool))
+            load_msg = self.text_messenger.get_text_msg("load_mlp_training")
+            if load_msg[1]:
+                print("loading new model", end="\n")
+                self.model = MLP(load_msg[0], 2, self.model_out_size)
+                
+            self.toggle_inference = self.messenger.get_val("toggle_inference", 1.0)
+            
+            if self.toggle_inference <= 0.0:
+                triggered = self.messenger.triggered("model_output")
+                if triggered:
+                    print("receiving model output values", end="\n")
+                    model_output = self.messenger.get_list("model_output")
+                    num = Int(min(self.model_out_size, len(model_output)))
+                    for i in range(num):
+                        self.model_output[i] = model_output[i]
+
+        # inference will only happen at the rate of the impulse
         infer = self.inference_trig.next(50)
-        self.do_inference(infer)
+        if infer > 0.0 and self.toggle_inference > 0.0:
+            self.model_input[0] = self.world_ptr[0].mouse_x
+            self.model_input[1] = self.world_ptr[0].mouse_y
+            try:
+                self.model_output = self.model.next(self.model_input)  # Process the input through the MLP model
+            except Exception:
+                print("Inference error in MLP model", end="\n")
 
         # smooth the model output values with lags
         lag_vals = self.lags.next(self.model_output, 0.1, 16)
@@ -128,33 +156,6 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.fb = osc2
 
         return SIMD[DType.float64, 2](osc1, osc2) * 0.2
-
-    fn do_inference(mut self, infer: Float64):
-
-        # check if we need to load a new model
-        self.load_messenger.get_text_msg("load_mlp_training")
-        if self.load_messenger.changed:
-            print("loading new model", end="\n")
-            self.model = MLP(self.load_messenger.string, 2, self.model_out_size)
-
-        # check if we should do inference or get the model output from messages
-        self.toggle_inference.get_msg("toggle_inference")
-        if infer > 0.0 and self.toggle_inference.value > 0.0:
-            self.model_input[0] = self.world_ptr[0].mouse_x
-            self.model_input[1] = self.world_ptr[0].mouse_y
-            try:
-                self.model_output = self.model.next(self.model_input)  # Process the input through the MLP model
-            except Exception:
-                print("Inference error in MLP model", end="\n")
-                
-        if self.toggle_inference.value <= 0.0:
-            self.outputs_messenger.get_msg("model_outputs")
-            if self.outputs_messenger.changed:
-                num = Int(min(self.model_out_size, len(self.outputs_messenger.values)))
-                for i in range(num):
-                    self.model_output[i] = self.outputs_messenger.values[i]
-                    print(self.model_output[i], end=", ")
-                print("")
 
 
 # THE GRAPH
