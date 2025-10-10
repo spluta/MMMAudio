@@ -418,25 +418,25 @@ struct OnePole[N: Int = 1](Representable, Movable, Copyable):
         self.last_samp = output
         return output
 
-struct Integrator(Representable, Movable, Copyable):
-    """
-    Simple one-pole IIR filter that can be configured as lowpass or highpass
-    """
-    var last_samp: Float64  # Previous output
-    var sample_rate: Float64
+# struct Integrator(Representable, Movable, Copyable):
+#     """
+#     Simple one-pole IIR filter that can be configured as lowpass or highpass
+#     """
+#     var last_samp: Float64  # Previous output
+#     var sample_rate: Float64
     
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.last_samp = 0.0
-        self.sample_rate = world_ptr[0].sample_rate
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         self.last_samp = 0.0
+#         self.sample_rate = world_ptr[0].sample_rate
     
-    fn __repr__(self) -> String:
-        return String("Integrator")
+#     fn __repr__(self) -> String:
+#         return String("Integrator")
     
-    fn next(mut self, input: Float64, coef: Float64) -> Float64:
-        """Process one sample through the filter"""
-        var output = input + coef * self.last_samp
-        self.last_samp = output
-        return output
+#     fn next(mut self, input: Float64, coef: Float64) -> Float64:
+#         """Process one sample through the filter"""
+#         var output = input + coef * self.last_samp
+#         self.last_samp = output
+#         return output
 
 # needs to be tested and updated to SIMD
 # struct OneZero(Representable, Movable, Copyable):
@@ -812,49 +812,3 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
 
         tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world_ptr[0].sample_rate)
         return self.tf2.next(input, self.coeffs)
-
-
-# struct LBCF:
-#     """JOS Lowpass Feedback Comb Filter"""
-
-#     var world_ptr: UnsafePointer[MMMWorld]
-#     var delay_line: List[Float64]
-#     var delay_samples: Int64
-#     var write_pos: Int64
-#     var integrator_state: Float64
-#     var mem_state: Float64
-#     var 
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], mut delay_time: Float64):
-#         self.world_ptr = world_ptr
-#         if delay_time <= 0.0:
-#             delay_time = 1.0 / world_ptr[0].sample_rate  # 1 sample minimum delay
-#         self.delay_samples = Int64(delay_time * world_ptr[0].sample_rate)
-#         self.fb_signal = 0.0
-#         self.write_pos = 0
-#         self.integrator_state = 0.0
-#         self.mem_state = 0.0
-        
-#         # Initialize delay line
-#         self.delay_line = [0.0 for _ in range(self.delay_samples + 1)]
-
-#     fn next(mut self, input: Float64, feedback: Float64, damping: Float64) -> Float64:
-#         # Read from delay line
-        
-#         # read from the sample that you are about to write into
-#         delayed = self.delay_line[self.write_pos]
-
-#         var sum_signal = input + delayed
-        
-#         self.integrator_state = sum_signal * (1.0 - damping) + (self.integrator_state * damping)
-        
-#         var feedback_signal = self.integrator_state * feedback
-        
-#         self.delay_line[self.write_pos] = feedback_signal
-#         self.write_pos = (self.write_pos + 1) % (self.delay_samples + 1)
-        
-#         # mem: one sample delay
-#         var output = self.mem_state
-#         self.mem_state = sum_signal
-        
-#         return output

@@ -8,7 +8,7 @@ What was encouraging is that writing dsp code in Mojo is incredibly straight-for
 
 ## Getting Started
 
-See `doc_generation/static_docs/getting-started.md`.
+[See the Getting Started guide](doc_generation/static_docs/getting-started.md).
 
 ## Program structure
 
