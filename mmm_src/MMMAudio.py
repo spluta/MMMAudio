@@ -140,18 +140,21 @@ class MMMAudio:
         for i in range(blocks):
             self.mmm_audio_bridge.next(in_buf, self.out_buffer)
             for j in range(self.out_buffer.shape[0]):
-                waveform[i*self.blocksize + j] = self.out_buffer[j]
+                if i*self.blocksize + j < samples:
+                    waveform[i*self.blocksize + j] = self.out_buffer[j]
 
         return waveform
     
-    def plot(self, samples):
+    def plot(self, samples, clear=True):
         a = self.get_samples(samples)
-        plt.title("Channel 0")
+        if clear:
+            plt.clf()
+        plt.title("MMMAudio Output")
         plt.xlabel("Samples")
         plt.ylabel("Amplitude")
         plt.grid()
         plt.plot(np.array(a))
-        plt.show()
+        plt.show(block=False)
     
     def audio_loop(self):
         max = 0.0
@@ -165,7 +168,6 @@ class MMMAudio:
             chunk = self.out_buffer.astype(np.float32).tobytes()
             self.output_stream.write(chunk)
 
-
     def start_audio(self):
         # Instantiate PyAudio
         print("Starting audio...")
@@ -173,7 +175,6 @@ class MMMAudio:
             self.running = True
             self.audio_stopper.clear()
             print("Audio started with sample rate:", self.sample_rate, "block size:", self.blocksize, "input channels:", self.num_input_channels, "output channels:", self.num_output_channels)
-            # self.audio_loop()
             self.audio_thread = threading.Thread(target=self.audio_loop)
             self.audio_thread.start()
     
@@ -182,14 +183,6 @@ class MMMAudio:
             self.running = False
             print("Stopping audio...")
             self.audio_stopper.set()
-        #     if self.input_stream:
-        #         self.input_stream.close()
-        #     if self.output_stream:
-        #         self.output_stream.close()
-        #     if self.p:
-        #         self.p.terminate()
-        # else:
-        #     print("Audio is not running.")
 
     def send_msg(self, key, *args):
         """
@@ -222,16 +215,16 @@ class MMMAudio:
 
         self.mmm_audio_bridge.send_text_msg(key_vals)
 
-    # currently doesn't handle sysex or other complex midi messages
-    def send_midi(self, msg):
-        # encodes the midi message into a key val pair, where the key includes type/channel/etc in one string
-        # send a midi clock message to keep things in sync
-        if hasattr(msg, "note"):
-            self.mmm_audio_bridge.send_midi((str(msg.type), msg.channel, msg.note, msg.velocity))
-        if hasattr(msg, "control"):
-            self.mmm_audio_bridge.send_midi(("cc", msg.channel, msg.control, msg.value))
-        if hasattr(msg, "pitch"):
-            self.mmm_audio_bridge.send_midi(("bend", msg.channel, msg.pitch))
+    # # currently doesn't handle sysex or other complex midi messages
+    # def send_midi(self, msg):
+    #     # encodes the midi message into a key val pair, where the key includes type/channel/etc in one string
+    #     # send a midi clock message to keep things in sync
+    #     if hasattr(msg, "note"):
+    #         self.mmm_audio_bridge.send_midi((str(msg.type), msg.channel, msg.note, msg.velocity))
+    #     if hasattr(msg, "control"):
+    #         self.mmm_audio_bridge.send_midi(("cc", msg.channel, msg.control, msg.value))
+    #     if hasattr(msg, "pitch"):
+    #         self.mmm_audio_bridge.send_midi(("bend", msg.channel, msg.pitch))
 
 
     def add_hid_device(self, name, vendor_id, product_id):
