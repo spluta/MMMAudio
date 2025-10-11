@@ -15,6 +15,7 @@ struct EnvParams(Representable, Movable, Copyable):
     This struct holds the values, times, curves, loop flag, and time warp factor for the envelope generator.
     
     Attributes:
+    
         values (List[Float64]): List of envelope values at each segment.
         times (List[Float64]): List of durations for each segment.
         curves (List[Float64]): List of curve shapes for each segment.
@@ -47,8 +48,8 @@ struct Env(Representable, Movable, Copyable):
     var times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
-    var last_out: Float64  # Last output value of the envelope
     var Lag: Lag  # Lag filter for smoothing the envelope output
+    var norm_seg: Float64  # Normalized segment position
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
 
@@ -58,8 +59,8 @@ struct Env(Representable, Movable, Copyable):
         self.times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
-        self.last_out = 0.0  # Initialize last output value
         self.Lag = Lag(world_ptr)  # Initialize Lag filter with the MMMWorld instance
+        self.norm_seg = 0.0
 
     fn __repr__(self) -> String:
         return String("Env")
@@ -99,12 +100,13 @@ struct Env(Representable, Movable, Copyable):
 
                 return values[0]
 
-        var phase = self.sweep.next(self.freq * time_warp, trig)
+        var phase = self.sweep.next(self.freq / time_warp, trig)
         
         self.last_trig = trig
 
         if loop and phase >= 1.0:  # Check if the envelope has completed
             self.sweep.phase = 0.0  # Reset phase for looping
+            phase = 0.0
         elif not loop and phase >= 1.0: 
             if values[-1]==values[0]:
                 self.is_active = False  # Stop the envelope if not looping and last value is the same as first
@@ -120,13 +122,35 @@ struct Env(Representable, Movable, Copyable):
             segment += 1
 
         # # Interpolate between the current and next segment
-        var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])  # Normalized time within the segment
+        var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])
+
+        if values[segment] > values[segment + 1]:
+            norm_seg = 1.0 - norm_seg  # Handle reverse segments
+
+        self.norm_seg = norm_seg
 
         norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
         
-        self.last_out = lerp(values[segment], values[segment + 1], norm_seg)  # Update last output value
+        if values[segment] > values[segment + 1]:
+            norm_seg = 1.0 - norm_seg  # Handle reverse segments
+        
+        out = lerp(values[segment], values[segment + 1], norm_seg)  
 
-        return self.Lag.next(self.last_out, 0.001)
+        return out
+
+    # fn asr(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Float64) -> Float64:
+    #     """Simple ASR envelope generator."""
+    #     if not self.is_active:
+    #         if gate > 0.0 and self.last_trig <= 0.0:
+    #             self.sweep.phase = 0.0  # Reset phase on trigger
+    #             self.is_active = True  # Start the envelope
+    #             self.last_trig = gate  # Update last trigger state
+    #         else:
+    #             self.last_trig = gate  # Update last trigger state
+
+        
+
+    #     var phase = self.sweep.next(self.freq / time_warp, trig)
 
 fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
         """
