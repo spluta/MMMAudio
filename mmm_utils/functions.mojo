@@ -221,18 +221,20 @@ fn lincurve[width: Int, //
         curved_amplitude = lincurve(linear_time, 0.0, 1.0, 0.001, 1.0)
         ```
     """
-
     result = SIMD[DType.float64, width](0.0)
     a = SIMD[DType.float64, width](0.0)
     b = SIMD[DType.float64, width](0.0)
     grow = SIMD[DType.float64, width](0.0)
-    for i in range(width):
+    for i in range(width): 
+        temp_curve = curve[i]
+        if temp_curve == 0.0:
+            temp_curve = 0.0001  # Avoid zero curve to prevent NaN
         if input[i] < in_min[i]:
             result[i] = out_min[i]
         elif input[i] > in_max[i]:
             result[i] = out_max[i]
         else:
-            grow[i] = 2.71828182845904523536 ** curve[i]
+            grow[i] = 2.71828182845904523536 ** temp_curve
             a[i] = (out_max[i] - out_min[i]) / (1.0 - grow[i])
             b[i] = out_min[i] + a[i]
 

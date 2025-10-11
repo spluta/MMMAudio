@@ -18,7 +18,7 @@ struct EnvParams(Representable, Movable, Copyable):
     
         values (List[Float64]): List of envelope values at each segment.
         times (List[Float64]): List of durations for each segment.
-        curves (List[Float64]): List of curve shapes for each segment.
+        curves (List[Float64]): List of curve shapes for each segment. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
         loop (Bool): Flag to indicate if the envelope should loop.
         time_warp (Float64): Time warp factor to speed up or slow down the envelope.
     """
@@ -49,7 +49,10 @@ struct Env(Representable, Movable, Copyable):
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
     var Lag: Lag  # Lag filter for smoothing the envelope output
-    var norm_seg: Float64  # Normalized segment position
+    var trig_point: Float64  # Point at which the asr envelope was triggered
+    var last_asr: Float64  # Last output of the asr envelope
+
+
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
 
@@ -60,7 +63,8 @@ struct Env(Representable, Movable, Copyable):
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
         self.Lag = Lag(world_ptr)  # Initialize Lag filter with the MMMWorld instance
-        self.norm_seg = 0.0
+        self.trig_point = 0.0
+        self.last_asr = 0.0
 
     fn __repr__(self) -> String:
         return String("Env")
@@ -87,7 +91,17 @@ struct Env(Representable, Movable, Copyable):
         return self.next(params.values, params.times, params.curves, params.loop, trig, params.time_warp)
 
     fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
-        """Generate the next envelope sample."""
+         """
+            Generate the next envelope sample.
+            
+            Attributes:
+            
+                values (List[Float64]): List of envelope values at each segment.
+                times (List[Float64]): List of durations for each segment.
+                curves (List[Float64]): List of curve shapes for each segment. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves. (if the output of the envelope is negative, the curve will be inverted)
+                loop (Bool): Flag to indicate if the envelope should loop.
+                time_warp (Float64): Time warp factor to speed up or slow down the envelope.
+        """
 
         if not self.is_active:
             if trig > 0.0 and self.last_trig <= 0.0:
@@ -120,37 +134,64 @@ struct Env(Representable, Movable, Copyable):
         var segment = 0
         while segment < len(self.times) - 1 and phase >= self.times[segment + 1]:
             segment += 1
+            
 
-        # # Interpolate between the current and next segment
-        var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])
+        if values[segment] == values[segment + 1]:
+            out = values[segment]
+        elif values[segment] < values[segment + 1]:
+            out = lincurve(phase, self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], curves[segment % len(curves)])
+        else:
+            out = lincurve(phase, self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], -1 * curves[segment % len(curves)])
 
-        if values[segment] > values[segment + 1]:
-            norm_seg = 1.0 - norm_seg  # Handle reverse segments
+        # if out != out:  # Check for NaN
+        #     print("NaN detected in Env output")
+        #     print(self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], phase, curves[segment % len(curves)])
+        #     out = 0.0
 
-        self.norm_seg = norm_seg
 
-        norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
+        # # # Interpolate between the current and next segment
+        # var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])
+
+        # if values[segment] > values[segment + 1]:
+        #     norm_seg = 1.0 - norm_seg  # Handle reverse segments
+
+        # self.norm_seg = norm_seg
+
+        # norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
         
-        if values[segment] > values[segment + 1]:
-            norm_seg = 1.0 - norm_seg  # Handle reverse segments
+        # if values[segment] > values[segment + 1]:
+        #     norm_seg = 1.0 - norm_seg  # Handle reverse segments
         
-        out = lerp(values[segment], values[segment + 1], norm_seg)  
+        # out = lerp(values[segment], values[segment + 1], norm_seg)  
 
         return out
 
-    # fn asr(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Float64) -> Float64:
-    #     """Simple ASR envelope generator."""
-    #     if not self.is_active:
-    #         if gate > 0.0 and self.last_trig <= 0.0:
-    #             self.sweep.phase = 0.0  # Reset phase on trigger
-    #             self.is_active = True  # Start the envelope
-    #             self.last_trig = gate  # Update last trigger state
-    #         else:
-    #             self.last_trig = gate  # Update last trigger state
-
+    fn asr(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Float64, curve: SIMD[DType.float64, 2]) -> Float64:
+        """Simple ASR envelope generator.
         
+        Args:
+            attack: (Float64): Attack time in seconds.
+            sustain: (Float64): Sustain level (0 to 1).
+            release: (Float64): Release time in seconds.
+            gate: (Float64): Gate signal (0 or 1).
+            curve: (SIMD[DType.float64, 2]): Can pass a Float64 for equivalent curve on rise and fall or SIMD[DType.float64, 2] for different rise and fall curve. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
+        """
 
-    #     var phase = self.sweep.next(self.freq / time_warp, trig)
+        if gate != self.last_trig:
+            self.last_trig = gate  # Update last trigger state
+            if gate > 0.0:
+                self.freq = 1.0 / attack
+            else:
+                self.freq = -1.0 / release
+
+        _ = self.sweep.next(self.freq, gate)
+        self.sweep.phase = clip(self.sweep.phase, 0.0, 1.0)
+
+        if gate > 0.0:
+            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])
+        else:
+            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[1])
+
 
 fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
         """
