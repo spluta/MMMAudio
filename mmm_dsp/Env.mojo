@@ -7,7 +7,7 @@ from .Osc import Sweep
 from .Filters import Lag
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-# from .Buffer import Buffer
+from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 struct EnvParams(Representable, Movable, Copyable):
     """
@@ -42,7 +42,7 @@ struct Env(Representable, Movable, Copyable):
     """Envelope generator."""
 
     var sweep: Sweep  # Sweep for tracking time
-    var last_trig: Float64  # Track the last trigger state
+    var rising_bool_detector: RisingBoolDetector  # Track the last trigger state
     var is_active: Bool  # Flag to indicate if the envelope is active
     var times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
@@ -53,7 +53,7 @@ struct Env(Representable, Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
 
         self.sweep = Sweep(world_ptr)
-        self.last_trig = 0.0  # Initialize last trigger state
+        self.rising_bool_detector = RisingBoolDetector()  # Initialize rising bool detector
         self.is_active = False
         self.times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
@@ -81,27 +81,22 @@ struct Env(Representable, Movable, Copyable):
     # fn next(mut self, mut buffer: Buffer, phase: Float64, interp: Int64 = 0) -> Float64:
     #     return buffer.next(0, phase, interp)  
 
-    fn next(mut self, ref params: EnvParams, trig: Float64 = 1.0) -> Float64:
+    fn next(mut self, ref params: EnvParams, trig: Bool = True) -> Float64:
         """Generate the next envelope sample."""
         return self.next(params.values, params.times, params.curves, params.loop, trig, params.time_warp)
 
-    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
+    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Bool = True, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
 
         if not self.is_active:
-            if trig > 0.0 and self.last_trig <= 0.0:
+            if self.rising_bool_detector.next(trig):
                 self.sweep.phase = 0.0  # Reset phase on trigger
                 self.is_active = True  # Start the envelope
-                self.last_trig = trig  # Update last trigger state
                 self.reset_vals(times)
             else:
-                self.last_trig = trig  # Update last trigger state
-
                 return values[0]
 
         var phase = self.sweep.next(self.freq * time_warp, trig)
-        
-        self.last_trig = trig
 
         if loop and phase >= 1.0:  # Check if the envelope has completed
             self.sweep.phase = 0.0  # Reset phase for looping

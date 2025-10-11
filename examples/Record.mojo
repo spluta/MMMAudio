@@ -19,7 +19,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var is_recording: Float64
     var is_playing: Float64
     var playback_speed: Float64
-    var trig: Float64
+    var trig: Bool
     var write_pos: Int64 
     var record_buf: RecordBuf
     var play_buf: PlayBuf
@@ -34,7 +34,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.buffer = Buffer(1, Int64(self.world_ptr[0].sample_rate*self.buf_dur), self.world_ptr[0].sample_rate)
         self.is_recording = 0.0
         self.is_playing = 0.0
-        self.trig = 0.0
+        self.trig = False
         self.playback_speed = 1.0
         self.record_buf = RecordBuf(world_ptr)
         self.play_buf = PlayBuf(world_ptr)
@@ -52,7 +52,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.write_pos = 0
         self.is_recording = 1.0
         self.is_playing = 0.0
-        self.trig = 0.0
+        self.trig = False
         print("Recording started")
     
     fn stop_recording(mut self):
@@ -61,7 +61,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.note_time = self.end_frame / self.world_ptr[0].sample_rate
         self.is_recording = 0.0
         self.is_playing = 1.0
-        self.trig = 1.0
+        self.trig = True
         self.write_pos = 0
         print(self.note_time, self.end_frame/self.world_ptr[0].sample_rate)
         print("Recorded duration:", self.note_time, "seconds")
@@ -92,7 +92,7 @@ struct Record_Synth(Representable, Movable, Copyable):
                 self.is_recording = 0.0
                 print("Recording stopped: buffer full")
                 self.is_playing = 1.0
-                self.trig = 1.0
+                self.trig = True
                 self.write_pos = 0
 
         out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)

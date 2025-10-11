@@ -32,32 +32,33 @@ struct ChowningFM(Representable, Movable, Copyable):
 
     @always_inline
     fn update_envs(mut self):
-        index_vals = self.m.val_list("index_vals")
+        index_vals = self.m.get_list("index_vals")
+        # self.world_ptr.print(index_vals, "index_vals")
         if len(index_vals) > 0:
             self.index_env_params.values = index_vals
-        index_times = self.m.val_list("index_times")
+        index_times = self.m.get_list("index_times")
         if len(index_times) > 0:
             self.index_env_params.times = index_times
-        index_curves = self.m.val_list("index_curves")
+        index_curves = self.m.get_list("index_curves")
         if len(index_curves) > 0:
             self.index_env_params.curves = index_curves
         
-        amp_vals = self.m.val_list("amp_vals")
+        amp_vals = self.m.get_list("amp_vals")
         if len(amp_vals) > 0:
             self.amp_env_params.values = amp_vals
-        amp_times = self.m.val_list("amp_times")
+        amp_times = self.m.get_list("amp_times")
         if len(amp_times) > 0:
             self.amp_env_params.times = amp_times
-        amp_curves = self.m.val_list("amp_curves")
+        amp_curves = self.m.get_list("amp_curves")
         if len(amp_curves) > 0:
             self.amp_env_params.curves = amp_curves
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        cfreq = self.m.val("c_freq", 100)
-        mfreq = self.m.val("m_freq", 20)
-        vol = self.m.val("vol", -12)
-        trig = self.m.trig("trigger")
+        cfreq = self.m.get_val("c_freq", 100)
+        mfreq = self.m.get_val("m_freq", 20)
+        vol = self.m.get_val("vol", -12)
+        trig = self.m.triggered("trigger")
         self.update_envs()
 
         index = self.index_env.next(self.index_env_params, trig)

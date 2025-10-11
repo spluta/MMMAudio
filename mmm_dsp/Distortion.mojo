@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from math import tanh, floor
+from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 fn vtanh(in_samp: Float64, gain: Float64, offset: Float64) -> Float64:
     var out_samp = tanh(in_samp * gain + offset)
@@ -14,17 +15,17 @@ fn bitcrusher(in_samp: Float64, bits: Int64) -> Float64:
 struct Latch(Copyable, Movable, Representable):
     var world_ptr: UnsafePointer[MMMWorld]
     var samp: Float64
-    var last_trig: Float64
+    var rising_bool_detector: RisingBoolDetector
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.samp = 0
-        self.last_trig = 0
+        self.rising_bool_detector = RisingBoolDetector()
 
     fn __repr__(self) -> String:
         return String("Latch")
 
-    fn next(mut self, in_samp: Float64, trig: Float64) -> Float64:
-        if trig > 0 and self.last_trig <= 0:
+    fn next(mut self, in_samp: Float64, trig: Bool) -> Float64:
+        if self.rising_bool_detector.next(trig):
             self.samp = in_samp  # Latch the sample when the trigger goes high
         return self.samp
