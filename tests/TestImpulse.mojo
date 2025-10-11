@@ -1,6 +1,7 @@
 """use this as a template for your own graphs"""
 
 from mmm_src.MMMWorld import MMMWorld
+from mmm_utils.Messengers import Messenger
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
@@ -14,25 +15,25 @@ struct TestImpulse(Movable, Copyable):
     var synth: Impulse[2]
     var trig: SIMD[DType.float64, 2]
     var freq: Float64
+    var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.synth = Impulse[2](self.world_ptr)
         self.trig = SIMD[DType.float64, 2](1.0)
         self.freq = 0.5
+        self.messenger = Messenger(world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.get_msgs()
+        if self.world_ptr[0].top_of_block:
+            if self.messenger.triggered("trig"):
+                temp = self.messenger.get_list("trig")
+                for i in range(min(2, len(temp))):
+                    self.trig[i] = temp[i]
+            else:
+                self.trig = SIMD[DType.float64, 2](0.0)  # Reset trigger after the first sample
+
+            self.freq = self.messenger.get_val("freq", 0.5)
+
         sample = self.synth.next(self.freq, self.trig)  # Get the next sample from the synth
         return sample * 0.2  # Get the next sample from the synth
-
-    fn get_msgs(mut self: Self):
-        # Get messages from the world
-        msg = self.world_ptr[0].get_msg("trig")
-        if msg:
-            self.trig = SIMD[DType.float64, 2](msg.value()[0], msg.value()[1])
-        else:
-            self.trig = 0.0
-        msg = self.world_ptr[0].get_msg("freq")
-        if msg:
-            self.freq = msg.value()[0]

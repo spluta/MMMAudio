@@ -12,7 +12,7 @@ mmm_audio.send_msg("trig", 0, 1)
 
 mmm_audio.stop_audio()
 
-mmm_audio.send_msg("freq", 200.0)
+mmm_audio.send_msg("freq", 2.0)
 mmm_audio.send_msg("trig", 1, 1)
 
 mmm_audio.plot(1024)

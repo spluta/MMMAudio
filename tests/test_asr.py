@@ -8,7 +8,7 @@ mmm_audio = MMMAudio(128, graph_name="TestASR", package_name="tests")
 
 mmm_audio.start_audio()
 
-mmm_audio.send_msg("curve", -1.0)
+mmm_audio.send_msg("curves", 4.0, -4.0)  # set the curves to logarithmic attack and exponential decay
 
 # this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 if True:
