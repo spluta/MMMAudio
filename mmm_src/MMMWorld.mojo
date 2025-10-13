@@ -179,7 +179,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.text_msg_dict[key] = list.copy()
 
     @always_inline
-    fn get_text_msg(mut self: Self, key: String) -> Optional[List[String]]:
+    fn get_text_msgs(mut self: Self, key: String) -> Optional[List[String]]:
 
         if self.block_state == 0:
             return self.text_msg_dict.get(key)

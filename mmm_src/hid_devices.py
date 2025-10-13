@@ -69,7 +69,6 @@ class Joystick:
                 
         elif self.name=="thrustmaster":
             self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
-            # print(combined >> 28)
             self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
             self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
 
@@ -81,10 +80,9 @@ class Joystick:
                 self.buttons[i] = int(buttons0 & (1 << i) > 0)
             for i in range(8):
                 self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
-            # print(f"Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
-            # print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}")
 
-    def read_continuous(self, name, destination, duration=None):
+
+    def read_continuous(self, name, function, duration=None):
         """Read joystick data continuously.
         
         Arguments:
@@ -95,11 +93,14 @@ class Joystick:
         if not self.device:
             print("Device not connected")
             return
+        
+        self.name = name
+        start_time = time.time()
             
         try:
             while True:
                 # Check duration limit
-                if duration and (time.time() - start_time) > duration:
+                if duration and (time.time() - self.start_time) > duration:
                     break
                 
                 # Read data with timeout
@@ -109,23 +110,11 @@ class Joystick:
                     self.parse_report(data)
                     if self.verbose:
                         print(f"X: {self.x_axis:.2f}, Y: {self.y_axis:.2f}, Z: {self.z_axis:.2f}, Throttle: {self.throttle:.2f}, Joy_Button: {self.joystick_button}, Buttons: {self.buttons}")
-                    destination.send_msg((name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons))
-                    # destination.send_raw_hid((name, 10))
+                    function(self.name, self.x_axis, self.y_axis, self.z_axis, self.throttle, self.joystick_button, *self.buttons)
                 time.sleep(0.001)  # Small delay to prevent overwhelming output
                 
         except KeyboardInterrupt:
             print("\nStopped by user")
-
-    def list_hid_devices():
-        print("Available HID devices:")
-        for device_dict in hid.enumerate():
-            print(f"Manufacturer: {device_dict.get('manufacturer_string', 'Unknown')}")
-            print(f"Product: {device_dict.get('product_string', 'Unknown')}")
-            print(f"Vendor ID: 0x{device_dict.get('vendor_id', 0):04x}")
-            print(f"Product ID: 0x{device_dict.get('product_id', 0):04x}")
-            print(f"Path: {device_dict.get('path', 'Unknown')}")
-            print("--------------------")
-    
 
 def list_hid_devices():
     print("Available HID devices:")

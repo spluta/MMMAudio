@@ -43,14 +43,23 @@ for i in range(len(y_train_list)):
 
 # when you like a setting add an input and output pair
 # this is assuming you are training on 4 pairs of data points - you do as many as you like
+
+outputs = make_setting()
+
 X_train_list.append([0,0])
 y_train_list.append(outputs)
+
+outputs = make_setting()
 
 X_train_list.append([0,1])
 y_train_list.append(outputs)
 
+outputs = make_setting()
+
 X_train_list.append([1,1])
 y_train_list.append(outputs)
+
+outputs = make_setting()
 
 X_train_list.append([1,0])
 y_train_list.append(outputs)

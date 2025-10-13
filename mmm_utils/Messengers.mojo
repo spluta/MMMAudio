@@ -49,6 +49,19 @@ struct Messenger(Movable, Copyable):
         else:
             return List[Float64]().copy()
 
+    # fn get_list(mut self, key: String) -> (List[Float64], Bool):
+        
+    #     ptr = self.world_ptr[0].get_messenger(key)
+
+    #     if ptr:
+    #         if ptr.value()[0].triggered:
+    #             ptr.value()[0].grabbed = True
+    #             return (ptr.value()[0].lists[0].copy(), True)
+    #         else:
+    #             return (List[Float64]().copy(), False)
+    #     else:
+    #         return (List[Float64]().copy(), False)
+
     fn get_lists(mut self, key: String) -> List[List[Float64]]:
         """
         This version of get_lists will return all messages for the given key
@@ -101,7 +114,7 @@ struct TextMessenger(Movable, Copyable):
         self.triggered = False
 
     @always_inline
-    fn get_text_msg(mut self: Self, key: String) -> (String, Bool):
+    fn get_text_msg_val(mut self: Self, key: String) -> String:
         """
         Retrieves a text message associated with the given key from the world's text message dictionary.
 
@@ -116,15 +129,37 @@ struct TextMessenger(Movable, Copyable):
             If no message is found, returns ("", False).
 
         """
-        opt = self.world_ptr[0].get_text_msg(key)
+        opt = self.world_ptr[0].get_text_msgs(key)
         if opt: 
             self.triggered = True
-            return (opt.value()[0], True)
+            return opt.value()[0]
         else:
             self.triggered = False
-            return ("", False)
+            return ""
 
+    @always_inline
+    fn get_text_msg_list(mut self: Self, key: String) -> List[String]:
+        """
+        Retrieves a text message associated with the given key from the world's text message dictionary.
 
+        Args:
+            key: String - The key to look for in the text message dictionary.
+
+        Returns:
+            A tuple containing the message (String) and a boolean indicating if it was triggered (Bool).
+            
+            Returns a tuple (message, triggered)
+            
+            If no message is found, returns ("", False).
+
+        """
+        opt = self.world_ptr[0].get_text_msgs(key)
+        if opt:
+            self.triggered = True
+            return opt.value().copy()
+        else:
+            self.triggered = False
+            return List[String]()
 
 # struct MessengerManager(Movable, Copyable):
 #     var world_ptr: UnsafePointer[MMMWorld]  

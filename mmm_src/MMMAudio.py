@@ -215,37 +215,6 @@ class MMMAudio:
 
         self.mmm_audio_bridge.send_text_msg(key_vals)
 
-    # # currently doesn't handle sysex or other complex midi messages
-    # def send_midi(self, msg):
-    #     # encodes the midi message into a key val pair, where the key includes type/channel/etc in one string
-    #     # send a midi clock message to keep things in sync
-    #     if hasattr(msg, "note"):
-    #         self.mmm_audio_bridge.send_midi((str(msg.type), msg.channel, msg.note, msg.velocity))
-    #     if hasattr(msg, "control"):
-    #         self.mmm_audio_bridge.send_midi(("cc", msg.channel, msg.control, msg.value))
-    #     if hasattr(msg, "pitch"):
-    #         self.mmm_audio_bridge.send_midi(("bend", msg.channel, msg.pitch))
-
-
-    def add_hid_device(self, name, vendor_id, product_id):
-        """
-        Add a HID device to the MMMAudio instance.
-
-        Args:
-            name: Name of the HID device
-            vendor_id: Vendor ID of the HID device
-            product_id: Product ID of the HID device
-        """
-        joystick = Joystick(name, vendor_id, product_id)
-        
-        if joystick.connect():
-            print(f"Connected to {name}")
-            # Start reading joystick data in a separate thread
-            joystick_thread = threading.Thread(target=joystick.read_continuous, args=(name, self.mmm_audio_bridge, ), daemon=True)
-            joystick_thread.start()
-            self.joysticks.append(joystick)
-        else:
-            print(f"Could not connect to {name}. Make sure the device is plugged in and drivers are installed.")
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
