@@ -37,7 +37,7 @@ struct MLP(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("MLP_Ugen(input_size: " + String(self.input_size) + ", output_size: " + String(self.output_size) + ")")
 
-    fn next[N: Int = 16](mut self: MLP, input: List[Float64]) raises -> SIMD[DType.float64, N]:
+    fn next(mut self: MLP, ref input: List[Float64], mut output: List[Float64]):
         """
         Process the input through the MLP model.
             
@@ -46,20 +46,15 @@ struct MLP(Representable, Movable, Copyable):
 
         Args:
             input: (List[Float64]): Input list of Float64 values.
-
-        Returns:
-            SIMD[DType.float64, N]: Output SIMD vector of N Float64 values.
+            output: (List[Float64]): Output list to store the Float64 results.
         """
 
-
-        var output = SIMD[DType.float64, N](0.0)  # Initialize output SIMD vector with zeros
-        
         if self.torch is None:
-            return output  # Return the output if torch is not available
+            return 
 
         if Int64(len(input)) != self.input_size:
             print("Input size mismatch: expected", self.input_size, "got", len(input))
-            return output  # Return the output if input size does not match
+            return 
 
         try:
             for i in range(self.input_size):
@@ -72,7 +67,5 @@ struct MLP(Representable, Movable, Copyable):
             py_output = self.model(self.py_input)  # Run the model with the input
             for i in range(self.output_size):
                 output[Int(i)] = Float64(py_output[0][i].item())  # Convert each output to Float64
-            return output  # Return the output tensor
         except Exception:
             print("Error processing input through MLP:")
-            return output  # Return the output if an error occurs

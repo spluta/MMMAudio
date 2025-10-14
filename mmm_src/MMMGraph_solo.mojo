@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from tests.TestASR import TestASR
+from examples.Torch_Mlp import Torch_Mlp
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: TestASR
+    var graph: Torch_Mlp
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,7 +16,7 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = TestASR(self.world_ptr)
+        self.graph = Torch_Mlp(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -48,6 +48,6 @@ struct MMMGraph(Representable, Movable):
             for j in range(min(self.num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
 
-    fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64], mut msg_dict: Dict[String, List[Float64]]) raises:
+    fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
         

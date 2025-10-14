@@ -24,8 +24,6 @@ struct MMMAudioBridge(Representable, Movable):
     var loc_in_buffer: UnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
     var loc_out_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
 
-    var msg_dict: Dict[String, List[Float64]]
-
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
 
@@ -51,8 +49,6 @@ struct MMMAudioBridge(Representable, Movable):
         self.world_ptr = UnsafePointer(to=self.world)  # Pointer to the MMMWorld instance
 
         self.graph = MMMGraph(self.world_ptr)
-
-        self.msg_dict = Dict[String, List[Float64]]()
 
         print("AudioEngine initialized with sample rate:", self.world_ptr[0].sample_rate)
 
@@ -119,7 +115,7 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world_ptr[0].block_size):
                 py_self[0].loc_out_buffer[i * py_self[0].world_ptr[0].num_out_chans + j] = 0.0 
 
-        py_self[0].graph.next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer, py_self[0].msg_dict)  
+        py_self[0].graph.next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer)  
 
         return PythonObject(None)  # Return a PythonObject wrapping the float value
 

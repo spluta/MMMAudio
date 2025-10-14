@@ -51,7 +51,7 @@ struct MMMGraph(Representable, Movable):
             for j in range(min(self.num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
 
-    fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64], mut msg_dict: Dict[String, List[Float64]]) raises:
+    fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
         """
     with open("mmm_src/MMMGraph_solo.mojo", "w") as file:
