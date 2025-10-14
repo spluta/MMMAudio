@@ -6,34 +6,28 @@ from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
+from mmm_utils.Messengers import Messenger
+from mmm_utils.functions import dbamp
 
 struct DelaySynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-
+    alias maxdelay = 1.0
     var buffer: Buffer
     var playBuf: PlayBuf
-    var delays: FBDelay[2, 3]  # FBDelay for feedback delay effect
-    var lag: Lag[2]
-    var mouse_x: Float64
-    var mouse_y: Float64
+    var delays: FBDelay[N=2, interp=3]  # FBDelay with 2 channels and interpolation type 3 (cubic)
+    var delay_time_lag: Lag[2]
+    var m: Messenger
+    var vol_lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
-        # FBDelay is initialized as 2 channel
-        self.delays = FBDelay[2, 3](self.world_ptr, 1.0) 
-
-        self.lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
-
-        self.mouse_x = 0.0
-        self.mouse_y = 0.0
+        self.delays = FBDelay[N=2, interp=3](self.world_ptr, self.maxdelay) 
+        self.delay_time_lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
+        self.vol_lag = Lag(self.world_ptr)  # Initialize Lag with a default time constant
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        # grab the mouse position at the start of the block
-        if self.world_ptr[0].top_of_block:
-            self.mouse_x = self.world_ptr[0].mouse_x
-            self.mouse_y = self.world_ptr[0].mouse_y
 
         var sample = self.playBuf.next[N=2](self.buffer, 0, 1.0, True)  # Read samples from the buffer
 
@@ -41,14 +35,13 @@ struct DelaySynth(Representable, Movable, Copyable):
         # var del_time = self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 0.5)
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
-        var del_time = self.lag.next(SIMD[DType.float64, 2](
-            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 
-            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()*0.9)
-        ), SIMD[DType.float64, 2](0.5, 0.5))
+        deltime_m = self.m.get_val("delay_time",0.5)
+        deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](deltime_m, deltime_m * 0.9), SIMD[DType.float64, 2](0.1, 0.1))
 
-        var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
+        fb_m = self.m.get_val("feedback", 0.99)
+        fb = SIMD[DType.float64, 2](fb_m, fb_m * 0.9)
 
-        sample = self.delays.next(sample, del_time, feedback)*0.5
+        sample = self.delays.next(sample, deltime, fb) * 0.5 * self.vol_lag.next(dbamp(self.m.get_val("gate", 0)), 0.03)
 
         return sample
 
