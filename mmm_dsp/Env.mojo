@@ -9,6 +9,9 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
+# [TODO] because of the list copying that happens when setting from Python, I don't know that 
+# EnvParams is the best approach. The impetus is, 
+# an env like this has so many params, I wish there was a way to set them in an organized way.
 struct EnvParams(Representable, Movable, Copyable):
     """
     Parameters for the Env class.
