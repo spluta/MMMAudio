@@ -29,7 +29,7 @@ struct EnvParams(Representable, Movable, Copyable):
     var loop: Bool
     var time_warp: Float64
 
-    fn __init__(out self, values: List[Float64] = List[Float64](1,1), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
+    fn __init__(out self, values: List[Float64] = List[Float64](0,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
         self.values = values.copy()  # Make a copy to avoid external modifications
         self.times = times.copy()
         self.curves = curves.copy()
@@ -90,7 +90,7 @@ struct Env(Representable, Movable, Copyable):
         """Generate the next envelope sample."""
         return self.next(params.values, params.times, params.curves, params.loop, trig, params.time_warp)
 
-    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
+    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Bool = False, trig: Bool = True, time_warp: Float64 = 1.0) -> Float64:
          """
             Generate the next envelope sample.
             
@@ -111,8 +111,6 @@ struct Env(Representable, Movable, Copyable):
             else:
                 return values[0]
 
-        
-        self.last_trig = trig
         var phase = self.sweep.next(self.freq / time_warp, trig)
 
         if loop and phase >= 1.0:  # Check if the envelope has completed
@@ -162,35 +160,8 @@ struct Env(Representable, Movable, Copyable):
         # out = lerp(values[segment], values[segment + 1], norm_seg)  
 
         return out
-
-    fn asr(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Float64, curve: SIMD[DType.float64, 2]) -> Float64:
-        """Simple ASR envelope generator.
-        
-        Args:
-            attack: (Float64): Attack time in seconds.
-            sustain: (Float64): Sustain level (0 to 1).
-            release: (Float64): Release time in seconds.
-            gate: (Float64): Gate signal (0 or 1).
-            curve: (SIMD[DType.float64, 2]): Can pass a Float64 for equivalent curve on rise and fall or SIMD[DType.float64, 2] for different rise and fall curve. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
-        """
-
-        if gate != self.last_trig:
-            self.last_trig = gate  # Update last trigger state
-            if gate > 0.0:
-                self.freq = 1.0 / attack
-            else:
-                self.freq = -1.0 / release
-
-        _ = self.sweep.next(self.freq, gate)
-        self.sweep.phase = clip(self.sweep.phase, 0.0, 1.0)
-
-        if gate > 0.0:
-            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])
-        else:
-            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[1])
-
-
-fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
+    
+    fn min_env[N: Int = 1](self, ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
         """
         Create a simple envelope with specified ramp and duration. The rise and fall will be of length 'rise'.
 
@@ -203,15 +174,72 @@ fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.floa
             SIMD[DType.float64, N]: Envelope value at the current ramp position.
         """
 
-    rise2 = rise
-    out = SIMD[DType.float64, N](1.0)
-    @parameter
-    for i in range(N):
-        if rise2[i] > dur[i]/2.0:
-            rise2[i] = dur[i]/2.0
-        if ramp[i] < rise2[i]/dur[i]:
-            out[i] = ramp[i]*(dur[i]/rise2[i])
-        elif ramp[i] > 1.0 - rise2[i]/dur[i]:
-            out[i] = (1.0-ramp[i])*(dur[i]/rise2[i])
+        rise2 = rise
+        out = SIMD[DType.float64, N](1.0)
+        @parameter
+        for i in range(N):
+            if rise2[i] > dur[i]/2.0:
+                rise2[i] = dur[i]/2.0
+            if ramp[i] < rise2[i]/dur[i]:
+                out[i] = ramp[i]*(dur[i]/rise2[i])
+            elif ramp[i] > 1.0 - rise2[i]/dur[i]:
+                out[i] = (1.0-ramp[i])*(dur[i]/rise2[i])
+        
+        return out
+
+# [TODO] move to mmm_utils and make this a generic utility with T
+struct Changed(Representable, Movable, Copyable):
+    """Detect changes in a value."""
+    var last_val: Bool  # Store the last value
+
+    fn __init__(out self, initial: Bool = False):
+        self.last_val = initial  # Initialize last value
+
+    fn __repr__(self) -> String:
+        return String("Changed")
+
+    fn next(mut self, val: Bool) -> Bool:
+        """Check if the value has changed."""
+        if val != self.last_val:
+            self.last_val = val  # Update last value
+            return True
+        return False
+
+struct ASREnv(Representable, Movable, Copyable):
+    """Simple ASR envelope generator."""
+    var sweep: Sweep  # Sweep for tracking time
+    var bool_changed: Changed  # Track the last trigger state
+    var freq: Float64  # Frequency for the envelope
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.sweep = Sweep(world_ptr)
+        self.bool_changed = Changed()  # Initialize last trigger state
+        self.freq = 0.0  # Initialize frequency
+
+    fn __repr__(self) -> String:
+        return String("ASREnv")
     
-    return out
+    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: SIMD[DType.float64, 2]) -> Float64:
+        """Simple ASR envelope generator.
+        
+        Args:
+            attack: (Float64): Attack time in seconds.
+            sustain: (Float64): Sustain level (0 to 1).
+            release: (Float64): Release time in seconds.
+            gate: (Float64): Gate signal (0 or 1).
+            curve: (SIMD[DType.float64, 2]): Can pass a Float64 for equivalent curve on rise and fall or SIMD[DType.float64, 2] for different rise and fall curve. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
+        """
+
+        if self.bool_changed.next(gate):
+            if gate:
+                self.freq = 1.0 / attack
+            else:
+                self.freq = -1.0 / release
+
+        _ = self.sweep.next(self.freq, gate)
+        self.sweep.phase = clip(self.sweep.phase, 0.0, 1.0)
+
+        if gate:
+            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])
+        else:
+            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[1])
