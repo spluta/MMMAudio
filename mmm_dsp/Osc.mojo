@@ -331,6 +331,20 @@ struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
 
         return out
 
+    @always_inline
+    fn next_bool(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.bool, self.N]:
+        """Generate the next impulse sample."""
+        phase = self.phasor.next(freq, 0.0, trig)  # Update the phase
+        test = SIMD[DType.bool, self.N](fill=False)
+
+        for i in range(self.N):
+            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]) or (trig[i] and not self.last_trig[i]):  # Check for an impulse (crossing the 0.5 threshold)
+                test[i] = True
+        self.last_phase = phase
+        self.last_trig = trig
+
+        return test
+
     fn get_phase(mut self: Impulse) -> SIMD[DType.float64, self.N]:
         return self.phasor.phase
 
@@ -476,8 +490,7 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return String("Phasor")
-
-    # could change this to get trigs for each oscillator
+        
     @always_inline
     fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
         # Reset phase if trig has changed from 0 to positive value
