@@ -430,7 +430,8 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         self.ic1eq = SIMD[DType.float64, N](0.0)
         self.ic2eq = SIMD[DType.float64, N](0.0)
 
-    fn _compute_coeficients(self, filter_type: SIMD[DType.int32, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
+    @always_inline
+    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
         """Compute filter coeficients based on type and parameters"""
         
         # Compute A (gain factor)
@@ -439,6 +440,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         # Compute g (frequency warping)
         var base_g = tan(frequency * pi / self.sample_rate)
         var g: SIMD[DType.float64, self.N]
+        @parameter
         if filter_type == 7:  # lowshelf
             g = base_g / sqrt(A)
         elif filter_type == 8:  # highshelf
@@ -448,54 +450,59 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         
         # Compute k (resonance factor)
         var k: SIMD[DType.float64, self.N]
+        @parameter
         if filter_type == 6:  # bell
             k = 1.0 / (q * A)
         else:
             k = 1.0 / q
         
         # Get mix coeficients based on filter type
-        var mix_coefs = self._get_mix_coeficients(filter_type, k, A)
+        var mix_coefs = self._get_mix_coeficients[filter_type](k, A)
         
         return (g, k, mix_coefs[0], mix_coefs[1], mix_coefs[2])
 
-    fn _get_mix_coeficients(self, filter_type: SIMD[DType.int32, self.N], k: SIMD[DType.float64, self.N], A: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
+    @always_inline
+    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, N], A: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
         """Get mixing coeficients for different filter types"""
         
         mc0 = SIMD[DType.float64, self.N](1.0)
         mc1 = SIMD[DType.float64, self.N](0.0)
         mc2 = SIMD[DType.float64, self.N](0.0)
 
+        @parameter
         for i in range(self.N):
-            if filter_type[i] == 0:      # lowpass
+            @parameter
+            if filter_type == 0:      # lowpass
                 mc0[i], mc1[i], mc2[i] = 0.0, 0.0, 1.0
-            elif filter_type[i] == 1:    # bandpass
+            elif filter_type == 1:    # bandpass
                 mc0[i], mc1[i], mc2[i] = 0.0, 1.0, 0.0
-            elif filter_type[i] == 2:    # highpass
+            elif filter_type == 2:    # highpass
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -1.0
-            elif filter_type[i] == 3:    # notch
+            elif filter_type == 3:    # notch
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], 0.0
-            elif filter_type[i] == 4:    # peak
+            elif filter_type == 4:    # peak
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -2.0
-            elif filter_type[i] == 5:    # allpass
+            elif filter_type == 5:    # allpass
                 mc0[i], mc1[i], mc2[i] = 1.0, -2.0*k[i], 0.0
-            elif filter_type[i] == 6:    # bell
+            elif filter_type == 6:    # bell
                 mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i]*A[i] - 1.0), 0.0
-            elif filter_type[i] == 7:    # lowshelf
+            elif filter_type == 7:    # lowshelf
                 mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i] - 1.0), A[i]*A[i] - 1.0
-            elif filter_type[i] == 8:    # highshelf
+            elif filter_type == 8:    # highshelf
                 mc0[i], mc1[i], mc2[i] = A[i]*A[i], k[i]*(1.0 - A[i])*A[i], 1.0 - A[i]*A[i]
             else:
                 mc0[i], mc1[i], mc2[i] = 1.0, 0.0, 0.0  # default
 
         return (mc0, mc1, mc2)
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], filter_type: SIMD[DType.int32, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    @always_inline
+    fn next[filter_type: Int64](mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """
         process one sample through the SVF filter of the given type.
         
         """
         
-        var coefs = self._compute_coeficients(filter_type, frequency, q, gain_db)
+        var coefs = self._compute_coeficients[filter_type](frequency, q, gain_db)
         var g = coefs[0]
         var k = coefs[1]
         var mix_a = coefs[2]
@@ -523,7 +530,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The cutoff frequency of the lowpass filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 0, frequency, q)
+        return self.next[0](input, frequency, q)
 
     fn bpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bandpass filter
@@ -533,7 +540,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The center frequency of the bandpass filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 1, frequency, q)
+        return self.next[1](input, frequency, q)
 
     fn hpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Highpass filter
@@ -543,7 +550,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The cutoff frequency of the highpass filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 2, frequency, q)
+        return self.next[2](input, frequency, q)
 
     fn notch(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Notch filter
@@ -553,7 +560,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The center frequency of the notch filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 3, frequency, q)
+        return self.next[3](input, frequency, q)
 
     fn peak(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Peak filter
@@ -563,7 +570,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The center frequency of the peak filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 4, frequency, q)
+        return self.next[4](input, frequency, q)
 
     fn allpass(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Allpass filter
@@ -573,7 +580,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             frequency: The center frequency of the allpass filter.
             q: The resonance (Q factor) of the filter.
         """
-        return self.next(input, 5, frequency, q)
+        return self.next[5](input, frequency, q)
 
     fn bell(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bell filter (parametric EQ)
@@ -584,7 +591,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             q: The resonance (Q factor) of the filter.
             gain_db: The gain in decibels for the bell filter.
         """
-        return self.next(input, 6, frequency, q, gain_db)
+        return self.next[6](input, frequency, q, gain_db)
 
     fn lowshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Low shelf filter
@@ -595,7 +602,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             q: The resonance (Q factor) of the filter.
             gain_db: The gain in decibels for the low shelf filter.
         """
-        return self.next(input, 7, frequency, q, gain_db)
+        return self.next[7](input, frequency, q, gain_db)
 
     fn highshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """High shelf filter
@@ -606,7 +613,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             q: The resonance (Q factor) of the filter.
             gain_db: The gain in decibels for the high shelf filter.
         """
-        return self.next(input, 8, frequency, q, gain_db)
+        return self.next[8](input, frequency, q, gain_db)
 
 struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
     var svf1: SVF[N]
