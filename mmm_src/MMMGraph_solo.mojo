@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from mine.Torch_MLP import Torch_MLP
+from examples.OleDusty import OleDusty
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: Torch_MLP
+    var graph: OleDusty
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,7 +16,7 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = Torch_MLP(self.world_ptr)
+        self.graph = OleDusty(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
