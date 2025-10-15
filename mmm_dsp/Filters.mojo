@@ -129,69 +129,90 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable, ListProcessable):
                     # Calculate the lag coeficient based on the sample rate
                     self.b1[i] = exp(self.log001 / (self.lag[i] * self.world_ptr[0].sample_rate))
 
-        self.val = in_samp + self.b1 * (SIMD[DType.float64, self.N](self.val) - (in_samp))
+        self.val = in_samp + self.b1 * (self.val - (in_samp))
         self.val = sanitize(self.val)
 
         return self.val
-
+        
     @staticmethod
-    fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-        """Process a list of input samples through a list of processors.
+    fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], lag: Float64):
 
-        Parameters:
-            num: Total number of values in the list.
+        alias simd_size = simd_width * 2
 
-        Args:
-            list_of_self: (List[Lag]): List of Self.
-            in_list: (List[Float64]): List of input samples.
-            out_list: (List[Float64]): List of output samples after applying the processing.
-            args: VariadicList of arguments.
+        in_SIMD = SIMD[DType.float64, simd_size](0.0)
+        lag_SIMD = SIMD[DType.float64, simd_size](0.0)
+        b1_SIMD = SIMD[DType.float64, simd_size](0.0)
+        val = SIMD[DType.float64, simd_size](0.0)
 
-        """
+        alias num_simds = num // simd_size + (0 if num % simd_size == 0  else 1)
 
-        alias groups = num // N
-        alias remainder = num % N
-
-        vals = SIMD[DType.float64, N](0.0)
-
-        # Apply vectorization
         @parameter
-        for i in range(groups):
+        for i in range(num_simds):
             @parameter
-            for j in range(N):
-                vals[j] = in_list[j + (i * N)]
-            # if len(args) == 1:
-            temp = list_of_self[i].next(
-                vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
-            )
-            # elif len(args) == 2:
-            #     temp = list_of_self[i].next(
-            #         vals, args[0], args[1] # once args can be unpacked, this is a generic solution for almost all ugens
-            #     )
-            # elif len(args) == 3:
-            #     temp = list_of_self[i].next(
-            #         vals, args[0], args[1], args[2] # once args can be unpacked, this is a generic solution for almost all ugens
-            #     )
-            # elif len(args) == 4:
-            #     temp = list_of_self[i].next(
-            #         vals, args[0], args[1], args[2], args[3] # once args can be unpacked, this is a generic solution for almost all ugens
-            #     )
-            # else:
-            #     temp = list_of_self[i].next(
-            #         vals
-            #     )
+            for j in range(simd_size):
+                var idx = i * simd_size + j
+                if idx < num:
+                    in_SIMD[j] = in_list[idx]
+                    lag_SIMD[j] = lag
+                    b1_SIMD[j] = exp(list_of_self[0].log001 / (lag * list_of_self[0].world_ptr[0].sample_rate))
+                    val[j] = list_of_self[idx].val[0]
+                else:
+                    in_SIMD[j] = 0.0
+                    lag_SIMD[j] = 0.0
+                    b1_SIMD[j] = 0.0
+                    val[j] = 0.0
+            temp = in_SIMD + b1_SIMD * (val - in_SIMD)
+            
             @parameter
-            for j in range(N):
-                out_list[i * N + j] = temp[j]
-        @parameter
-        if remainder > 0:
-            @parameter
-            for i in range(remainder):
-                vals[i] = in_list[groups * N + i]
-            temp = list_of_self[groups].next(vals, args[0])
-            @parameter
-            for i in range(remainder):
-                out_list[groups*N + i] = temp[i]
+            for j in range(simd_size):
+                var idx = i * simd_size + j
+                if idx < num:
+                    out_list[idx] = temp[j]
+                    list_of_self[idx].val = temp[j]
+
+
+    # @staticmethod
+    # fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
+    #     """Process a list of input samples through a list of processors.
+
+    #     Parameters:
+    #         num: Total number of values in the list.
+
+    #     Args:
+    #         list_of_self: (List[Lag]): List of Self.
+    #         in_list: (List[Float64]): List of input samples.
+    #         out_list: (List[Float64]): List of output samples after applying the processing.
+    #         args: VariadicList of arguments.
+
+    #     """
+
+    #     alias groups = num // N
+    #     alias remainder = num % N
+
+    #     vals = SIMD[DType.float64, N](0.0)
+
+    #     # Apply vectorization
+    #     @parameter
+    #     for i in range(groups):
+    #         @parameter
+    #         for j in range(N):
+    #             vals[j] = in_list[j + (i * N)]
+    #         # if len(args) == 1:
+    #         temp = list_of_self[i].next(
+    #             vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
+    #         )
+    #         @parameter
+    #         for j in range(N):
+    #             out_list[i * N + j] = temp[j]
+    #     @parameter
+    #     if remainder > 0:
+    #         @parameter
+    #         for i in range(remainder):
+    #             vals[i] = in_list[groups * N + i]
+    #         temp = list_of_self[groups].next(vals, args[0])
+    #         @parameter
+    #         for i in range(remainder):
+    #             out_list[groups*N + i] = temp[i]
 
 # struct ListProcessor[T: ListProcessable, N: Int = 1](Movable, Copyable):
 #     @staticmethod
