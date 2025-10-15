@@ -52,7 +52,7 @@ struct Env(Representable, Movable, Copyable):
     # fn next(mut self, mut buffer: Buffer, phase: Float64, interp: Int64 = 0) -> Float64:
     #     return buffer.next(0, phase, interp)  
 
-    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Float64 = 1.0, time_warp: Float64 = 1.0) -> Float64:
+    fn next(mut self: Env, ref values: List[Float64], ref times: List[Float64] = List[Float64](1,1), ref curves: List[Float64] = List[Float64](1), loop: Int64 = 0, trig: Bool = True, time_warp: Float64 = 1.0) -> Float64:
         """Generate the next envelope sample."""
 
         if not self.is_active:

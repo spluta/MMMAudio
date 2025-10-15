@@ -8,7 +8,7 @@ from mmm_utils.functions import *
 from .Pan import Pan2
 from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
-
+from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 alias dtype = DType.float64
 
@@ -17,7 +17,7 @@ struct PlayBuf(Representable, Movable, Copyable):
     var sample_rate: Float64
     var done: Bool
     var world_ptr: UnsafePointer[MMMWorld]  
-    var last_trig: Float64  
+    var rising_bool_detector: RisingBoolDetector
     var start_frame: Float64 
     var end_frame: Float64  
     var reset_point: Float64
@@ -35,7 +35,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         # self.num_chans = num_chans
         self.sample_rate = self.world_ptr[0].sample_rate  # Sample rate from the MMMWorld instance
         self.done = True
-        self.last_trig = 0.0  # Initialize last trigger time
+        self.rising_bool_detector = RisingBoolDetector()
 
         self.start_frame = 0.0  # Initialize start frame
         self.end_frame = 0.0  # Initialize end frame
@@ -46,7 +46,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         return String("PlayBuf")
 
     @always_inline
-    fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Float64 = 1.0, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
+    fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
         """
         get the next sample from an audio buffer (Buffer)
 
@@ -66,7 +66,7 @@ struct PlayBuf(Representable, Movable, Copyable):
 
         # this should happen on the first call if trig > 0.0
         # or when any trig happens
-        if trig > 0.0 and self.last_trig <= 0.0 and num_frames > 0:
+        if self.rising_bool_detector.next(trig) and num_frames > 0:
             self.done = False  # Reset done flag on trigger
             self.start_frame = start_frame  # Set start frame
             if end_frame < 0 or end_frame > num_frames:
@@ -76,7 +76,6 @@ struct PlayBuf(Representable, Movable, Copyable):
             self.reset_point = abs(self.end_frame - self.start_frame) / num_frames  # Calculate reset point based on end_frame and start_frame
             self.phase_offset = self.start_frame / num_frames  
         if self.done:
-            self.last_trig = trig
             return out  # Return zeros if done
         else:
             var freq = rate / duration  # Calculate step size based on rate and sample rate
@@ -96,8 +95,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                     return out
                 else:
                     out = buffer.read[N](start_chan, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
-            self.last_trig = trig  # Update last trigger time
-
+            
             return out
             # return self.dc_trap.next(out)
 
@@ -120,7 +118,7 @@ struct Grain(Representable, Movable, Copyable):
     var rate: Float64  
     var pan: Float64  
     var gain: Float64 
-    var last_trig: Float64  
+    var rising_bool_detector: RisingBoolDetector
     var panner: Pan2 
     var play_buf: PlayBuf
     var win_phase: Float64
@@ -134,7 +132,7 @@ struct Grain(Representable, Movable, Copyable):
         self.rate = 1.0
         self.pan = 0.5 
         self.gain = 1.0
-        self.last_trig = 0.0 
+        self.rising_bool_detector = RisingBoolDetector()
         self.panner = Pan2(world_ptr)  
         self.play_buf = PlayBuf(world_ptr)
         self.win_phase = 0.0
@@ -144,9 +142,9 @@ struct Grain(Representable, Movable, Copyable):
         return String("Grain")
 
     # N can only be 1 (default) or 2
-    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, start_chan: Int, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
 
-        if trig > 0.0 and self.last_trig <= 0.0:
+        if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
             self.end_frame =  start_frame + duration * buffer.get_buf_sample_rate()  # Calculate end frame based on duration
             self.duration = (self.end_frame - self.start_frame) / self.world_ptr[0].sample_rate  # Calculate duration in seconds
@@ -159,7 +157,7 @@ struct Grain(Representable, Movable, Copyable):
 
             sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, trig, self.start_frame, self.end_frame)  # Get samples from PlayBuf
         else:
-            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, 0.0, self.start_frame, self.end_frame)  # Call next on PlayBuf with no trigger
+            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, False, self.start_frame, self.end_frame)  # Call next on PlayBuf with no trigger
 
         # Get the current phase of the PlayBuf
         if self.play_buf.reset_point > 0.0:
@@ -185,8 +183,8 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     var grains: List[Grain]  
     var world_ptr: UnsafePointer[MMMWorld]
     var counter: Int 
-    var last_trig: Float64  
-    var trig: Float64
+    var rising_bool_detector: RisingBoolDetector 
+    var trig: Bool
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  # Use the world instance directly
@@ -194,14 +192,14 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         for _ in range(max_grains):
             self.grains.append(Grain(world_ptr, 2))  
         self.counter = 0  
-        self.trig = 0.0  
-        self.last_trig = 0.0  
+        self.trig = False  
+        self.rising_bool_detector = RisingBoolDetector()
     
     fn __repr__(self) -> String:
         return String("TGrains")
 
     @always_inline
-    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, buf_chan: Int, trig: Float64 = 0.0, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, buf_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         """Generate the next set of grains.
         
         Arguments:.
@@ -217,20 +215,15 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
             List of output samples for all channels.
         """
 
-        if trig > 0.0 and self.last_trig <= 0.0:
-            self.trig = trig  # Update trigger value
+        if self.rising_bool_detector.next(trig):
             self.counter += 1  # Increment the counter on trigger
             if self.counter >= max_grains:
                 self.counter = 0  # Reset counter if it exceeds the number of grains
-        else:
-            self.trig = 0.0  # Reset trigger value if no trigger
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         @parameter
         for i in range(max_grains):
-            if i == self.counter and self.trig > 0.0:
-                out += self.grains[i].next[N=N](buffer, buf_chan, 1.0, rate, start_frame, duration, pan, gain)
-            else:
-                out += self.grains[i].next[N=N](buffer, buf_chan, 0.0, rate, start_frame, duration, pan, gain)
+            b = i == self.counter and self.rising_bool_detector.state
+            out += self.grains[i].next[N=N](buffer, buf_chan, b, rate, start_frame, duration, pan, gain)
 
         return out
