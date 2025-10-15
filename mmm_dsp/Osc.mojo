@@ -95,7 +95,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square; 
             default is 0).
         """
-        var trig_mask = SIMD[DType.bool, self.N](trig)
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
         @parameter
         if os_index == 0:
