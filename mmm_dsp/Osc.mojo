@@ -160,7 +160,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
 
         """
-        var trig_mask = SIMD[DType.bool, self.N](trig)
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
         var osc_frac2 = Float64(len(osc_types)-1) * osc_frac
 
@@ -255,7 +255,7 @@ struct LFSaw[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
     @always_inline
     fn next(mut self: LFSaw, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
         # return self.osc.next(freq, phase_offset, trig, 2, interp, os_index)
-        var trig_mask = SIMD[DType.bool, self.N](trig)
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
         return (self.phasor.next(freq, phase_offset, trig_mask) * 2.0) - 1.0
 
 struct LFSquare[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
@@ -271,7 +271,7 @@ struct LFSquare[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable
 
     @always_inline
     fn next(mut self: LFSquare, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
-        var trig_mask = SIMD[DType.bool, self.N](trig)
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
         return -1.0 if self.phasor.next(freq, phase_offset, trig_mask) < 0.5 else 1.0
 
 struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
@@ -287,7 +287,7 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self: LFTri, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
-        var trig_mask = SIMD[DType.bool, self.N](trig)
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
         return (abs((self.phasor.next(freq, phase_offset-0.25, trig_mask) * 4.0) - 2.0) - 1.0)
 
 struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
@@ -360,7 +360,7 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
         return out
 
     @always_inline
-    fn next_range(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: Bool = True) -> SIMD[DType.float64, self.N]:
+    fn next_range(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.float64, self.N]:
         """Generate the next dust noise sample."""
         if self.rising_bool_detector.next(trig):
             self.freq = random_exp_float64(low, high)  # Update frequency if trig is greater than 0.0
