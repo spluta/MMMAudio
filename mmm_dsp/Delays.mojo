@@ -258,6 +258,48 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "LP_Comb"
 
+    @staticmethod
+    fn process_list[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
+        """Process a list of input samples through a list of processors.
+
+        Parameters:
+            num: Total number of values in the list.
+
+        Args:
+            list_of_self: (List[Lag]): List of Self.
+            in_list: (List[Float64]): List of input samples.
+            out_list: (List[Float64]): List of output samples after applying the processing.
+            args: VariadicList of arguments.
+
+        """
+
+        alias groups = num // N
+        alias remainder = num % N
+
+        vals = SIMD[DType.float64, N](0.0)
+
+        # Apply vectorization
+        @parameter
+        for i in range(groups):
+            @parameter
+            for j in range(N):
+                vals[j] = in_list[j + (i * N)]
+            temp = list_of_self[i].next(
+                vals, args[0], args[1], args[2] #onces args can be unpacked, this is a generic solution for almost all ugens
+            )
+            @parameter
+            for j in range(N):
+                out_list[i * N + j] = temp[j]
+        @parameter
+        if remainder > 0:
+            @parameter
+            for i in range(remainder):
+                vals[i] = in_list[groups * N + i]
+            temp = list_of_self[groups].next(vals, args[0], args[1], args[2])
+            @parameter
+            for i in range(remainder):
+                out_list[groups*N + i] = temp[i]
+
 struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """
     A simple all-pass comb filter using a delay line with feedback.
