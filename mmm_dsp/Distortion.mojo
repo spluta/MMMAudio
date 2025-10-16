@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from math import tanh, floor
+from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 fn vtanh[N: Int](in_samp: SIMD[DType.float64, N], gain: SIMD[DType.float64, N], offset: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     var out_samp = tanh(in_samp * gain + offset)

@@ -81,3 +81,15 @@ def midicps(midi_note):
 def cpsmidi(frequency):
     """Convert frequency in Hz to MIDI note number"""
     return 69.0 + 12 * math.log2(frequency / 440.0)
+
+def scale(val: float = 0, in_min: float = 0, in_max: float = 1, out_min: float = 0, out_max: float = 1) -> float:
+    """Scale a value from one range to another."""
+    in_range = in_max - in_min
+    norm_val = (val - in_min) / in_range if in_range != 0 else 0
+    out_range = out_max - out_min
+    scaled_val = (norm_val * out_range) + out_min
+    return scaled_val
+
+def clip(val: float, min_val: float, max_val: float) -> float:
+    """Clip a value to be within a specified range."""
+    return max(min_val, min(max_val, val))

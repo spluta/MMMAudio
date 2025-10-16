@@ -13,14 +13,14 @@ from mmm_dsp.Osc import *
 struct TestImpulse(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synth: Impulse[2]
-    var trig: SIMD[DType.float64, 2]
+    var trig: SIMD[DType.bool, 2]
     var freq: Float64
     var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.synth = Impulse[2](self.world_ptr)
-        self.trig = SIMD[DType.float64, 2](1.0)
+        self.trig = SIMD[DType.bool, 2](fill=True)
         self.freq = 0.5
         self.messenger = Messenger(world_ptr)
 
@@ -29,9 +29,9 @@ struct TestImpulse(Movable, Copyable):
             if self.messenger.triggered("trig"):
                 temp = self.messenger.get_list("trig")
                 for i in range(min(2, len(temp))):
-                    self.trig[i] = temp[i]
+                    self.trig[i] = temp[i] > 0.0
             else:
-                self.trig = SIMD[DType.float64, 2](0.0)  # Reset trigger after the first sample
+                self.trig = SIMD[DType.bool, 2](fill = False)
 
             self.freq = self.messenger.get_val("freq", 0.5)
 
