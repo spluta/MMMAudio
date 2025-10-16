@@ -7,11 +7,90 @@ from sys import simd_width_of
 from algorithm import vectorize
 from .Oversampling import Oversampling
 
+from mmm_src.MMMTraits import ListProcessable
 
-struct Lag[N: Int = 1](Representable, Movable, Copyable):
+alias simd_width = simd_width_of[DType.float64]()
+
+struct Lag2[N: Int = 1](Movable, Copyable, ListProcessable):
+    """This is an ugly implementation of a lag processor that can handle a list of lags.
+    """
+    
+    alias num_simds = N // simd_width_of[DType.float64]() + (0 if N % simd_width_of[DType.float64]() == 0  else 1)
+
+    var val: List[SIMD[DType.float64, simd_width]]
+    var b1: List[SIMD[DType.float64, simd_width]]
+    var lag: List[SIMD[DType.float64, simd_width]]
+    var log001: Float64
+    var world_ptr: UnsafePointer[MMMWorld]
+    var lag_list: List[Float64]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.val = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
+        self.b1 = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
+        self.lag = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
+        self.world_ptr = world_ptr
+        self.log001 = -6.907755278982137  # log(0.01) for lag calculations, precomputed for efficiency
+        self.lag_list = [0.0 for _ in range(N)]
+
+    @always_inline
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref lag: Float64):
+        @parameter
+        for i in range(self.N):
+            self.lag_list[i] = lag
+        self.next(in_list, out_list)
+
+    @always_inline
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref lag_list: List[Float64]):
+        @parameter
+        for i in range(self.N):
+            self.lag_list[i] = lag_list[i]
+        self.next(in_list, out_list)
+
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
+        """
+        Process one sample through the lag processor.
+        
+        Args:
+            in_samp: (List[SIMD[DType.float64, simd_width]]): Input SIMD vector of Float64 values.
+            lag: (List[SIMD[DType.float64, simd_width]]): Lag time in seconds for each channel.
+
+        Returns:
+            List[SIMD[DType.float64, simd_width]]: Output SIMD vector of Float64 values after applying the lag.
+        """
+        @parameter
+        for i in range(self.N):
+            var simd_idx = i // simd_width_of[DType.float64]()
+            var lane_idx = i % simd_width_of[DType.float64]()
+            if self.lag[simd_idx][lane_idx] != self.lag_list[i]:
+                self.lag[simd_idx][lane_idx] = self.lag_list[i]
+                if self.lag[simd_idx][lane_idx] == 0.0:
+                    self.b1[simd_idx][lane_idx] = 0.0
+                else:
+                    # Calculate the lag coeficient based on the sample rate
+                    self.b1[simd_idx][lane_idx] = exp(self.log001 / (self.lag[simd_idx][lane_idx] * self.world_ptr[0].sample_rate))
+
+        for i in range(self.num_simds):
+            in_simd = SIMD[DType.float64, simd_width](0.0)
+            @parameter
+            for j in range(simd_width):
+                var idx = i * simd_width + j
+                if idx < self.N:
+                    in_simd[j] = in_list[idx]
+                else:
+                    in_simd[j] = 0.0
+            self.val[i] = in_simd + self.b1[i] * (self.val[i] - in_simd)
+            self.val[i] = sanitize(self.val[i])
+            @parameter
+            for j in range(simd_width):
+                var idx = i * simd_width + j
+                if idx < self.N:
+                    out_list[idx] = self.val[i][j]
+
+
+struct Lag[N: Int = 1](Representable, Movable, Copyable, ListProcessable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
     """
-
+    alias simd_width = 2 * simd_width_of[DType.float64]()
     var val: SIMD[DType.float64, N]
     var b1: SIMD[DType.float64, N]
     var lag: SIMD[DType.float64, N]
@@ -28,7 +107,8 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Lag")
 
-    fn next(mut self: Lag, in_samp: SIMD[DType.float64, self.N], lag: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.05)) -> SIMD[DType.float64, self.N]:
+    @always_inline
+    fn next(mut self, in_samp: SIMD[DType.float64, self.N], lag: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, N]:
         """
         Process one sample through the lag processor.
         
@@ -39,7 +119,7 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             SIMD[DType.float64, N]: Output SIMD vector of Float64 values after applying the lag.
         """
-        
+        @parameter
         for i in range(self.N):
             if self.lag[i] != lag[i]:
                 self.lag[i] = lag[i]
@@ -55,7 +135,7 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         return self.val
 
     @staticmethod
-    fn process_list[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
+    fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
         """Process a list of input samples through a list of processors.
 
         Parameters:
@@ -80,9 +160,26 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
             @parameter
             for j in range(N):
                 vals[j] = in_list[j + (i * N)]
+            # if len(args) == 1:
             temp = list_of_self[i].next(
-                vals, args[0] #onces args can be unpacked, this is a generic solution for almost all ugens
+                vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
             )
+            # elif len(args) == 2:
+            #     temp = list_of_self[i].next(
+            #         vals, args[0], args[1] # once args can be unpacked, this is a generic solution for almost all ugens
+            #     )
+            # elif len(args) == 3:
+            #     temp = list_of_self[i].next(
+            #         vals, args[0], args[1], args[2] # once args can be unpacked, this is a generic solution for almost all ugens
+            #     )
+            # elif len(args) == 4:
+            #     temp = list_of_self[i].next(
+            #         vals, args[0], args[1], args[2], args[3] # once args can be unpacked, this is a generic solution for almost all ugens
+            #     )
+            # else:
+            #     temp = list_of_self[i].next(
+            #         vals
+            #     )
             @parameter
             for j in range(N):
                 out_list[i * N + j] = temp[j]
@@ -95,6 +192,49 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
             @parameter
             for i in range(remainder):
                 out_list[groups*N + i] = temp[i]
+
+# struct ListProcessor[T: ListProcessable, N: Int = 1](Movable, Copyable):
+#     @staticmethod
+#     fn process_list[num: Int](mut self, list_of_self: List[T], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
+#         """Process a list of input samples through a list of processors.
+
+#         Parameters:
+#             num: Total number of values in the list.
+
+#         Args:
+#             list_of_self: (List[Lag]): List of Self.
+#             in_list: (List[Float64]): List of input samples.
+#             out_list: (List[Float64]): List of output samples after applying the processing.
+#             args: VariadicList of arguments.
+
+#         """
+
+#         alias groups = num // N
+#         alias remainder = num % N
+
+#         vals = SIMD[DType.float64, N](0.0)
+
+#         # Apply vectorization
+#         @parameter
+#         for i in range(groups):
+#             @parameter
+#             for j in range(N):
+#                 vals[j] = in_list[j + (i * N)]
+#             temp = list_of_self[i].next(
+#                 vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
+#             )
+#             @parameter
+#             for j in range(N):
+#                 out_list[i * N + j] = temp[j]
+#         @parameter
+#         if remainder > 0:
+#             @parameter
+#             for i in range(remainder):
+#                 vals[i] = in_list[groups * N + i]
+#             temp = list_of_self[groups].next(vals, args[0])
+#             @parameter
+#             for i in range(remainder):
+#                 out_list[groups*N + i] = temp[i]
 
 # Lag is super vectorized for processing in parallel
 # struct Lag[N: Int=1](Representable, Movable, Copyable):

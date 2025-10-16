@@ -8,8 +8,9 @@ UGens
 
 - Shaper
 - Amplitude
+- PitchShift
 - Dattoro, GVerb
-- Env is very inefficient right now, needs to be optimized
+
 
 FFT
 
