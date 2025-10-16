@@ -81,22 +81,41 @@ fn splay[
     var out = SIMD[DType.float64, 2](0.0, 0.0)
 
     @parameter
-    fn get_pans() -> SIMD[DType.float64, width]:
-        var pans = SIMD[DType.float64, width](0.0)
+    fn get_pan(i: Int) -> Float64:
         if width == 1:
-            return SIMD[DType.float64, width](0.0)
+            return 0.0
         else:
-            for i in range(width):
-                pans[i] = i * 2.0 / Float64(width-1) - 1.0  # pan from -1.0 to 1.0
-            return pans
-
-    alias pans = get_pans()
+            return Float64(i) * 2.0 / Float64(width-1) - 1.0  # pan from -1.0 to 1.0
     
     @parameter
     for i in range(width):
+        alias pan = get_pan(i)
+        gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
+        gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
 
-        gains[0] = sqrt((1.0 - pans[i]) * 0.5)  # left gain
-        gains[1] = sqrt((1.0 + pans[i]) * 0.5)   # right gain
+        out = out + samples[i] * gains 
+
+    return out
+
+@always_inline
+fn splay[
+    num_samples: Int, //
+](samples: List[Float64]) -> SIMD[DType.float64, 2]:
+    var gains = SIMD[DType.float64, 2](0.0, 0.0)
+    var out = SIMD[DType.float64, 2](0.0, 0.0)
+
+    @parameter
+    fn get_pan(i: Int) -> Float64:
+        if num_samples == 1:
+            return 0.0
+        else:
+            return Float64(i) * 2.0 / Float64(num_samples-1) - 1.0  # pan from -1.0 to 1.0
+
+    @parameter
+    for i in range(num_samples):
+        alias pan = get_pan(i)
+        gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
+        gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
 
         out = out + samples[i] * gains 
 

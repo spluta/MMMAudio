@@ -105,7 +105,7 @@ struct Env(Representable, Movable, Copyable):
                 loop (Bool): Flag to indicate if the envelope should loop.
                 time_warp (Float64): Time warp factor to speed up or slow down the envelope.
         """
-
+        phase = 0.0
         if not self.is_active:
             if self.rising_bool_detector.next(trig):
                 self.sweep.phase = 0.0  # Reset phase on trigger
@@ -113,8 +113,12 @@ struct Env(Representable, Movable, Copyable):
                 self.reset_vals(times)
             else:
                 return values[0]
-
-        var phase = self.sweep.next(self.freq / time_warp, trig)
+        else:
+            if self.rising_bool_detector.next(trig):
+                self.sweep.phase = 0.0  # Reset phase on trigger
+                self.reset_vals(times)
+            else:    
+                phase = self.sweep.next(self.freq / time_warp)
 
         if loop and phase >= 1.0:  # Check if the envelope has completed
             self.sweep.phase = 0.0  # Reset phase for looping
@@ -140,27 +144,6 @@ struct Env(Representable, Movable, Copyable):
             out = lincurve(phase, self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], curves[segment % len(curves)])
         else:
             out = lincurve(phase, self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], -1 * curves[segment % len(curves)])
-
-        # if out != out:  # Check for NaN
-        #     print("NaN detected in Env output")
-        #     print(self.times[segment], self.times[segment + 1], values[segment], values[segment + 1], phase, curves[segment % len(curves)])
-        #     out = 0.0
-
-
-        # # # Interpolate between the current and next segment
-        # var norm_seg = (phase - self.times[segment % len(self.times)]) / (self.times[(segment + 1) % len(self.times)] - self.times[segment % len(self.times)])
-
-        # if values[segment] > values[segment + 1]:
-        #     norm_seg = 1.0 - norm_seg  # Handle reverse segments
-
-        # self.norm_seg = norm_seg
-
-        # norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
-        
-        # if values[segment] > values[segment + 1]:
-        #     norm_seg = 1.0 - norm_seg  # Handle reverse segments
-        
-        # out = lerp(values[segment], values[segment + 1], norm_seg)  
 
         return out
     
