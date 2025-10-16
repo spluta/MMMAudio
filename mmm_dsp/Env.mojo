@@ -75,6 +75,8 @@ struct Env(Representable, Movable, Copyable):
     fn reset_vals(mut self, times: List[Float64]):
         """Reset internal values."""
         # this should only happen when the times list is empty
+        if self.times.__len__() != (times.__len__() + 1):
+            self.times.clear()
         while self.times.__len__() < (times.__len__() + 1):
             self.times.insert(0, 0.0)  # Ensure times list has the same length as the input times
         for i in range(times.__len__()):
