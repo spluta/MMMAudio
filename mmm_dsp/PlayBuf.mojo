@@ -87,7 +87,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                 # for i in range(N):
                 out = buffer.read[N](start_chan, self.get_phase() + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
             else:
-                var eor = self.impulse.next(freq, trig = trig)
+                var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
                 phase = self.get_phase()
                 if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_point:
