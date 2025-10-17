@@ -2,6 +2,11 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from math import tanh
 from mmm_dsp.Filters import *
+from sys import simd_width_of
+from algorithm import vectorize
+from mmm_dsp.Filters import VAOnePole, DCTrap
+
+alias simd_width = simd_width_of[DType.float64]()*2
 
 struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Representable, Movable, Copyable):
     """
@@ -163,6 +168,37 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
 
         return out
 
+struct DelayN[N: Int = 2, interp: Int = 3, write_to_buffer: Bool = True](Movable, Copyable):
+    var list: List[Delay[simd_width, interp, write_to_buffer]]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
+        self.list = [Delay[simd_width, interp, write_to_buffer](world_ptr) for _ in range(num_simd)]
+
+    @always_inline
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref arg0: List[Float64]):
+        vals = SIMD[DType.float64, simd_width](0.0)
+        arg0_simd = SIMD[DType.float64, simd_width](0.0)
+        N = len(out_list)
+
+        @parameter
+        fn closure[width: Int](i: Int):
+            @parameter
+            for j in range(simd_width):
+                vals[j] = in_list[(j + i) % len(in_list)]
+                arg0_simd[j] = arg0[(j + i) % len(arg0)]  # wrap around if not enough args
+
+            temp = self.list[i // simd_width].next(vals, arg0_simd)
+            @parameter
+            for j in range(simd_width):
+                idx = i + j
+                if idx < N:
+                    out_list[idx] = temp[j]
+        vectorize[closure, simd_width](N)
+
+
+
+
 struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     """
     A simple comb filter using a delay line with feedback.
@@ -205,6 +241,35 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "CombFilter"
 
+# struct CombN[N: Int = 2](Movable, Copyable):
+#     var list: List[Comb[simd_width]]
+
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
+#         self.list = [Comb[simd_width](world_ptr) for _ in range(num_simd)]
+
+#     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], arg0: List[Float64], arg1: List[Float64]):
+#         vals = SIMD[DType.float64, simd_width](0.0)
+#         arg0_simd = SIMD[DType.float64, simd_width](0.0)
+#         arg1_simd = SIMD[DType.float64, simd_width](0.0)
+#         N = len(out_list)
+
+#         @parameter
+#         fn closure[width: Int](i: Int):
+#             @parameter
+#             for j in range(simd_width):
+#                 vals[j] = in_list[j + i]
+#                 arg0_simd[j] = arg0[(j + i)%len(arg0)]  # wrap around if not enough args
+#                 arg1_simd[j] = arg1[(j + i)%len(arg1)]  # wrap around if not enough args
+
+#             temp = self.list[i // simd_width].next(vals, arg0_simd, arg1_simd)
+#             @parameter
+#             for j in range(simd_width):
+#                 idx = i + j
+#                 if idx < N:
+#                     out_list[idx] = temp[j]
+#         vectorize[closure, simd_width](N)
+
 struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """
     A simple comb filter with an integrated one-pole low-pass filter.
@@ -220,13 +285,14 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp, False] # Delay line without automatic feedback
-    var one_pole: VAOnePole[N]
+    var one_pole: OnePole[N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
         self.delay = Delay[N, interp, False](self.world_ptr, max_delay)
-        self.one_pole = VAOnePole[N](self.world_ptr)
+        self.one_pole = OnePole[N]()
 
+    @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """Process one sample through the comb filter.
         
@@ -244,7 +310,9 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
         """
         var out = self.delay.next(input, delay_time)  # Get the delayed sample
 
-        fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
+        # fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
+        coef = exp(-2.0 * pi * lp_freq / self.world_ptr[0].sample_rate)
+        fb = self.one_pole.next(out, coef)
 
         fb += input
 
@@ -258,47 +326,41 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-    @staticmethod
-    fn process_list[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-        """Process a list of input samples through a list of processors.
+struct LP_CombN[N: Int = 2](Movable, Copyable):
+    var list: List[LP_Comb[simd_width]]
+    var arg0_simd: SIMD[DType.float64, simd_width]
+    var arg1_simd: SIMD[DType.float64, simd_width]
+    var arg2_simd: SIMD[DType.float64, simd_width]
+    var vals: SIMD[DType.float64, simd_width]
 
-        Parameters:
-            num: Total number of values in the list.
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
+        self.list = [LP_Comb[simd_width](world_ptr) for _ in range(num_simd)]
+        self.arg0_simd = SIMD[DType.float64, simd_width](0.0)
+        self.arg1_simd = SIMD[DType.float64, simd_width](0.0)
+        self.arg2_simd = SIMD[DType.float64, simd_width](0.0)
+        self.vals = SIMD[DType.float64, simd_width](0.0)
 
-        Args:
-            list_of_self: (List[Lag]): List of Self.
-            in_list: (List[Float64]): List of input samples.
-            out_list: (List[Float64]): List of output samples after applying the processing.
-            args: VariadicList of arguments.
+    @always_inline
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref delay_time: List[Float64], ref feedback: List[Float64], ref lpf: List[Float64]):
+        N = len(out_list)
 
-        """
-
-        alias groups = num // N
-        alias remainder = num % N
-
-        vals = SIMD[DType.float64, N](0.0)
-
-        # Apply vectorization
         @parameter
-        for i in range(groups):
+        fn closure[width: Int](i: Int):
             @parameter
-            for j in range(N):
-                vals[j] = in_list[j + (i * N)]
-            temp = list_of_self[i].next(
-                vals, args[0], args[1], args[2] #onces args can be unpacked, this is a generic solution for almost all ugens
-            )
+            for j in range(simd_width):
+                self.vals[j] = in_list[(j + i) % len(in_list)]
+                self.arg0_simd[j] = delay_time[(j + i) % len(delay_time)]  # wrap around if not enough args
+                self.arg1_simd[j] = feedback[(j + i) % len(feedback)]  # wrap around if not enough args
+                self.arg2_simd[j] = lpf[(j + i) % len(lpf)]  # wrap around if not enough args
+
+            temp = self.list[i // simd_width].next(self.vals, self.arg0_simd, self.arg1_simd, self.arg2_simd)
             @parameter
-            for j in range(N):
-                out_list[i * N + j] = temp[j]
-        @parameter
-        if remainder > 0:
-            @parameter
-            for i in range(remainder):
-                vals[i] = in_list[groups * N + i]
-            temp = list_of_self[groups].next(vals, args[0], args[1], args[2])
-            @parameter
-            for i in range(remainder):
-                out_list[groups*N + i] = temp[i]
+            for j in range(simd_width):
+                idx = i + j
+                if idx < N:
+                    out_list[idx] = temp[j]
+        vectorize[closure, simd_width](N)
 
 struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """

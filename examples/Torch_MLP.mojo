@@ -124,13 +124,13 @@ struct TorchSynth(Representable, Movable, Copyable):
         # the output is written directly into the lag_vals list
 
         # self.lags.next(self.model_output, self.lag_vals, [0.01])
-        next(self.lags.list, self.model_output, self.lag_vals, [0.01])
+        self.lags.next(self.model_output, self.lag_vals, [0.01])
 
         # uncomment to see the output of the model
-        var output_str = String("")
-        for i in range(len(self.lag_vals)):
-            output_str += String(self.lag_vals[i]) + " "
-        self.world_ptr[0].print(output_str)
+        # var output_str = String("")
+        # for i in range(len(self.lag_vals)):
+        #     output_str += String(self.lag_vals[i]) + " "
+        # self.world_ptr[0].print(output_str)
 
         # oscillator 1 -----------------------
 

@@ -17,19 +17,28 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
       N: size of the SIMD vector - defaults to 1
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var lp_combs: List[List[LP_Comb[4]]]
-    var del_times: List[SIMD[DType.float64, 4]]
-    var temp: List[SIMD[DType.float64, 4]]
+    var lp_combs: List[LP_CombN[8]]
+    var del_times: List[Float64]
+    var del_timesB: List[Float64]
+    var temp: List[Float64]
     var allpass_combs: List[Allpass_Comb[N]]
     var allpass_del_times: List[Float64]
+    var feedback: List[Float64]
+    var lp_comb_lpfreq: List[Float64]
+    var in_list: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.lp_combs = [[LP_Comb[4](self.world_ptr, 0.046) for _ in range(2)] for _ in range(N)]
-        self.del_times = [SIMD[DType.float64, 4](1116.0 / 44100.0, 1188.0 / 44100.0, 1277.0 / 44100.0, 1356.0 / 44100.0), SIMD[DType.float64, 4](1422.0 / 44100.0, 1491.0 / 44100.0, 1557.0 / 44100.0, 1617.0 / 44100.0)] # in seconds
-        self.temp = [SIMD[DType.float64, 4](0.0), SIMD[DType.float64, 4](0.0)]
+        self.lp_combs = [ LP_CombN[8](self.world_ptr) for _ in range(self.N)]
+        self.del_times = [1116.0 / 44100.0, 1188.0 / 44100.0, 1277.0 / 44100.0, 1356.0 / 44100.0, 1422.0 / 44100.0, 1491.0 / 44100.0, 1557.0 / 44100.0, 1617.0 / 44100.0] # in seconds
+        self.del_timesB = [0.0 for _ in range(8)] # in seconds
+
+        self.temp = [0.0 for _ in range(8)]
         self.allpass_combs = [Allpass_Comb[N](self.world_ptr, 0.02) for _ in range(4)]
         self.allpass_del_times = [556.0 / 44100.0, 441.0 / 44100.0, 341.0 / 44100.0, 225.0 / 44100.0]
+        self.feedback = [0.0]
+        self.lp_comb_lpfreq = [1000.0]
+        self.in_list = [0.0]
 
     @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], room_size: SIMD[DType.float64, self.N] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.N] = 1000.0, added_space: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
@@ -55,21 +64,21 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
 
         delay_offset = added_space_clipped * 0.0012
 
-        alias simd_width = simd_width_of[DType.float64]()  # e.g., 2 on 128-bit, 4 on 256-bit, etc.
-
         @parameter
         for i in range(self.N):
-            # this is correct - parallelizing stacks of 4 comb filters
-            # there has to be a way to do all channels at the same time
-            @parameter
-            fn closure1[width: Int](j: Int):
-                var d_time: SIMD[DType.float64, 4] = self.del_times[j] + delay_offset[i]
-                self.temp[j] = self.lp_combs[i][j].next(input[i], d_time, feedback[i], lp_comb_lpfreq[i])
-            vectorize[closure1, simd_width](2)
+          @parameter
+          for j in range(8):
+              self.del_timesB[j] = self.del_times[j] + delay_offset[i]
+          self.feedback[0] = feedback[i]
+          self.lp_comb_lpfreq[0] = lp_comb_lpfreq[i]
 
-            temp = self.temp[0] + self.temp[1]
-            out[i] = temp.reduce_add()
-
+          self.in_list[0] = input[i]
+          self.lp_combs[i].next(self.in_list, self.temp, self.del_timesB, self.feedback, self.lp_comb_lpfreq)
+          out[i] = 0.0
+          @parameter
+          for j in range(8):
+              out[i] += self.temp[j]
+        @parameter
         for j in range(4):
             out = self.allpass_combs[j].next(out, self.allpass_del_times[j])
 
