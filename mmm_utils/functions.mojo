@@ -96,6 +96,12 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
     return 20.0 * log10(amp)
 
 @always_inline
+fn select(index: Float64, list: List[Float64]) -> Float64:
+    index_int = Int(index) % len(list)
+    index_mix = index - index_int
+    return list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
+
+@always_inline
 fn linlin[
     dtype: DType, width: Int, //
 ](input: SIMD[dtype, width], in_min: SIMD[dtype, width], in_max: SIMD[dtype, width], out_min: SIMD[dtype, width], out_max: SIMD[dtype, width]) -> SIMD[dtype, width]:
@@ -484,7 +490,7 @@ fn random_lin_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
         u[i] = random_float64()
     return u
 
-
+@always_inline
 fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """
     Generates a random float64 sample from an exponential distribution.
