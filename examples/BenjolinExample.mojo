@@ -1,12 +1,9 @@
-"""
+"""Benjolin-inspired Synthesizer
 
-@misc{benjolinsc,
-  url={https://scsynth.org/t/benjolin-inspired-instrument/1074/1},
-  title={Benjolin inspired instrument},
-  author={Hyppasus},
-  journal={SuperCollider Forum}
-}
+Based on the SuperCollider implementation by Hyppasus
+https://scsynth.org/t/benjolin-inspired-instrument/1074/1
 
+Ported to MMMAudio by Ted Moore, October 2025
 """
 
 from mmm_src.MMMWorld import MMMWorld
@@ -37,7 +34,6 @@ struct Benjolin(Representable, Movable, Copyable):
     var sample_dur: Float64
     var sh: List[Float64]
     var dctraps: List[DCTrap]
-    var printers: List[Print]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -55,27 +51,18 @@ struct Benjolin(Representable, Movable, Copyable):
         self.sample_dur = 1.0 / self.world_ptr[0].sample_rate
         self.sh = List[Float64](capacity=9)
         self.dctraps = List[DCTrap](capacity=2)
-        self.printers = List[Print](capacity=13)
 
-        print("len dels",len(self.delays))
+        for _ in range(8):
+            self.delays.append(Delay[1,3,True](self.world_ptr, max_delay_time=0.1))
+            self.latches.append(Latch(self.world_ptr))
 
-        for i in range(8):
-            self.delays[i] = Delay[1,3,True](self.world_ptr, max_delay_time=0.1)
+        for _ in range(9):
+            self.filters.append(SVF(self.world_ptr))
+            self.filter_outputs.append(0.0)
+            self.sh.append(0.0)
 
-        for i in range(8):
-            self.latches[i] = Latch(self.world_ptr)
-
-        for i in range(9):
-            self.filters[i] = SVF(self.world_ptr)
-
-        for i in range(9):
-            self.sh[i] = 0
-
-        for i in range(2):
-            self.dctraps[i] = DCTrap(self.world_ptr)
-
-        # for i in range(len(self.printers)):
-        #     self.printers[i] = Print(self.world_ptr)
+        for _ in range(2):
+            self.dctraps.append(DCTrap(self.world_ptr))
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -132,12 +119,10 @@ struct Benjolin(Representable, Movable, Copyable):
         self.filter_outputs[6] = self.filters[6].bell(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
         self.filter_outputs[7] = self.filters[7].highshelf(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
         self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
-
         
         filter_output = select(filterType,self.filter_outputs) * dbamp(-12)
-        filter_output = sanitize(filter_output)
-
         self.world_ptr[0].print(filter_output,"filter output: ")
+        filter_output = sanitize(filter_output)
 
         output = SIMD[DType.float64, 2](0.0, 0.0)
         output[0] = select(outSignalL,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])

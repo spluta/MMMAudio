@@ -195,9 +195,13 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         # Update internal state (2*v1 - ic1eq, 2*v2 - ic2eq)
         self.ic1eq = 2.0 * v1 - self.ic1eq
         self.ic2eq = 2.0 * v2 - self.ic2eq
+
+        self.ic1eq = sanitize(self.ic1eq)
+        self.ic2eq = sanitize(self.ic2eq)
         
         # Mix the outputs: mix_a*v0 + mix_b*v1 + mix_c*v2
-        return mix_a * input + mix_b * v1 + mix_c * v2
+        var output = mix_a * input + mix_b * v1 + mix_c * v2
+        return sanitize(output)
     
     # Convenience methods for different filter types
     fn lpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
