@@ -61,10 +61,10 @@ struct ChowningFM(Representable, Movable, Copyable):
         trig = self.m.triggered("trigger")
         self.update_envs()
 
-        index = self.index_env.next(self.index_env_params, Float64(Int(trig)))
+        index = self.index_env.next(self.index_env_params, trig)
         msig = self.m_osc.next(mfreq) * mfreq * index        
         csig = self.c_osc.next(cfreq + msig)
-        csig *= self.amp_env.next(self.amp_env_params, Float64(Int(trig)))
+        csig *= self.amp_env.next(self.amp_env_params, trig)
         csig *= dbamp(vol)
 
         return csig

@@ -20,7 +20,7 @@ app = QApplication([])
 
 # Create the main window
 window = QWidget()
-window.setWindowTitle("Feedback Delay Controller")
+window.setWindowTitle("Benjolin")
 window.resize(300, 100)
 # stop audio when window is closed
 window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
@@ -44,7 +44,7 @@ add_handle("rungler2", 0, 1.0, 1, 0.1)
 add_handle("runglerFiltMul", 0, 1.0, 1.0, 0.5)
 add_handle("loop", 0, 1.0, 1, 0.1)
 add_handle("filterFreq", 20, 20000, 0.25, 3000)
-add_handle("q", 0.1, 10, 0.5, 1.0)
+add_handle("q", 0.1, 8.0, 0.5, 1.0)
 add_handle("gain", 0.0, 2.0, 1, 1.0)
 add_handle("filterType", 0, 8, 1.0, 0.0)
 add_handle("outSignalL", 0, 6, 1.0, 1.0)

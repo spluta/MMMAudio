@@ -17,9 +17,9 @@ struct DelaySynth(Representable, Movable, Copyable):
     var buffer: Buffer
     var playBuf: PlayBuf
     var delays: FBDelay[N=2, interp=3]  # FBDelay with 2 channels and interpolation type 3 (cubic)
-    var delay_time_lag: Lag[2]
+    var delay_time_lag: List[Lag]
     var m: Messenger
-    var gate_lag: Lag[1]
+    var gate_lag: Lag
     var svf: SVF[2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -28,9 +28,11 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         self.delays = FBDelay[N=2, interp=3](self.world_ptr, self.maxdelay) 
-        self.delay_time_lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
+        self.delay_time_lag = List[Lag](capacity=2)
+        self.delay_time_lag[0] = Lag(self.world_ptr)
+        self.delay_time_lag[1] = Lag(self.world_ptr)
         self.m = Messenger(self.world_ptr)
-        self.gate_lag = Lag[1](self.world_ptr)
+        self.gate_lag = Lag(self.world_ptr)
         self.svf = SVF[2](self.world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -42,13 +44,16 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
         deltime_m = self.m.get_val("delay_time",0.5)
-        deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](deltime_m, deltime_m * 0.9), SIMD[DType.float64, 2](0.2, 0.2))
+        deltimes = SIMD[DType.float64, 2](0.0,0.0)
+    
+        deltimes[0] = self.delay_time_lag[0].next(deltime_m, 0.2)
+        deltimes[1] = self.delay_time_lag[1].next(deltime_m * 0.9, 0.2)
 
         fb_m = dbamp(self.m.get_val("feedback", -6))
         fb = SIMD[DType.float64, 2](fb_m, fb_m * 0.9)
 
 
-        delays = self.delays.next(sample * self.gate_lag.next(self.m.get_val("delay-input", 1), 0.03), deltime, fb)
+        delays = self.delays.next(sample * self.gate_lag.next(self.m.get_val("delay-input", 1), 0.03), deltimes, fb)
         delays = self.svf.lpf(delays, self.m.get_val("ffreq", 8000.0), self.m.get_val("q", 1.0))
         mix = self.m.get_val("mix", 0.2)
         output = (mix * delays) + ((1.0 - mix) * sample)

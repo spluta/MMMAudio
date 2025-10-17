@@ -42,7 +42,6 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
         Args:
           input: The input sample to process.
           delay_time: The amount of delay to apply (in seconds).
-          interp: The interpolation method to use (0 = no interpolation, 2 = Lagrange).
 
         Returns:
           The processed output sample.

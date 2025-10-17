@@ -99,7 +99,8 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
 fn select(index: Float64, list: List[Float64]) -> Float64:
     index_int = Int(index) % len(list)
     index_mix = index - index_int
-    return list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
+    val = list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
+    return val
 
 @always_inline
 fn linlin[
@@ -468,6 +469,8 @@ fn sanitize[
 ](mut x: SIMD[dtype, width]) -> SIMD[dtype, width]:
     var absx = abs(x)
     for i in range(width):
+        if x[i] != x[i]:  # NaN check
+            x[i] = 0.0
         if absx[i] > 1e15 or absx[i] < 1e-15:
             x[i] = 0.0
     return x
