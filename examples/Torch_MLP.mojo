@@ -9,9 +9,13 @@ from mmm_dsp.Filters import *
 
 from mmm_dsp.MLP import MLP
 from mmm_dsp.Distortion import *
+from sys import simd_width_of
 
-alias simd_width = 4  # Define the SIMD width for processing
+from mmm_utils.next_list_functions import *
+
+alias simd_width = simd_width_of[DType.float64]() * 2
 alias model_out_size = 16  # Define the output size of the model
+alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
 
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
 struct TorchSynth(Representable, Movable, Copyable):
@@ -23,8 +27,7 @@ struct TorchSynth(Representable, Movable, Copyable):
     var model_output: List[Float64]  # Output list from the model
     var model: MLP  # Placeholder for the model
     var inference_trig: Impulse
-
-    var lags: List[Lag] # list of Lags for smoothing the model outputs
+    var lags: LagN[model_out_size]  # List of Lag processors for smoothing model outputs
     var lag_vals: List[Float64] # flattened list of lagged values
 
     var fb: Float64
@@ -64,7 +67,7 @@ struct TorchSynth(Representable, Movable, Copyable):
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         self.lag_vals = [random_float64() for _ in range(model_out_size)]
-        self.lags = [Lag(self.world_ptr) for _ in range(model_out_size)]
+        self.lags = LagN[model_out_size](self.world_ptr)
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
@@ -119,17 +122,15 @@ struct TorchSynth(Representable, Movable, Copyable):
         # process_list is an experimental feature of Lag that allows SIMD processing of multiple Lags at once
         # this processes the 16 Lags, 2 Lags at a time (like they are grouped)
         # the output is written directly into the lag_vals list
-        # Lag.next[16](self.lags, self.model_output, self.lag_vals, 0.01)
 
-        @parameter
-        for i in range(model_out_size):
-            self.lag_vals[i] = self.lags[i].next(self.model_output[i], 0.01)
+        # self.lags.next(self.model_output, self.lag_vals, [0.01])
+        next(self.lags.list, self.model_output, self.lag_vals, [0.01])
 
         # uncomment to see the output of the model
-        # var output_str = String("")
-        # for i in range(len(self.lag_vals)):
-        #     output_str += String(self.lag_vals[i]) + " "
-        # self.world_ptr[0].print(output_str)
+        var output_str = String("")
+        for i in range(len(self.lag_vals)):
+            output_str += String(self.lag_vals[i]) + " "
+        self.world_ptr[0].print(output_str)
 
         # oscillator 1 -----------------------
 

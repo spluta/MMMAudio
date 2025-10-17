@@ -9,7 +9,7 @@ from mmm_utils.Messengers import Messenger
 struct ChowningFM(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var m: Messenger
-    var c_osc: Osc  # Carrier oscillator
+    var c_osc: Osc[1,0,1]  # Carrier oscillator
     var m_osc: Osc  # Modulator oscillator
     var index_env: Env
     var index_env_params: EnvParams
@@ -19,7 +19,7 @@ struct ChowningFM(Representable, Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
-        self.c_osc = Osc(world_ptr)
+        self.c_osc = Osc[1,0,1](world_ptr)
         self.m_osc = Osc(world_ptr)
         self.index_env = Env(world_ptr)
         self.index_env_params = EnvParams()
@@ -54,6 +54,7 @@ struct ChowningFM(Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
+
         cfreq = self.m.get_val("c_freq", 100)
         mfreq = self.m.get_val("m_freq", 20)
         vol = self.m.get_val("vol", -12)
@@ -66,4 +67,4 @@ struct ChowningFM(Representable, Movable, Copyable):
         csig *= self.amp_env.next(self.amp_env_params, Float64(Int(trig)))
         csig *= dbamp(vol)
 
-        return SIMD[DType.float64, 2](csig, csig)
+        return csig
