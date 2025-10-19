@@ -11,8 +11,6 @@ from mmm_dsp.MLP import MLP
 from mmm_dsp.Distortion import *
 from sys import simd_width_of
 
-from mmm_utils.next_list_functions import *
-
 alias simd_width = simd_width_of[DType.float64]() * 2
 alias model_out_size = 16  # Define the output size of the model
 alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
@@ -23,12 +21,16 @@ struct TorchSynth(Representable, Movable, Copyable):
     var osc1: Osc[1, 2, 1]
     var osc2: Osc[1, 2, 1]
 
+    # var model_input: InlineArray[Float64, 2]  # Input list for audio synthesis
+    # var model_output: InlineArray[Float64, model_out_size]  # Output list from the model
     var model_input: List[Float64]  # Input list for audio synthesis
     var model_output: List[Float64]  # Output list from the model
     var model: MLP  # Placeholder for the model
     var inference_trig: Impulse
-    var lags: LagN[model_out_size]  # List of Lag processors for smoothing model outputs
-    var lag_vals: List[Float64] # flattened list of lagged values
+    var lags: LagN[0.02, model_out_size]  # List of Lag processors for smoothing model outputs
+    # var lag_vals: InlineArray[Float64, model_out_size] # flattened list of lagged values
+    # var lag_times: InlineArray[Float64, 1]
+    var lag_vals: List[Float64]
 
     var fb: Float64
 
@@ -54,10 +56,10 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.osc1 = Osc[1, 2, 1](world_ptr)
         self.osc2 = Osc[1, 2, 1](world_ptr)
 
-        self.model_input = List[Float64](0.0, 0.0)
-
-        # initialize the output of the nn with model_out_size elements
-        self.model_output = [0.0 for _ in range(model_out_size)]
+        # self.model_input = InlineArray[Float64, 2](fill=0.0)
+        # self.model_output = InlineArray[Float64, model_out_size](fill=0.0)
+        self.model_input = [Float64() for _ in range(2)]
+        self.model_output = [Float64() for _ in range(model_out_size)]
 
         # load the trained model
         self.text_messenger = TextMessenger(world_ptr)
@@ -66,8 +68,9 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.inference_trig = Impulse(self.world_ptr)
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
+        # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
         self.lag_vals = [random_float64() for _ in range(model_out_size)]
-        self.lags = LagN[model_out_size](self.world_ptr)
+        self.lags = LagN[0.02, model_out_size](self.world_ptr)
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
@@ -110,7 +113,7 @@ struct TorchSynth(Representable, Movable, Copyable):
                         self.model_output[i] = model_output[i]
 
         # inference will only happen at the rate of the impulse
-        infer = self.inference_trig.next(50)
+        infer = self.inference_trig.next(25)
         if infer > 0.0 and self.toggle_inference > 0.0:
             self.model_input[0] = self.world_ptr[0].mouse_x
             self.model_input[1] = self.world_ptr[0].mouse_y
@@ -124,7 +127,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         # the output is written directly into the lag_vals list
 
         # self.lags.next(self.model_output, self.lag_vals, [0.01])
-        self.lags.next(self.model_output, self.lag_vals, [0.01])
+        self.lags.next(self.model_output, self.lag_vals)
 
         # uncomment to see the output of the model
         # var output_str = String("")

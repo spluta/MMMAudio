@@ -4,7 +4,6 @@ This module provides an envelope generator class that can create complex envelop
 """
 
 from .Osc import Sweep
-from .Filters import Lag
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
@@ -51,7 +50,6 @@ struct Env(Representable, Movable, Copyable):
     var times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
-    var Lag: Lag  # Lag filter for smoothing the envelope output
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
 
@@ -65,7 +63,6 @@ struct Env(Representable, Movable, Copyable):
         self.times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
-        self.Lag = Lag(world_ptr)  # Initialize Lag filter with the MMMWorld instance
         self.trig_point = 0.0
         self.last_asr = 0.0
 
