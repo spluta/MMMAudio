@@ -1,10 +1,7 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
 
-from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
-from mmm_dsp.Osc import *
 from mmm_dsp.Filters import VAMoogLadder
 from mmm_utils.functions import linexp
 from random import random_float64

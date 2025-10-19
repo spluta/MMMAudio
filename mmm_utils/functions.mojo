@@ -131,8 +131,8 @@ fn linlin[
     output = input
 
     # Create masks for the conditions
-    below_min: SIMD[DType.bool, width] = output < in_min
-    above_max: SIMD[DType.bool, width] = output > in_max
+    below_min: SIMD[DType.bool, width] = output.lt(in_min)
+    above_max: SIMD[DType.bool, width] = output.gt(in_max)
 
     scaled = (input - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
 
@@ -174,8 +174,8 @@ fn linexp[width: Int, //
         exp_amplitude = linexp(linear_time, 0.0, 1.0, 0.001, 1.0)
         ```
     """
-    below_min: SIMD[DType.bool, width] = input < in_min
-    above_max: SIMD[DType.bool, width] = input > in_max
+    below_min: SIMD[DType.bool, width] = input.lt(in_min)
+    above_max: SIMD[DType.bool, width] = input.gt(in_max)
     normalized = (input - in_min) / (in_max - in_min)
     exponential_scaled = out_min * pow(out_max / out_min, normalized)
 
@@ -248,8 +248,8 @@ fn lincurve[width: Int, //
     temp_curve: SIMD[DType.float64, width] = curve_zero.select(0.0001, curve)
 
     # Create condition masks
-    below_min: SIMD[DType.bool, width] = input < in_min
-    above_max: SIMD[DType.bool, width] = input > in_max
+    below_min: SIMD[DType.bool, width] = input.lt(in_min)
+    above_max: SIMD[DType.bool, width] = input.gt(in_max)
 
     # Compute exponential curve parameters for all elements
     grow = pow(SIMD[DType.float64, width](2.71828182845904523536), temp_curve)  # e^curve
@@ -306,7 +306,7 @@ fn wrap[
     var wrapped_sample = (input - min_val) % range_size + min_val
     
     # Handle negative modulo results (vectorized)
-    var needs_adjustment: SIMD[DType.bool, width] = wrapped_sample < min_val
+    var needs_adjustment: SIMD[DType.bool, width] = wrapped_sample.lt(min_val)
 
     wrapped_sample = needs_adjustment.select(wrapped_sample + range_size, wrapped_sample)
 

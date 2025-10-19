@@ -24,7 +24,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var record_buf: RecordBuf
     var play_buf: PlayBuf
     var note_time: Float64
-    var end_frame: Float64
+    var num_frames: Float64
     var input_chan: Int64
     var messenger: Messenger
 
@@ -40,7 +40,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.play_buf = PlayBuf(world_ptr)
         self.write_pos = 0
         self.note_time = 0.0
-        self.end_frame = 0.0
+        self.num_frames = 0
         self.input_chan = 0
         self.messenger = Messenger(world_ptr)
 
@@ -57,13 +57,13 @@ struct Record_Synth(Representable, Movable, Copyable):
     
     fn stop_recording(mut self):
         self.note_time = min(time.perf_counter() - self.note_time, self.buf_dur)
-        self.end_frame = floor(self.note_time*self.world_ptr[0].sample_rate)
-        self.note_time = self.end_frame / self.world_ptr[0].sample_rate
+        self.num_frames = floor(self.note_time*self.world_ptr[0].sample_rate)
+        self.note_time = self.num_frames / self.world_ptr[0].sample_rate
         self.is_recording = 0.0
         self.is_playing = 1.0
         self.trig = True
         self.write_pos = 0
-        print(self.note_time, self.end_frame/self.world_ptr[0].sample_rate)
+        print(self.note_time, self.num_frames/self.world_ptr[0].sample_rate)
         print("Recorded duration:", self.note_time, "seconds")
         print("Recording stopped. Now playing.")
 
@@ -95,9 +95,11 @@ struct Record_Synth(Representable, Movable, Copyable):
                 self.trig = True
                 self.write_pos = 0
 
-        out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, end_frame = self.end_frame)
+        out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, num_frames = self.num_frames)
 
-        out = out * self.is_playing * min_env(self.play_buf.get_win_phase(), self.note_time, 0.01)
+        env = min_env(self.play_buf.get_win_phase(), self.note_time, 0.01)
+
+        out = out * self.is_playing * env
 
         return out
 

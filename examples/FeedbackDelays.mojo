@@ -41,10 +41,12 @@ struct DelaySynth(Representable, Movable, Copyable):
         # var del_time = self.lag.next(linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 0.5)
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
-        var del_time = self.lag.next(SIMD[DType.float64, 2](
-            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()), 
-            linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()*0.9)
-        ))
+        var del_time = self.lag.next(
+            SIMD[DType.float64, 2](
+                linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()),
+                linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()*0.9)
+            )
+        )
 
         var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
 

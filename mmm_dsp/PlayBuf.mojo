@@ -21,7 +21,7 @@ struct PlayBuf(Representable, Movable, Copyable):
     var rising_bool_detector: RisingBoolDetector
     var start_frame: Float64 
     var end_frame: Float64  
-    var reset_point: Float64
+    var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -40,14 +40,14 @@ struct PlayBuf(Representable, Movable, Copyable):
 
         self.start_frame = 0.0  # Initialize start frame
         self.end_frame = 0.0  # Initialize end frame
-        self.reset_point = 0.0  # Initialize reset point
+        self.reset_phase_point = 0.0  # Initialize reset point
         self.phase_offset = 0.0  # Initialize phase offset
 
     fn __repr__(self) -> String:
         return String("PlayBuf")
 
     @always_inline
-    fn next[T: Buffable, N: Int=1](mut self: PlayBuf, mut buffer: T, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, end_frame: Float64 = -1) -> SIMD[DType.float64, N]: 
+    fn next[N: Int=1](mut self: PlayBuf, mut buffer: Buffer, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, num_frames: Float64 = -1) -> SIMD[DType.float64, N]: 
         """
         get the next sample from an audio buffer (Buffer)
 
@@ -57,25 +57,28 @@ struct PlayBuf(Representable, Movable, Copyable):
             loop: Whether to loop the buffer (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).
             start_frame: The start frame for playback (default: 0) upon receiving a trigger.
-            end_frame: The end frame for playback (default: -1).
+            num_frames: The end frame for playback (default: -1).
         """
 
-        num_frames = buffer.get_num_frames()
         duration = buffer.get_duration()
+        if num_frames < 0:
+            num_frames2 = buffer.num_frames
+        else:
+            num_frames2 = num_frames
 
         out = SIMD[DType.float64, N](0.0)
 
         # this should happen on the first call if trig > 0.0
         # or when any trig happens
-        if self.rising_bool_detector.next(trig) and num_frames > 0:
+        if self.rising_bool_detector.next(trig) and buffer.num_frames > 0:
             self.done = False  # Reset done flag on trigger
             self.start_frame = start_frame  # Set start frame
             # if end_frame < 0 or end_frame > num_frames:
             #     self.end_frame = num_frames  # Set end frame to buffer length if not specified
             # else:
-            self.end_frame = end_frame  # Use specified end frame
-            self.reset_point = abs(self.end_frame - self.start_frame) / num_frames  # Calculate reset point based on end_frame and start_frame
-            self.phase_offset = self.start_frame / num_frames  
+            self.end_frame = start_frame + num_frames2  # Use specified end frame
+            self.reset_phase_point = num_frames2 / buffer.num_frames  # Calculate reset point based on end_frame and start_frame
+            self.phase_offset = self.start_frame / buffer.num_frames  # Calculate phase offset based on start_frame  
         if self.done:
             return out  # Return zeros if done
         else:
@@ -83,29 +86,26 @@ struct PlayBuf(Representable, Movable, Copyable):
 
             if loop:
                 _ = self.impulse.next(freq, trig = trig) 
-                if self.get_phase() >= self.reset_point:
-                    self.impulse.phasor.phase -= self.reset_point
+                if self.impulse.phasor.phase >= self.reset_phase_point:
+                    self.impulse.phasor.phase -= self.reset_phase_point
                 # for i in range(N):
-                out = buffer.read[N](start_chan, (self.get_phase() + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
+                out = buffer.read[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
-                phase = self.get_phase()
-                if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_point:
+                phase = self.impulse.phasor.phase
+                if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_phase_point:
                     self.done = True  # Set done flag if phase is out of bounds
                     return out
                 else:
-                    out = buffer.read[N](start_chan, self.impulse.phasor.phase + self.phase_offset, 1)  # Read the sample from the buffer at the current phase
+                    out = buffer.read[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
             
             return out
-            # return self.dc_trap.next(out)
 
-    fn get_phase(mut self: PlayBuf) -> Float64:
-        return self.impulse.get_phase()
     
     fn get_win_phase(mut self: PlayBuf) -> Float64:
-        if self.reset_point > 0.0:
-            return self.impulse.get_phase() / self.reset_point  
+        if self.reset_phase_point > 0.0:
+            return self.impulse.get_phase() / self.reset_phase_point  
         else:
             return 0.0  # Use the phase
 
@@ -114,7 +114,7 @@ struct Grain(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var start_frame: Float64
-    var end_frame: Float64  
+    var num_frames: Float64  
     var rate: Float64  
     var pan: Float64  
     var gain: Float64 
@@ -127,7 +127,7 @@ struct Grain(Representable, Movable, Copyable):
         self.world_ptr = world_ptr  
 
         self.start_frame = 0.0
-        self.end_frame = 0.0
+        self.num_frames = 0.0
         self.rate = 1.0
         self.pan = 0.5 
         self.gain = 1.0
@@ -141,9 +141,9 @@ struct Grain(Representable, Movable, Copyable):
         return String("Grain")
 
     @always_inline
-    fn next_pan[T: Buffable, N: Int = 1, win_num: Int = 0](mut self, mut buffer: T, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
-        var sample = self.next[N=N, win_num=win_num](buffer, start_chan, trig, rate, start_frame, duration, gain)
-        self.pan = pan
+    fn next_pan[N: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+        
+        var sample = self.next[N=N, win_num=win_num](buffer, start_chan, trig, rate, start_frame, duration, pan, gain)
 
         @parameter
         if N == 1:
@@ -152,21 +152,22 @@ struct Grain(Representable, Movable, Copyable):
             return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
 
     # N can only be 1 (default) or 2
-    fn next[T: Buffable, N: Int = 1, win_num: Int = 0](mut self, mut buffer: T, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, N]:
+    fn next[N: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, N]:
 
         if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
-            self.end_frame =  start_frame + (duration * buffer.get_buf_sample_rate()*rate)  # Calculate end frame based on duration
+            self.num_frames =  (duration * buffer.get_buf_sample_rate()*rate)  # Calculate end frame based on duration
             self.rate = rate
             self.gain = gain
+            self.pan = pan
 
-            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, trig, self.start_frame, self.end_frame)  # Get samples from PlayBuf
+            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, trig, self.start_frame, self.num_frames) # Get samples from PlayBuf
         else:
-            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, False, self.start_frame, self.end_frame)  # Call next on PlayBuf with no trigger
+            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, False, self.start_frame, self.num_frames)  # Call next on PlayBuf with no trigger
 
         # Get the current phase of the PlayBuf
-        if self.play_buf.reset_point > 0.0:
-            self.win_phase = self.play_buf.impulse.phasor.phase / self.play_buf.reset_point  
+        if self.play_buf.reset_phase_point > 0.0:
+            self.win_phase = self.play_buf.impulse.phasor.phase / self.play_buf.reset_phase_point  
         else:
             self.win_phase = 0.0  # Use the phase
 
@@ -206,7 +207,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         return String("TGrains")
 
     @always_inline
-    fn next[T: Buffable, N: Int = 1](mut self, mut buffer: T, buf_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+    fn next[N: Int = 1](mut self, mut buffer: Buffer, buf_chan: Int = 0, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         """Generate the next set of grains.
         
         Arguments:.
@@ -258,7 +259,8 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
     var pitch_ratio: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
-        """ world_ptr: pointer to the MMMWorld instance.
+        """ 
+            world_ptr: pointer to the MMMWorld instance.
             buf_dur: duration of the internal buffer in seconds.
         """
         self.world_ptr = world_ptr  # Use the world instance directly
@@ -321,8 +323,8 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
                 else:
                     start_frame = Int(self.buffer.index - ((win_size * self.world_ptr[0].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.get_num_frames())
             if i == self.counter:
-                out += self.grains[i].next[win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, gain)
+                out += self.grains[i].next[win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, 0.0, gain)
             else:
-                out += self.grains[i].next[win_num=1](self.buffer, 0, False, self.pitch_ratio, start_frame, win_size, gain)
+                out += self.grains[i].next[win_num=1](self.buffer, 0, False, self.pitch_ratio, start_frame, win_size, 0.0, gain)
 
         return out

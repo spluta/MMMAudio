@@ -185,6 +185,9 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
         var idx = Int64(f_idx)
 
+        if idx < 0 or idx >= Int64(self.num_frames):
+            return SIMD[DType.float64, N](0.0)  # Out of bounds
+
         var out = SIMD[DType.float64, N](0.0)
         for i in range(N):
             if interp == 0:
