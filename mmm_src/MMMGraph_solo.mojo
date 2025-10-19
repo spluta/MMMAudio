@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.FeedbackDelaysGUI import FeedbackDelaysGUI
+from tests.TestTrigGateFloat import TestTrigGateFloat
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: FeedbackDelaysGUI
+    var graph: TestTrigGateFloat
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,7 +16,7 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = FeedbackDelaysGUI(self.world_ptr)
+        self.graph = TestTrigGateFloat(self.world_ptr)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -28,12 +28,13 @@ struct MMMGraph(Representable, Movable):
 
         for i in range(self.world_ptr[0].block_size):
             self.world_ptr[0].block_state = i  # Update the block state
-
+            
             if i == 0:
                 self.world_ptr[0].top_of_block = True
-                self.world_ptr[0].transfer_pooled_messages()
+                self.world_ptr[0].transfer_trig_msgs()
             elif i == 1:
                 self.world_ptr[0].top_of_block = False
+                self.world_ptr[0].trig_msgs.clear()
                 self.world_ptr[0].text_msg_dict.clear()
 
             # fill the sound_in list with the current sample from all inputs
@@ -41,8 +42,6 @@ struct MMMGraph(Representable, Movable):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
             samples = self.graph.next()  # Get the next audio samples from the graph
-
-            self.world_ptr[0].untrigger_all_messengers()
 
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):

@@ -1,24 +1,19 @@
 from mmm_src.MMMWorld import *
 
-
-
 struct Messenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
-    var default_dict: Dict[String, Float64]
+    var world_ptr: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
-        self.default_dict = Dict[String, Float64]()
 
-    fn get_val(mut self, key: String, default: Float64) -> Float64:
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            ptr.value()[0].grabbed = True
-            return ptr.value()[0].lists[0][0]
-        else:
-            return default
+    fn get_float(mut self, key: String, default: Float64) -> Float64:
+        return self.world_ptr[0].get_float(key)
+
+    fn get_gate(mut self, key: String, default: Bool) -> Bool:
+        return self.world_ptr[0].get_gate(key)
+    
+    fn get_trig(mut self, key: String) -> Bool:
+        return self.world_ptr[0].get_trig(key)
 
     # fn __float__(mut self, key: String, default: Float64) -> Float64:
     #     return self.get_val(key, default)
@@ -26,28 +21,17 @@ struct Messenger(Movable, Copyable):
     # fn __int__(mut self, key: String, default: Float64) -> Int64:
     #     return Int64(self.get_val(key, default))
 
-    fn triggered(mut self, key: String) -> Bool:
-    
-    # Return the trigger state (val if triggered, 0.0 otherwise) of the messenger with the given key.
+    # fn get_list(mut self, key: String) -> List[Float64]:
+    #     ptr = self.world_ptr[0].get_messenger(key)
 
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return True
-        return False
-
-    fn get_list(mut self, key: String) -> List[Float64]:
-        ptr = self.world_ptr[0].get_messenger(key)
-
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists[0].copy()
-            else:
-                return List[Float64]().copy()
-        else:
-            return List[Float64]().copy()
+    #     if ptr:
+    #         if ptr.value()[0].triggered:
+    #             ptr.value()[0].grabbed = True
+    #             return ptr.value()[0].lists[0].copy()
+    #         else:
+    #             return List[Float64]().copy()
+    #     else:
+    #         return List[Float64]().copy()
 
     # fn get_list(mut self, key: String) -> (List[Float64], Bool):
         
@@ -62,48 +46,48 @@ struct Messenger(Movable, Copyable):
     #     else:
     #         return (List[Float64]().copy(), False)
 
-    fn get_lists(mut self, key: String) -> List[List[Float64]]:
-        """
-        This version of get_lists will return all messages for the given key
-        """
+    # fn get_lists(mut self, key: String) -> List[List[Float64]]:
+    #     """
+    #     This version of get_lists will return all messages for the given key
+    #     """
         
-        ptr = self.world_ptr[0].get_messenger(key)
+    #     ptr = self.world_ptr[0].get_messenger(key)
 
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists.copy()
-            else:
-                return List[List[Float64]]().copy()
-        else:
-            return List[List[Float64]]().copy()
+    #     if ptr:
+    #         if ptr.value()[0].triggered:
+    #             ptr.value()[0].grabbed = True
+    #             return ptr.value()[0].lists.copy()
+    #         else:
+    #             return List[List[Float64]]().copy()
+    #     else:
+    #         return List[List[Float64]]().copy()
 
-    fn get_lists(mut self, key: String, *filters: Optional[Int]) -> List[List[Float64]]:
-        """
-        This version of get_lists filters out messages based on the filters provided
-        If a filter is None, that position is ignored
-        If a filter is an Int, only messages with that value in that position are included
-        e.g. get_lists("note_on", None, 48) will return only note_on messages with a value of 48 in the second position (the note number)
-        """
-        ptr = self.world_ptr[0].get_messenger(key)
+    # fn get_lists(mut self, key: String, *filters: Optional[Int]) -> List[List[Float64]]:
+    #     """
+    #     This version of get_lists filters out messages based on the filters provided
+    #     If a filter is None, that position is ignored
+    #     If a filter is an Int, only messages with that value in that position are included
+    #     e.g. get_lists("note_on", None, 48) will return only note_on messages with a value of 48 in the second position (the note number)
+    #     """
+    #     ptr = self.world_ptr[0].get_messenger(key)
 
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                if len(filters) == 0:
-                    return ptr.value()[0].lists.copy()
-                elif len(filters) > 0:
-                    big_list = List[List[Float64]]().copy()
-                    for item in ptr.value()[0].lists:
-                        include = [False for _ in range(len(filters))]
-                        for i in range(min(len(filters), len(item))):
-                            if filters[i]==None or item[i] == filters[i].value():
-                                include[i] = True
+    #     if ptr:
+    #         if ptr.value()[0].triggered:
+    #             ptr.value()[0].grabbed = True
+    #             if len(filters) == 0:
+    #                 return ptr.value()[0].lists.copy()
+    #             elif len(filters) > 0:
+    #                 big_list = List[List[Float64]]().copy()
+    #                 for item in ptr.value()[0].lists:
+    #                     include = [False for _ in range(len(filters))]
+    #                     for i in range(min(len(filters), len(item))):
+    #                         if filters[i]==None or item[i] == filters[i].value():
+    #                             include[i] = True
 
-                        if all(include):
-                            big_list.append(item.copy())
-                    return big_list.copy()
-        return List[List[Float64]]().copy()
+    #                     if all(include):
+    #                         big_list.append(item.copy())
+    #                 return big_list.copy()
+    #     return List[List[Float64]]().copy()
 
 struct TextMessenger(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] 
