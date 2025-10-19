@@ -58,3 +58,5 @@ if True:
 # To stop the thread:
 stop_event.set()
 
+mmm_audio.stop_audio()
+

@@ -13,24 +13,24 @@ from mmm_dsp.Filters import SVF
 struct DelaySynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
-    var main_lag: Lag
+    var main_lag: Lag[0.03]
     var buffer: Buffer
     var playBuf: PlayBuf
     var delays: FBDelay[N=2, interp=3]  # FBDelay with 2 channels and interpolation type 3 (cubic)
-    var delay_time_lag: Lag[2]
+    var delay_time_lag: Lag[0.2, 2]
     var m: Messenger
-    var gate_lag: Lag[1]
+    var gate_lag: Lag[0.03, 1]
     var svf: SVF[2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
-        self.main_lag = Lag(self.world_ptr)
+        self.main_lag = Lag[0.03](self.world_ptr)
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         self.delays = FBDelay[N=2, interp=3](self.world_ptr, self.maxdelay) 
-        self.delay_time_lag = Lag[2](self.world_ptr)  # Initialize Lag with a default time constant
+        self.delay_time_lag = Lag[0.2, 2](self.world_ptr)  # Initialize Lag with a default time constant
         self.m = Messenger(self.world_ptr)
-        self.gate_lag = Lag[1](self.world_ptr)
+        self.gate_lag = Lag[0.03, 1](self.world_ptr)
         self.svf = SVF[2](self.world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -42,18 +42,18 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
         deltime_m = self.m.get_val("delay_time",0.5)
-        deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](deltime_m, deltime_m * 0.9), SIMD[DType.float64, 2](0.2, 0.2))
+        deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](deltime_m, deltime_m * 0.9))
 
         fb_m = dbamp(self.m.get_val("feedback", -6))
         fb = SIMD[DType.float64, 2](fb_m, fb_m * 0.9)
 
 
-        delays = self.delays.next(sample * self.gate_lag.next(self.m.get_val("delay-input", 1), 0.03), deltime, fb)
+        delays = self.delays.next(sample * self.gate_lag.next(self.m.get_val("delay-input", 1)), deltime, fb)
         delays = self.svf.lpf(delays, self.m.get_val("ffreq", 8000.0), self.m.get_val("q", 1.0))
         mix = self.m.get_val("mix", 0.2)
         output = (mix * delays) + ((1.0 - mix) * sample)
         output *= dbamp(-12)
-        output *= self.main_lag.next(self.m.get_val("main", 1), 0.03)
+        output *= self.main_lag.next(self.m.get_val("main", 1))
         return output
 
     fn __repr__(self) -> String:

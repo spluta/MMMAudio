@@ -6,13 +6,10 @@ from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
-from mmm_utils.Messengers import Messenger
-from mmm_utils.functions import dbamp
-from mmm_dsp.Filters import SVF
 
 struct DelaySynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-    alias maxdelay = 1.0
+
     var buffer: Buffer
     var playBuf: PlayBuf
     var delays: FBDelay[2, 3]  # FBDelay for feedback delay effect
@@ -33,6 +30,10 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.mouse_y = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
+        # grab the mouse position at the start of the block
+        if self.world_ptr[0].top_of_block:
+            self.mouse_x = self.world_ptr[0].mouse_x
+            self.mouse_y = self.world_ptr[0].mouse_y
 
         var sample = self.playBuf.next[N=2](self.buffer, 0, 1.0, True)  # Read samples from the buffer
 
@@ -49,14 +50,8 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
 
-        fb_m = self.m.get_val("feedback", 0.99)
-        fb = SIMD[DType.float64, 2](fb_m, fb_m * 0.9)
+        sample = self.delays.next(sample, del_time, feedback)*0.5
 
-        delays = self.delays.next(sample, deltime, fb)
-        delays = self.svf.lpf(delays, self.m.get_val("ffreq", 8000.0), 0.1)
-        sample += delays
-        sample *= 0.5
-        sample *= self.gate_lag.next(self.m.get_val("gate", 0), 0.03)
         return sample
 
     fn __repr__(self) -> String:
