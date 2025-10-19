@@ -196,13 +196,19 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
         return out
 
-    fn write[N: Int = 1](mut self, value: SIMD[DType.float64, N], index: Int64, start_channel: Int64 = 0):
+    fn write[N: Int](mut self, value: SIMD[DType.float64, N], index: Int64, start_channel: Int64 = 0):
         if index < 0 or index >= Int64(self.num_frames):
             return  # Out of bounds TODO: throw warning
         for i in range(len(value)):
             # only write into the buffer if the channel exists
             if start_channel + i < self.num_chans:
                 self.data[start_channel + i][index] = value[i]
+    
+    fn write_next_index[N: Int](mut self, value: SIMD[DType.float64, N], start_channel: Int64 = 0):
+        self.write[N=N](value, Int64(self.index), start_channel)
+        self.index += 1.0
+        if self.index >= self.num_frames:
+            self.index = 0.0
 
 # struct InterleavedBuffer(Representable, Movable, Buffable, Copyable):
 #     """

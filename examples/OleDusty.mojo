@@ -18,7 +18,7 @@ struct Dusty(Representable, Movable, Copyable):
 
     fn next(mut self, freq: Float64) -> SIMD[DType.float64, 2]:
 
-        out = self.dust.next_range(freq*0.125, freq*8) * 0.5
+        out = self.dust.next(freq*0.125, freq*8, SIMD[DType.bool, 1](fill=False)) * 0.5
 
         # uncomment below for use the phase of the Dust oscillator instead of the impulse
         # out = self.dust.get_phase()

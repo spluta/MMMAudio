@@ -20,7 +20,7 @@ struct TrigSynthVoice(Movable, Copyable):
     var car: Osc[1, 0, 0]
     var sub: Osc
 
-    var trig: Float64
+    var trig: Bool
     var freq: Float64
 
     var vol: Float64
@@ -37,7 +37,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
         self.env = Env(self.world_ptr)
 
-        self.trig = 0.0
+        self.trig = False
         self.freq = 100.0
         self.vol = 1.0
 
@@ -46,7 +46,7 @@ struct TrigSynthVoice(Movable, Copyable):
     @always_inline
     fn next(mut self) -> Float64:
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
-        if not self.env.is_active and self.trig<= 0.0:
+        if not self.env.is_active and not self.trig:
             return 0.0
         else:
             bend_freq = self.freq * self.bend_mul
@@ -55,8 +55,8 @@ struct TrigSynthVoice(Movable, Copyable):
 
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
             var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=2)  
-            
-            self.trig = 0.0  # reset the trigger after using it
+
+            self.trig = False  # reset the trigger after using it
 
             car_value += self.sub.next(bend_freq * 0.5) # Add a sub oscillator one octave below the carrier
             car_value = car_value * 0.1 * env * self.vol
@@ -78,7 +78,7 @@ struct TrigSynth(Movable, Copyable):
     var num_voices: Int64
 
     var svf: SVF
-    var filt_lag: Lag
+    var filt_lag: Lag[0.1]
     var filt_freq: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
@@ -93,7 +93,7 @@ struct TrigSynth(Movable, Copyable):
             self.voices.append(TrigSynthVoice(self.world_ptr))
 
         self.svf = SVF(self.world_ptr)
-        self.filt_lag = Lag(self.world_ptr)
+        self.filt_lag = Lag[0.1](self.world_ptr)
         self.filt_freq = 1000.0
 
     @always_inline
@@ -107,7 +107,7 @@ struct TrigSynth(Movable, Copyable):
             for ref note_on in notes:
                 self.current_voice = (self.current_voice + 1) % self.num_voices
                 self.voices[self.current_voice].vol = note_on[2] / 127.0
-                self.voices[self.current_voice].trig = 1.0
+                self.voices[self.current_voice].trig = True
                 self.voices[self.current_voice].freq = midicps(note_on[1])
 
             ccs = self.messenger.get_lists("control_change", 0, 34) #filter out the list so we only see cc 34
@@ -128,7 +128,7 @@ struct TrigSynth(Movable, Copyable):
         for i in range(len(self.voices)):
             out += self.voices[i].next()
 
-        out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq, 0.1), 2.0) * 0.6
+        out = self.svf.lpf(out, self.filt_lag.next(self.filt_freq), 2.0) * 0.6
 
         return out
         

@@ -129,21 +129,20 @@ fn linlin[
         ```
     """
     output = input
-    @parameter
-    for i in range(width):
-        if output[i] < in_min[i]:
-            output[i] = out_min[i]
-        elif output[i] > in_max[i]:
-            output[i] = out_max[i]
-        else:
-            # First scale to 0..1 range, then scale to output range
-            output[i] = (output[i] - in_min[i]) / (in_max[i] - in_min[i]) * (out_max[i] - out_min[i]) + out_min[i]
-    return output
+
+    # Create masks for the conditions
+    below_min: SIMD[DType.bool, width] = output < in_min
+    above_max: SIMD[DType.bool, width] = output > in_max
+
+    scaled = (input - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
+
+    # Use select to choose the right value based on conditions
+    return below_min.select(out_min,
+       above_max.select(out_max, scaled))
 
 @always_inline
-fn linexp[
-    dtype: DType, width: Int, //
-](input: SIMD[dtype, width], in_min: SIMD[dtype, width], in_max: SIMD[dtype, width], out_min: SIMD[dtype, width], out_max: SIMD[dtype, width]) -> SIMD[dtype, width]:
+fn linexp[width: Int, //
+](input: SIMD[DType.float64, width], in_min: SIMD[DType.float64, width], in_max: SIMD[DType.float64, width], out_min: SIMD[DType.float64, width], out_max: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
     """Maps samples from one linear range to another exponential range.
 
     This function performs exponential mapping from a linear input range to an
@@ -175,17 +174,40 @@ fn linexp[
         exp_amplitude = linexp(linear_time, 0.0, 1.0, 0.001, 1.0)
         ```
     """
-    var result = SIMD[dtype, width](0.0)
-    for i in range(width):
-        if input[i] < in_min[i]:
-            result[i] = out_min[i]
-        elif input[i] > in_max[i]:
-            result[i] = out_max[i]
-        else:
-            # First scale to 0..1 range linearly, then apply exponential scaling
-            var normalized = (input[i] - in_min[i]) / (in_max[i] - in_min[i])
-            result[i] = out_min[i] * pow(out_max[i] / out_min[i], normalized)
-    return result
+    below_min: SIMD[DType.bool, width] = input < in_min
+    above_max: SIMD[DType.bool, width] = input > in_max
+    normalized = (input - in_min) / (in_max - in_min)
+    exponential_scaled = out_min * pow(out_max / out_min, normalized)
+
+    return below_min.select(out_min,
+        above_max.select(out_max, exponential_scaled))
+    # # Create condition masks
+    # below_min: SIMD[DType.bool, width] = input < in_min
+    # above_max: SIMD[DType.bool, width] = input > in_max
+
+    # # Safety checks
+    # zero_range: SIMD[DType.bool, width] = in_max == in_min
+    # zero_out_min: SIMD[DType.bool, width] = out_min == 0.0
+
+    # # Compute normalized values (safe division)
+    # safe_in_range = zero_range.select(1, in_max - in_min)
+    # normalized = (input - in_min) / safe_in_range
+
+    # # Compute exponential scaling with safety for out_min = 0
+    # safe_out_min = zero_out_min.select(0.001, out_min)
+    # ratio = out_max / safe_out_min
+    # exponential_scaled = zero_out_min.select( 
+    #                             out_max * normalized,  # Linear fallback when out_min = 0
+    #                             out_min * pow(ratio, normalized))
+
+    # # Handle zero range case (use out_min when range is zero)
+    # final_scaled = zero_range.select(out_min, exponential_scaled)
+
+    # # Apply all conditions
+    # result = below_min.select(out_min,
+    #             above_max.select(out_max, final_scaled))
+
+    # return result
 
 @always_inline
 fn lincurve[width: Int, //
@@ -221,28 +243,28 @@ fn lincurve[width: Int, //
         curved_amplitude = lincurve(linear_time, 0.0, 1.0, 0.001, 1.0)
         ```
     """
-    result = SIMD[DType.float64, width](0.0)
-    a = SIMD[DType.float64, width](0.0)
-    b = SIMD[DType.float64, width](0.0)
-    grow = SIMD[DType.float64, width](0.0)
-    for i in range(width): 
-        temp_curve = curve[i]
-        if temp_curve == 0.0:
-            temp_curve = 0.0001  # Avoid zero curve to prevent NaN
-        if input[i] < in_min[i]:
-            result[i] = out_min[i]
-        elif input[i] > in_max[i]:
-            result[i] = out_max[i]
-        else:
-            grow[i] = 2.71828182845904523536 ** temp_curve
-            a[i] = (out_max[i] - out_min[i]) / (1.0 - grow[i])
-            b[i] = out_min[i] + a[i]
+    # Handle zero curve values to avoid NaN
+    curve_zero: SIMD[DType.bool, width] = curve == 0.0
+    temp_curve: SIMD[DType.float64, width] = curve_zero.select(0.0001, curve)
 
-        # Scale input to 0-1 range with clipping
+    # Create condition masks
+    below_min: SIMD[DType.bool, width] = input < in_min
+    above_max: SIMD[DType.bool, width] = input > in_max
+
+    # Compute exponential curve parameters for all elements
+    grow = pow(SIMD[DType.float64, width](2.71828182845904523536), temp_curve)  # e^curve
+    a = (out_max - out_min) / (1.0 - grow)
+    b = out_min + a
+
+    # Scale input to 0-1 range
     scaled = (input - in_min) / (in_max - in_min)
 
     # Apply exponential curve
-    result = b - (a * pow(grow, scaled))
+    curved_result = b - (a * pow(grow, scaled))
+
+    # Use select to choose the right value based on conditions
+    result = below_min.select(out_min,
+                above_max.select(out_max, curved_result))
 
     return result
 
@@ -261,14 +283,7 @@ fn clip[
     Returns:
         The clipped SIMD vector.
     """ 
-    y = x
-    @parameter
-    for i in range(width):
-        if y[i] < lo[i]:
-            y[i] = lo[i]
-        elif y[i] > hi[i]:
-            y[i] = hi[i]
-    return y
+    return min(max(x, lo), hi)
 
 @always_inline
 fn wrap[
@@ -284,15 +299,19 @@ fn wrap[
     Returns:
         The wrapped sample within the range [min_val, max_val]. Returns the sample if min_val >= max_val.
     """
-    for i in range(width):
-        if min_val[i] >= max_val[i]:
-            return input
+    # Check if any min_val >= max_val (vectorized comparison)
+    var invalid_range: SIMD[DType.bool, width] = min_val >= max_val
+    
     var range_size = max_val - min_val
     var wrapped_sample = (input - min_val) % range_size + min_val
-    for i in range(width):
-        if wrapped_sample[i] < min_val[i]:
-            wrapped_sample[i] += range_size[i] # Ensure the sample is within the range
-    return wrapped_sample
+    
+    # Handle negative modulo results (vectorized)
+    var needs_adjustment: SIMD[DType.bool, width] = wrapped_sample < min_val
+
+    wrapped_sample = needs_adjustment.select(wrapped_sample + range_size, wrapped_sample)
+
+    # Return original input where range is invalid, wrapped result otherwise
+    return invalid_range.select(input, wrapped_sample)
 
 @always_inline
 fn quadratic_interp[
@@ -310,24 +329,17 @@ fn quadratic_interp[
         The interpolated sample at position x.
     """
     # Calculate the coefficients of the quadratic polynomial
-    out = SIMD[dtype, width](0.0)
-    @parameter
-    for i in range(width):
+    xm1 = x - 1.0
+    xm2 = x - 2.0
 
-        xm1 = x - 1.0
-        xm2 = x - 2.0
-        y_samples = SIMD[dtype, 4](y0[i], y1[i], y2[i], 0.0)
-        coeffs = SIMD[dtype, 4](
-            (xm1[i] * xm2[i]) * 0.5,
-            (x[i] * xm2[i]) * (-1.0),
-            (x[i] * xm1[i]) * 0.5,
-            0.0
-            )
-        prod = y_samples * coeffs
-        out[i] = prod.reduce_add()
+    # Compute Lagrange coefficients for all elements
+    coeff0 = (xm1 * xm2) * 0.5
+    coeff1 = (x * xm2) * (-1.0)  
+    coeff2 = (x * xm1) * 0.5
 
+    # Apply coefficients to y samples and sum
+    out = coeff0 * y0 + coeff1 * y1 + coeff2 * y2
 
-    # Return the estimated sample
     return out
 
 @always_inline
@@ -458,13 +470,14 @@ fn cpsmidi[
 
 @always_inline
 fn sanitize[
-    dtype: DType, width: Int, //
-](mut x: SIMD[dtype, width]) -> SIMD[dtype, width]:
+    width: Int, //
+](mut x: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]:
     var absx = abs(x)
-    for i in range(width):
-        if absx[i] > 1e15 or absx[i] < 1e-15:
-            x[i] = 0.0
-    return x
+    too_large: SIMD[DType.bool, width] = absx.gt(SIMD[DType.float64, width](1e15))
+    too_small: SIMD[DType.bool, width] = absx.lt(SIMD[DType.float64, width](1e-15))
+    should_zero: SIMD[DType.bool, width] = too_large | too_small
+
+    return should_zero.select(0.0, x)
 
 fn random_lin_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
     """
@@ -480,8 +493,9 @@ fn random_lin_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
         A random float64 sample from the specified range.
     """
     var u = SIMD[DType.float64, N](0.0)
+    @parameter
     for i in range(N):
-        u[i] = random_float64()
+        u[i] = random_float64(min[i], max[i])
     return u
 
 
@@ -499,6 +513,7 @@ fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
         A random float64 sample from the specified range.
     """
     var u = SIMD[DType.float64, N](0.0)
+    @parameter
     for i in range(N):
         u[i] = random_float64()
     u = linexp(u, 0.0, 1.0, min, max)

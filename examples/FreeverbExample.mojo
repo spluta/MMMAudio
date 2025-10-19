@@ -2,7 +2,6 @@ from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.Messengers import Messenger
 from mmm_src.MMMTraits import *
 from mmm_utils.functions import *
-from mmm_dsp.Filters import Lag
 from mmm_dsp.Delays import LP_Comb
 
 from mmm_dsp.Buffer import *

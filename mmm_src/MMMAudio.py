@@ -143,11 +143,28 @@ class MMMAudio:
         a = self.get_samples(samples)
         if clear:
             plt.clf()
-        plt.title("MMMAudio Output")
-        plt.xlabel("Samples")
-        plt.ylabel("Amplitude")
-        plt.grid()
-        plt.plot(np.array(a))
+        
+        # Plot each channel on its own subplot
+        num_channels = a.shape[1] if len(a.shape) > 1 else 1
+        
+        fig, axes = plt.subplots(num_channels, 1, figsize=(10, 3 * num_channels))
+        if num_channels == 1:
+            axes = [axes]  # Make it iterable for single channel
+        
+        for ch in range(num_channels):
+            ax = axes[ch]
+            if num_channels > 1:
+                ax.plot(a[:, ch])
+            else:
+                ax.plot(a)
+            
+            ax.set_ylim(-1, 1)
+            ax.set_title(f'Channel {ch}')
+            ax.set_xlabel("Samples")
+            ax.set_ylabel("Amplitude")
+            ax.grid()
+        
+        plt.tight_layout()
         plt.show(block=False)
     
     def audio_loop(self):

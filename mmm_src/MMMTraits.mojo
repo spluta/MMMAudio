@@ -1,5 +1,7 @@
 
 from mmm_src.MMMWorld import MMMWorld
+from sys import simd_width_of
+from algorithm import vectorize
 
 trait Graphable:
     fn next(mut self: Self) -> List[Float64]: ...
@@ -10,94 +12,23 @@ trait Buffable:
     fn get_duration(self) -> Float64: ...
     fn get_buf_sample_rate(self) -> Float64: ...
 
-# when traits can have parameters, this will hopefully be possible
-trait ListProcessable(Copyable, Movable):
-    pass
-    # fn next(mut self, *args: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]: ...
-#     fn next(mut self, input: SIMD[DType.float64, self.N], *args: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]: ...
+trait MutableIndexable(Sized, Copyable, Movable, SizedRaising):
+    fn __getitem__[I: Indexer, //](ref self, idx: I) -> ref [self] Float64: ...
+    fn __setitem__(mut self, index: Int, value: Float64): ...
 
-#     @staticmethod
-#     fn next_list[N: Int, num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-#         """Process a list of input samples through a list of processors.
+# trait UGen1(Copyable, Movable):
+#     fn next(mut self, arg0: SIMD[DType.float64, simd_width_of[DType.float64]()], arg1: SIMD[DType.float64, simd_width_of[DType.float64]()]) -> SIMD[DType.float64, simd_width_of[DType.float64]()]: ...
 
-#         Parameters:
-#             num: Total number of values in the list.
+# # when traits can have parameters, this will hopefully be possible
+# trait ListProcessable(Copyable, Movable):
+#     pass
+#     # fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], args: List[Float64]): ...
 
-#         Args:
-#             list_of_self: (List[Lag]): List of Self.
-#             in_list: (List[Float64]): List of input samples.
-#             out_list: (List[Float64]): List of output samples after applying the processing.
-#             args: VariadicList of arguments.
+# trait Indexable(Sized, Copyable, Movable):
+#     fn __getitem__[I: Indexer, //](ref self, idx: I) -> ref [self] T: ...
 
-#         """
-
-#         alias groups = num // N
-#         alias remainder = num % N
-
-#         vals = SIMD[DType.float64, N](0.0)
-
-#         # Apply vectorization
-#         @parameter
-#         for i in range(groups):
-#             @parameter
-#             for j in range(N):
-#                 vals[j] = in_list[j + (i * N)]
-#             temp = list_of_self[i].next(
-#                 vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
-#             )
-#             @parameter
-#             for j in range(N):
-#                 out_list[i * N + j] = temp[j]
-#         @parameter
-#         if remainder > 0:
-#             @parameter
-#             for i in range(remainder):
-#                 vals[i] = in_list[groups * N + i]
-#             temp = list_of_self[groups].next(vals, args[0])
-#             @parameter
-#             for i in range(remainder):
-#                 out_list[groups*N + i] = temp[i]
-# #     fn next(mut self, input: SIMD[DType.float64, N], arg: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
-# #         ...
-
-#     # @staticmethod
-#     # fn process_list[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-#     #     """Process a list of input samples through a list of processors.
-
-#     #     Parameters:
-#     #         num: Total number of values in the list.
-
-#     #     Args:
-#     #         list_of_self: (List[Lag]): List of Self.
-#     #         in_list: (List[Float64]): List of input samples.
-#     #         out_list: (List[Float64]): List of output samples after applying the processing.
-#     #         args: VariadicList of arguments.
-
-#     #     """
-
-#     #     alias groups = num // N
-#     #     alias remainder = num % N
-
-#     #     vals = SIMD[DType.float64, N](0.0)
-
-#     #     # Apply vectorization
-#     #     @parameter
-#     #     for i in range(groups):
-#     #         @parameter
-#     #         for j in range(N):
-#     #             vals[j] = in_list[j + (i * N)]
-#     #         temp = list_of_self[i].next(
-#     #             vals, args[0] #onces args can be unpacked, this is a generic solution for almost all ugens
-#     #         )
-#     #         @parameter
-#     #         for j in range(N):
-#     #             out_list[i * N + j] = temp[j]
-#     #     @parameter
-#     #     if remainder > 0:
-#     #         @parameter
-#     #         for i in range(remainder):
-#     #             vals[i] = in_list[groups * N + i]
-#     #         temp = list_of_self[groups].next(vals, args[0])
-#     #         @parameter
-#     #         for i in range(remainder):
-#     #             out_list[groups*N + i] = temp[i]
+# trait IndexReadable:
+#     fn len(self) -> Int:
+#         return len(self)
+#     fn getitem(mut self, i: Int) -> Float64:
+#         return self[i]
