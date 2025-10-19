@@ -13,7 +13,7 @@ if True:
     mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
     # the default input channel (in the Record_Synth) is 0, but you can change it
-    mmm_audio.send_msg("set_input_chan", 11) 
+    mmm_audio.send_msg("set_input_chan", 8) 
     mmm_audio.start_audio() 
 
 

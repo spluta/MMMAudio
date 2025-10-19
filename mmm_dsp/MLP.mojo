@@ -37,6 +37,39 @@ struct MLP(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("MLP_Ugen(input_size: " + String(self.input_size) + ", output_size: " + String(self.output_size) + ")")
 
+    fn next(mut self: MLP, ref input: InlineArray[Float64], mut output: InlineArray[Float64]):
+        """
+        Process the input through the MLP model.
+            
+        Parameters:
+            N: (Int): Size of the output SIMD vector. Default is 16.
+
+        Args:
+            input: (List[Float64]): Input list of Float64 values.
+            output: (List[Float64]): Output list to store the Float64 results.
+        """
+
+        if self.torch is None:
+            return 
+
+        if Int64(len(input)) != self.input_size:
+            print("Input size mismatch: expected", self.input_size, "got", len(input))
+            return 
+
+        try:
+            for i in range(self.input_size):
+                self.py_input[0][i] = input[Int(i)]
+            self.py_output = self.model(self.py_input)  # Run the model with the input
+        except Exception:
+            print("Error processing input through MLP")
+
+        try:
+            py_output = self.model(self.py_input)  # Run the model with the input
+            for i in range(self.output_size):
+                output[Int(i)] = Float64(py_output[0][i].item())  # Convert each output to Float64
+        except Exception:
+            print("Error processing input through MLP:")
+
     fn next(mut self: MLP, ref input: List[Float64], mut output: List[Float64]):
         """
         Process the input through the MLP model.

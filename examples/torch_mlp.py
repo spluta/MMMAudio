@@ -13,6 +13,8 @@ if True:
     # this one is a bit intense, so maybe start with a low volume
     mmm_audio.start_audio()
 
+mmm_audio.stop_audio()
+
 # below is the code to make a new training --------------------------------
 
 # toggle inference off so you can set the synth values directly

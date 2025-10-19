@@ -7,108 +7,33 @@ from sys import simd_width_of
 from algorithm import vectorize
 from .Oversampling import Oversampling
 
-from mmm_src.MMMTraits import ListProcessable
+from mmm_src.MMMTraits import *
 
-alias simd_width = simd_width_of[DType.float64]()
-
-struct Lag2[N: Int = 1](Movable, Copyable, ListProcessable):
-    """This is an ugly implementation of a lag processor that can handle a list of lags.
-    """
-    
-    alias num_simds = N // simd_width_of[DType.float64]() + (0 if N % simd_width_of[DType.float64]() == 0  else 1)
-
-    var val: List[SIMD[DType.float64, simd_width]]
-    var b1: List[SIMD[DType.float64, simd_width]]
-    var lag: List[SIMD[DType.float64, simd_width]]
-    var log001: Float64
-    var world_ptr: UnsafePointer[MMMWorld]
-    var lag_list: List[Float64]
-
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.val = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
-        self.b1 = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
-        self.lag = [SIMD[DType.float64, simd_width](0.0) for _ in range(self.num_simds)]
-        self.world_ptr = world_ptr
-        self.log001 = -6.907755278982137  # log(0.01) for lag calculations, precomputed for efficiency
-        self.lag_list = [0.0 for _ in range(N)]
-
-    @always_inline
-    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref lag: Float64):
-        @parameter
-        for i in range(self.N):
-            self.lag_list[i] = lag
-        self.next(in_list, out_list)
-
-    @always_inline
-    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref lag_list: List[Float64]):
-        @parameter
-        for i in range(self.N):
-            self.lag_list[i] = lag_list[i]
-        self.next(in_list, out_list)
-
-    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
-        """
-        Process one sample through the lag processor.
-        
-        Args:
-            in_samp: (List[SIMD[DType.float64, simd_width]]): Input SIMD vector of Float64 values.
-            lag: (List[SIMD[DType.float64, simd_width]]): Lag time in seconds for each channel.
-
-        Returns:
-            List[SIMD[DType.float64, simd_width]]: Output SIMD vector of Float64 values after applying the lag.
-        """
-        @parameter
-        for i in range(self.N):
-            var simd_idx = i // simd_width_of[DType.float64]()
-            var lane_idx = i % simd_width_of[DType.float64]()
-            if self.lag[simd_idx][lane_idx] != self.lag_list[i]:
-                self.lag[simd_idx][lane_idx] = self.lag_list[i]
-                if self.lag[simd_idx][lane_idx] == 0.0:
-                    self.b1[simd_idx][lane_idx] = 0.0
-                else:
-                    # Calculate the lag coeficient based on the sample rate
-                    self.b1[simd_idx][lane_idx] = exp(self.log001 / (self.lag[simd_idx][lane_idx] * self.world_ptr[0].sample_rate))
-
-        for i in range(self.num_simds):
-            in_simd = SIMD[DType.float64, simd_width](0.0)
-            @parameter
-            for j in range(simd_width):
-                var idx = i * simd_width + j
-                if idx < self.N:
-                    in_simd[j] = in_list[idx]
-                else:
-                    in_simd[j] = 0.0
-            self.val[i] = in_simd + self.b1[i] * (self.val[i] - in_simd)
-            self.val[i] = sanitize(self.val[i])
-            @parameter
-            for j in range(simd_width):
-                var idx = i * simd_width + j
-                if idx < self.N:
-                    out_list[idx] = self.val[i][j]
-
-
-struct Lag[N: Int = 1](Representable, Movable, Copyable, ListProcessable):
+struct Lag[lag: Float64 = 0.02,N: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
+    ``Lag[N, lag](world_ptr)``
+    Parameters:
+        N: Number of channels to process in parallel.
+        lag: Lag time in seconds.
     """
-    alias simd_width = 2 * simd_width_of[DType.float64]()
+
+    alias simd_width = simd_width_of[DType.float64]()
+    var world_ptr: UnsafePointer[MMMWorld]
     var val: SIMD[DType.float64, N]
     var b1: SIMD[DType.float64, N]
-    var lag: SIMD[DType.float64, N]
-    var log001: Float64
-    var world_ptr: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.val = SIMD[DType.float64, N](0.0)
-        self.b1 = SIMD[DType.float64, N](0.0)
-        self.lag = SIMD[DType.float64, N](0.0)
         self.world_ptr = world_ptr
-        self.log001 = -6.907755278982137  # log(0.01) for lag calculations, precomputed for efficiency
+        self.val = SIMD[DType.float64, self.N](0.0)
+        self.b1 = exp(-6.907755278982137 / (lag * self.world_ptr[0].sample_rate))
+        
+
 
     fn __repr__(self) -> String:
         return String("Lag")
 
     @always_inline
-    fn next(mut self, in_samp: SIMD[DType.float64, self.N], lag: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, N]:
+    fn next(mut self, in_samp: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """
         Process one sample through the lag processor.
         
@@ -119,288 +44,47 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable, ListProcessable):
         Returns:
             SIMD[DType.float64, N]: Output SIMD vector of Float64 values after applying the lag.
         """
-        @parameter
-        for i in range(self.N):
-            if self.lag[i] != lag[i]:
-                self.lag[i] = lag[i]
-                if self.lag[i] == 0.0:
-                    self.b1[i] = 0.0
-                else:
-                    # Calculate the lag coeficient based on the sample rate
-                    self.b1[i] = exp(self.log001 / (self.lag[i] * self.world_ptr[0].sample_rate))
 
         self.val = in_samp + self.b1 * (self.val - (in_samp))
         self.val = sanitize(self.val)
 
         return self.val
-        
-    @staticmethod
-    fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], lag: Float64):
 
-        alias simd_size = simd_width * 2
+alias simd_width = simd_width_of[DType.float64]() * 2
 
-        in_SIMD = SIMD[DType.float64, simd_size](0.0)
-        lag_SIMD = SIMD[DType.float64, simd_size](0.0)
-        b1_SIMD = SIMD[DType.float64, simd_size](0.0)
-        val = SIMD[DType.float64, simd_size](0.0)
+struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
+    var list: List[Lag[lag, simd_width]]
 
-        alias num_simds = num // simd_size + (0 if num % simd_size == 0  else 1)
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
+        self.list = [Lag[lag, simd_width](world_ptr) for _ in range(num_simd)]
+    @always_inline
+    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
+        vals = SIMD[DType.float64, simd_width](0.0)
+        N = len(out_list)
+        in_len = len(in_list)
 
         @parameter
-        for i in range(num_simds):
-            @parameter
-            for j in range(simd_size):
-                var idx = i * simd_size + j
-                if idx < num:
-                    in_SIMD[j] = in_list[idx]
-                    lag_SIMD[j] = lag
-                    b1_SIMD[j] = exp(list_of_self[0].log001 / (lag * list_of_self[0].world_ptr[0].sample_rate))
-                    val[j] = list_of_self[idx].val[0]
-                else:
-                    in_SIMD[j] = 0.0
-                    lag_SIMD[j] = 0.0
-                    b1_SIMD[j] = 0.0
-                    val[j] = 0.0
-            temp = in_SIMD + b1_SIMD * (val - in_SIMD)
-            
-            @parameter
-            for j in range(simd_size):
-                var idx = i * simd_size + j
-                if idx < num:
-                    out_list[idx] = temp[j]
-                    list_of_self[idx].val = temp[j]
+        fn closure[width: Int](i: Int):
+            if i + simd_width <= in_len:
+                vals = in_list.unsafe_ptr().load[width=simd_width](i)
+            else:
+                @parameter
+                for j in range(simd_width):
+                    vals[j] = in_list[(j + i) % in_len]
 
-
-    # @staticmethod
-    # fn next[num: Int](mut list_of_self: List[Self], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-    #     """Process a list of input samples through a list of processors.
-
-    #     Parameters:
-    #         num: Total number of values in the list.
-
-    #     Args:
-    #         list_of_self: (List[Lag]): List of Self.
-    #         in_list: (List[Float64]): List of input samples.
-    #         out_list: (List[Float64]): List of output samples after applying the processing.
-    #         args: VariadicList of arguments.
-
-    #     """
-
-    #     alias groups = num // N
-    #     alias remainder = num % N
-
-    #     vals = SIMD[DType.float64, N](0.0)
-
-    #     # Apply vectorization
-    #     @parameter
-    #     for i in range(groups):
-    #         @parameter
-    #         for j in range(N):
-    #             vals[j] = in_list[j + (i * N)]
-    #         # if len(args) == 1:
-    #         temp = list_of_self[i].next(
-    #             vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
-    #         )
-    #         @parameter
-    #         for j in range(N):
-    #             out_list[i * N + j] = temp[j]
-    #     @parameter
-    #     if remainder > 0:
-    #         @parameter
-    #         for i in range(remainder):
-    #             vals[i] = in_list[groups * N + i]
-    #         temp = list_of_self[groups].next(vals, args[0])
-    #         @parameter
-    #         for i in range(remainder):
-    #             out_list[groups*N + i] = temp[i]
-
-# struct ListProcessor[T: ListProcessable, N: Int = 1](Movable, Copyable):
-#     @staticmethod
-#     fn process_list[num: Int](mut self, list_of_self: List[T], ref in_list: List[Float64], mut out_list: List[Float64], *args: SIMD[DType.float64, N]):
-#         """Process a list of input samples through a list of processors.
-
-#         Parameters:
-#             num: Total number of values in the list.
-
-#         Args:
-#             list_of_self: (List[Lag]): List of Self.
-#             in_list: (List[Float64]): List of input samples.
-#             out_list: (List[Float64]): List of output samples after applying the processing.
-#             args: VariadicList of arguments.
-
-#         """
-
-#         alias groups = num // N
-#         alias remainder = num % N
-
-#         vals = SIMD[DType.float64, N](0.0)
-
-#         # Apply vectorization
-#         @parameter
-#         for i in range(groups):
-#             @parameter
-#             for j in range(N):
-#                 vals[j] = in_list[j + (i * N)]
-#             temp = list_of_self[i].next(
-#                 vals, args[0] # once args can be unpacked, this is a generic solution for almost all ugens
-#             )
-#             @parameter
-#             for j in range(N):
-#                 out_list[i * N + j] = temp[j]
-#         @parameter
-#         if remainder > 0:
-#             @parameter
-#             for i in range(remainder):
-#                 vals[i] = in_list[groups * N + i]
-#             temp = list_of_self[groups].next(vals, args[0])
-#             @parameter
-#             for i in range(remainder):
-#                 out_list[groups*N + i] = temp[i]
-
-# Lag is super vectorized for processing in parallel
-# struct Lag[N: Int=1](Representable, Movable, Copyable):
-#     """A lag processor that smooths input values over time based on a specified lag time in seconds.
-#     """
-#     alias SIMD_vec = SIMD[DType.float64, N]
-#     var val: Self.SIMD_vec
-#     var b1: Self.SIMD_vec
-#     var lag: Self.SIMD_vec
-#     var log001: Float64
-#     var world_ptr: UnsafePointer[MMMWorld]
-
-#     alias width = 2 * simd_width_of[DType.float64]()
-#     var num_simds: Int
-#     var in_simd: SIMD[DType.float64, Self.width]
-#     var lag_simd: SIMD[DType.float64, Self.width]
-#     var val_simd: SIMD[DType.float64, Self.width]
-#     var b1_simd: SIMD[DType.float64, Self.width]
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         self.val = self.SIMD_vec(0.0)
-#         self.b1 = self.SIMD_vec(0.0)
-#         self.lag = self.SIMD_vec(0.0)
-#         self.world_ptr = world_ptr
-#         self.log001 = -6.907755278982137  # log(0.01) for lag calculations, precomputed for efficiency
-
-#         self.num_simds = Int(ceil(self.N / self.width))
-#         self.in_simd = SIMD[DType.float64, self.width](0.0)
-#         self.lag_simd = SIMD[DType.float64, self.width](0.0)
-#         self.val_simd = SIMD[DType.float64, self.width](0.0)
-#         self.b1_simd = SIMD[DType.float64, self.width](0.0)
-
-#     fn __repr__(self) -> String:
-#         return String("Lag")
-
-#     fn get_small_simd(mut self, in_samp: self.SIMD_vec, j: Int):
-#         for i in range(self.width):
-#             var idx = j * self.width + i
-#             if idx < self.N:
-#                 self.in_simd[i] = in_samp[idx]
-#                 self.lag_simd[i] = self.lag[idx]
-#                 self.val_simd[i] = self.val[idx]
-#                 self.b1_simd[i] = self.b1[idx]
-#             else:
-#                 self.in_simd[i] = 0.0
-#                 self.lag_simd[i] = 0.0
-#                 self.val_simd[i] = 0.0
-#                 self.b1_simd[i] = 0.0
-
-#     fn put_small_simd(mut self, j: Int):
-#         for i in range(self.width):
-#             var idx = j * self.width + i
-#             if idx < self.N:
-#                 self.val[idx] = self.val_simd[i]
-#                 self.lag[idx] = self.lag_simd[i]
-#                 self.b1[idx] = self.b1_simd[i]
-
-#     fn next(mut self: Lag, var in_samp: self.SIMD_vec, lag: self.SIMD_vec = self.SIMD_vec(0.05), num_lags: Int = self.N) -> self.SIMD_vec:
-#         # the number of simd loops
-
-#         lower = min(num_lags, self.N)
-#         num_SIMDs = Int(floor(Float64(lower) / Float64(self.width)))
-#         carry = lower - num_SIMDs * self.width
-
-#         # print("num_SIMDs: " + String(num_SIMDs) + " carry: " + String(carry) + " lower: " + String(lower) + " self.N: " + String(self.N))
-
-#         # for j in range(num_SIMDs):
-#         #     self.get_small_simd(in_samp, j)
-
-#         #     var change = False
-#         #     for i in range(self.width): 
-#         #         var idx = j * self.width + i
-#         #         if self.lag_simd[i] != lag[idx]:
-#         #             self.lag_simd[i] = lag[idx]
-#         #             change = True
-#         #     if not change:
-#         #         self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
-#         #     else:
-#         #         for i in range(self.width):
-#         #             if self.lag_simd[i] == 0.0:
-#         #                 self.b1_simd[i] = 0.0
-#         #             else:
-#         #                 # Calculate the lag coeficient based on the sample rate
-#         #                 self.b1_simd[i] = exp(self.log001 / (self.lag_simd[i] * self.world_ptr[0].sample_rate))
-
-#         #         # self.lag = self.lag_simd
-#         #         self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
-
-#         #     self.val_simd = sanitize(self.val_simd)
-
-#         #     self.put_small_simd(j)
-#         #     for i in range(self.width):
-#         #         var idx = j * self.width + i
-#         #         if idx < self.N:
-#         #             in_samp[idx] = self.val_simd[i]
-        
-#         @parameter
-#         fn process_block[simd_width: Int](j: Int):
-#             self.get_small_simd(in_samp, j)
-#             var change = False
-#             for i in range(simd_width):
-#                 var idx = j * simd_width + i
-#                 if self.lag_simd[i] != lag[idx]:
-#                     self.lag_simd[i] = lag[idx]
-#                     change = True
-#             if not change:
-#                 self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
-#             else:
-#                 for i in range(simd_width):
-#                     if self.lag_simd[i] == 0.0:
-#                         self.b1_simd[i] = 0.0
-#                     else:
-#                         self.b1_simd[i] = exp(self.log001 / (self.lag_simd[i] * self.world_ptr[0].sample_rate))
-#                 self.val_simd = self.in_simd + self.b1_simd * (self.val_simd - self.in_simd)
-#             self.val_simd = sanitize(self.val_simd)
-#             self.put_small_simd(j)
-#             for i in range(simd_width):
-#                 var idx = j * simd_width + i
-#                 if idx < self.N:
-#                     in_samp[idx] = self.val_simd[i]
-        
-#         vectorize[process_block, self.width](num_SIMDs)
-
-#         # go through the carries one by one
-#         start_at = num_SIMDs * self.width
-#         for i in range(carry):
-#             var change = False
-#             var idx = start_at + i
-#             if self.lag[idx] != lag[idx]:
-#                 self.lag[idx] = lag[idx]
-#                 change = True
-#             if not change:
-#                 self.val[idx] = in_samp[idx] + self.b1[idx] * (self.val[idx] - in_samp[idx])
-#             else:
-#                 if self.lag[idx] == 0.0:
-#                     self.b1[idx] = 0.0
-#                 else:
-#                     # Calculate the lag coeficient based on the sample rate
-#                     self.b1[idx] = exp(self.log001 / (self.lag[idx] * self.world_ptr[0].sample_rate))
-
-#                 self.val[idx] = in_samp[idx] + self.b1[idx] * (self.val[idx] - in_samp[idx])
-#             self.val[idx] = sanitize(self.val[idx])
-#             in_samp[idx] = self.val[idx]
-
-#         return in_samp
+            temp = self.list[i // simd_width].next(vals)
+            # More efficient storing
+            remaining = N - i
+            if remaining >= simd_width:
+                out_list.unsafe_ptr().store(i, temp)
+            else:
+                # Handle partial store for the last chunk
+                @parameter
+                for j in range(simd_width):
+                    if j < remaining:
+                        out_list[i + j] = temp[j]
+        vectorize[closure, simd_width](N)
 
 struct SVF[N: Int = 1](Representable, Movable, Copyable):
     """State Variable Filter implementation from Andrew Simper (https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf). Translated from Oleg Nesterov's Faust implementation.
@@ -522,6 +206,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return mix_a * input + mix_b * v1 + mix_c * v2
     
     # Convenience methods for different filter types
+    @always_inline
     fn lpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Lowpass filter
         
@@ -532,6 +217,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[0](input, frequency, q)
 
+    @always_inline
     fn bpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bandpass filter
         
@@ -542,6 +228,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[1](input, frequency, q)
 
+    @always_inline
     fn hpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Highpass filter
 
@@ -552,6 +239,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[2](input, frequency, q)
 
+    @always_inline
     fn notch(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Notch filter
         
@@ -562,6 +250,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[3](input, frequency, q)
 
+    @always_inline
     fn peak(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Peak filter
 
@@ -572,6 +261,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[4](input, frequency, q)
 
+    @always_inline
     fn allpass(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Allpass filter
         
@@ -582,6 +272,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[5](input, frequency, q)
 
+    @always_inline
     fn bell(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Bell filter (parametric EQ)
         
@@ -593,6 +284,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[6](input, frequency, q, gain_db)
 
+    @always_inline
     fn lowshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Low shelf filter
 
@@ -604,6 +296,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[7](input, frequency, q, gain_db)
 
+    @always_inline
     fn highshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """High shelf filter
 
@@ -633,6 +326,7 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
         self.svf1.sample_rate = sample_rate
         self.svf2.sample_rate = sample_rate
 
+    @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """a single sample through the 4th order lowpass filter."""
         # First stage
@@ -771,6 +465,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
             "VAOnePole"
         )
 
+    @always_inline
     fn lpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         """
         Process one sample through the VA one-pole lowpass filter.
@@ -791,6 +486,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         self.last_1 = v + output
         return output
 
+    @always_inline
     fn hpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
         return input - self.lpf(input, freq)
 
