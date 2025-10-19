@@ -4,6 +4,7 @@ from mmm_utils.functions import *
 from memory import Pointer
 from mmm_utils.Windows import build_sinc_table
 from algorithm.functional import vectorize
+from sys import simd_width_of
 
 struct Sinc_Interpolator(Representable, Movable, Copyable):
     var ripples: Int64  # Number of ripples for sinc interpolation
@@ -16,7 +17,7 @@ struct Sinc_Interpolator(Representable, Movable, Copyable):
     fn __init__(out self, ripples: Int64 = 4, power: Int64 = 14):
         self.ripples = ripples
         self.sinc_power = power
-        self.table_size = 2 ** power  # Size of the sinc table, e.g., 16384 for power 14
+        self.table_size = 1 << power  # Size of the sinc table, e.g., 16384 for power 14 (using bit shift instead of exponentiation)
         self.table = build_sinc_table(self.table_size, ripples=self.ripples)  # Build sinc table with specified ripples
         self.max_sinc_offset = self.table_size // (self.ripples * 2)  # Calculate maximum sinc offset based on spacing
 
@@ -28,9 +29,9 @@ struct Sinc_Interpolator(Representable, Movable, Copyable):
         return String("Sinc_Interpolator(ripples: " + String(self.ripples) + ", table_size: " + String(self.table_size) + ")")
 
     fn next(self: Sinc_Interpolator, sp: Int64, sinc_offset: Int64, sinc_mult: Int64, frac: Float64) -> Float64:
-        var sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)  # Get sinc index from the sinc points
-        var sinc_indexB = sinc_indexA + 1  # Get the next sinc index
-        var sinc_indexC = sinc_indexA + 2  # Get the next sinc index
+        var sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
+        var sinc_indexB = sinc_indexA + 1
+        var sinc_indexC = sinc_indexA + 2
         var sinc_value = quadratic_interp(
             self.table[sinc_indexA % self.table_size],
             self.table[sinc_indexB % self.table_size],
@@ -184,99 +185,79 @@ struct OscBuffers(Representable, Movable, Copyable):
 
     @always_inline
     fn read_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
-        # Sinc interpolation using the sinc table
-        var phase_diff = phase - last_phase  
-        var slope = wrap(phase_diff, -0.5, 0.5)  
-        var samples_per_frame = abs(slope) * Float64(self.size)  # Calculate samples per frame based on slope
-        var octave = max(0.0, log2(samples_per_frame))
-        octave = min(octave, Float64(self.sinc_interpolator.sinc_power) - 2.0) 
-
-        var layer: Int64 = Int64(ceil(octave))  # Round up to the upper layer
-        var sinc_crossfade: Float64 = octave - floor(octave) 
-
-        if layer >= self.sinc_interpolator.sinc_power - 3:
-            layer = self.sinc_interpolator.sinc_power - 3  # Limit layer to a maximum of self.sinc_interpolator.sinc_power - 3
-            sinc_crossfade = 0.0  # Set crossfade to 0 if layer exceeds self.sinc_interpolator.sinc_power - 3
-        var spacing1: Int64 = 2 ** layer
-        var spacing2 = spacing1 * 2  # Calculate spacing for sinc interpolation
-
-        var f_index = (phase * Float64(self.size)) % Float64(self.size)
-        var index = Int64(f_index)  # Get the integer part of the index
-        var frac = f_index - Float64(index)  # Get the fractional part
-
-        var sinc1 = self.spaced_sinc(buf_num, index, frac, spacing1)  # Get the spaced sinc value
-        if layer < 12:  # Check if layer is less than 12
-            var sinc2 = self.spaced_sinc(buf_num, index, frac, spacing2)  # Get the spaced sinc value for double spacing
-            return lerp(sinc1, sinc2, sinc_crossfade)  # Linear interpolation between sinc1 and sinc2
+        # Pre-compute constants to avoid repeated conversions
+        size_f64 = Float64(self.size)
+        sinc_power_f64 = Float64(self.sinc_interpolator.sinc_power)
+        max_layer = self.sinc_interpolator.sinc_power - 3
+        
+        # Compute phase difference and slope
+        phase_diff = phase - last_phase  
+        slope = wrap(phase_diff, -0.5, 0.5)  
+        samples_per_frame = abs(slope) * size_f64
+        
+        # Compute octave with single clamp operation
+        octave = clip(log2(samples_per_frame), 0.0, sinc_power_f64 - 2.0)
+        
+        # Compute layer and crossfade
+        octave_floor = floor(octave)
+        var layer = Int64(octave_floor + 1.0) 
+        var sinc_crossfade = octave - octave_floor
+        
+        # Clamp layer and adjust crossfade
+        if layer >= max_layer:
+            layer = max_layer
+            sinc_crossfade = 0.0
+        
+        # Use bit shifts for powers of 2 (much faster)
+        spacing1 = 1 << layer
+        spacing2 = spacing1 << 1
+        
+        # Compute index and fraction
+        f_index = (phase * size_f64) % size_f64
+        index = Int64(f_index)
+        frac = f_index - Float64(index)
+        
+        # Get first sinc value
+        sinc1 = self.spaced_sinc(buf_num, index, frac, spacing1)
+        
+        # Early return optimization for crossfade = 0
+        if sinc_crossfade == 0.0:
+            return sinc1
+        
+        # Conditional interpolation
+        if layer < 12:
+            sinc2 = self.spaced_sinc(buf_num, index, frac, spacing2)
+            return sinc1 + sinc_crossfade * (sinc2 - sinc1)  # Optimized lerp
         else:
-            return lerp(sinc1, 0.0, sinc_crossfade)  # Use sinc1 directly if spacing exceeds maximum sinc offset
+            return sinc1 * (1.0 - sinc_crossfade)  # Optimized lerp with 0
 
+    @always_inline  
     fn spaced_sinc(self, buf_num: Int64, index: Int64, frac: Float64, spacing: Int64) -> Float64:
-        var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing
-
-        # var out: Float64 = 0.0  # Initialize output value
+        sinc_mult = self.sinc_interpolator.max_sinc_offset / spacing
+        ripples = self.sinc_interpolator.ripples
+        loop_count = ripples * 2
+        
+        # Try to process in SIMD chunks if the loop is large enough
+        alias simd_width = simd_width_of[DType.float64]()
         var out: Float64 = 0.0
-
-        for sp in range(0, self.sinc_interpolator.ripples * 2):
-            var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size  # Calculate location point in the buffer
-            var spaced_point = (loc_point / spacing) * spacing
-            var sinc_offset = loc_point - spaced_point  # Calculate sinc offset
-
-            var sinc_value = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)  # Get sinc value from the interpolator
-
-            out += sinc_value * self.buffers[buf_num][spaced_point]
-
-        return out  # Scale the sample by the sinc value
-
-# one would think SIMD optimization would help here, but it doesn't
-# it actually makes is worse!
-
-#     fn spaced_sinc[simd_width: Int = 4](
-#     self, 
-#     buf_num: Int64, 
-#     index: Int64, 
-#     frac: Float64, 
-#     spacing: Int64
-# ) -> Float64:
-#         var sinc_mult: Int64 = self.sinc_interpolator.max_sinc_offset / spacing
-#         var loop_count = self.sinc_interpolator.ripples * 2
-#         var num_chunks = loop_count // simd_width
-#         # var remainder = loop_count % simd_width
         
-#         var accumulator = SIMD[DType.float64, simd_width](0.0)
-        
-#             # Process SIMD chunks
-#         var sinc_values = SIMD[DType.float64, simd_width](0.0)
-#         var buffer_values = SIMD[DType.float64, simd_width](0.0)
+        # Process SIMD chunks
+        for base_sp in range(0, loop_count, simd_width):
+            remaining = min(simd_width, loop_count - base_sp)
             
-#         for chunk in range(num_chunks):
-#             var base_sp = chunk * simd_width
-            
-#             # Calculate all values for this chunk
-#             for i in range(simd_width):
-#                 var sp = base_sp + i
-#                 var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size
-#                 var spaced_point = (loc_point / spacing) * spacing
-#                 var sinc_offset = loc_point - spaced_point
-                
-#                 sinc_values[i] = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)
-#                 buffer_values[i] = self.buffers[buf_num][spaced_point]
-            
-#             # SIMD multiply-accumulate
-#             accumulator += sinc_values * buffer_values
+            @parameter
+            for i in range(simd_width):
+                if Int64(i) < remaining:
+                    sp = base_sp + i
+                    offset = sp - ripples + 1
+                    loc_point = (index + offset * spacing) % self.size
+                    spaced_point = (loc_point / spacing) * spacing
+                    sinc_offset = loc_point - spaced_point
+                    
+                    sinc_value = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)
+                    out += sinc_value * self.buffers[buf_num][spaced_point]
         
-#         var out: Float64 = 0.0
-#         for i in range(simd_width):
-#             out += accumulator[i]
-#         # # Handle remaining iterations - it should never run this code
-#         # for sp in range(num_chunks * simd_width, loop_count):
-#         #     var loc_point = (index + (sp - self.sinc_interpolator.ripples + 1) * spacing) % self.size
-#         #     var spaced_point = (loc_point / spacing) * spacing
-#         #     var sinc_offset = loc_point - spaced_point
-#         #     var sinc_value = self.sinc_interpolator.next(sp, sinc_offset, sinc_mult, frac)
-#         #     out += sinc_value * self.buffers[buf_num][spaced_point]
-        
-#         return out
+        return out
 
     fn read[interp: Int = 0](self, phase: Float64, osc_type: Int64 = 0) -> Float64:
         @parameter

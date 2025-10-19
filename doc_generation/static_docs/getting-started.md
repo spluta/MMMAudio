@@ -13,7 +13,7 @@ in the root of the downloaded repository, set up your virtual environment and in
 python3.13 -m venv venv
 source venv/bin/activate
 
-pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib
+pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib PySide6
 ```
 install modular's max/mojo library
 ```

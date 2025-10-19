@@ -4,7 +4,6 @@ This module provides an envelope generator class that can create complex envelop
 """
 
 from .Osc import Sweep
-from .Filters import Lag
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
@@ -51,7 +50,6 @@ struct Env(Representable, Movable, Copyable):
     var times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
-    var Lag: Lag  # Lag filter for smoothing the envelope output
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
 
@@ -65,7 +63,6 @@ struct Env(Representable, Movable, Copyable):
         self.times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
-        self.Lag = Lag(world_ptr)  # Initialize Lag filter with the MMMWorld instance
         self.trig_point = 0.0
         self.last_asr = 0.0
 
@@ -74,7 +71,6 @@ struct Env(Representable, Movable, Copyable):
 
     fn reset_vals(mut self, times: List[Float64]):
         """Reset internal values."""
-        # this should only happen when the times list is empty
         if self.times.__len__() != (times.__len__() + 1):
             self.times.clear()
         while self.times.__len__() < (times.__len__() + 1):
@@ -149,31 +145,63 @@ struct Env(Representable, Movable, Copyable):
 
         return out
     
-    fn min_env[N: Int = 1](self, ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
-        """
-        Create a simple envelope with specified ramp and duration. The rise and fall will be of length 'rise'.
+# min_env is just a function, not a struct
+fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
+    """
+    Create a simple envelope with specified ramp and duration. The rise and fall will be of length 'rise'.
 
-        Args:
-            ramp: (SIMD[DType.float64, N]): Current ramp position (0 to 1).
-            dur: (SIMD[DType.float64, N]): Total duration of the envelope.
-            rise: (SIMD[DType.float64, N]): Duration of the rise and fall segments.
+    Args:
+        ramp: (SIMD[DType.float64, N]): Current ramp position (0 to 1).
+        dur: (SIMD[DType.float64, N]): Total duration of the envelope.
+        rise: (SIMD[DType.float64, N]): Duration of the rise and fall segments.
 
-        Returns:
-            SIMD[DType.float64, N]: Envelope value at the current ramp position.
-        """
+    Returns:
+        SIMD[DType.float64, N]: Envelope value at the current ramp position.
+    """
+    
+    # Pre-compute common values
+    rise_ratio = rise / dur
+    fall_threshold = 1.0 - rise_ratio
+    dur_over_rise = dur / rise
+    
+    # Create condition masks
+    in_attack: SIMD[DType.bool, N] = ramp < rise_ratio
+    in_release: SIMD[DType.bool, N] = ramp > fall_threshold
+    
+    # Compute envelope values for each segment
+    attack_value = ramp * dur_over_rise
+    release_value = (1.0 - ramp) * dur_over_rise
+    sustain_value = SIMD[DType.float64, N](1.0)
+    
+    # Use select to choose the appropriate value
+    return in_attack.select(attack_value,
+           in_release.select(release_value, sustain_value))
 
-        rise2 = rise
-        out = SIMD[DType.float64, N](1.0)
-        @parameter
-        for i in range(N):
-            if rise2[i] > dur[i]/2.0:
-                rise2[i] = dur[i]/2.0
-            if ramp[i] < rise2[i]/dur[i]:
-                out[i] = ramp[i]*(dur[i]/rise2[i])
-            elif ramp[i] > 1.0 - rise2[i]/dur[i]:
-                out[i] = (1.0-ramp[i])*(dur[i]/rise2[i])
-        
-        return out
+# fn min_env[N: Int = 1](ramp: SIMD[DType.float64, N] = 0.01, dur: SIMD[DType.float64, N] = 0.1, rise: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
+#     """
+#     Create a simple envelope with specified ramp and duration. The rise and fall will be of length 'rise'.
+
+#     Args:
+#         ramp: (SIMD[DType.float64, N]): Current ramp position (0 to 1).
+#         dur: (SIMD[DType.float64, N]): Total duration of the envelope.
+#         rise: (SIMD[DType.float64, N]): Duration of the rise and fall segments.
+
+#     Returns:
+#         SIMD[DType.float64, N]: Envelope value at the current ramp position.
+#     """
+
+#     rise2 = rise
+#     out = SIMD[DType.float64, N](1.0)
+#     @parameter
+#     for i in range(N):
+#         if rise2[i] > dur[i]/2.0:
+#             rise2[i] = dur[i]/2.0
+#         if ramp[i] < rise2[i]/dur[i]:
+#             out[i] = ramp[i]*(dur[i]/rise2[i])
+#         elif ramp[i] > 1.0 - rise2[i]/dur[i]:
+#             out[i] = (1.0-ramp[i])*(dur[i]/rise2[i])
+    
+#     return out
 
 # [TODO] move to mmm_utils and make this a generic utility with T
 struct Changed(Representable, Movable, Copyable):

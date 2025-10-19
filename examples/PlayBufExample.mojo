@@ -19,7 +19,7 @@ struct BufSynth(Representable, Movable, Copyable):
     
     var moog: VAMoogLadder[2, 1] # 2 channels, os_index == 1 (2x oversampling)
     var lpf_freq: Float64
-    var lpf_freq_lag: Lag
+    var lpf_freq_lag: Lag[0.1]
     var messenger: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -38,7 +38,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.moog = VAMoogLadder[2, 1](self.world_ptr)
         self.lpf_freq = 20000.0
-        self.lpf_freq_lag = Lag(world_ptr)
+        self.lpf_freq_lag = Lag[0.1](world_ptr)
 
         self.messenger = Messenger(self.world_ptr)
 
@@ -49,7 +49,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         out = self.play_buf.next[N=2](self.buffer, 0, self.play_rate, True)
 
-        freq = self.lpf_freq_lag.next(self.lpf_freq, 0.1)
+        freq = self.lpf_freq_lag.next(self.lpf_freq)
         out = self.moog.next(out, freq, 1.0)
         return out
 

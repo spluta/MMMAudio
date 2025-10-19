@@ -14,15 +14,13 @@ struct VariableOsc(Representable, Movable, Copyable):
     # var osc: Osc[1,2,1]
     # var lag: Lag[1]
     var osc: Osc[2,2,1]
-    var lag: Lag[2]
+    var lag: Lag[0.1, 2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         # for efficiency we set the interpolation and oversampling in the constructor
-        # self.osc = Osc[1,2,1](self.world_ptr)
-        # self.lag = Lag[1](self.world_ptr)
         self.osc = Osc[2,2,1](self.world_ptr)
-        self.lag = Lag[2](self.world_ptr)
+        self.lag = Lag[0.1, 2](self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -31,7 +29,7 @@ struct VariableOsc(Representable, Movable, Copyable):
 
         # freq = self.world_ptr[0].mouse_y
         freq = SIMD[DType.float64, 2](1-self.world_ptr[0].mouse_y, self.world_ptr[0].mouse_y)
-        freq = self.lag.next(freq, 0.1)
+        freq = self.lag.next(freq)
         freq = linexp(freq, 0.0, 1.0, 100, 10000)
 
         # by defualt, next_interp will interpolate between the four default waveforms - sin, tri, square, saw

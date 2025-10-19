@@ -19,12 +19,12 @@ struct Pan2 (Representable, Movable, Copyable):
         return String("Pan2")
 
     @always_inline
-    fn next(mut self, samples: SIMD[DType.float64, 2], mut pan: Float64) -> SIMD[DType.float64, 2]:
+    fn next(mut self, samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
         # Calculate left and right channel samples based on pan value
-        pan = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
+        pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
         
-        self.gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
-        self.gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
+        self.gains[0] = sqrt((1.0 - pan2) * 0.5)  # left gain
+        self.gains[1] = sqrt((1.0 + pan2) * 0.5)   # right gain
 
         samples_out = samples * self.gains
         return samples_out  # Return stereo output as List

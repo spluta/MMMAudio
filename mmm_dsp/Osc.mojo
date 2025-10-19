@@ -47,6 +47,15 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
         return (self.phase + phase_offset) % 1.0
 
+struct OscType:
+    alias sine: Int64 = 0
+    alias saw: Int64 = 1
+    alias square: Int64 = 2
+    alias triangle: Int64 = 3
+    alias bandlimited_triangle: Int64 = 4
+    alias bandlimited_saw: Int64 = 5
+    alias bandlimited_square: Int64 = 6
+
 struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling. 
@@ -313,35 +322,24 @@ struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
     #     return Float64(self.next(freq, trig))
 
     @always_inline
-    fn next(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-        """Generate the next impulse sample."""
-        phase = self.phasor.next(freq, 0.0, trig)  # Update the phase
-        test = SIMD[DType.bool, self.N](fill=False)
+    fn next(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.float64, self.N]:
 
-        for i in range(self.N):
-            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]) or (trig[i] and not self.last_trig[i]):  # Check for an impulse (crossing the 0.5 threshold)
-                test[i] = True
-        self.last_phase = phase
-        self.last_trig = trig
-
-        out = SIMD[DType.float64, self.N](0.0)
-        @parameter
-        for i in range(self.N):
-            out[i] = 1.0 if test[i] else 0.0
-
-        return out
+        return SIMD[DType.float64, self.N](self.next_bool(freq, trig).cast[DType.float64]())
 
     @always_inline
-    fn next_bool(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.bool, self.N]:
+    fn next_bool(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
         """Generate the next impulse sample."""
         phase = self.phasor.next(freq, 0.0, trig)  # Update the phase
         test = SIMD[DType.bool, self.N](fill=False)
+        rbd = self.rising_bool_detector.next(trig)
 
         for i in range(self.N):
-            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]) or (trig[i] and not self.last_trig[i]):  # Check for an impulse (crossing the 0.5 threshold)
+            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]):  # Check for an impulse (crossing the 0.5 threshold)
                 test[i] = True
+            elif rbd[i]:
+                test[i] = True
+                self.phasor.phase[i] = 0.0  # Reset phase on trigger
         self.last_phase = phase
-        self.last_trig = trig
 
         return test
 
@@ -362,42 +360,24 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Dust")
 
-    @always_inline
-    fn next(mut self: Dust, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-        """Generate the next dust noise sample."""
-        if self.rising_bool_detector.next(trig):
-            self.freq = random_exp_float64(freq*0.25, freq*4.0)  # Update frequency if trig is greater than 0.0
-            self.impulse.phasor.phase = 0.0  # Reset phase
-            return random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
 
-        var tick = self.impulse.next(self.freq, trig)  # Update the phase
-
-        var out = SIMD[DType.float64, self.N](0.0)
-
-        for i in range(self.N):
-            if tick[i] == 1.0:  # If an impulse is detected
-                self.freq[i] = random_exp_float64(freq[i]*0.25, freq[i]*4.0)
-                out[i] = random_float64(-1.0, 1.0)  # Return a random value between -1 and 1
-        return out
+    fn next(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.float64, self.N]:
+        return self.next_bool(low, high, trig).cast[DType.float64]()
 
     @always_inline
-    fn next_range(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.float64, self.N]:
+    fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.bool, self.N]:
         """Generate the next dust noise sample."""
-        if self.rising_bool_detector.next(trig):
-            self.freq = random_exp_float64(low, high)  # Update frequency if trig is greater than 0.0
-            self.impulse.phasor.phase = 0.0  # Reset phase
-            return random_float64(0.1, 1.0)  # Return a random value between -1 and 1
+        rbd = self.rising_bool_detector.next(trig)
 
-        var tick = self.impulse.next(self.freq, trig)  # Update the phase
+        var tick = self.impulse.next_bool(self.freq, trig)  # Update the phase
+        var out = SIMD[DType.bool, self.N](fill=False)
 
-        var out = SIMD[DType.float64, self.N](0.0)
-
+        @parameter
         for i in range(self.N):
-            if tick[i] > 0.0:  # If an impulse is detected
+            if tick[i] or rbd[i]:
                 self.freq[i] = random_exp_float64(low[i], high[i])
-                out[i] = random_float64(0.1, 1.0)  # Return a random value between -1 and 1
+                out[i] = True
         return out
-        return 0.0
 
     fn get_phase(mut self: Dust) -> SIMD[DType.float64, self.N]:
         return self.impulse.last_phase
@@ -505,7 +485,6 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
                 self.phase[i] = 0.0
 
         return self.phase
-
 
 # struct Sweep(Representable, Movable, Copyable):
 #     var phase: Float64
