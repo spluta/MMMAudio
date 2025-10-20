@@ -90,7 +90,7 @@ struct MMMAudioBridge(Representable, Movable):
         key = String(key_vals[0])
         value = Float64(key_vals[1])
 
-        py_self[0].world_ptr[0].update_float_msg(key, value)
+        py_self[0].world_ptr[0].messengerManager.update_float_msg(key, value)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -100,7 +100,7 @@ struct MMMAudioBridge(Representable, Movable):
         key = String(key_vals[0])
         value = Bool(key_vals[1])
 
-        py_self[0].world_ptr[0].update_gate_msg(key, value)
+        py_self[0].world_ptr[0].messengerManager.update_gate_msg(key, value)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -112,7 +112,7 @@ struct MMMAudioBridge(Representable, Movable):
         for i in range(1, len(key_vals)):
             values.append(Float64(key_vals[i]))
 
-        py_self[0].world_ptr[0].update_list_msg(key, values)
+        py_self[0].world_ptr[0].messengerManager.update_list_msg(key, values)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -121,21 +121,18 @@ struct MMMAudioBridge(Representable, Movable):
 
         key = String(key_vals[0])
 
-        py_self[0].world_ptr[0].update_trig_msg(key)
+        py_self[0].world_ptr[0].messengerManager.update_trig_msg(key)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
     fn send_text_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
-        var list = List[String]()
-
         var key = String(key_vals[0])
-        for i in range(1,len(key_vals)):     
-            list.append(String(key_vals[i]))  # Convert each value to String and append to the list
+        var text = String(key_vals[1])
 
-        py_self[0].world_ptr[0].send_text_msg(key, list)
-        
+        py_self[0].world_ptr[0].messengerManager.update_text_msg(key, text)
+
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod

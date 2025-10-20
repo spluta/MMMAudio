@@ -24,18 +24,17 @@ struct MMMGraph(Representable, Movable):
     fn __repr__(self) -> String:
         return String("MMMGraph")
 
-    fn get_audio_samples(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]):
+    fn get_audio_samples(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
 
+        self.world_ptr[0].top_of_block = True
+        self.world_ptr[0].messengerManager.transfer_msgs()
+                
         for i in range(self.world_ptr[0].block_size):
             self.world_ptr[0].block_state = i  # Update the block state
-            
-            if i == 0:
-                self.world_ptr[0].top_of_block = True
-                self.world_ptr[0].transfer_trig_msgs()
-            elif i == 1:
+
+            if i == 1:
                 self.world_ptr[0].top_of_block = False
-                self.world_ptr[0].trig_msgs.clear()
-                self.world_ptr[0].text_msg_dict.clear()
+                self.world_ptr[0].messengerManager.clear_trig_and_text_msgs()
 
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):
@@ -46,6 +45,8 @@ struct MMMGraph(Representable, Movable):
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
+        
+        self.world_ptr[0].messengerManager.un_new_msgs()
 
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)

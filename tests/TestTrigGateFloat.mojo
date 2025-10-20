@@ -30,8 +30,8 @@ struct TestTrigGateFloat(Movable, Copyable):
         gt = self.m.get_gate("gate_test", False)
         tg = self.m.get_trig("trig_test")
 
-        self.printers[0].next(fl, "Float Value:")
-        self.printers[1].next(gt, "Gate Value:")
+        self.printers[0].next(fl, "Float Value:",0.5)
+        self.printers[1].next(gt, "Gate Value:",0.5)
 
         if tg:
             print("Trig Received! ********************************************")
