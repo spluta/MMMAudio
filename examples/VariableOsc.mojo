@@ -14,13 +14,13 @@ struct VariableOsc(Representable, Movable, Copyable):
     # var osc: Osc[1,2,1]
     # var lag: Lag[1]
     var osc: Osc[2,2,1]
-    var lag: Lag[0.1, 2]
+    var lag: Lag[2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         # for efficiency we set the interpolation and oversampling in the constructor
         self.osc = Osc[2,2,1](self.world_ptr)
-        self.lag = Lag[0.1, 2](self.world_ptr)
+        self.lag = Lag[2](self.world_ptr, 0.1)
 
     fn __repr__(self) -> String:
         return String("Default")

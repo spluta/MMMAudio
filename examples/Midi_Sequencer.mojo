@@ -78,7 +78,7 @@ struct TrigSynth(Movable, Copyable):
     var num_voices: Int64
 
     var svf: SVF
-    var filt_lag: Lag[0.1]
+    var filt_lag: Lag
     var filt_freq: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
@@ -93,7 +93,7 @@ struct TrigSynth(Movable, Copyable):
             self.voices.append(TrigSynthVoice(self.world_ptr))
 
         self.svf = SVF(self.world_ptr)
-        self.filt_lag = Lag[0.1](self.world_ptr)
+        self.filt_lag = Lag(self.world_ptr, 0.1)
         self.filt_freq = 1000.0
 
     @always_inline

@@ -13,24 +13,24 @@ from mmm_dsp.Filters import SVF
 struct DelaySynth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
-    var main_lag: Lag[0.03]
+    var main_lag: Lag
     var buffer: Buffer
     var playBuf: PlayBuf
     var delays: FBDelay[N=2, interp=3]  # FBDelay with 2 channels and interpolation type 3 (cubic)
-    var delay_time_lag: Lag[0.2, 2]
+    var delay_time_lag: Lag[2]
     var m: Messenger
-    var gate_lag: Lag[0.03, 1]
+    var gate_lag: Lag[1]
     var svf: SVF[2]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
-        self.main_lag = Lag[0.03](self.world_ptr)
+        self.main_lag = Lag(self.world_ptr, 0.03)
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         self.delays = FBDelay[N=2, interp=3](self.world_ptr, self.maxdelay) 
-        self.delay_time_lag = Lag[0.2, 2](self.world_ptr)  # Initialize Lag with a default time constant
+        self.delay_time_lag = Lag[2](self.world_ptr, 0.2)  # Initialize Lag with a default time constant
         self.m = Messenger(self.world_ptr)
-        self.gate_lag = Lag[0.03, 1](self.world_ptr)
+        self.gate_lag = Lag(self.world_ptr, 0.03)
         self.svf = SVF[2](self.world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

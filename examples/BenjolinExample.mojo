@@ -121,7 +121,7 @@ struct Benjolin(Representable, Movable, Copyable):
         self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
         
         filter_output = select(filterType,self.filter_outputs) * dbamp(-12)
-        self.world_ptr[0].print(filter_output,"filter output: ")
+        # self.world_ptr[0].print(filter_output,"filter output: ")
         filter_output = sanitize(filter_output)
 
         output = SIMD[DType.float64, 2](0.0, 0.0)

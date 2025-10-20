@@ -96,7 +96,7 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
     return 20.0 * log10(amp)
 
 @always_inline
-fn select(index: Float64, list: List[Float64]) -> Float64:
+fn select[dtype: DType, width: Int](index: SIMD[dtype, width], list: List[SIMD[dtype, width]]) -> SIMD[dtype, width]:
     index_int = Int(index) % len(list)
     index_mix = index - index_int
     val = list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix

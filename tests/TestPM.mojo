@@ -14,13 +14,13 @@ struct TestPM(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var mod: Osc
     var carrier: Osc
-    var lag: Lag[1, 0.2]
+    var lag: Lag[1]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.mod = Osc(self.world_ptr)
         self.carrier = Osc(self.world_ptr)
-        self.lag = Lag[1, 0.2](self.world_ptr)
+        self.lag = Lag[1](self.world_ptr, 0.2)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         freq = linexp(self.world_ptr[0].mouse_x, 0.0, 1.0, 100.0, 1000.0)
