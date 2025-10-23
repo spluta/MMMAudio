@@ -2,7 +2,9 @@ name: Build & Deploy MkDocs to GitHub Pages
 
 on:
   push:
-    branches: [ fix-docs , main ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -61,3 +63,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Previews for PRs, production for pushes to main
+          preview: ${{ github.event_name == 'pull_request' }}
