@@ -32,7 +32,7 @@ jobs:
 
       - name: Install Mojo for mojo docs
         run: |
-          pip install --pre modular --index-url https://dl.modular.com/public/nightly/python/simple/
+          pip install mojo
 
       - name: Create docs_md dir
         run: |
