@@ -2,7 +2,9 @@ name: Build & Deploy MkDocs to GitHub Pages
 
 on:
   push:
-    branches: [ render-in-line-docs , main ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 permissions:
@@ -30,7 +32,7 @@ jobs:
 
       - name: Install Mojo for mojo docs
         run: |
-          pip install --pre modular --index-url https://dl.modular.com/public/nightly/python/simple/
+          pip install mojo
 
       - name: Create docs_md dir
         run: |
@@ -61,3 +63,6 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Previews for PRs, production for pushes to main
+          preview: ${{ github.event_name == 'pull_request' }}
