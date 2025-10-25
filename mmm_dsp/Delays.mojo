@@ -6,6 +6,12 @@ from sys import simd_width_of
 from algorithm import vectorize
 from mmm_dsp.Filters import VAOnePole, DCTrap
 
+struct InterpOptions:
+    alias no_interp: Int = 0
+    alias linear_interp: Int = 1
+    alias cubic_interp: Int = 2
+    alias lagrange4: Int = 3
+
 alias simd_width = simd_width_of[DType.float64]()*2
 
 struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Representable, Movable, Copyable):
@@ -52,79 +58,99 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
 
         Returns:
           The processed output sample.
-
         """
         # return input
         self.write_idx = (self.write_idx + 1) % self.max_delay_samples
 
         @parameter
-        if interp < 3:
-          var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
-          var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
-          var read_idx = (self.write_idx - sample_delay) % self.max_delay_samples
-          var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-          @parameter
-          if interp == 0:
-              # no interpolation
-              @parameter
-              for i in range(self.N):
-                  out[i] = self.delay_line[i][read_idx[i]]
-                  @parameter
-                  if write_to_buffer:
-                    self.delay_line[i][self.write_idx] = input[i]
-            
-              return out
-          elif interp == 1:
-            # linear interpolation
-            var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
-            var next_idx = (read_idx - 1) % self.max_delay_samples
-            var samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-            var next_samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-            @parameter
-            for i in range(self.N):
-              samps[i] = self.delay_line[i][read_idx[i]]
-              next_samps[i] = self.delay_line[i][next_idx[i]]
-
-            @parameter
-            if write_to_buffer:
-                @parameter
-                for i in range(self.N):
-                    self.delay_line[i][self.write_idx] = input[i]
-
-            return lerp(samps, next_samps, frac)
-          else:
-            # cubic interpolation - this needs to be checked
-            # because it is a delay, everythings is backwards and I have been staring at it too long
-            var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
-            var p0_idx = (read_idx - 2) % self.max_delay_samples
-            var p1_idx = (read_idx - 1) % self.max_delay_samples
-            var p2_idx = (read_idx) % self.max_delay_samples
-            var p3_idx = (read_idx + 1) % self.max_delay_samples
-
-            var p0: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-            var p1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-            var p2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-            var p3: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-            @parameter
-            for i in range(self.N):
-              p0[i] = self.delay_line[i][p0_idx[i]]
-              p1[i] = self.delay_line[i][p1_idx[i]]
-              p2[i] = self.delay_line[i][p2_idx[i]]
-              p3[i] = self.delay_line[i][p3_idx[i]]
-
-            @parameter
-            if write_to_buffer:
-                @parameter
-                for i in range(self.N):
-                    self.delay_line[i][self.write_idx] = input[i]
-
-            return cubic_interp(p0, p1, p2, p3, frac)
-        else:
-            # Lagrange interpolation
+        if interp == InterpOptions.no_interp:
+          return self.no_interp(input, delay_time)
+        elif interp == InterpOptions.linear_interp:
+            return self.linear_interp_loc(input, delay_time)
+        elif interp == InterpOptions.cubic_interp:
+            return self.cubic_interp_loc(input, delay_time)
+        elif interp == InterpOptions.lagrange4:
           return self.lagrange4(input, delay_time)
 
+    @doc_private
+    fn get_read_idx(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.int64, self.N]:
+        var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
+        var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
+        var read_idx = (self.write_idx - sample_delay) % self.max_delay_samples
+        return read_idx
+
+    @doc_private
+    fn get_read_idx_and_frac(mut self, delay_time: SIMD[DType.float64, self.N]) -> (SIMD[DType.int64, self.N], SIMD[DType.float64, self.N]):
+        var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
+        var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
+        var read_idx = (self.write_idx - sample_delay) % self.max_delay_samples
+        var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
+        return (read_idx, frac)
+
+    @doc_private
+    fn no_interp(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+      var read_idx = self.get_read_idx(delay_time)
+
+      var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+      @parameter
+      for i in range(self.N):
+          out[i] = self.delay_line[i][read_idx[i]]
+          @parameter
+          if write_to_buffer:
+            self.delay_line[i][self.write_idx] = input[i]
+      return out
+
+    @doc_private
+    fn linear_interp_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+      var (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
+      var next_idx = (read_idx - 1) % self.max_delay_samples
+      var samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+      var next_samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+
+      @parameter
+      for i in range(self.N):
+        samps[i] = self.delay_line[i][read_idx[i]]
+        next_samps[i] = self.delay_line[i][next_idx[i]]
+
+      @parameter
+      if write_to_buffer:
+          @parameter
+          for i in range(self.N):
+              self.delay_line[i][self.write_idx] = input[i]
+
+      return lerp(samps, next_samps, frac)
+
+    @doc_private
+    fn cubic_interp_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+      var (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
+      # this is tested and ok: Mojo allows `negative_number` % `positive_number`
+      # to yield a positive result, so we can safely use modulo for wrapping indices.
+      var p0_idx = (read_idx - 2) % self.max_delay_samples
+      var p1_idx = (read_idx - 1) % self.max_delay_samples
+      var p2_idx = (read_idx) % self.max_delay_samples
+      var p3_idx = (read_idx + 1) % self.max_delay_samples
+
+      var p0: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+      var p1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+      var p2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+      var p3: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+
+      @parameter
+      for i in range(self.N):
+        p0[i] = self.delay_line[i][p0_idx[i]]
+        p1[i] = self.delay_line[i][p1_idx[i]]
+        p2[i] = self.delay_line[i][p2_idx[i]]
+        p3[i] = self.delay_line[i][p3_idx[i]]
+
+      @parameter
+      if write_to_buffer:
+          @parameter
+          for i in range(self.N):
+              self.delay_line[i][self.write_idx] = input[i]
+
+      return cubic_interp(p0, p1, p2, p3, frac)
+
+    @doc_private
     fn lagrange4(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Perform Lagrange interpolation for 4th order case (from JOS Faust Model)
         """
@@ -139,10 +165,9 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
         var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
         var fd = o + frac
 
-        # simd optimized!
         var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
 
-        var read_ptr = (self.write_idx - sample_delay) % self.max_delay_samples
+        var read_idx = (self.write_idx - sample_delay) % self.max_delay_samples
 
         var fdm1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
         var fdm2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
@@ -174,88 +199,21 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
             coeffs: SIMD[DType.float64, 4] = SIMD[DType.float64, 4](coeff0[i], coeff1[i], coeff2[i], coeff3[i])
 
             delays_simd = SIMD[DType.float64, 4](
-                self.delay_line[i][read_ptr[i]],
-                self.delay_line[i][(read_ptr[i] - 1) % self.max_delay_samples],
-                self.delay_line[i][(read_ptr[i] - 2) % self.max_delay_samples], 
-                self.delay_line[i][(read_ptr[i] - 3) % self.max_delay_samples],
+                self.delay_line[i][read_idx[i]],
+                self.delay_line[i][(read_idx[i] - 1) % self.max_delay_samples],
+                self.delay_line[i][(read_idx[i] - 2) % self.max_delay_samples],
+                self.delay_line[i][(read_idx[i] - 3) % self.max_delay_samples],
             )
 
             var products = delays_simd * coeffs
 
-            out[i] = products.reduce_add() + (self.delay_line[i][(read_ptr[i] - 4) % self.max_delay_samples] * coeff4[i])
+            out[i] = products.reduce_add() + (self.delay_line[i][(read_idx[i] - 4) % self.max_delay_samples] * coeff4[i])
 
             @parameter
             if write_to_buffer:
               self.delay_line[i][self.write_idx] = input[i]
 
         return out
-
-        # fn lagrange4(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-        # """Perform Lagrange interpolation for 4th order case (from JOS Faust Model)
-        # """
-
-        # # Write the current sample to the delay line
-        # self.write_idx = (self.write_idx + 1) % self.max_delay_samples
-
-        # var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
-        # @parameter
-        # for i in range(self.N):
-        #     fsample_delay[i] = max(1.0, fsample_delay[i])
-
-        # var o = 1.49999
-        # var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
-        # var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
-        # self.fd_dels[0] = o + frac
-
-        # # simd optimized!
-        # var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-        # var read_idx = (self.write_idx - sample_delay) % self.max_delay_samples
-
-        # # var fdm1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        # # var fdm2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        # # var fdm3: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        # # var fdm4: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-        # alias offsets = SIMD[DType.float64, 4](1.0, 2.0, 3.0, 4.0)
-
-        # @parameter
-        # for i in range(self.N):
-        #     var fd_vec = SIMD[DType.float64, 4](self.fd_dels[0][i])
-
-        #     var fd_minus_offsets = fd_vec - offsets  # [fd-1, fd-2, fd-3, fd-4]
-
-        #     self.fd_dels[1][i] = fd_minus_offsets[0]
-        #     self.fd_dels[2][i] = fd_minus_offsets[1]
-        #     self.fd_dels[3][i] = fd_minus_offsets[2]
-        #     self.fd_dels[4][i] = fd_minus_offsets[3]
-
-        # # all this math is parallelized - for N > 4, this should be further optimized
-        # self.coeffs[0] = self.fd_dels[1] * self.fd_dels[2] * self.fd_dels[3] * self.fd_dels[4] / 24.0
-        # self.coeffs[1] = (0.0 - self.fd_dels[0]) * self.fd_dels[2] * self.fd_dels[3] * self.fd_dels[4] / 6.0
-        # self.coeffs[2] = self.fd_dels[0] * self.fd_dels[1] * self.fd_dels[3] * self.fd_dels[4] / 4.0
-        # self.coeffs[3] = (0.0 - self.fd_dels[0] * self.fd_dels[1] * self.fd_dels[2] * self.fd_dels[4]) / 6.0
-        # self.coeffs[4] = self.fd_dels[0] * self.fd_dels[1] * self.fd_dels[2] * self.fd_dels[3] / 24.0
-        # @parameter
-        # for i in range(self.N):
-        #     coeffs: SIMD[DType.float64, 4] = SIMD[DType.float64, 4](self.coeffs[0][i], self.coeffs[1][i], self.coeffs[2][i], self.coeffs[3][i])
-
-        #     delays_simd = SIMD[DType.float64, 4](
-        #         self.delay_line[i][read_idx[i]],
-        #         self.delay_line[i][(read_idx[i] - 1) % self.max_delay_samples],
-        #         self.delay_line[i][(read_idx[i] - 2) % self.max_delay_samples], 
-        #         self.delay_line[i][(read_idx[i] - 3) % self.max_delay_samples],
-        #     )
-
-        #     var products = delays_simd * coeffs
-
-        #     out[i] = products.reduce_add() + (self.delay_line[i][(read_idx[i] - 4) % self.max_delay_samples] * self.coeffs[4][i])
-
-        #     @parameter
-        #     if write_to_buffer:
-        #       self.delay_line[i][self.write_idx] = input[i]
-
-        # return out
 
 struct DelayN[N: Int = 2, interp: Int = 3, write_to_buffer: Bool = True](Movable, Copyable):
     var list: List[Delay[simd_width, interp, write_to_buffer]]
@@ -284,9 +242,6 @@ struct DelayN[N: Int = 2, interp: Int = 3, write_to_buffer: Bool = True](Movable
                 if idx < N:
                     out_list[idx] = temp[j]
         vectorize[closure, simd_width](N)
-
-
-
 
 struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     """
