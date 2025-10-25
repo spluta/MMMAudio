@@ -1,5 +1,5 @@
 """
-MMM Utility Functions
+MMMAudioUtility Functions
 
 This module provides essential utility functions for audio processing and mathematical
 operations in the MMMAudio framework. All functions are optimized for SIMD operations

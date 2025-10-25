@@ -34,7 +34,11 @@ theme:
     - content.code.annotate
 
 nav:
-  - Home: index.md
+  - Home: 
+    - Overview: index.md
+    - API Reference: api/index.md
+    - Examples: examples/index.md
+    - Contributing: contributing/index.md
   - Getting Started: getting-started.md
   - API Reference:
     - Overview: api/index.md
