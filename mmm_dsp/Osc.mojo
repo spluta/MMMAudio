@@ -34,18 +34,27 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-        # Reset phase if trig has changed from 0 to positive value
-
         self.increment_phase(freq)
-
+        
         var resets = self.rising_bool_detector.next(trig)
-
-        @parameter
-        for i in range(self.N):
-            if resets[i]:
-                self.phase[i] = 0.0
-
+        
+        # SIMD conditional reset - no loop needed!
+        self.phase = resets.select(0.0, self.phase)
+        
         return (self.phase + phase_offset) % 1.0
+    # fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
+    #     # Reset phase if trig has changed from 0 to positive value
+
+    #     self.increment_phase(freq)
+
+    #     var resets = self.rising_bool_detector.next(trig)
+
+    #     @parameter
+    #     for i in range(self.N):
+    #         if resets[i]:
+    #             self.phase[i] = 0.0
+
+    #     return (self.phase + phase_offset) % 1.0
 
 struct OscType:
     alias sine: Int64 = 0
