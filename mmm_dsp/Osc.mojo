@@ -233,7 +233,10 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     #     return sample
 
 struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A sine wave oscillator."""
+    """A sine wave oscillator.
+    
+    This is a convenience struct as internally it uses Osc and indicates `osc_type = 0`
+    """
 
     var osc: Osc[N, os_index]  # Instance of the Oscillator
 
