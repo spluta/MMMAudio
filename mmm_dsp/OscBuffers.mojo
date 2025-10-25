@@ -177,7 +177,7 @@ struct OscBuffers(Representable, Movable, Copyable):
         
         frac = x - Float64(Int64(x))
         
-        buffer = self.buffers[buf_num]
+        ref buffer = self.buffers[buf_num]
         return quadratic_interp(buffer[base_idx], buffer[idx1], buffer[idx2], frac)
 
     @always_inline
@@ -186,8 +186,9 @@ struct OscBuffers(Representable, Movable, Copyable):
         index_next = (index + 1) & self.mask
         frac = x - Float64(Int64(x))
         
-        buffer = self.buffers[buf_num]
+        ref buffer = self.buffers[buf_num]
         return buffer[index] + frac * (buffer[index_next] - buffer[index])
+
 
     # Get the next sample from the buffer using linear interpolation
     # Needs to receive an unsafe pointer to the buffer being used
@@ -246,52 +247,6 @@ struct OscBuffers(Representable, Movable, Copyable):
                 )
         
         return sinc1 + sinc_crossfade * (sinc2 - sinc1)
-
-    # @always_inline
-    # fn read_sinc(self, phase: Float64, last_phase: Float64, buf_num: Int64) -> Float64:
-    #     # Pre-compute constants to avoid repeated conversions
-
-        
-    #     # Compute phase difference and slope
-    #     phase_diff = phase - last_phase  
-    #     slope = wrap(phase_diff, -0.5, 0.5)  
-    #     samples_per_frame = abs(slope) * self.size_f64
-        
-    #     # Compute octave with single clamp operation
-    #     octave = clip(log2(samples_per_frame), 0.0, self.sinc_power_f64 - 2.0)
-        
-    #     # Compute layer and crossfade
-    #     octave_floor = floor(octave)
-    #     var layer = Int64(octave_floor + 1.0) 
-    #     var sinc_crossfade = octave - octave_floor
-        
-    #     # Clamp layer and adjust crossfade
-    #     if layer >= self.max_layer:
-    #         layer = self.max_layer
-    #         sinc_crossfade = 0.0
-        
-    #     # Use bit shifts for powers of 2 (much faster)
-    #     spacing1 = 1 << layer
-    #     spacing2 = spacing1 << 1
-        
-    #     # Compute index and fraction
-    #     f_index = (phase * self.size_f64) #% size_f64
-    #     index = Int64(f_index)
-    #     frac = f_index - Float64(index)
-        
-    #     # Get first sinc value
-    #     sinc1 = self.spaced_sinc(buf_num, index, frac, spacing1)
-        
-    #     # Early return optimization for crossfade = 0
-    #     if sinc_crossfade == 0.0:
-    #         return sinc1
-        
-    #     # Conditional interpolation
-    #     if layer < 12:
-    #         sinc2 = self.spaced_sinc(buf_num, index, frac, spacing2)
-    #         return sinc1 + sinc_crossfade * (sinc2 - sinc1)  # Optimized lerp
-    #     else:
-    #         return sinc1 * (1.0 - sinc_crossfade)  # Optimized lerp with 0
 
     @always_inline  
     fn spaced_sinc(self, buf_num: Int64, index: Int64, frac: Float64, spacing: Int64) -> Float64:
