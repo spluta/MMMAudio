@@ -12,7 +12,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     var buffer: Buffer
     var playBuf: PlayBuf
-    var delays: FBDelay[2, 3]  # FBDelay for feedback delay effect
+    var delays: FBDelay[2, DelayInterpOptions.lagrange]  # FBDelay for feedback delay effect
     var lag: Lag[2]
     var mouse_x: Float64
     var mouse_y: Float64
@@ -22,7 +22,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         # FBDelay is initialized as 2 channel
-        self.delays = FBDelay[2, 3](self.world_ptr, 1.0) 
+        self.delays = FBDelay[2, DelayInterpOptions.lagrange](self.world_ptr, 1.0) 
 
         self.lag = Lag[2](self.world_ptr, 0.5)  # Initialize Lag with a default time constant
 
@@ -42,10 +42,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
         var del_time = self.lag.next(
-            SIMD[DType.float64, 2](
-                linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()),
-                linlin(self.mouse_x, 0.0, 1.0, 0.0, self.buffer.get_duration()*0.9)
-            )
+            self.mouse_x * SIMD[DType.float64, 2](1.0, 0.9)
         )
 
         var feedback = SIMD[DType.float64, 2](self.mouse_y * 2.0, self.mouse_y * 2.1)
