@@ -1,5 +1,14 @@
-from mmm_src.MMMAudio import MMMAudio
+import sys
+from pathlib import Path
 
+# This example is able to run by pressing the "play" button in VSCode
+# that executes the whole file.
+# In order to do this, it needs to add the parent directory to the path
+# (the next line here) so that it can find the mmm_src and mmm_utils packages.
+# If you want to run it line by line in a REPL, skip this line!
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mmm_src.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(128, graph_name="PlayBufExample", package_name="examples")
 
@@ -27,8 +36,3 @@ def osc_msg_handler(key, *args):
 osc_server = OSCServer("0.0.0.0", 5005, osc_msg_handler)
 osc_server.start()
 
-# if you need to adjust and reset the handler function:
-osc_server.set_osc_msg_handler(osc_msg_handler)
-
-# Stop server when needed
-osc_server.stop()

@@ -3,11 +3,10 @@ from python import Python
 from memory import UnsafePointer
 from mmm_utils.functions import *
 from mmm_src.MMMWorld import MMMWorld
-from mmm_src.MMMTraits import Buffable
 
 alias dtype = DType.float64
 
-struct Buffer(Representable, Movable, Buffable, Copyable):
+struct Buffer(Representable, Movable, Copyable):
     """Buffer for holding data (often audio data).
 
     There are two ways to initialize a Buffer (see the two `__init__` methods below):
@@ -24,16 +23,6 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
     var num_chans: Int64  # Number of channels
 
     var data: List[List[Float64]]  # List of channels, each channel is a List of Float64 samples
-
-    fn get_num_frames(self) -> Float64:
-        """Return the number of frames in the buffer."""
-        return self.num_frames
-    fn get_duration(self) -> Float64:
-        """Return the duration of the buffer in seconds."""
-        return self.duration
-    fn get_buf_sample_rate(self) -> Float64:
-        """Return the sample rate of the buffer."""
-        return self.buf_sample_rate
 
     fn __init__(out self, lists: List[List[Float64]] = List[List[Float64]](), buf_sample_rate: Float64 = 48000.0):
         """
@@ -138,6 +127,7 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
     fn __repr__(self) -> String:
         return String("Buffer")
 
+    @always_inline
     fn quadratic_interp_loc(self, idx: Int64, idx1: Int64, idx2: Int64, frac: Float64, chan: Int64) -> Float64:
         """Perform quadratic interpolation between three samples in the buffer."""
         # Ensure indices are within bounds
@@ -152,6 +142,7 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
 
         return quadratic_interp(y0, y1, y2, frac)
 
+    @always_inline
     fn linear_interp_loc(self, idx: Int64, idx1: Int64, frac: Float64, chan: Int64) -> Float64:
         """Perform linear interpolation between two samples in the buffer."""
         # Ensure indices are within bounds
@@ -172,23 +163,11 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
         This function is not yet implemented. """
         raise Error("Sinc interpolation is not implemented yet.")
 
-    fn read[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
-        """
-        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N. 
-        It will start reading from the channel specified by start_chan and read N channels from there.
-
-        Parameters:
-            N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
-
-        Args:
-            start_chan: The starting channel index to read from (0-based).
-            phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
-            interp: The interpolation method to use (0 = linear, 1 = quadratic).
-        """
-
+    @always_inline
+    fn read_index[N: Int = 1](mut self, start_chan: Int64, f_idx: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
         if self.num_frames == 0 or self.num_chans == 0:
             return SIMD[DType.float64, N](0.0)  # Return zero if no frames or channels are available
-        var f_idx = phase * self.num_frames
+        
         var frac = f_idx - Float64(Int64(f_idx))
 
         var idx = Int64(f_idx)
@@ -204,9 +183,28 @@ struct Buffer(Representable, Movable, Buffable, Copyable):
                 out[i] = self.quadratic_interp_loc(idx, (idx + 1), (idx + 2), frac, start_chan + i)
             else:
                 out[i] = self.linear_interp_loc(idx, idx + 1, frac, start_chan + i)  # default is linear interpolation
-
         return out
 
+    @always_inline
+    fn read_phase[N: Int = 1](mut self, start_chan: Int64, phase: Float64, interp: Int64 = 0) -> SIMD[DType.float64, N]:
+        """
+        A read operation on the buffer that reads a multichannel buffer and returns a SIMD vector of size N. 
+        It will start reading from the channel specified by start_chan and read N channels from there.
+
+        Parameters:
+            N: The number of channels to read (default is 1). The SIMD vector returned will have this size as well.
+
+        Args:
+            start_chan: The starting channel index to read from (0-based).
+            phase: The phase position to read from, where 0.0 is the start of the buffer and 1.0 is the end.
+            interp: The interpolation method to use (0 = linear, 1 = quadratic).
+        """
+
+        var f_idx = phase * self.num_frames
+        
+        return self.read_index[N](start_chan, f_idx, interp)
+
+    @always_inline
     fn write[N: Int](mut self, value: SIMD[DType.float64, N], index: Int64, start_channel: Int64 = 0):
         """Write a SIMD vector of values to the buffer at a specific index and channel.
 

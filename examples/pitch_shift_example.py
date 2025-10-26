@@ -8,9 +8,9 @@ mmm_audio = MMMAudio(128, num_input_channels = 12, graph_name="PitchShiftExample
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
-mmm_audio.send_msg("pitch_shift", 3.10)
-mmm_audio.send_msg("grain_size", 0.05)
+mmm_audio.send_msg("pitch_shift", 1.10)
+mmm_audio.send_msg("grain_size", 0.4)
 mmm_audio.send_msg("pitch_dispersion", 0.4)
-mmm_audio.send_msg("time_dispersion", 0.3)
+mmm_audio.send_msg("time_dispersion", 0.5)
 
 mmm_audio.stop_audio()  # stop the audio thread
