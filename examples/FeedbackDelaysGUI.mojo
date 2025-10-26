@@ -16,7 +16,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var main_lag: Lag
     var buffer: Buffer
     var playBuf: PlayBuf
-    var delays: FBDelay[N=2, interp=3]  # FBDelay with 2 channels and interpolation type 3 (cubic)
+    var delays: FB_Delay[N=2, interp=3]  # FB_Delay with 2 channels and interpolation type 3 (cubic)
     var delay_time_lag: Lag[2]
     var m: Messenger
     var gate_lag: Lag[1]
@@ -27,7 +27,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.main_lag = Lag(self.world_ptr, 0.03)
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
-        self.delays = FBDelay[N=2, interp=3](self.world_ptr, self.maxdelay) 
+        self.delays = FB_Delay[N=2, interp=3](self.world_ptr, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.world_ptr, 0.2)  # Initialize Lag with a default time constant
         self.m = Messenger(self.world_ptr)
         self.gate_lag = Lag(self.world_ptr, 0.03)

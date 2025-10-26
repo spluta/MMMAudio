@@ -24,7 +24,7 @@ struct DelayInterpOptions:
     alias cubic: Int = 2
     alias lagrange: Int = 3
 
-struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Representable, Movable, Copyable):
+struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """
     A variable delay line with Lagrange interpolation.
     
@@ -77,13 +77,15 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
         """
         self.write_idx = (self.write_idx + 1) % self.max_delay_samples
         # # clamp delay time to max delay time
-        too_long: SIMD[DType.bool, self.N] = delay_time.gt(self.max_delay_time)
-        delay_time2 = too_long.select(self.max_delay_time, delay_time)
+        # too_long: SIMD[DType.bool, self.N] = delay_time.gt(self.max_delay_time)
+        # delay_time2 = too_long.select(self.max_delay_time, delay_time)
+        delay_time2 = min(delay_time, self.max_delay_time)
 
         # # if there is a zero or invalid delay time specified,
         # # make the delay time a single sample to avoid issues
-        too_short: SIMD[DType.bool, self.N] = delay_time2.lt(self.sample_duration)
-        delay_time2 = too_short.select(self.sample_duration, delay_time2)
+        # too_short: SIMD[DType.bool, self.N] = delay_time2.lt(self.sample_duration)
+        # delay_time2 = too_short.select(self.sample_duration, delay_time2)
+        delay_time2 = max(delay_time2, self.sample_duration)
 
         @parameter
         if interp == DelayInterpOptions.none:
@@ -97,11 +99,10 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
         else: 
           out = self.none(input, delay_time2)
 
+        # Write the input sample to the delay line
         @parameter
-        if write_to_buffer:
-            @parameter
-            for i in range(self.N):
-                self.delay_line[i][self.write_idx] = input[i]
+        for i in range(self.N):
+            self.delay_line[i][self.write_idx] = input[i]
 
         return out
 
@@ -134,12 +135,6 @@ struct Delay[N: Int = 1, interp: Int = 3, write_to_buffer: Bool = True](Represen
       for i in range(self.N):
         samps[i] = self.delay_line[i][read_idx[i]]
         next_samps[i] = self.delay_line[i][next_idx[i]]
-
-      @parameter
-      if write_to_buffer:
-          @parameter
-          for i in range(self.N):
-              self.delay_line[i][self.write_idx] = input[i]
 
       return lerp(samps, next_samps, frac)
 
@@ -243,11 +238,13 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     """
 
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp, False]
+    var delay: Delay[N, interp]
+    var fb: SIMD[DType.float64, N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N, interp, False](self.world_ptr, max_delay)
+        self.delay = Delay[N, interp](self.world_ptr, max_delay)
+        self.fb = SIMD[DType.float64, N](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """Process one sample through the comb filter.
@@ -265,13 +262,14 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
         """
         # Get the delayed sample
         # does not write to the buffer
-        var out = self.delay.next(input, delay_time)  
+        var out = self.delay.next(self.fb, delay_time)  
         temp = input + out * clip(feedback, 0.0, 1.0)  # Apply feedback
 
+        self.fb = temp
         # writes to the buffer here instead
-        @parameter
-        for i in range(self.N):
-            self.delay.delay_line[i][self.delay.write_idx] = temp[i] # Apply feedback
+        # @parameter
+        # for i in range(self.N):
+        #     self.fb[i] = temp[i] # Apply feedback
 
         return out  # Return the delayed sample
 
@@ -321,13 +319,15 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
       max_delay: The maximum delay time in seconds.
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp, False] # Delay line without automatic feedback
+    var delay: Delay[N, interp] # Delay line without automatic feedback
     var one_pole: VAOnePole[N]
+    var fb: SIMD[DType.float64, N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N, interp, False](self.world_ptr, max_delay)
+        self.delay = Delay[N, interp](self.world_ptr, max_delay)
         self.one_pole = VAOnePole[N](world_ptr)
+        self.fb = SIMD[DType.float64, N](0.0)
 
     @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
@@ -345,83 +345,76 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
           The processed output sample.
 
         """
-        var out = self.delay.next(input, delay_time)  # Get the delayed sample
+        var out = self.delay.next(self.fb, delay_time)  # Get the delayed sample
 
-        fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
-        # coef = exp(-2.0 * pi * lp_freq / self.world_ptr[0].sample_rate)
-        # fb = self.one_pole.next(out, coef)
+        self.fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
 
-        fb += input
-
-        # writes to the buffer here instead of in the delay next() function
-        @parameter
-        for i in range(self.N):
-            self.delay.delay_line[i][self.delay.write_idx] = fb[i] # Apply feedback
+        self.fb += input
 
         return out  # Return the delayed sample
 
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-struct LP_CombN[N: Int = 2](Movable, Copyable):
-    var list: List[LP_Comb[simd_width]]
-    var arg0_simd: SIMD[DType.float64, simd_width]
-    var arg1_simd: SIMD[DType.float64, simd_width]
-    var arg2_simd: SIMD[DType.float64, simd_width]
-    var vals: SIMD[DType.float64, simd_width]
+# struct LP_CombN[N: Int = 2](Movable, Copyable):
+#     var list: List[LP_Comb[simd_width]]
+#     var arg0_simd: SIMD[DType.float64, simd_width]
+#     var arg1_simd: SIMD[DType.float64, simd_width]
+#     var arg2_simd: SIMD[DType.float64, simd_width]
+#     var vals: SIMD[DType.float64, simd_width]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-        self.list = [LP_Comb[simd_width](world_ptr) for _ in range(num_simd)]
-        self.arg0_simd = SIMD[DType.float64, simd_width](0.0)
-        self.arg1_simd = SIMD[DType.float64, simd_width](0.0)
-        self.arg2_simd = SIMD[DType.float64, simd_width](0.0)
-        self.vals = SIMD[DType.float64, simd_width](0.0)
+#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+#         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
+#         self.list = [LP_Comb[simd_width](world_ptr) for _ in range(num_simd)]
+#         self.arg0_simd = SIMD[DType.float64, simd_width](0.0)
+#         self.arg1_simd = SIMD[DType.float64, simd_width](0.0)
+#         self.arg2_simd = SIMD[DType.float64, simd_width](0.0)
+#         self.vals = SIMD[DType.float64, simd_width](0.0)
 
-    @always_inline
-    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref delay_time: List[Float64], ref feedback: List[Float64], ref lpf: List[Float64]):
-        N = len(out_list)
-        in_len = len(in_list)
-        delay_len = len(delay_time)
-        feedback_len = len(feedback)
-        lpf_len = len(lpf)
+#     @always_inline
+#     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref delay_time: List[Float64], ref feedback: List[Float64], ref lpf: List[Float64]):
+#         N = len(out_list)
+#         in_len = len(in_list)
+#         delay_len = len(delay_time)
+#         feedback_len = len(feedback)
+#         lpf_len = len(lpf)
 
-        @parameter
-        fn closure[width: Int](i: Int):
-            # Check if we can do direct SIMD loads (no wrapping needed)
-            can_direct_load = (i + simd_width <= in_len and 
-                                  i + simd_width <= delay_len and 
-                                  i + simd_width <= feedback_len and 
-                                  i + simd_width <= lpf_len)
+#         @parameter
+#         fn closure[width: Int](i: Int):
+#             # Check if we can do direct SIMD loads (no wrapping needed)
+#             can_direct_load = (i + simd_width <= in_len and 
+#                                   i + simd_width <= delay_len and 
+#                                   i + simd_width <= feedback_len and 
+#                                   i + simd_width <= lpf_len)
             
-            if can_direct_load:
-                # Fast path: direct SIMD loads
-                self.vals = in_list.unsafe_ptr().load[width=simd_width](i)
-                self.arg0_simd = delay_time.unsafe_ptr().load[width=simd_width](i)
-                self.arg1_simd = feedback.unsafe_ptr().load[width=simd_width](i)
-                self.arg2_simd = lpf.unsafe_ptr().load[width=simd_width](i)
-            else:
-                # Slow path: element-wise with wrapping
-                @parameter
-                for j in range(simd_width):
-                    self.vals[j] = in_list[(j + i) % in_len]
-                    self.arg0_simd[j] = delay_time[(j + i) % delay_len]
-                    self.arg1_simd[j] = feedback[(j + i) % feedback_len]
-                    self.arg2_simd[j] = lpf[(j + i) % lpf_len]
+#             if can_direct_load:
+#                 # Fast path: direct SIMD loads
+#                 self.vals = in_list.unsafe_ptr().load[width=simd_width](i)
+#                 self.arg0_simd = delay_time.unsafe_ptr().load[width=simd_width](i)
+#                 self.arg1_simd = feedback.unsafe_ptr().load[width=simd_width](i)
+#                 self.arg2_simd = lpf.unsafe_ptr().load[width=simd_width](i)
+#             else:
+#                 # Slow path: element-wise with wrapping
+#                 @parameter
+#                 for j in range(simd_width):
+#                     self.vals[j] = in_list[(j + i) % in_len]
+#                     self.arg0_simd[j] = delay_time[(j + i) % delay_len]
+#                     self.arg1_simd[j] = feedback[(j + i) % feedback_len]
+#                     self.arg2_simd[j] = lpf[(j + i) % lpf_len]
 
-            temp = self.list[i // simd_width].next(self.vals, self.arg0_simd, self.arg1_simd, self.arg2_simd)
+#             temp = self.list[i // simd_width].next(self.vals, self.arg0_simd, self.arg1_simd, self.arg2_simd)
             
-            # Optimized output store
-            remaining = N - i
-            if remaining >= simd_width:
-                out_list.unsafe_ptr().store(i, temp)
-            else:
-                @parameter
-                for j in range(simd_width):
-                    if j < remaining:
-                        out_list[i + j] = temp[j]
+#             # Optimized output store
+#             remaining = N - i
+#             if remaining >= simd_width:
+#                 out_list.unsafe_ptr().store(i, temp)
+#             else:
+#                 @parameter
+#                 for j in range(simd_width):
+#                     if j < remaining:
+#                         out_list[i + j] = temp[j]
         
-        vectorize[closure, simd_width](N)
+#         vectorize[closure, simd_width](N)
 
 struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """
@@ -466,17 +459,19 @@ struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyabl
     fn __repr__(self) -> String:
         return "Allpass_Comb"
 
-struct FBDelay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
+struct FB_Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
 
     var world_ptr: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp, False]
+    var delay: Delay[N, interp]
     var dc: DCTrap[N]
+    var fb: SIMD[DType.float64, N]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world_ptr = world_ptr
-        self.delay = Delay[N, interp, False](self.world_ptr, max_delay)
+        self.delay = Delay[N, interp](self.world_ptr, max_delay)
         self.dc = DCTrap[N](world_ptr)
+        self.fb = SIMD[DType.float64, N](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], feedback: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Process one sample or SIMD vector through the feedback delay.
@@ -490,16 +485,11 @@ struct FBDelay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
           The processed output sample or SIMD vector.
 
         """
-        var out = self.delay.next(input, delay_time)  # Get the delayed sample
+        var out = self.delay.next(self.fb, delay_time)  # Get the delayed sample
 
-        temp = self.dc.next(tanh((input + out) * feedback))
-
-        # writes to the buffer here instead of in the delay next() function 
-        @parameter
-        for i in range(self.N):
-            self.delay.delay_line[i][self.delay.write_idx] = temp[i]
+        self.fb = self.dc.next(tanh((input + out) * feedback))
 
         return out  # Return the delayed sample
 
     fn __repr__(self) -> String:
-        return "FBDelay"
+        return "FB_Delay"

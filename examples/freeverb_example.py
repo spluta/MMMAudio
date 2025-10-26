@@ -1,37 +1,55 @@
+import sys
+from pathlib import Path
+
+# This example is able to run by pressing the "play" button in VSCode
+# that executes the whole file.
+# In order to do this, it needs to add the parent directory to the path
+# (the next line here) so that it can find the mmm_src and mmm_utils packages.
+# If you want to run it line by line in a REPL, skip this line!
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from mmm_src.MMMAudio import MMMAudio
 from mmm_utils.functions import *
+
+from mmm_utils.GUI import Handle, ControlSpec
+from mmm_src.MMMAudio import MMMAudio
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 
 mmm_audio = MMMAudio(128, graph_name="FreeverbExample", package_name="examples")
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
-# this example uses open sound control to control Freeverb's parameters
-# there is a simple touchosc patch provided for control
+app = QApplication([])
 
+# Create the main window
+window = QWidget()
+window.setWindowTitle("Freeverb Controller")
+window.resize(300, 100)
+# stop audio when window is closed
+window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
 
-from mmm_utils.osc_server import OSCServer
+# Create layout
+layout = QVBoxLayout()
 
-# Usage:
-def osc_msg_handler(key, *args):
-    if key == "/fader1":
-        mmm_audio.send_msg("room_size", args[0])
-    elif key == "/fader2":
-        val = linexp(args[0], 0.0, 1.0, 100.0, 20000.0)
-        mmm_audio.send_msg("lpf_comb", val)
-    elif key == "/fader3":
-        mmm_audio.send_msg("added_space", args[0])
-    elif key == "/fader4":
-        mmm_audio.send_msg("mix", args[0])
-    else:
-        print(f"Unhandled OSC address: {key}")
+# Create a slider
+roomsize_slider = Handle("room size", ControlSpec(0, 1.0, 4), 0.5, callback=lambda v: mmm_audio.send_msg("room_size", v), run_callback_on_init=True)
+layout.addWidget(roomsize_slider)
 
-# Start server
-osc_server = OSCServer("0.0.0.0", 5005, osc_msg_handler)
-osc_server.start()
+lpf = Handle("lpf",ControlSpec(100.0, 20000.0, 0.5), 2000, callback=lambda v: mmm_audio.send_msg("lpf_comb", v), run_callback_on_init=True)
+layout.addWidget(lpf)
 
-# if you need to adjust and reset the handler function:
-osc_server.set_osc_msg_handler(osc_msg_handler)
+added_space = Handle("added space",ControlSpec(0.2, 1.0), 0.0, callback=lambda v: mmm_audio.send_msg("added_space", v), run_callback_on_init=True)
+layout.addWidget(added_space)
 
-# Stop server when needed
-osc_server.stop()
+mix_slider = Handle("mix",ControlSpec(0.1, 1.0, 0.5), 0.2, callback=lambda v: mmm_audio.send_msg("mix", v), run_callback_on_init=True)
+layout.addWidget(mix_slider)
+
+# Set the layout for the main window
+window.setLayout(layout)
+
+# Show the window
+window.show()
+
+# Start the application's event loop
+app.exec()
