@@ -45,8 +45,6 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     var delay_line: List[List[Float64]]
     var write_idx: Int64
     var sample_duration: Float64
-    # var fd_dels: InlineArray[SIMD[DType.float64, N], 5]  # For Lagrange interpolation
-    # var coeffs: InlineArray[SIMD[DType.float64, N], 5]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
         self.world_ptr = world_ptr
@@ -55,8 +53,6 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
         self.delay_line = [[Float64(0.0) for _ in range(self.max_delay_samples)] for _ in range(N)]
         self.write_idx = 0
         self.sample_duration = 1.0 / self.world_ptr[0].sample_rate
-        # self.fd_dels = InlineArray[SIMD[DType.float64, N], 5](fill=SIMD[DType.float64, N](0.0))
-        # self.coeffs = InlineArray[SIMD[DType.float64, N], 5](fill=SIMD[DType.float64, N](0.0))
 
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
@@ -76,27 +72,24 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
         """
         self.write_idx = (self.write_idx + 1) % self.max_delay_samples
-        # # clamp delay time to max delay time
-        # too_long: SIMD[DType.bool, self.N] = delay_time.gt(self.max_delay_time)
-        # delay_time2 = too_long.select(self.max_delay_time, delay_time)
         delay_time2 = min(delay_time, self.max_delay_time)
-
-        # # if there is a zero or invalid delay time specified,
-        # # make the delay time a single sample to avoid issues
-        # too_short: SIMD[DType.bool, self.N] = delay_time2.lt(self.sample_duration)
-        # delay_time2 = too_short.select(self.sample_duration, delay_time2)
-        delay_time2 = max(delay_time2, self.sample_duration)
-
+        
+        # minimum delay time depends on interpolation method
         @parameter
         if interp == DelayInterpOptions.none:
+          delay_time2 = max(delay_time2, self.sample_duration)
           out = self.none(input, delay_time2)
         elif interp == DelayInterpOptions.linear:
+          delay_time2 = max(delay_time2, self.sample_duration)
           out = self.linear_loc(input, delay_time2)
         elif interp == DelayInterpOptions.cubic:
+          delay_time2 = max(delay_time2, self.sample_duration*3)
           out = self.cubic_loc(input, delay_time2)
         elif interp == DelayInterpOptions.lagrange:
+          delay_time2 = max(delay_time2, self.sample_duration*5)
           out = self.lagrange4(input, delay_time2)
         else: 
+          delay_time2 = max(delay_time2, self.sample_duration)
           out = self.none(input, delay_time2)
 
         # Write the input sample to the delay line
@@ -142,13 +135,13 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     fn cubic_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
       var (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
 
-      too_short: SIMD[DType.bool, self.N] = (self.write_idx - read_idx).lt(3)
-      if any(too_short):
-        # if there are not enough samples, use linear interpolation
-        # [TODO] currently, the way this code is structured it's duplicating 
-        # some calculation by calling self.linear_loc here since it will again
-        # call self.get_read_idx_and_frac
-        return self.linear_loc(input, delay_time)
+      # too_short: SIMD[DType.bool, self.N] = (self.write_idx - read_idx).lt(3)
+      # if any(too_short):
+      #   # if there are not enough samples, use linear interpolation
+      #   # [TODO] currently, the way this code is structured it's duplicating 
+      #   # some calculation by calling self.linear_loc here since it will again
+      #   # call self.get_read_idx_and_frac
+      #   return self.linear_loc(input, delay_time)
 
       # this is tested and ok: Mojo allows `negative_number` % `positive_number`
       # to yield a positive result, so we can safely use modulo for wrapping indices.
@@ -177,11 +170,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
         """
 
         var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world_ptr[0].sample_rate
-        @parameter
-        for i in range(self.N):
-            fsample_delay[i] = max(1.0, fsample_delay[i])
 
-        # var o = 1.49999
         var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
         var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
         
@@ -202,34 +191,6 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
         return lagrange4(p0, p1, p2, p3, p4, frac)
 
-
-# struct DelayN[N: Int = 2, interp: Int = 3, write_to_buffer: Bool = True](Movable, Copyable):
-#     var list: List[Delay[simd_width, interp, write_to_buffer]]
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-#         self.list = [Delay[simd_width, interp, write_to_buffer](world_ptr) for _ in range(num_simd)]
-
-#     @always_inline
-#     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref arg0: List[Float64]):
-#         vals = SIMD[DType.float64, simd_width](0.0)
-#         arg0_simd = SIMD[DType.float64, simd_width](0.0)
-#         N = len(out_list)
-
-#         @parameter
-#         fn closure[width: Int](i: Int):
-#             @parameter
-#             for j in range(simd_width):
-#                 vals[j] = in_list[(j + i) % len(in_list)]
-#                 arg0_simd[j] = arg0[(j + i) % len(arg0)]  # wrap around if not enough args
-
-#             temp = self.list[i // simd_width].next(vals, arg0_simd)
-#             @parameter
-#             for j in range(simd_width):
-#                 idx = i + j
-#                 if idx < N:
-#                     out_list[idx] = temp[j]
-#         vectorize[closure, simd_width](N)
 
 struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     """
@@ -275,35 +236,6 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return "CombFilter"
-
-# struct CombN[N: Int = 2](Movable, Copyable):
-#     var list: List[Comb[simd_width]]
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-#         self.list = [Comb[simd_width](world_ptr) for _ in range(num_simd)]
-
-#     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], arg0: List[Float64], arg1: List[Float64]):
-#         vals = SIMD[DType.float64, simd_width](0.0)
-#         arg0_simd = SIMD[DType.float64, simd_width](0.0)
-#         arg1_simd = SIMD[DType.float64, simd_width](0.0)
-#         N = len(out_list)
-
-#         @parameter
-#         fn closure[width: Int](i: Int):
-#             @parameter
-#             for j in range(simd_width):
-#                 vals[j] = in_list[j + i]
-#                 arg0_simd[j] = arg0[(j + i)%len(arg0)]  # wrap around if not enough args
-#                 arg1_simd[j] = arg1[(j + i)%len(arg1)]  # wrap around if not enough args
-
-#             temp = self.list[i // simd_width].next(vals, arg0_simd, arg1_simd)
-#             @parameter
-#             for j in range(simd_width):
-#                 idx = i + j
-#                 if idx < N:
-#                     out_list[idx] = temp[j]
-#         vectorize[closure, simd_width](N)
 
 struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """
@@ -355,66 +287,6 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return "LP_Comb"
-
-# struct LP_CombN[N: Int = 2](Movable, Copyable):
-#     var list: List[LP_Comb[simd_width]]
-#     var arg0_simd: SIMD[DType.float64, simd_width]
-#     var arg1_simd: SIMD[DType.float64, simd_width]
-#     var arg2_simd: SIMD[DType.float64, simd_width]
-#     var vals: SIMD[DType.float64, simd_width]
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-#         self.list = [LP_Comb[simd_width](world_ptr) for _ in range(num_simd)]
-#         self.arg0_simd = SIMD[DType.float64, simd_width](0.0)
-#         self.arg1_simd = SIMD[DType.float64, simd_width](0.0)
-#         self.arg2_simd = SIMD[DType.float64, simd_width](0.0)
-#         self.vals = SIMD[DType.float64, simd_width](0.0)
-
-#     @always_inline
-#     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64], ref delay_time: List[Float64], ref feedback: List[Float64], ref lpf: List[Float64]):
-#         N = len(out_list)
-#         in_len = len(in_list)
-#         delay_len = len(delay_time)
-#         feedback_len = len(feedback)
-#         lpf_len = len(lpf)
-
-#         @parameter
-#         fn closure[width: Int](i: Int):
-#             # Check if we can do direct SIMD loads (no wrapping needed)
-#             can_direct_load = (i + simd_width <= in_len and 
-#                                   i + simd_width <= delay_len and 
-#                                   i + simd_width <= feedback_len and 
-#                                   i + simd_width <= lpf_len)
-            
-#             if can_direct_load:
-#                 # Fast path: direct SIMD loads
-#                 self.vals = in_list.unsafe_ptr().load[width=simd_width](i)
-#                 self.arg0_simd = delay_time.unsafe_ptr().load[width=simd_width](i)
-#                 self.arg1_simd = feedback.unsafe_ptr().load[width=simd_width](i)
-#                 self.arg2_simd = lpf.unsafe_ptr().load[width=simd_width](i)
-#             else:
-#                 # Slow path: element-wise with wrapping
-#                 @parameter
-#                 for j in range(simd_width):
-#                     self.vals[j] = in_list[(j + i) % in_len]
-#                     self.arg0_simd[j] = delay_time[(j + i) % delay_len]
-#                     self.arg1_simd[j] = feedback[(j + i) % feedback_len]
-#                     self.arg2_simd[j] = lpf[(j + i) % lpf_len]
-
-#             temp = self.list[i // simd_width].next(self.vals, self.arg0_simd, self.arg1_simd, self.arg2_simd)
-            
-#             # Optimized output store
-#             remaining = N - i
-#             if remaining >= simd_width:
-#                 out_list.unsafe_ptr().store(i, temp)
-#             else:
-#                 @parameter
-#                 for j in range(simd_width):
-#                     if j < remaining:
-#                         out_list[i + j] = temp[j]
-        
-#         vectorize[closure, simd_width](N)
 
 struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """
