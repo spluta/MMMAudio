@@ -44,6 +44,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     var max_delay_samples: Int64
     var delay_line: List[List[Float64]]
     var write_idx: Int64
+    var two_sample_duration: Float64
     var sample_duration: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
@@ -52,6 +53,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
         self.max_delay_samples = Int64(max_delay_time * self.world_ptr[0].sample_rate) + 1
         self.delay_line = [[Float64(0.0) for _ in range(self.max_delay_samples)] for _ in range(N)]
         self.write_idx = 0
+        self.two_sample_duration = 2.0 / self.world_ptr[0].sample_rate
         self.sample_duration = 1.0 / self.world_ptr[0].sample_rate
 
     fn __repr__(self) -> String:
@@ -72,32 +74,30 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
         """
         self.write_idx = (self.write_idx + 1) % self.max_delay_samples
-        delay_time2 = min(delay_time, self.max_delay_time)
-        
-        # minimum delay time depends on interpolation method
-        @parameter
-        if interp == DelayInterpOptions.none:
-          delay_time2 = max(delay_time2, self.sample_duration)
-          out = self.none(input, delay_time2)
-        elif interp == DelayInterpOptions.linear:
-          delay_time2 = max(delay_time2, self.sample_duration)
-          out = self.linear_loc(input, delay_time2)
-        elif interp == DelayInterpOptions.cubic:
-          delay_time2 = max(delay_time2, self.sample_duration*3)
-          out = self.cubic_loc(input, delay_time2)
-        elif interp == DelayInterpOptions.lagrange:
-          delay_time2 = max(delay_time2, self.sample_duration*5)
-          out = self.lagrange4(input, delay_time2)
-        else: 
-          delay_time2 = max(delay_time2, self.sample_duration)
-          out = self.none(input, delay_time2)
-
         # Write the input sample to the delay line
         @parameter
         for i in range(self.N):
             self.delay_line[i][self.write_idx] = input[i]
 
-        return out
+        delay_time2 = min(delay_time, self.max_delay_time)
+        
+        # minimum delay time depends on interpolation method
+        @parameter
+        if interp == DelayInterpOptions.none:
+          delay_time2 = max(delay_time2, 0.0)
+          return self.none(input, delay_time2)
+        elif interp == DelayInterpOptions.linear:
+          delay_time2 = max(delay_time2, 0.0)
+          return self.linear_loc(input, delay_time2)
+        elif interp == DelayInterpOptions.cubic:
+          delay_time2 = max(delay_time2, self.two_sample_duration)
+          return self.cubic_loc(input, delay_time2)
+        elif interp == DelayInterpOptions.lagrange:
+          delay_time2 = max(delay_time2, 0.0)
+          return self.lagrange4(input, delay_time2)
+        else: 
+          delay_time2 = max(delay_time2, 0.0)
+          return self.none(input, delay_time2)
 
     @doc_private
     fn get_read_idx_and_frac(mut self, delay_time: SIMD[DType.float64, self.N]) -> (SIMD[DType.int64, self.N], SIMD[DType.float64, self.N]):
@@ -119,7 +119,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
     @doc_private
     fn linear_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-      var (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
+      (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
       var next_idx = (read_idx + 1) % self.max_delay_samples
       var samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
       var next_samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
@@ -133,15 +133,8 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
     @doc_private
     fn cubic_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-      var (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
 
-      # too_short: SIMD[DType.bool, self.N] = (self.write_idx - read_idx).lt(3)
-      # if any(too_short):
-      #   # if there are not enough samples, use linear interpolation
-      #   # [TODO] currently, the way this code is structured it's duplicating 
-      #   # some calculation by calling self.linear_loc here since it will again
-      #   # call self.get_read_idx_and_frac
-      #   return self.linear_loc(input, delay_time)
+      (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
 
       # this is tested and ok: Mojo allows `negative_number` % `positive_number`
       # to yield a positive result, so we can safely use modulo for wrapping indices.

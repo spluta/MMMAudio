@@ -88,12 +88,19 @@ struct Buffer(Representable, Movable, Copyable):
             try:
                 py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
 
+                print(py_data)  # Print the loaded data for debugging
+
                 self.buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
 
                 self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
                 self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
 
-                self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+                if len(py_data[1].shape) == 1:
+                    # Mono file
+                    self.num_chans = 1
+                else:
+                    # Multi-channel file
+                    self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
 
                 print("num_chans:", self.num_chans, "num_frames:", self.num_frames)  # Print the shape of the data array for debugging
 
