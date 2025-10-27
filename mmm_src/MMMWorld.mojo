@@ -9,43 +9,34 @@ from collections import Set
 struct ListMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Float64]
-    var is_new: Bool
 
-    fn __init__(out self):
+    fn __init__(out self, value: List[Float64]):
         self.retrieved = False
-        self.value = []
-        self.is_new = True
+        self.value = value.copy()
 
-struct FloatMessage(Movable, Copyable):
+struct Float64Message(Movable, Copyable):
     var retrieved: Bool
     var value: Float64
-    var is_new: Bool
 
-    fn __init__(out self):
+    fn __init__(out self, value: Float64):
         self.retrieved = False
-        self.value = 0.0
-        self.is_new = True
+        self.value = value
 
 struct GateMessage(Movable, Copyable):
     var retrieved: Bool
     var value: Bool
-    var is_new: Bool
 
-    fn __init__(out self):
+    fn __init__(out self, value: Bool):
         self.retrieved = False
-        self.value = False
-        self.is_new = True
+        self.value = value
 
 struct TextMessage(Movable, Copyable):
     var values: List[String]
     var retrieved: Bool
 
-    fn __init__(out self, var values: List[String]):
-        self.values = values^
+    fn __init__(out self, values: List[String]):
+        self.values = values.copy()
         self.retrieved = False
-        # TextMessage doesn't need an "is_new" 
-        # flag because the Dict of TextMessages is
-        # cleared every block
 
 struct MessengerManager(Movable, Copyable):
 
@@ -53,7 +44,7 @@ struct MessengerManager(Movable, Copyable):
     var list_msgs: Dict[String, ListMessage]
     
     var float_msg_pool: Dict[String, Float64]
-    var float_msgs: Dict[String, FloatMessage]
+    var float_msgs: Dict[String, Float64Message]
     
     var gate_msg_pool: Dict[String, Bool]
     var gate_msgs: Dict[String, GateMessage]
@@ -76,7 +67,7 @@ struct MessengerManager(Movable, Copyable):
         self.list_msgs = Dict[String, ListMessage]()
 
         self.float_msg_pool = Dict[String, Float64]()
-        self.float_msgs = Dict[String, FloatMessage]()
+        self.float_msgs = Dict[String, Float64Message]()
 
         self.gate_msg_pool = Dict[String, Bool]()
         self.gate_msgs = Dict[String, GateMessage]()
@@ -87,45 +78,84 @@ struct MessengerManager(Movable, Copyable):
         self.text_msg_pool = Dict[String, List[String]]()
         self.text_msgs = Dict[String, TextMessage]()
 
+    # update_* functions add messages to the pool to be transferred at the
+    # start of the next audio block. These functions are called from MMMAudioBridge
+    # when a message is sent from Python.
     @always_inline
     fn update_float_msg(mut self, key: String, value: Float64):
         self.float_msg_pool[key] = value
 
     @always_inline
-    fn get_float(mut self, key: String, default: Float64 = 0.0) -> Float64:
-        f = self.float_msgs.get(key)
-        if f:
-            f.value().retrieved = True
-            return f.value().value
-        return default
-
     fn update_gate_msg(mut self, key: String, value: Bool):
         self.gate_msg_pool[key] = value
-
-    @always_inline
-    fn get_gate(mut self, key: String, default: Bool = False) -> Bool:
-        ref g = self.gate_msgs.get(key)
-        if g:
-            g.value().retrieved = True
-            return g.value().value
-        return default
 
     @always_inline
     fn update_list_msg(mut self, key: String, values: List[Float64]):
         self.list_msg_pool[key] = values.copy()
 
-    # [TODO] implement get_list such that it returns a pointer to the list in
-    # the list_msgs dict
-    # @always_inline
-    # fn get_list(mut self: Self, key: String) -> Pointer[List[Float64]]:
-    #     l = self.list_msgs.get(key)
-    #     if l:
-    #         return Pointer[List[Float64]](l.value()^)
-    #     return Pointer[List[Float64]](null)
-
     @always_inline
     fn update_trig_msg(mut self, key: String):
         self.trig_msg_pool.add(key)
+
+    @always_inline
+    fn update_text_msg(mut self, key: String, text: String) raises:
+        opt = self.text_msg_pool.get(key)
+        if not opt:
+            self.text_msg_pool[key] = List[String]()
+        self.text_msg_pool[key].append(text)
+
+    fn transfer_msgs(mut self) raises:
+
+        for list_msg in self.list_msg_pool.take_items():
+            self.list_msgs[list_msg.key] = ListMessage(list_msg.value)
+
+        for float_msg in self.float_msg_pool.take_items():
+            self.float_msgs[float_msg.key] = Float64Message(float_msg.value)
+
+
+        for gate_msg in self.gate_msg_pool.take_items():
+            self.gate_msgs[gate_msg.key] = GateMessage(gate_msg.value)
+
+        for text_msg in self.text_msg_pool.take_items():
+            self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
+
+        for trig_msg_str in self.trig_msg_pool:
+            self.trig_msgs[trig_msg_str] = False  # Set retrieved Bool to False initially
+        # The other pools are Dicts so "take_items()" empties them, but since
+        # trig_msg_pool is a Set, we have to clear it manually:
+        self.trig_msg_pool.clear() 
+
+    # get_* functions retrieve messages from the Dicts *after* they have
+    # been transferred from the pools to the Dicts. These functions are called
+    # from a graph (likely via a Messenger instance) to get the latest message values.
+    @always_inline
+    fn get_float(mut self, key: String) -> Optional[Float64]:
+        opt = self.float_msgs.get(key)
+        if opt:
+            opt.value().retrieved = True
+            return opt.value().value
+        return Optional[Float64](None)
+
+    @always_inline
+    fn get_gate(mut self, key: String) -> Optional[Bool]:
+        ref g = self.gate_msgs.get(key)
+        if g:
+            g.value().retrieved = True
+            return g.value().value
+        return Optional[Bool](None)
+
+    @always_inline
+    fn get_list(mut self: Self, key: String) -> Optional[List[Float64]]:
+        opt = self.list_msgs.get(key)
+        if opt:
+            opt.value().retrieved = True
+            # Copy is ok here because it will only copy when there is a
+            # new list for it to use, which should be rare. If the user
+            # is, like, streaming lists of tons of values, they should
+            # be using a different method, such as loading the data into
+            # a buffer ahead of time and reading from that.
+            return opt.value().value.copy()
+        return None
 
     @always_inline
     fn get_trig(mut self, key: String) -> Bool:
@@ -135,13 +165,6 @@ struct MessengerManager(Movable, Copyable):
             return True
         return False
 
-    @always_inline
-    fn update_text_msg(mut self, key: String, text: String) raises:
-        opt = self.text_msg_pool.get(key)
-        if not opt:
-            self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].append(text)
-
     # Unlike the other "get_*" functions, this one returns an Optional List of Strings
     # because it doesn't make sense for there to be a default value for text messages.
     @always_inline
@@ -149,81 +172,33 @@ struct MessengerManager(Movable, Copyable):
         ref opt = self.text_msgs.get(key)
         if opt:
             opt.value().retrieved = True
-            return Optional[List[String]](opt.value().values.copy())
-        return Optional[List[String]](None)
+            # Copy here is ok because text messages are expected
+            # to be rare, so this shouldn't happen often.
+            return opt.value().values.copy()
+        return None
 
-    fn transfer_msgs(mut self) raises:
-
-        # Go through each item in the pool
-        for list_msg in self.list_msg_pool.take_items():
-            # See if it already exists in the Dict
-            list_opt = self.list_msgs.get(list_msg.key)
-            # If it doesn't, create a new value at that key
-            if not list_opt:
-                self.list_msgs[list_msg.key] = ListMessage()
-            # Now there is definitely a key, so copy the value
-            self.list_msgs[list_msg.key].value = list_msg.value.copy()
-            # If it is in the pool it is new this block
-            self.list_msgs[list_msg.key].is_new = True
-
-        for float_msg in self.float_msg_pool.take_items():
-            float_opt = self.float_msgs.get(float_msg.key)
-            if not float_opt:
-                self.float_msgs[float_msg.key] = FloatMessage()
-            self.float_msgs[float_msg.key].value = float_msg.value
-            # If it is in the pool it is new this block
-            self.float_msgs[float_msg.key].is_new = True
-
-        for gate_msg in self.gate_msg_pool.take_items():
-            gate_opt = self.gate_msgs.get(gate_msg.key)
-            if not gate_opt:
-                self.gate_msgs[gate_msg.key] = GateMessage()
-            self.gate_msgs[gate_msg.key].value = gate_msg.value
-            # If it is in the pool it is new this block
-            self.gate_msgs[gate_msg.key].is_new = True
-
-        # Text Messages will be cleared after every computed audio block
-        # so we know there won't be anything to check for (with Optionals like
-        # above) in the Dicts, so we can just copy them over directly.
-        for text_msg in self.text_msg_pool.take_items():
-            self.text_msgs[text_msg.key] = TextMessage(text_msg.value)
-
-        for trig_msg_str in self.trig_msg_pool:
-            self.trig_msgs[trig_msg_str] = False  # Set retrieved Bool to False initially
-        # The other pools are Dicts so "take_items()" empties them, but since
-        # trig_msg_pool is a Set, we have to clear it manually:
-        self.trig_msg_pool.clear() 
-
-    fn un_new_msgs(mut self):
-        for ref list_msg in self.list_msgs.items():
-            if list_msg.value.is_new and not list_msg.value.retrieved:
+    fn empty_msg_dicts(mut self):
+        for list_msg in self.list_msgs.take_items():
+            if not list_msg.value.retrieved:
                 print("List message was not retrieved this block:", list_msg.key)
-            list_msg.value.is_new = False
 
-        for ref float_msg in self.float_msgs.items():
-            # [TODO] Maybe "mouse_x" and "mouse_y" should be handled differently?
-            if float_msg.key != "mouse_x" and float_msg.key != "mouse_y" and float_msg.value.is_new and not float_msg.value.retrieved:
+        for float_msg in self.float_msgs.take_items():
+            if not float_msg.value.retrieved:
                 print("Float message was not retrieved this block:", float_msg.key)
-            float_msg.value.is_new = False
-        
-        for ref gate_msg in self.gate_msgs.items():
-            if gate_msg.value.is_new and not gate_msg.value.retrieved:
+
+        for gate_msg in self.gate_msgs.items():
+            if not gate_msg.value.retrieved:
                 print("Gate message was not retrieved this block:", gate_msg.key)
-            gate_msg.value.is_new = False
         
-        for ref trig_msg in self.trig_msgs.take_items():
+        for trig_msg in self.trig_msgs.take_items():
             if not trig_msg.value: # It wasn't retrieved this block
                 print("Trig message", trig_msg.key, "was not retrieved this block.")
-        
-        for ref text_msg in self.text_msgs.take_items():
+
+        for text_msg in self.text_msgs.take_items():
             if not text_msg.value.retrieved:
                 print("Text message", text_msg.key, "was not retrieved this block.")
                 for val in text_msg.value.values:
                     print("   Value:", val)
-
-    fn clear_trig_and_text_msgs(mut self):
-        self.trig_msgs.clear()
-        self.text_msgs.clear()
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64

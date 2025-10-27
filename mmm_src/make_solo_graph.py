@@ -37,7 +37,7 @@ struct MMMGraph(Representable, Movable):
 
             if i == 1:
                 self.world_ptr[0].top_of_block = False
-                self.world_ptr[0].messengerManager.clear_trig_and_text_msgs()
+                self.world_ptr[0].messengerManager.empty_msg_dicts()
 
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):
@@ -49,8 +49,6 @@ struct MMMGraph(Representable, Movable):
             for j in range(min(self.num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.num_out_chans + j] = samples[Int(j)]
         
-        self.world_ptr[0].messengerManager.un_new_msgs()
-
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
         """

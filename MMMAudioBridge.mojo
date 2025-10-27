@@ -95,6 +95,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
+    fn update_mouse_pos(py_self: UnsafePointer[Self], pos: PythonObject) raises -> PythonObject:
+
+        py_self[0].world_ptr[0].mouse_x = Float64(pos[0])
+        py_self[0].world_ptr[0].mouse_y = Float64(pos[1])
+
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
     fn update_gate_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
@@ -160,6 +168,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             m.add_type[MMMAudioBridge]("MMMAudioBridge").def_py_init[MMMAudioBridge.py_init]()
             .def_method[MMMAudioBridge.next]("next")
             .def_method[MMMAudioBridge.set_screen_dims]("set_screen_dims")
+            .def_method[MMMAudioBridge.update_mouse_pos]("update_mouse_pos")
             .def_method[MMMAudioBridge.update_gate_msg]("update_gate_msg")
             .def_method[MMMAudioBridge.update_float_msg]("update_float_msg")
             .def_method[MMMAudioBridge.update_trig_msg]("update_trig_msg")
