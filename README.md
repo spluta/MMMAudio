@@ -1,4 +1,4 @@
-### MMM (MMM Means Mojo) Audio 
+### MMMAudio(MMMAudioMeans Mojo) Audio 
 
 MMMAudio is a python environment for sound synthesis which uses Mojo for real-time audio processing.
 
@@ -14,7 +14,7 @@ What was encouraging is that writing dsp code in Mojo is incredibly straight-for
 
 MMMAudio is a python Class that is the interface from Python to the Mojo audio graph. The User should only have to interact with this module and should never have to edit this file. To get started, from mmm_src.MMMAudio import MMMAudio, like in the examples, and then interact with it.
 
-MMM currently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
+MMMAudiocurrently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
 
 The only distinction between a Graph and a Synth is that a Graph contains a next function with no arguments other than self:
 ```

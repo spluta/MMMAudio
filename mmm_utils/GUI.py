@@ -23,7 +23,7 @@ class ControlSpec:
         return scale(norm_val, 0.0, 1.0, self.min, self.max)
 
 class Handle(QWidget):
-    def __init__(self, label: str, spec: ControlSpec, default: float, callback=None, orientation=Qt.Horizontal, resolution: int = 1000):
+    def __init__(self, label: str, spec: ControlSpec, default: float, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
         super().__init__()
         self.resolution = resolution
         self.handle = QSlider(orientation)
@@ -40,6 +40,8 @@ class Handle(QWidget):
         self.handle.setValue(int(spec.normalize(clip(default, spec.min, spec.max)) * resolution))
         self.callback = callback
         self.handle.valueChanged.connect(self.update)
+        if run_callback_on_init:
+            self.update()
         
     def update(self):
         v = self.get_value()

@@ -612,6 +612,7 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("FIR")
 
+    @always_inline
     fn next(mut self: FIR, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         self.buffer[self.index] = input
         var output = SIMD[DType.float64, self.N](0.0)
@@ -689,6 +690,7 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("IIR")
 
+    @always_inline
     fn next(mut self: IIR, input: SIMD[DType.float64, self.N], coeffsbv: List[SIMD[DType.float64, self.N]], coeffsav: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         var temp = input - self.fb
         # calls the parallelized fir function, indicating the size of the simd vector to use
@@ -706,10 +708,11 @@ struct tf2[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("tf2")
 
+    @always_inline
     fn next(mut self: tf2, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         return self.iir.next(input, coeffs[:3], coeffs[3:])
 
-
+@always_inline
 fn tf2s[N: Int = 1](coeffs: List[SIMD[DType.float64, N]], mut coeffs_out: List[SIMD[DType.float64, N]], sample_rate: Float64):
     var b2 = coeffs[0]
     var b1 = coeffs[1]
@@ -746,6 +749,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Reson")
 
+    @always_inline
     fn lpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
@@ -758,6 +762,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
 
         return self.tf2.next(input, self.coeffs)
 
+    @always_inline
     fn hpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
@@ -770,6 +775,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
 
         return gain*input - self.tf2.next(input, self.coeffs)
 
+    @always_inline
     fn bpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
