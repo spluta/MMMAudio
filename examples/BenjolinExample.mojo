@@ -27,7 +27,7 @@ struct Benjolin(Representable, Movable, Copyable):
     var tri2: Osc[interp=2,os_index=1]
     var pulse1: Osc[interp=2,os_index=1]
     var pulse2: Osc[interp=2,os_index=1]
-    var delays: List[Delay[1,3,True]]
+    var delays: List[Delay[1,3]]
     var latches: List[Latch]
     var filters: List[SVF]
     var filter_outputs: List[Float64]
@@ -44,7 +44,7 @@ struct Benjolin(Representable, Movable, Copyable):
         self.tri2 = Osc[interp=2,os_index=1](self.world_ptr)
         self.pulse1 = Osc[interp=2,os_index=1](self.world_ptr)
         self.pulse2 = Osc[interp=2,os_index=1](self.world_ptr)
-        self.delays = List[Delay[1,3,True]](capacity=8)
+        self.delays = List[Delay[1,3]](capacity=8)
         self.latches = List[Latch](capacity=8)
         self.filters = List[SVF](capacity=9)
         self.filter_outputs = List[Float64](capacity=9)
@@ -53,7 +53,7 @@ struct Benjolin(Representable, Movable, Copyable):
         self.dctraps = List[DCTrap](capacity=2)
 
         for _ in range(8):
-            self.delays.append(Delay[1,3,True](self.world_ptr, max_delay_time=0.1))
+            self.delays.append(Delay[1,3](self.world_ptr, max_delay_time=0.1))
             self.latches.append(Latch(self.world_ptr))
 
         for _ in range(9):
