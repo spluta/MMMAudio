@@ -71,14 +71,18 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
-    Parameters:
+    ```
+        Osc[N=1, interp=OscType.sine, os_index=0](world_ptr)
+    ```
+
+    Params:
 
         N: Number of channels (default is 1).
-
         interp: Interpolation method (0 = linear, 1 = cubic, 2 = sinc; default is 0).
-        
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
 
+    Args:
+    
         world_ptr: Pointer to the MMMWorld instance.
 
     """
