@@ -38,6 +38,7 @@ struct TestMessengersRefactor():
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
+        
         self.printers[0].next(self.f, "Float Value:",1)
         self.printers[1].next(self.gate, "Gate Value:",1)
 
@@ -48,8 +49,8 @@ struct TestMessengersRefactor():
         #     for t in self.txt.strings:
         #         print("Text Received: ", t)
         
-        # if len(self.lst) > 0:
-        #     for l in self.lst.values:
-        #         print("List Received: ", l)
+        if len(self.lst) > 0:
+            for l in self.lst.values:
+                print("List Received: ", l)
 
         return SIMD[DType.float64, 2](0.0, 0.0)

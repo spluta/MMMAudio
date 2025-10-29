@@ -15,6 +15,6 @@ mmm_audio.send_trig("trig_test")
 
 mmm_audio.send_trig("should_warn_re_trig")
 
-mmm_audio.send_list("list_test", [1.1, 1.2, 1.4, 1.5])
+mmm_audio.send_list("list_test", [99.99])
 
 mmm_audio.stop_audio()
