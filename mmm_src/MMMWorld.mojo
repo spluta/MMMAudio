@@ -99,8 +99,7 @@ struct MessengerManager(Movable, Copyable):
 
     @always_inline
     fn update_text_msg(mut self, key: String, text: String) raises:
-        opt = self.text_msg_pool.get(key)
-        if not opt:
+        if not key in self.text_msg_pool:
             self.text_msg_pool[key] = List[String]()
         self.text_msg_pool[key].append(text)
 
@@ -129,52 +128,47 @@ struct MessengerManager(Movable, Copyable):
     # been transferred from the pools to the Dicts. These functions are called
     # from a graph (likely via a Messenger instance) to get the latest message values.
     @always_inline
-    fn get_float(mut self, key: String) -> Optional[Float64]:
-        opt = self.float_msgs.get(key)
-        if opt:
-            opt.value().retrieved = True
-            return opt.value().value
-        return Optional[Float64](None)
+    fn get_float(mut self, key: String) raises -> Optional[Float64]:
+        if key in self.float_msgs:
+            self.float_msgs[key].retrieved = True
+            return self.float_msgs[key].value
+        return None
 
     @always_inline
-    fn get_gate(mut self, key: String) -> Optional[Bool]:
-        ref g = self.gate_msgs.get(key)
-        if g:
-            g.value().retrieved = True
-            return g.value().value
-        return Optional[Bool](None)
+    fn get_gate(mut self, key: String) raises -> Optional[Bool]:
+        if key in self.gate_msgs:
+            self.gate_msgs[key].retrieved = True
+            return self.gate_msgs[key].value
+        return None
 
     @always_inline
-    fn get_list(mut self: Self, key: String) -> Optional[List[Float64]]:
-        opt = self.list_msgs.get(key)
-        if opt:
-            opt.value().retrieved = True
+    fn get_list(mut self: Self, key: String) raises-> Optional[List[Float64]]:
+        if key in self.list_msgs:
+            self.list_msgs[key].retrieved = True
             # Copy is ok here because it will only copy when there is a
             # new list for it to use, which should be rare. If the user
             # is, like, streaming lists of tons of values, they should
             # be using a different method, such as loading the data into
             # a buffer ahead of time and reading from that.
-            return opt.value().value.copy()
+            return self.list_msgs[key].value.copy()
         return None
 
     @always_inline
     fn get_trig(mut self, key: String) -> Bool:
-        ref opt = self.trig_msgs.get(key)
-        if opt:
-            opt.value() = True
+        if key in self.trig_msgs:
+            self.trig_msgs[key] = True
             return True
         return False
 
     # Unlike the other "get_*" functions, this one returns an Optional List of Strings
     # because it doesn't make sense for there to be a default value for text messages.
     @always_inline
-    fn get_text(mut self, key: String) -> Optional[List[String]]:
-        ref opt = self.text_msgs.get(key)
-        if opt:
-            opt.value().retrieved = True
+    fn get_text(mut self, key: String) raises -> Optional[List[String]]:
+        if key in self.text_msgs:
+            self.text_msgs[key].retrieved = True
             # Copy here is ok because text messages are expected
             # to be rare, so this shouldn't happen often.
-            return opt.value().values.copy()
+            return self.text_msgs[key].values.copy()
         return None
 
     fn empty_msg_dicts(mut self):

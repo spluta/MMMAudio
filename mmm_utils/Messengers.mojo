@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import *
 from utils import Variant
 
-struct Float64Param(Movable, Copyable, Representable, Floatable, Writable):
+struct Float64Msg(Movable, Copyable, Representable, Floatable, Writable):
     var name: String
     var value: Float64
 
@@ -21,7 +21,7 @@ struct Float64Param(Movable, Copyable, Representable, Floatable, Writable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.value)
 
-struct GateParam(Movable, Copyable, Representable, Boolable, Writable):
+struct GateMsg(Movable, Copyable, Representable, Boolable, Writable):
     var name: String
     var state: Bool
 
@@ -41,7 +41,7 @@ struct GateParam(Movable, Copyable, Representable, Boolable, Writable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct ListFloat64Param(Movable, Copyable, Representable, Writable, Sized):
+struct ListFloat64Msg(Movable, Copyable, Representable, Writable, Sized):
     var name: String
     var values: List[Float64]
 
@@ -73,7 +73,7 @@ struct ListFloat64Param(Movable, Copyable, Representable, Writable, Sized):
     fn __len__(self) -> Int:
         return self.values.__len__()
 
-struct TrigParam(Movable, Copyable, Representable, Writable, Boolable):
+struct TrigMsg(Movable, Copyable, Representable, Writable, Boolable):
     var name: String
     var state: Bool
 
@@ -93,7 +93,7 @@ struct TrigParam(Movable, Copyable, Representable, Writable, Boolable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TextParam(Movable, Copyable, Representable, Writable, Sized):
+struct TextMsg(Movable, Copyable, Representable, Writable, Sized):
     var name: String
     var strings: List[String]
 
@@ -124,65 +124,76 @@ struct TextParam(Movable, Copyable, Representable, Writable, Sized):
 
 struct Messenger(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var float_dict: Dict[String, UnsafePointer[Float64Param]]
-    var gate_dict: Dict[String, UnsafePointer[GateParam]]
-    var trig_dict: Dict[String, UnsafePointer[TrigParam]]
-    var list_dict: Dict[String, UnsafePointer[ListFloat64Param]]
-    var text_dict: Dict[String, UnsafePointer[TextParam]]
+    var float_dict: Dict[String, UnsafePointer[Float64Msg]]
+    var gate_dict: Dict[String, UnsafePointer[GateMsg]]
+    var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
+    var list_dict: Dict[String, UnsafePointer[ListFloat64Msg]]
+    var text_dict: Dict[String, UnsafePointer[TextMsg]]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.float_dict = Dict[String, UnsafePointer[Float64Param]]()
-        self.gate_dict = Dict[String, UnsafePointer[GateParam]]()
-        self.trig_dict = Dict[String, UnsafePointer[TrigParam]]()
-        self.list_dict = Dict[String, UnsafePointer[ListFloat64Param]]()
-        self.text_dict = Dict[String, UnsafePointer[TextParam]]()
+        self.float_dict = Dict[String, UnsafePointer[Float64Msg]]()
+        self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
+        self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
+        self.list_dict = Dict[String, UnsafePointer[ListFloat64Msg]]()
+        self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
 
-    # [TODO] I have to believe there is a way to use polymorphism to have 
-    # just one add_param function instead of five...
-    fn add_float64_param(mut self, ref param: Float64Param) -> None:
+    fn add_param(mut self, ref param: Float64Msg) -> None:
         self.float_dict[param.name] = UnsafePointer(to=param)
+        try:
+            print("Added float64 param at memory location: ", self.float_dict[param.name])
+        except:
+            pass
 
-    fn add_gate_param(mut self, ref param: GateParam) -> None:
+    fn add_param(mut self, ref param: GateMsg) -> None:
         self.gate_dict[param.name] = UnsafePointer(to=param)
     
-    fn add_trig_param(mut self, ref param: TrigParam) -> None:
+    fn add_param(mut self, ref param: TrigMsg) -> None:
         self.trig_dict[param.name] = UnsafePointer(to=param)
     
-    fn add_list_float64_param(mut self, ref param: ListFloat64Param) -> None:
+    fn add_param(mut self, ref param: ListFloat64Msg) -> None:
         self.list_dict[param.name] = UnsafePointer(to=param)
 
-    fn add_text_param(mut self, ref param: TextParam) -> None:
+    fn add_param(mut self, ref param: TextMsg) -> None:
         self.text_dict[param.name] = UnsafePointer(to=param)
 
     fn update(self) -> None:
         if self.world_ptr[].block_state == 0:
-            for item in self.float_dict.items():
-                var opt = self.world_ptr[].messengerManager.get_float(item.key)
-                if opt:
-                    item.value[].value = opt.value()
-            
-            for item in self.gate_dict.items():
-                var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
-                if opt:
-                    item.value[].state = opt.value()
-            
-            for item in self.trig_dict.items():
-                var opt = self.world_ptr[].messengerManager.get_trig(item.key)
-                if opt:
-                    item.value[].state = opt
-            
-            for item in self.list_dict.items():
-                var opt = self.world_ptr[].messengerManager.get_list(item.key)
-                if opt:
-                    item.value[].values = opt.value().copy()
-            
-            for item in self.text_dict.items():
-                var opt = self.world_ptr[].messengerManager.get_text(item.key)
-                if opt:
-                    item.value[].strings = opt.value().copy()
+            try: 
+                # This all goes in a try block because all of the get_* functions are
+                # marked "raises." They need to because that is required in order to 
+                # access non-copies of the values in the message Dicts.
+                for ref item in self.float_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_float(item.key)
+                    if opt:
+                        print("Updating float msg ", item.key, " to ", opt.value())
+                        item.value[].value = opt.value()
+                        print("location of item.value: ", item.value)
+                    print("Updated float msg ", item.key, " to ", item.value[].value)
+                
+                for ref item in self.gate_dict.items():
+                    var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
+                    if opt:
+                        item.value[].state = opt.value()
+
+                for ref item in self.trig_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_trig(item.key)
+                    if opt:
+                        item.value[].state = opt
+                
+                for ref item in self.list_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_list(item.key)
+                    if opt:
+                        item.value[].values = opt.value().copy()
+                
+                for ref item in self.text_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_text(item.key)
+                    if opt:
+                        item.value[].strings = opt.value().copy()
+            except:
+                pass # I feel confident there won't be exceptions here.
         elif self.world_ptr[].block_state == 1:
-            for item in self.trig_dict.items():
+            for ref item in self.trig_dict.items():
                 item.value[].state = False
-            for item in self.text_dict.items():
+            for ref item in self.text_dict.items():
                 item.value[].strings.clear()
