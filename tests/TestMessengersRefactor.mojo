@@ -26,12 +26,12 @@ struct TestMessengersRefactor():
         self.lst = ListFloat64Msg("list_test", [0.0, 0.1, 0.2])
         self.txt = TextMsg("text_test", ["default"])
         self.printers = List[Print](capacity=2)
-        
-        self.m.add_param(UnsafePointer(to=self.trig))
-        self.m.add_param(UnsafePointer(to=self.f))
-        self.m.add_param(UnsafePointer(to=self.gate))
-        self.m.add_param(UnsafePointer(to=self.lst))
-        self.m.add_param(UnsafePointer(to=self.txt))
+
+        self.m.add_param(self.trig)
+        self.m.add_param(self.f)
+        self.m.add_param(self.gate)
+        self.m.add_param(self.lst)
+        self.m.add_param(self.txt)
 
         for i in range(2):
             self.printers.append(Print(world_ptr))

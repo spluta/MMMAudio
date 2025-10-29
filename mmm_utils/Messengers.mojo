@@ -138,20 +138,20 @@ struct Messenger():
         self.list_dict = Dict[String, UnsafePointer[ListFloat64Msg]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
 
-    fn add_param(mut self, param: UnsafePointer[Float64Msg]) -> None:
-        self.float_dict[param[].name] = param
+    fn add_param(mut self, ref param: Float64Msg) -> None:
+        self.float_dict[param.name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, param_ptr: UnsafePointer[GateMsg]) -> None:
-        self.gate_dict[param_ptr[].name] = param_ptr
+    fn add_param(mut self, ref param: GateMsg) -> None:
+        self.gate_dict[param.name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, param_ptr: UnsafePointer[TrigMsg]) -> None:
-        self.trig_dict[param_ptr[].name] = param_ptr
+    fn add_param(mut self, ref param: TrigMsg) -> None:
+        self.trig_dict[param.name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, param_ptr: UnsafePointer[ListFloat64Msg]) -> None:
-        self.list_dict[param_ptr[].name] = param_ptr
+    fn add_param(mut self, ref param: ListFloat64Msg) -> None:
+        self.list_dict[param.name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, param_ptr: UnsafePointer[TextMsg]) -> None:
-        self.text_dict[param_ptr[].name] = param_ptr
+    fn add_param(mut self, ref param: TextMsg) -> None:
+        self.text_dict[param.name] = UnsafePointer(to=param)
 
     fn update(self) -> None:
         if self.world_ptr[].block_state == 0:
