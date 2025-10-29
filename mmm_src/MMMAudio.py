@@ -239,7 +239,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_list_msg(key_vals)
 
-    def send_text_msg(self, key, *args):
+    def send_text(self, key, *args):
         """
         Send a message to the Mojo audio engine.
         
@@ -251,8 +251,7 @@ class MMMAudio:
         key_vals = [key]  # Start with the key
         key_vals.extend([str(arg) for arg in args])
 
-        self.mmm_audio_bridge.send_text_msg(key_vals)
-
+        self.mmm_audio_bridge.update_text_msg(key_vals)
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 

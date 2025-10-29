@@ -132,7 +132,7 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn send_text_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_text_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         var key = String(key_vals[0])
         var text = String(key_vals[1])
@@ -171,7 +171,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             .def_method[MMMAudioBridge.update_float_msg]("update_float_msg")
             .def_method[MMMAudioBridge.update_trig_msg]("update_trig_msg")
             .def_method[MMMAudioBridge.update_list_msg]("update_list_msg")
-            .def_method[MMMAudioBridge.send_text_msg]("send_text_msg")
+            .def_method[MMMAudioBridge.update_text_msg]("update_text_msg")
             .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
             .def_method[MMMAudioBridge.set_channel_count]("set_channel_count")
         )
