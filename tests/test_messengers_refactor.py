@@ -1,5 +1,4 @@
 from mmm_src.MMMAudio import MMMAudio
-
 mmm_audio = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
 mmm_audio.start_audio() 
 

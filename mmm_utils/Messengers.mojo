@@ -122,7 +122,7 @@ struct TextMsg(Movable, Copyable, Representable, Writable, Sized):
     fn __len__(self) -> Int:
         return len(self.strings)
 
-struct Messenger(Movable, Copyable):
+struct Messenger():
     var world_ptr: UnsafePointer[MMMWorld]
     var float_dict: Dict[String, UnsafePointer[Float64Msg]]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]

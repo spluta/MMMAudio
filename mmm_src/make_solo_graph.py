@@ -52,9 +52,7 @@ struct MMMGraph(Representable, Movable):
         
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
-    
-    fn __del__(owned self):
-        self.graph_ptr.free()
         """
+    
     with open("mmm_src/MMMGraph_solo.mojo", "w") as file:
         file.write(string)

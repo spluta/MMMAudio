@@ -90,13 +90,12 @@ class MMMAudio:
         self.mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(self.sample_rate, self.blocksize)
         self.mmm_audio_bridge.set_channel_count((self.num_input_channels, self.num_output_channels))
 
-        # # Get screen size
+        # Get screen size
         screen_dims = pyautogui.size()
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
         # the mouse thread will always be running
         threading.Thread(target=asyncio.run, args=(self.get_mouse_position(0.01),)).start()
-
         self.p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
 

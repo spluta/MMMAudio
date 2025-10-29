@@ -16,7 +16,6 @@ from mmm_src.MMMTraits import *
 from utils import Variant
 
 struct MMMAudioBridge(Representable, Movable):
-    var world: MMMWorld  # Instance of MMMWorld
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var graph_ptr: UnsafePointer[MMMGraph]
@@ -40,18 +39,17 @@ struct MMMAudioBridge(Representable, Movable):
     fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int64 = 512, num_in_chans: Int64 = 12, num_out_chans: Int64 = 12, graphs: List[Int64] = List[Int64](0)):
         """Initialize the audio engine with sample rate, block size, and number of channels."""
 
-        print("MMMAudioBridge initialized with sample rate:", sample_rate, "block size:", block_size)
-
         # it is way more efficient to use an UnsafePointer to write to the output buffer directly
         self.loc_in_buffer = UnsafePointer[SIMD[DType.float32, 1]]() 
-        self.loc_out_buffer = UnsafePointer[SIMD[DType.float64, 1]]()  
-        self.world = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)  # Initialize MMMWorld with sample rate and block size
-        self.world_ptr = UnsafePointer(to=self.world)  # Pointer to the MMMWorld instance
+        self.loc_out_buffer = UnsafePointer[SIMD[DType.float64, 1]]()
+        
+        # Allocate MMMWorld on heap so it never moves
+        self.world_ptr = UnsafePointer[MMMWorld].alloc(1)
+        __get_address_as_uninit_lvalue(self.world_ptr.address) = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
 
+        # Allocate MMMGraph on heap
         self.graph_ptr = UnsafePointer[MMMGraph].alloc(1)
         __get_address_as_uninit_lvalue(self.graph_ptr.address) = MMMGraph(self.world_ptr)
-
-        print("AudioEngine initialized with sample rate:", self.world_ptr[0].sample_rate)
 
     @staticmethod
     fn set_channel_count(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
@@ -59,15 +57,12 @@ struct MMMAudioBridge(Representable, Movable):
         var num_out_chans = Int64(args[1])
         print("set_channel_count:", num_in_chans, num_out_chans)
         py_self[0].world_ptr[0].set_channel_count(num_in_chans, num_out_chans)
-        py_self[0].graph_ptr[].set_channel_count(num_in_chans, num_out_chans)
-        
-        return PythonObject(None)
+        py_self[0].graph_ptr[0].set_channel_count(num_in_chans, num_out_chans)
+    
+        return None # PythonObject(None)
 
     fn __repr__(self) -> String:
         return String("MMMAudioBridge(sample_rate: " + String(self.world_ptr[0].sample_rate) + ", block_size: " + String(self.world_ptr[0].block_size) + ", num_in_chans: " + String(self.world_ptr[0].num_in_chans) + ", num_out_chans: " + String(self.world_ptr[0].num_out_chans) + ")")
-
-    fn __del__(deinit self):
-        self.graph_ptr.free()
 
     @staticmethod
     fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:

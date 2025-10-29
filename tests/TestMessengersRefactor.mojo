@@ -41,8 +41,8 @@ struct TestMessengersRefactor():
         self.printers[0].next(self.f, "Float Value:",1)
         self.printers[1].next(self.gate, "Gate Value:",1)
 
-        # if self.trig:
-            # print("Trig Received! ********************************************")
+        if self.trig:
+            print("Trig Received! ********************************************")
 
         # if len(self.txt) > 0:
         #     for t in self.txt.strings:

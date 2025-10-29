@@ -8,7 +8,7 @@ from tests.TestMessengersRefactor import TestMessengersRefactor
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: TestMessengersRefactor
+    var graph_ptr: UnsafePointer[TestMessengersRefactor]
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,8 +16,9 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = TestMessengersRefactor(self.world_ptr)
-
+        self.graph_ptr = UnsafePointer[TestMessengersRefactor].alloc(1)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = TestMessengersRefactor(self.world_ptr)
+        
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
 
@@ -40,7 +41,7 @@ struct MMMGraph(Representable, Movable):
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
-            samples = self.graph.next()  # Get the next audio samples from the graph
+            samples = self.graph_ptr[].next()  # Get the next audio samples from the graph
 
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):
