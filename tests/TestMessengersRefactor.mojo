@@ -6,7 +6,7 @@ from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
-struct TestMessengersRefactor(Movable, Copyable):
+struct TestMessengersRefactor():
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var trig: TrigMsg
@@ -26,27 +26,23 @@ struct TestMessengersRefactor(Movable, Copyable):
         self.lst = ListFloat64Msg("list_test", [0.0, 0.1, 0.2])
         self.txt = TextMsg("text_test", ["default"])
         self.printers = List[Print](capacity=2)
-
-        print("address of f: ", UnsafePointer(to=self.f))
-
-        self.m.add_param(self.trig)
-        self.m.add_param(self.f)
-        self.m.add_param(self.gate)
-        self.m.add_param(self.lst)
-        self.m.add_param(self.txt)
+        
+        self.m.add_param(UnsafePointer(to=self.trig))
+        self.m.add_param(UnsafePointer(to=self.f))
+        self.m.add_param(UnsafePointer(to=self.gate))
+        self.m.add_param(UnsafePointer(to=self.lst))
+        self.m.add_param(UnsafePointer(to=self.txt))
 
         for i in range(2):
             self.printers.append(Print(world_ptr))
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
-
+    fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
-
         self.printers[0].next(self.f, "Float Value:",1)
         self.printers[1].next(self.gate, "Gate Value:",1)
 
-        if self.trig:
-            print("Trig Received! ********************************************")
+        # if self.trig:
+            # print("Trig Received! ********************************************")
 
         # if len(self.txt) > 0:
         #     for t in self.txt.strings:

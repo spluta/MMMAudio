@@ -180,7 +180,7 @@ struct MessengerManager(Movable, Copyable):
             if not float_msg.value.retrieved:
                 print("Float message was not retrieved this block:", float_msg.key)
 
-        for gate_msg in self.gate_msgs.items():
+        for gate_msg in self.gate_msgs.take_items():
             if not gate_msg.value.retrieved:
                 print("Gate message was not retrieved this block:", gate_msg.key)
         

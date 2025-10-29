@@ -138,24 +138,20 @@ struct Messenger(Movable, Copyable):
         self.list_dict = Dict[String, UnsafePointer[ListFloat64Msg]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
 
-    fn add_param(mut self, ref param: Float64Msg) -> None:
-        self.float_dict[param.name] = UnsafePointer(to=param)
-        try:
-            print("Added float64 param at memory location: ", self.float_dict[param.name])
-        except:
-            pass
+    fn add_param(mut self, param: UnsafePointer[Float64Msg]) -> None:
+        self.float_dict[param[].name] = param
 
-    fn add_param(mut self, ref param: GateMsg) -> None:
-        self.gate_dict[param.name] = UnsafePointer(to=param)
-    
-    fn add_param(mut self, ref param: TrigMsg) -> None:
-        self.trig_dict[param.name] = UnsafePointer(to=param)
-    
-    fn add_param(mut self, ref param: ListFloat64Msg) -> None:
-        self.list_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, param_ptr: UnsafePointer[GateMsg]) -> None:
+        self.gate_dict[param_ptr[].name] = param_ptr
 
-    fn add_param(mut self, ref param: TextMsg) -> None:
-        self.text_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, param_ptr: UnsafePointer[TrigMsg]) -> None:
+        self.trig_dict[param_ptr[].name] = param_ptr
+
+    fn add_param(mut self, param_ptr: UnsafePointer[ListFloat64Msg]) -> None:
+        self.list_dict[param_ptr[].name] = param_ptr
+
+    fn add_param(mut self, param_ptr: UnsafePointer[TextMsg]) -> None:
+        self.text_dict[param_ptr[].name] = param_ptr
 
     fn update(self) -> None:
         if self.world_ptr[].block_state == 0:
@@ -166,10 +162,7 @@ struct Messenger(Movable, Copyable):
                 for ref item in self.float_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_float(item.key)
                     if opt:
-                        print("Updating float msg ", item.key, " to ", opt.value())
                         item.value[].value = opt.value()
-                        print("location of item.value: ", item.value)
-                    print("Updated float msg ", item.key, " to ", item.value[].value)
                 
                 for ref item in self.gate_dict.items():
                     var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
@@ -190,8 +183,8 @@ struct Messenger(Movable, Copyable):
                     var opt = self.world_ptr[].messengerManager.get_text(item.key)
                     if opt:
                         item.value[].strings = opt.value().copy()
-            except:
-                pass # I feel confident there won't be exceptions here.
+            except error:
+                print("Error occurred while updating messages. Error: ", error)
         elif self.world_ptr[].block_state == 1:
             for ref item in self.trig_dict.items():
                 item.value[].state = False

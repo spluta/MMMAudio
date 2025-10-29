@@ -11,7 +11,7 @@ from """+package_name+"""."""+graph_name+""" import """+graph_name+"""
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph: """+graph_name+"""
+    var graph_ptr: UnsafePointer["""+graph_name+"""]
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -19,8 +19,9 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph = """+graph_name+"""(self.world_ptr)
-
+        self.graph_ptr = UnsafePointer["""+graph_name+"""].alloc(1)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = """+graph_name+"""(self.world_ptr)
+        
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
 
@@ -43,7 +44,7 @@ struct MMMGraph(Representable, Movable):
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
 
-            samples = self.graph.next()  # Get the next audio samples from the graph
+            samples = self.graph_ptr[].next()  # Get the next audio samples from the graph
 
             # Fill the wire buffer with the sample data
             for j in range(min(self.num_out_chans, samples.__len__())):
@@ -51,6 +52,9 @@ struct MMMGraph(Representable, Movable):
         
     fn next(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
+    
+    fn __del__(owned self):
+        self.graph_ptr.free()
         """
     with open("mmm_src/MMMGraph_solo.mojo", "w") as file:
         file.write(string)

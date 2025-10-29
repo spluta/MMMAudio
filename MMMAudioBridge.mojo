@@ -19,7 +19,7 @@ struct MMMAudioBridge(Representable, Movable):
     var world: MMMWorld  # Instance of MMMWorld
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    var graph: MMMGraph
+    var graph_ptr: UnsafePointer[MMMGraph]
 
     var loc_in_buffer: UnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
     var loc_out_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
@@ -48,7 +48,8 @@ struct MMMAudioBridge(Representable, Movable):
         self.world = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)  # Initialize MMMWorld with sample rate and block size
         self.world_ptr = UnsafePointer(to=self.world)  # Pointer to the MMMWorld instance
 
-        self.graph = MMMGraph(self.world_ptr)
+        self.graph_ptr = UnsafePointer[MMMGraph].alloc(1)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = MMMGraph(self.world_ptr)
 
         print("AudioEngine initialized with sample rate:", self.world_ptr[0].sample_rate)
 
@@ -58,13 +59,15 @@ struct MMMAudioBridge(Representable, Movable):
         var num_out_chans = Int64(args[1])
         print("set_channel_count:", num_in_chans, num_out_chans)
         py_self[0].world_ptr[0].set_channel_count(num_in_chans, num_out_chans)
-        py_self[0].graph.set_channel_count(num_in_chans, num_out_chans)
-
+        py_self[0].graph_ptr[].set_channel_count(num_in_chans, num_out_chans)
+        
         return PythonObject(None)
 
     fn __repr__(self) -> String:
         return String("MMMAudioBridge(sample_rate: " + String(self.world_ptr[0].sample_rate) + ", block_size: " + String(self.world_ptr[0].block_size) + ", num_in_chans: " + String(self.world_ptr[0].num_in_chans) + ", num_out_chans: " + String(self.world_ptr[0].num_out_chans) + ")")
 
+    fn __del__(deinit self):
+        self.graph_ptr.free()
 
     @staticmethod
     fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
@@ -154,7 +157,7 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world_ptr[0].block_size):
                 py_self[0].loc_out_buffer[i * py_self[0].world_ptr[0].num_out_chans + j] = 0.0 
 
-        py_self[0].graph.next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer)  
+        py_self[0].graph_ptr[].next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer)  
 
         return PythonObject(None)  # Return a PythonObject wrapping the float value
 
