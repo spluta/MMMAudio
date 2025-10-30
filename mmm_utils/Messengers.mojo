@@ -66,13 +66,9 @@ struct TextMsg(Representable, Writable, Sized):
         return len(self.strings)
 
 struct Messenger():
-    # [TODO] Messenger needs a Set to keep track of all the keys
-    # so that there can't be a key collision even if one is for
-    # a different type of message.
-
     # [TODO] Add Optional namespace with default = None
-
     var world_ptr: UnsafePointer[MMMWorld]
+    var all_keys: Set[String]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]
     var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
     var list_dict: Dict[String, UnsafePointer[List[Float64]]]
@@ -86,20 +82,34 @@ struct Messenger():
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
+        self.all_keys = Set[String]()
+
+    fn check_key_collision(mut self, name: String) -> None:
+        try:
+            if name in self.all_keys:
+                raise Error("Messenger key collision: The key '" + name + "' is already in use.")
+            self.all_keys.add(name)
+        except error:
+            print("Error occurred while checking key collision. Error: ", error)
 
     fn add_param(mut self, ref param: Float64, name: String) -> None:
+        self.check_key_collision(name)
         self.float64_dict[name] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: GateMsg, name: String) -> None:
+        self.check_key_collision(name)
         self.gate_dict[name] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: TrigMsg, name: String) -> None:
+        self.check_key_collision(name)
         self.trig_dict[name] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: List[Float64], name: String) -> None:
+        self.check_key_collision(name)
         self.list_dict[name] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: TextMsg, name: String) -> None:
+        self.check_key_collision(name)
         self.text_dict[name] = UnsafePointer(to=param)
 
     fn update(self) -> None:

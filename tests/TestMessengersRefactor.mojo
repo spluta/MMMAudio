@@ -41,16 +41,16 @@ struct TestMessengersRefactor():
 
         # self.printers[0].next(self.f, "Freq Value:",1)
 
-        if self.trig:
-            print("Trig Received! ********************************************")
+        # if self.trig:
+        #     print("Trig Received! ********************************************")
 
-        if len(self.txt) > 0:
-            for t in self.txt.strings:
-                print("Text Received: ", t)
+        # if len(self.txt) > 0:
+        #     for t in self.txt.strings:
+        #         print("Text Received: ", t)
         
-        if len(self.float_list) > 0:
-            print("list len: ", len(self.float_list))
-            for l in self.float_list:
-                print("List: ", l)
+        # if len(self.float_list) > 0:
+        #     print("list len: ", len(self.float_list))
+        #     for l in self.float_list:
+        #         print("List: ", l)
 
         return SIMD[DType.float64, 2](0.0, 0.0)
