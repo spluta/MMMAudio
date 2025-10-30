@@ -65,8 +65,8 @@ struct TextMsg(Representable, Writable, Sized):
     fn __len__(self) -> Int:
         return len(self.strings)
 
-struct Messenger():
-    # [TODO] Add Optional namespace with default = None
+struct Messenger(Copyable, Movable):
+    var namespace: Optional[String]
     var world_ptr: UnsafePointer[MMMWorld]
     var all_keys: Set[String]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]
@@ -75,8 +75,9 @@ struct Messenger():
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
     var float64_dict: Dict[String, UnsafePointer[Float64]]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world_ptr = world_ptr
+        self.namespace = namespace
         self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
         self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
@@ -84,33 +85,40 @@ struct Messenger():
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
         self.all_keys = Set[String]()
 
-    fn check_key_collision(mut self, name: String) -> None:
+    fn check_key_collision(mut self, read name: String) -> String:
+        fullname = name
+        if self.namespace:
+            fullname = self.namespace.value() + "." + name
         try:
-            if name in self.all_keys:
-                raise Error("Messenger key collision: The key '" + name + "' is already in use.")
-            self.all_keys.add(name)
+            if fullname in self.all_keys:
+                raise Error("Messenger key collision: The key '" + fullname + "' is already in use.")
+            self.all_keys.add(fullname)
+            print("Registered messenger key: ", fullname, " because there were no collisions.")
+            return fullname
         except error:
             print("Error occurred while checking key collision. Error: ", error)
+            return fullname
 
     fn add_param(mut self, ref param: Float64, name: String) -> None:
-        self.check_key_collision(name)
-        self.float64_dict[name] = UnsafePointer(to=param)
+        fullname = self.check_key_collision(name)
+        print("Adding Float64 messenger param with name: ", fullname)
+        self.float64_dict[fullname] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: GateMsg, name: String) -> None:
-        self.check_key_collision(name)
-        self.gate_dict[name] = UnsafePointer(to=param)
+        fullname = self.check_key_collision(name)
+        self.gate_dict[fullname] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: TrigMsg, name: String) -> None:
-        self.check_key_collision(name)
-        self.trig_dict[name] = UnsafePointer(to=param)
+        fullname = self.check_key_collision(name)
+        self.trig_dict[fullname] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: List[Float64], name: String) -> None:
-        self.check_key_collision(name)
-        self.list_dict[name] = UnsafePointer(to=param)
+        fullname = self.check_key_collision(name)
+        self.list_dict[fullname] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: TextMsg, name: String) -> None:
-        self.check_key_collision(name)
-        self.text_dict[name] = UnsafePointer(to=param)
+        fullname = self.check_key_collision(name)
+        self.text_dict[fullname] = UnsafePointer(to=param)
 
     fn update(self) -> None:
         if self.world_ptr[].block_state == 0:
@@ -142,6 +150,10 @@ struct Messenger():
                 for ref item in self.float64_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_float(item.key)
                     if opt:
+                        print("float64_dict keys: ")
+                        for k in self.float64_dict.keys():
+                            print(" - ", k)
+                        print("Updating Float64 messenger '", item.key, "' to value: ", opt.value())
                         item.value[] = opt.value()
 
             except error:
