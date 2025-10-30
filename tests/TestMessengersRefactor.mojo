@@ -6,14 +6,14 @@ from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
-struct Tone():
+struct Tone(Copyable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
     var m: Messenger
     var printer: Print
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
         self.world_ptr = world_ptr
         self.osc = Osc(self.world_ptr)
         self.freq = 440.0
@@ -35,15 +35,15 @@ struct TestMessengersRefactor():
     var gate: GateMsg
     var float_list: List[Float64]
     var txt: TextMsg
-    var tone0: Tone
-    var tone1: Tone
+    var tones: InlineArray[Tone, 2]
     var printers: List[Print]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
-        self.tone0 = Tone(world_ptr, "tone_0")
-        self.tone1 = Tone(world_ptr, "tone_1")
+        self.tones = InlineArray[Tone, 2](uninitialized=True)
+        for i in range(2):
+            self.tones[i] = Tone(world_ptr, "tone_" + String(i))
 
         self.trig = TrigMsg()
         self.vol = -24.0
@@ -64,8 +64,17 @@ struct TestMessengersRefactor():
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
 
+        self.printers[0].next(self.vol, "Volume (dB):", 1)
+        self.printers[1].next(self.gate, "Gate State:", 1)
+        self.printers[2].next(self.float_list.__len__(), "Float List Length:", 1)
+        self.printers[3].next(self.txt.__repr__(), "Text Message:", 1)
+
+        if self.trig:
+            for i in range(2):
+                self.printers[i].next(self.tones[i].freq, "Tone " + String(i) + " Freq on Trigger:", 1)
+
         out = SIMD[DType.float64, 2](0.0, 0.0)
-        out[0] = self.tone0.next()
-        out[1] = self.tone1.next()
+        for i in range(2):
+            out[i] = self.tones[i].next() 
 
         return out * dbamp(self.vol)

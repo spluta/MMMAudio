@@ -9,7 +9,7 @@ mmm_audio.send_float("should_warn_re_float", 2.5)
 mmm_audio.send_gate("gate_test", True)
 mmm_audio.send_gate("gate_test", False)
 
-mmm_audio.send_float("should_warn_re_gate", True)
+mmm_audio.send_gate("should_warn_re_gate", True)
 
 mmm_audio.send_trig("trig_test")
 
@@ -20,6 +20,7 @@ mmm_audio.send_list("test_list", [9.9,11.12])
 mmm_audio.send_text("text_test", "Hello, Messengers!")
 
 mmm_audio.send_float("vol", -100.0)
+mmm_audio.send_float("vol", -30.0)
 
 mmm_audio.send_float("tone_0.freq", 700)
 
