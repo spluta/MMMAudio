@@ -1,12 +1,11 @@
 from mmm_src.MMMWorld import *
 from utils import Variant
 
-struct GateMsg(Movable, Copyable, Representable, Boolable, Writable):
-    var name: String
+struct GateMsg(Representable, Boolable, Writable):
     var state: Bool
 
-    fn __init__(out self, name: String, default: Bool):
-        self.name = name
+    fn __init__(out self, default: Bool = False):
+        self.state = default
         self.state = default
 
     fn __as_bool__(self) -> Bool:
@@ -21,44 +20,10 @@ struct GateMsg(Movable, Copyable, Representable, Boolable, Writable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct ListFloat64Msg(Movable, Copyable, Representable, Writable, Sized):
-    var name: String
-    var values: List[Float64]
-
-    fn __init__(out self, name: String, default: List[Float64]):
-        self.name = name
-        self.values = default.copy()
-
-    fn __repr__(self) -> String:
-        s = String("[")
-        for i in range(self.values.__len__()):
-            s += String(self.values[i])
-            if i < self.values.__len__() - 1:
-                s += String(", ")
-        s += String("]")
-        return s
-        
-    fn __getitem__(self, index: Int64) -> Float64:
-        return self.values[index]
-    
-    fn __setitem__(mut self, index: Int64, value: Float64):
-        self.values[index] = value
-
-    fn write_to(self, mut writer: Some[Writer]):
-        writer.write("[ ")
-        for v in self.values:
-            writer.write(String(v) + " ")
-        writer.write("]")
-
-    fn __len__(self) -> Int:
-        return self.values.__len__()
-
-struct TrigMsg(Movable, Copyable, Representable, Writable, Boolable):
-    var name: String
+struct TrigMsg(Representable, Writable, Boolable):
     var state: Bool
 
-    fn __init__(out self, name: String, default: Bool):
-        self.name = name
+    fn __init__(out self, default: Bool = False):
         self.state = default
 
     fn __as_bool__(self) -> Bool:
@@ -73,12 +38,10 @@ struct TrigMsg(Movable, Copyable, Representable, Writable, Boolable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TextMsg(Movable, Copyable, Representable, Writable, Sized):
-    var name: String
+struct TextMsg(Representable, Writable, Sized):
     var strings: List[String]
 
-    fn __init__(out self, name: String, default: List[String]):
-        self.name = name
+    fn __init__(out self, default: List[String] = List[String]()):
         self.strings = default.copy()
 
     fn __repr__(self) -> String:
@@ -112,34 +75,32 @@ struct Messenger():
     var world_ptr: UnsafePointer[MMMWorld]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]
     var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
-    var list_dict: Dict[String, UnsafePointer[ListFloat64Msg]]
+    var list_dict: Dict[String, UnsafePointer[List[Float64]]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
-
     var float64_dict: Dict[String, UnsafePointer[Float64]]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
         self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
-        self.list_dict = Dict[String, UnsafePointer[ListFloat64Msg]]()
+        self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
-
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
 
     fn add_param(mut self, ref param: Float64, name: String) -> None:
         self.float64_dict[name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, ref param: GateMsg) -> None:
-        self.gate_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, ref param: GateMsg, name: String) -> None:
+        self.gate_dict[name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, ref param: TrigMsg) -> None:
-        self.trig_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, ref param: TrigMsg, name: String) -> None:
+        self.trig_dict[name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, ref param: ListFloat64Msg) -> None:
-        self.list_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, ref param: List[Float64], name: String) -> None:
+        self.list_dict[name] = UnsafePointer(to=param)
 
-    fn add_param(mut self, ref param: TextMsg) -> None:
-        self.text_dict[param.name] = UnsafePointer(to=param)
+    fn add_param(mut self, ref param: TextMsg, name: String) -> None:
+        self.text_dict[name] = UnsafePointer(to=param)
 
     fn update(self) -> None:
         if self.world_ptr[].block_state == 0:
@@ -161,7 +122,7 @@ struct Messenger():
                 for ref item in self.list_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_list(item.key)
                     if opt:
-                        item.value[].values = opt.value().copy()
+                        item.value[] = opt.value().copy()
                 
                 for ref item in self.text_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_text(item.key)

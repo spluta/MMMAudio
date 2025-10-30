@@ -10,10 +10,9 @@ struct TestMessengersRefactor():
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var trig: TrigMsg
-    # var f: Float64Msg
     var f: Float64
     var gate: GateMsg
-    var lst: ListFloat64Msg
+    var float_list: List[Float64]
     var txt: TextMsg
     var printers: List[Print]
 
@@ -21,20 +20,18 @@ struct TestMessengersRefactor():
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
 
-        self.trig = TrigMsg("trig_test", False)
-        # self.f = Float64Msg("float_test", 0.0)
+        self.trig = TrigMsg()
         self.f = 0.0
-        self.gate = GateMsg("gate_test", False)
-        self.lst = ListFloat64Msg("list_test", [0.0, 0.1, 0.2])
-        self.txt = TextMsg("text_test", ["default"])
+        self.gate = GateMsg()
+        self.float_list = { 10.0, 0.1, 0.2 } # really needs to be initialized this way (I think it's a Mojo thing)
+        self.txt = TextMsg()
         self.printers = List[Print](capacity=2)
 
-        self.m.add_param(self.trig)
-        # self.m.add_param(self.f)
+        self.m.add_param(self.trig,"test_trig")
         self.m.add_param(self.f,"freq")
-        self.m.add_param(self.gate)
-        self.m.add_param(self.lst)
-        self.m.add_param(self.txt)
+        self.m.add_param(self.gate,"test_gate")
+        self.m.add_param(self.float_list,"test_list")
+        self.m.add_param(self.txt,"test_text")
 
         for i in range(2):
             self.printers.append(Print(world_ptr))
@@ -42,8 +39,7 @@ struct TestMessengersRefactor():
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
 
-        self.printers[0].next(self.f, "Freq Value:",1)
-        # self.printers[1].next(self.gate, "Gate Value:",1)
+        # self.printers[0].next(self.f, "Freq Value:",1)
 
         if self.trig:
             print("Trig Received! ********************************************")
@@ -52,8 +48,9 @@ struct TestMessengersRefactor():
             for t in self.txt.strings:
                 print("Text Received: ", t)
         
-        if len(self.lst) > 0:
-            for l in self.lst.values:
-                print("List Received: ", l)
+        if len(self.float_list) > 0:
+            print("list len: ", len(self.float_list))
+            for l in self.float_list:
+                print("List: ", l)
 
         return SIMD[DType.float64, 2](0.0, 0.0)
