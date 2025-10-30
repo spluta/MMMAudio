@@ -1,26 +1,6 @@
 from mmm_src.MMMWorld import *
 from utils import Variant
 
-struct Float64Msg(Movable, Copyable, Representable, Floatable, Writable):
-    var name: String
-    var value: Float64
-
-    fn __init__(out self, name: String, default: Float64):
-        self.name = name
-        self.value = default
-
-    fn __as_float__(self) -> Float64:
-        return self.value
-
-    fn __float__(self) -> Float64:
-        return self.value
-
-    fn __repr__(self) -> String:
-        return String(self.value)
-
-    fn write_to(self, mut writer: Some[Writer]):
-        writer.write(self.value)
-
 struct GateMsg(Movable, Copyable, Representable, Boolable, Writable):
     var name: String
     var state: Bool
@@ -123,23 +103,31 @@ struct TextMsg(Movable, Copyable, Representable, Writable, Sized):
         return len(self.strings)
 
 struct Messenger():
+    # [TODO] Messenger needs a Set to keep track of all the keys
+    # so that there can't be a key collision even if one is for
+    # a different type of message.
+
+    # [TODO] Add Optional namespace with default = None
+
     var world_ptr: UnsafePointer[MMMWorld]
-    var float_dict: Dict[String, UnsafePointer[Float64Msg]]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]
     var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
     var list_dict: Dict[String, UnsafePointer[ListFloat64Msg]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
 
+    var float64_dict: Dict[String, UnsafePointer[Float64]]
+
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.float_dict = Dict[String, UnsafePointer[Float64Msg]]()
         self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
         self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
         self.list_dict = Dict[String, UnsafePointer[ListFloat64Msg]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
 
-    fn add_param(mut self, ref param: Float64Msg) -> None:
-        self.float_dict[param.name] = UnsafePointer(to=param)
+        self.float64_dict = Dict[String, UnsafePointer[Float64]]()
+
+    fn add_param(mut self, ref param: Float64, name: String) -> None:
+        self.float64_dict[name] = UnsafePointer(to=param)
 
     fn add_param(mut self, ref param: GateMsg) -> None:
         self.gate_dict[param.name] = UnsafePointer(to=param)
@@ -159,10 +147,6 @@ struct Messenger():
                 # This all goes in a try block because all of the get_* functions are
                 # marked "raises." They need to because that is required in order to 
                 # access non-copies of the values in the message Dicts.
-                for ref item in self.float_dict.items():
-                    var opt = self.world_ptr[].messengerManager.get_float(item.key)
-                    if opt:
-                        item.value[].value = opt.value()
                 
                 for ref item in self.gate_dict.items():
                     var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
@@ -183,8 +167,17 @@ struct Messenger():
                     var opt = self.world_ptr[].messengerManager.get_text(item.key)
                     if opt:
                         item.value[].strings = opt.value().copy()
+                
+                for ref item in self.float64_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_float(item.key)
+                    if opt:
+                        item.value[] = opt.value()
+
             except error:
                 print("Error occurred while updating messages. Error: ", error)
+        # Clear trig and text messages at the end of the block so that on the very 
+        # next sample they are false/empty again. This can't happen "later" because
+        # the variables themselves might be (likely are) checked / used every sample!
         elif self.world_ptr[].block_state == 1:
             for ref item in self.trig_dict.items():
                 item.value[].state = False

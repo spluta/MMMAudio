@@ -17,6 +17,8 @@ mmm_audio.send_trig("should_warn_re_trig")
 
 mmm_audio.send_list("list_test", [])
 
+mmm_audio.send_float("freq", 440.0)
+
 mmm_audio.send_text("text_test", "Hello, Messengers!")
 
 mmm_audio.stop_audio()
