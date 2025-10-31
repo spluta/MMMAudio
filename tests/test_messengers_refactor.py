@@ -1,6 +1,7 @@
 from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
 mmm_audio.start_audio() 
+mmm_audio.stop_audio()
 
 mmm_audio.send_float("float_test", 1.4)
 
@@ -23,5 +24,5 @@ mmm_audio.send_float("vol", -100.0)
 mmm_audio.send_float("vol", -30.0)
 
 mmm_audio.send_float("tone_0.freq", 700)
+mmm_audio.send_float("freq_tone_0", 700)
 
-mmm_audio.stop_audio()

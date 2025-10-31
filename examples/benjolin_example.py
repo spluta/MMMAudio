@@ -38,11 +38,11 @@ layout = QVBoxLayout()
 
 def add_handle(name: str, min: float, max: float, exp: float, default: float):
     # make the slider
-    slider = Handle(name, ControlSpec(min, max, exp), default, callback=lambda v: mmm_audio.send_msg(name, v))
+    slider = Handle(name, ControlSpec(min, max, exp), default, callback=lambda v: mmm_audio.send_float(name, v))
     # add it to the layout
     layout.addWidget(slider)
     # send the default value to the graph
-    mmm_audio.send_msg(name, default)
+    mmm_audio.send_float(name, default)
 
 add_handle("freq1", 20, 14000.0, 0.25, 100)
 add_handle("freq2", 0.1, 14000.0, 0.25, 5)
