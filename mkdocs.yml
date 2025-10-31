@@ -62,6 +62,7 @@ nav:
       - World: api/mmm_src/MMMWorld.md
       - Audio Engine: api/mmm_src/MMMAudio.md
       - Graphs: api/mmm_src/MMMGraph_solo.md
+      - Messenger: api/mmm_utils/Messengers.md
       - Traits: api/mmm_src/MMMTraits.md
       - Patterns: api/mmm_src/Patterns.md
       - Scheduler: api/mmm_src/Scheduler.md
