@@ -35,6 +35,20 @@ struct Benjolin(Representable, Movable, Copyable):
     var sh: List[Float64]
     var dctraps: List[DCTrap]
 
+    var freq1: Float64
+    var freq2: Float64
+    var scale: Float64
+    var rungler1: Float64
+    var rungler2: Float64
+    var runglerFiltMul: Float64
+    var loop: Float64
+    var filterFreq: Float64
+    var q: Float64
+    var gain: Float64
+    var filterType: Float64
+    var outSignalL: Float64
+    var outSignalR: Float64
+
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(self.world_ptr)
@@ -52,6 +66,34 @@ struct Benjolin(Representable, Movable, Copyable):
         self.sh = List[Float64](capacity=9)
         self.dctraps = List[DCTrap](capacity=2)
 
+        self.freq1 = 40
+        self.freq2 = 4
+        self.scale = 1
+        self.rungler1 = 0.16
+        self.rungler2 = 0
+        self.loop = 0
+        self.filterFreq = 40
+        self.runglerFiltMul = 1
+        self.q = 0.82
+        self.gain = 1
+        self.filterType = 0
+        self.outSignalL = 1
+        self.outSignalR = 3
+
+        self.m.register(self.freq1,"freq1")
+        self.m.register(self.freq2,"freq2")
+        self.m.register(self.scale,"scale")
+        self.m.register(self.rungler1,"rungler1")
+        self.m.register(self.rungler2,"rungler2")
+        self.m.register(self.runglerFiltMul,"runglerFiltMul")
+        self.m.register(self.loop,"loop")
+        self.m.register(self.filterFreq,"filterFreq")
+        self.m.register(self.q,"q")
+        self.m.register(self.gain,"gain")
+        self.m.register(self.filterType,"filterType")
+        self.m.register(self.outSignalL,"outSignalL")
+        self.m.register(self.outSignalR,"outSignalR")
+
         for _ in range(8):
             self.delays.append(Delay[1,3](self.world_ptr, max_delay_time=0.1))
             self.latches.append(Latch(self.world_ptr))
@@ -68,28 +110,17 @@ struct Benjolin(Representable, Movable, Copyable):
         return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        freq1 = self.m.get_val("freq1", 40.0)
-        freq2 = self.m.get_val("freq2", 4.0)
-        scale = self.m.get_val("scale", 1.0)
-        rungler1 = self.m.get_val("rungler1", 0.16)
-        rungler2 = self.m.get_val("rungler2", 0.0)
-        runglerFiltMul = self.m.get_val("runglerFiltMul", 9.0)
-        loop = self.m.get_val("loop", 0.0)
-        filterFreq = self.m.get_val("filterFreq", 40.0)
-        q = self.m.get_val("q", 0.82)
-        gain = self.m.get_val("gain", 1.0)
-        filterType = self.m.get_val("filterType", 0.0)
-        outSignalL = self.m.get_val("outSignalL", 1.0)
-        outSignalR = self.m.get_val("outSignalR", 3.0)
 
-        tri1 = self.tri1.next((self.rungler*rungler1)+freq1,osc_type=3)
-        tri2 = self.tri2.next((self.rungler*rungler2)+freq2,osc_type=3)
-        pulse1 = self.pulse1.next((self.rungler*rungler1)+freq1,osc_type=2)
-        pulse2 = self.pulse2.next((self.rungler*rungler2)+freq2,osc_type=2)
+        self.m.update()
+        
+        tri1 = self.tri1.next((self.rungler*self.rungler1)+self.freq1,osc_type=3)
+        tri2 = self.tri2.next((self.rungler*self.rungler2)+self.freq2,osc_type=3)
+        pulse1 = self.pulse1.next((self.rungler*self.rungler1)+self.freq1,osc_type=2)
+        pulse2 = self.pulse2.next((self.rungler*self.rungler2)+self.freq2,osc_type=2)
 
         pwm = 1.0 if (tri1 + tri2) > 0.0 else 0.0
-        
-        pulse1 = (self.feedback*loop) + (pulse1 * ((loop * -1) + 1))
+
+        pulse1 = (self.feedback*self.loop) + (pulse1 * ((self.loop * -1) + 1))
 
         self.sh[0] = 1.0 if pulse1 > 0.5 else 0.0
         # pretty sure this makes no sense, but it matches the original code...:
@@ -108,25 +139,24 @@ struct Benjolin(Representable, Movable, Copyable):
         self.rungler = ((self.sh[0]/(2**8)))+(self.sh[1]/(2**7))+(self.sh[2]/(2**6))+(self.sh[3]/(2**5))+(self.sh[4]/(2**4))+(self.sh[5]/(2**3))+(self.sh[6]/(2**2))+(self.sh[7]/(2**1))
 
         self.feedback = self.rungler
-        self.rungler = midicps(self.rungler * linlin(scale,0.0,1.0,0.0,127.0))
+        self.rungler = midicps(self.rungler * linlin(self.scale,0.0,1.0,0.0,127.0))
 
-        self.filter_outputs[0] = self.filters[0].lpf(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[1] = self.filters[1].hpf(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[2] = self.filters[2].bpf(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[3] = self.filters[3].lpf(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[4] = self.filters[4].peak(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[5] = self.filters[5].allpass(pwm * gain,(self.rungler*runglerFiltMul)+filterFreq,q)
-        self.filter_outputs[6] = self.filters[6].bell(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
-        self.filter_outputs[7] = self.filters[7].highshelf(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
-        self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*runglerFiltMul)+filterFreq,q,ampdb(gain))
+        self.filter_outputs[0] = self.filters[0].lpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[1] = self.filters[1].hpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[2] = self.filters[2].bpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[3] = self.filters[3].lpf(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[4] = self.filters[4].peak(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[5] = self.filters[5].allpass(pwm * self.gain,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q)
+        self.filter_outputs[6] = self.filters[6].bell(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
+        self.filter_outputs[7] = self.filters[7].highshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
+        self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         
-        filter_output = select(filterType,self.filter_outputs) * dbamp(-12)
-        # self.world_ptr[0].print(filter_output,"filter output: ")
+        filter_output = select(self.filterType,self.filter_outputs) * dbamp(-12)
         filter_output = sanitize(filter_output)
 
         output = SIMD[DType.float64, 2](0.0, 0.0)
-        output[0] = select(outSignalL,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
-        output[1] = select(outSignalR,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
+        output[0] = select(self.outSignalL,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
+        output[1] = select(self.outSignalR,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
 
         for i in range(len(self.dctraps)):
             output[i] = self.dctraps[i].next(output[i])

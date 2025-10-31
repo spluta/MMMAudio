@@ -1,278 +1,290 @@
 from mmm_src.MMMWorld import *
 
+struct Messenger(Copyable, Movable):
+    """Messenger is a struct to enable communication between Python and Mojo."""
 
+    var namespace: Optional[String]
+    var world_ptr: UnsafePointer[MMMWorld]
+    var all_keys: Set[String]
+    var gate_dict: Dict[String, UnsafePointer[GateMsg]]
+    var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
+    var list_dict: Dict[String, UnsafePointer[List[Float64]]]
+    var text_dict: Dict[String, UnsafePointer[TextMsg]]
+    var float64_dict: Dict[String, UnsafePointer[Float64]]
 
-struct Messenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
-    var default_dict: Dict[String, Float64]
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+        """Initialize the Messenger.
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
-        self.default_dict = Dict[String, Float64]()
+        > Currently, 'namespace' doesn't work properly if the different synths that have a `Messenger` are in a `List` or other `collection`.
 
-    fn get_val(mut self, key: String, default: Float64) -> Float64:
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            ptr.value()[0].grabbed = True
-            return ptr.value()[0].lists[0][0]
-        else:
-            return default
+        If a 'namespace' is provided, any messages sent from Python need to be prepended with this name.
+        For example, if a Float64 is registered with this Messenger as 'freq' and this Messenger has the
+        namespace 'synth1', then to update the freq value from Python, the user must send:
 
-    # fn __float__(mut self, key: String, default: Float64) -> Float64:
-    #     return self.get_val(key, default)
-    
-    # fn __int__(mut self, key: String, default: Float64) -> Int64:
-    #     return Int64(self.get_val(key, default))
+        ```python
+        mmm_audio.send_float('synth1.freq',440.0)
+        ```
 
-    fn triggered(mut self, key: String) -> Bool:
-    
-    # Return the trigger state (val if triggered, 0.0 otherwise) of the messenger with the given key.
-
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return True
-        return False
-
-    fn get_list(mut self, key: String) -> List[Float64]:
-        ptr = self.world_ptr[0].get_messenger(key)
-
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists[0].copy()
-            else:
-                return List[Float64]().copy()
-        else:
-            return List[Float64]().copy()
-
-    # fn get_list(mut self, key: String) -> (List[Float64], Bool):
-        
-    #     ptr = self.world_ptr[0].get_messenger(key)
-
-    #     if ptr:
-    #         if ptr.value()[0].triggered:
-    #             ptr.value()[0].grabbed = True
-    #             return (ptr.value()[0].lists[0].copy(), True)
-    #         else:
-    #             return (List[Float64]().copy(), False)
-    #     else:
-    #         return (List[Float64]().copy(), False)
-
-    fn get_lists(mut self, key: String) -> List[List[Float64]]:
-        """
-        This version of get_lists will return all messages for the given key
-        """
-        
-        ptr = self.world_ptr[0].get_messenger(key)
-
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists.copy()
-            else:
-                return List[List[Float64]]().copy()
-        else:
-            return List[List[Float64]]().copy()
-
-    fn get_lists(mut self, key: String, *filters: Optional[Int]) -> List[List[Float64]]:
-        """
-        This version of get_lists filters out messages based on the filters provided
-        If a filter is None, that position is ignored
-        If a filter is an Int, only messages with that value in that position are included
-        e.g. get_lists("note_on", None, 48) will return only note_on messages with a value of 48 in the second position (the note number)
-        """
-        ptr = self.world_ptr[0].get_messenger(key)
-
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                if len(filters) == 0:
-                    return ptr.value()[0].lists.copy()
-                elif len(filters) > 0:
-                    big_list = List[List[Float64]]().copy()
-                    for item in ptr.value()[0].lists:
-                        include = [False for _ in range(len(filters))]
-                        for i in range(min(len(filters), len(item))):
-                            if filters[i]==None or item[i] == filters[i].value():
-                                include[i] = True
-
-                        if all(include):
-                            big_list.append(item.copy())
-                    return big_list.copy()
-        return List[List[Float64]]().copy()
-
-struct TextMessenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld] 
-    var triggered: Bool
-
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.triggered = False
-
-    @always_inline
-    fn get_text_msg_val(mut self: Self, key: String) -> String:
-        """
-        Retrieves a text message associated with the given key from the world's text message dictionary.
+        For example usage, see the [TODO] file in 'Examples.'
 
         Args:
-            key: String - The key to look for in the text message dictionary.
+            world_ptr: An `UnsafePointer[MMMWorld]` to the world to check for new messages.
+            namespace: A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger.
 
         Returns:
-            A tuple containing the message (String) and a boolean indicating if it was triggered (Bool).
-            
-            Returns a tuple (message, triggered)
-            
-            If no message is found, returns ("", False).
-
+            None
         """
-        opt = self.world_ptr[0].get_text_msgs(key)
-        if opt: 
-            self.triggered = True
-            return opt.value()[0]
-        else:
-            self.triggered = False
-            return ""
 
-    @always_inline
-    fn get_text_msg_list(mut self: Self, key: String) -> List[String]:
+        self.world_ptr = world_ptr
+        self.namespace = namespace
+        self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
+        self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
+        self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
+        self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
+        self.float64_dict = Dict[String, UnsafePointer[Float64]]()
+        self.all_keys = Set[String]()
+
+    fn update(self) -> None:
+        """This function checks the MMMAudioWorld for any new messages that arrived during the last audio
+        block. If it finds any, they will be available in the variables registered with the Messenger. This
+        function should be called in the Synth's `.next()` function, so it runs every audio sample (it will only *actually* check for messages at the top of each audio block).
         """
-        Retrieves a text message associated with the given key from the world's text message dictionary.
+        if self.world_ptr[].block_state == 0:
+            try:
+                # This all goes in a try block because all of the get_* functions are
+                # marked "raises." They need to because that is required in order to 
+                # access non-copies of the values in the message Dicts.
+                for ref item in self.gate_dict.items():
+                    var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
+                    if opt:
+                        item.value[].state = opt.value()
+                for ref item in self.trig_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_trig(item.key)
+                    if opt:
+                        item.value[].state = opt
+                for ref item in self.list_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_list(item.key)
+                    if opt:
+                        item.value[] = opt.value().copy()
+                for ref item in self.text_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_text(item.key)
+                    if opt:
+                        item.value[].strings = opt.value().copy()
+                for ref item in self.float64_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_float(item.key)
+                    if opt:
+                        item.value[] = opt.value()
+            except error:
+                print("Error occurred while updating messages. Error: ", error)
+        # Clear trig and text messages at the end of the block so that on the very 
+        # next sample they are false/empty again. This can't happen "later" because
+        # the variables themselves might be (likely are) checked / used every sample!
+        elif self.world_ptr[].block_state == 1:
+            for ref item in self.trig_dict.items():
+                item.value[].state = False
+            for ref item in self.text_dict.items():
+                item.value[].strings.clear()
+                
+    @doc_private
+    fn check_key_collision(mut self, read name: String) -> String:
+        fullname = name
+        if self.namespace:
+            fullname = self.namespace.value() + "." + name
+        try:
+            if fullname in self.all_keys:
+                raise Error("Messenger key collision: The key '" + fullname + "' is already in use.")
+            self.all_keys.add(fullname)
+            return fullname
+        except error:
+            return fullname
+
+    fn register(mut self, ref param: Float64, name: String) -> None:
+        """Register a `Float64` with this `Messenger` under a specified `name`.  
+        
+        Note that `.register()` is overloaded for different types.  
+        """
+
+        fullname = self.check_key_collision(name)
+        self.float64_dict[fullname] = UnsafePointer(to=param)
+
+    fn register(mut self, ref param: GateMsg, name: String) -> None:
+        """Register a `GateMsg` with this `Messenger` under a specified `name`.  
+        
+        Note that `.register()` is overloaded for different types.  
+        """
+
+        fullname = self.check_key_collision(name)
+        self.gate_dict[fullname] = UnsafePointer(to=param)
+
+    fn register(mut self, ref param: TrigMsg, name: String) -> None:
+        """Register a `TrigMsg` with this `Messenger` under a specified `name`.
+        
+        Note that `.register()` is overloaded for different types.  
+        """
+        fullname = self.check_key_collision(name)
+        self.trig_dict[fullname] = UnsafePointer(to=param)
+
+    fn register(mut self, ref param: List[Float64], name: String) -> None:
+        """Register a `List[Float64]` with this `Messenger` under a specified `name`.
+        
+        Note that `.register()` is overloaded for different types.  
+        """
+        fullname = self.check_key_collision(name)
+        self.list_dict[fullname] = UnsafePointer(to=param)
+
+    fn register(mut self, ref param: TextMsg, name: String) -> None:
+        """Register a `TextMsg` with this `Messenger` under a specified `name`.
+        
+        Note that `.register()` is overloaded for different types.  
+        """
+        fullname = self.check_key_collision(name)
+        self.text_dict[fullname] = UnsafePointer(to=param)
+
+struct GateMsg(Representable, Boolable, Writable):
+    """A 'Gate' that can be controlled from Python.
+
+    It is either True (on) or False (off). 
+    It works like a boolean in all places, but different from a boolean it can be
+    registered with a Messenger under a user specified name.
+
+    For a usage example, see the [TODO] file in 'Examples.'
+
+    [TODO]: Does this need to exist or should the user just use a Bool directly,
+    and be able to register it with a Messenger just like Float64?
+    """
+
+    var state: Bool
+
+    fn __init__(out self, default: Bool = False):
+        """Initialize the GateMsg.
 
         Args:
-            key: String - The key to look for in the text message dictionary.
-
-        Returns:
-            A tuple containing the message (String) and a boolean indicating if it was triggered (Bool).
-            
-            Returns a tuple (message, triggered)
-            
-            If no message is found, returns ("", False).
-
+            default: The starting state for the GateMsg.
         """
-        opt = self.world_ptr[0].get_text_msgs(key)
-        if opt:
-            self.triggered = True
-            return opt.value().copy()
-        else:
-            self.triggered = False
-            return List[String]()
+        self.state = default
 
-# struct MessengerManager(Movable, Copyable):
-#     var world_ptr: UnsafePointer[MMMWorld]  
-#     var messengers: Dict[String, Messenger]
-#     # var text_messengers: Dict[String, TextMessenger]
+    @doc_private
+    fn __as_bool__(self) -> Bool:
+        return self.state
 
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         self.world_ptr = world_ptr
-#         self.messengers = Dict[String, Messenger]()
-#         # self.text_messengers = Dict[String, TextMessenger]()
+    @doc_private
+    fn __bool__(self) -> Bool:
+        return self.state
 
-#     fn add_messenger[is_trigger: Bool = False](mut self, key: String, default: Float64 = 0.0):
-#         messenger = Messenger(self.world_ptr, key, default)
-#         self.messengers[key] = messenger.copy()
-
-#     # fn add_text_messenger(mut self, key: String, default: String = ""):
-#     #     messenger = TextMessenger(self.world_ptr, default)
-#     #     self.text_messengers[key] = messenger.copy()
-
-#     fn get_messages(mut self):
-#         if self.world_ptr[0].top_of_block:
-#             for ref item in self.messengers.items():
-#                 item.value.get_msg()  # Update each messenger
-#             # for value in self.text_messengers.lists():
-#             #     value.get_text_msg()  # Update each text messenger
-#         if self.world_ptr[0].block_state == 1:
-#             for ref item in self.messengers.items():
-#                 item.value.trig = False
-#             # for value in self.text_messengers.lists():
-#             #     value.trig = False
-
-#     fn lists(self, key: String) -> List[List[Float64]]:
-#         if key not in self.messengers:
-#             return List[List[Float64]]()
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists.copy()
-#             else:
-#                 return List[List[Float64]]()
-
-#     fn list(self, key: String) -> List[Float64]:
-#         if key not in self.messengers:
-#             return List[Float64]()
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists[0].copy()
-#             else:
-#                 return List[Float64]()
-
-#     fn value(self, key: String) -> Float64:
-#         if key not in self.messengers:
-#             return 0.0
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists[0][0]
-#             else:
-#                 return 0.0
-
-#     fn trig(self, key: String) -> Int:
-#         if key not in self.messengers:
-#             return 0
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().trig()
-#             else:
-#                 return 0
-
-# struct Messenger(Movable, Copyable):
-#     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-#     var get_lists: List[List[Float64]]
-#     var get_list: List[Float64]
-#     var val: Float64
-#     var trigger: Bool
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], *default: Float64):
-#         self.world_ptr = world_ptr
-#         self.get_lists = List[List[Float64]]()
-
-#         if len(default) == 0:
-#             temp = [0.0]  # Default to a single zero if no default is provided
-#         else:
-#             temp = [x for x in default]  # Expand the default values
-#         self.get_lists.append(temp.copy())
-#         self.get_list = self.get_lists[0].copy()
-#         self.val = self.get_lists[0][0]
-#         self.trigger = False
-
-#     @always_inline
-#     fn get_msg(mut self: Self, key: String):
-#         ref opt = self.world_ptr[0].get_msg(key)
-#         if opt: 
-#             self.get_lists.clear()
-#             for val in opt.value():
-#                 self.get_lists.append(val.copy())
-#             self.get_list = self.get_lists[0].copy()
-#             self.val = self.get_lists[0][0]
-#             self.trigger = True
-#         else:
-#             self.trigger = False
+    @doc_private
+    fn __repr__(self) -> String:
+        return String(self.state)
     
-#     fn set_value(mut self, val: List[List[Float64]]):
-#         self.get_lists = val.copy()
-#         self.get_list = val[0].copy()
-#         self.val = val[0][0]
-#         self.trigger = True
+    @doc_private
+    fn write_to(self, mut writer: Some[Writer]):
+        writer.write(self.state)
+
+struct TrigMsg(Representable, Writable, Boolable):
+    """A 'Trigger' that can be controlled from Python.
+
+    It is either True (triggered) or False (not triggered). 
+    It works like a boolean in all places, but different from a boolean it can be
+    registered with a Messenger under a user specified name. The Messenger checks for any
+    'triggers' sent under the specified name at the start of each audio block, and sets
+    the TrigMsg's state accordingly. If there is a trigger under the name, this TrigMsg
+    will be True for 1 sample (the first of the audio block), and then automatically reset to
+    False for the rest of the block.
+
+    For an usage example, see the [TODO] file in 'Examples.'
+    """
+    var state: Bool
+
+    fn __init__(out self, starting_state: Bool = False):
+        """Initialize the TrigMsg with an optional starting state. 
+        
+        If the starting
+        state is set to True, this TrigMsg will be true for the first sample of the
+        first audio block and then go down to False on the very next sample. This might be
+        useful for initializing some process at the beginning of the audio thread, but note
+        that many processes look for a *change* from low to high, so if this TrigMsg starts 
+        high it might not trigger as expected.
+        """
+        self.state = starting_state
+
+    @doc_private
+    fn __as_bool__(self) -> Bool:
+        return self.state
     
-#     fn set_value(mut self, val: Float64):
-#         self.get_list = [val]
-#         self.val = val
-#         self.get_lists.clear()
-#         self.get_lists.append([val])
-#         self.trigger = True
+    @doc_private
+    fn __bool__(self) -> Bool:
+        return self.state
+
+    @doc_private
+    fn __repr__(self) -> String:
+        return String(self.state)
+
+    @doc_private
+    fn write_to(self, mut writer: Some[Writer]):
+        writer.write(self.state)
+
+struct TextMsg(Representable, Writable, Sized):
+    """A 'Text' message that can be sent from Python. 
+    
+    It is essentially a list of strings.
+    It works like a List[String] in all places, but different from a List[String] it can be
+    registered with a Messenger under a user specified name. This is a list rather than a single string
+    because it might be necessary to send multiple pieces of information at once, for example a lot of buffers
+    to load.
+
+    When sending a message from Python, send one at a time.
+    ```python
+    mmm_audio.send_text("load_buffer","path/to/sound1.wav")
+    mmm_audio.send_text("load_buffer","path/to/sound2.wav")
+    ```
+
+    As these messages are received in Mojo, any that arrive within the same audio 
+    block will be provided as the TextMsg list at the beginning of the next audio block.
+    The list is cleared after the first sample of the audio block.
+
+    For example usage, see the [TODO] file in 'Examples.'
+    """
+
+    var strings: List[String]
+
+    fn __init__(out self, default: List[String] = List[String]()):
+        """Initialize the TextMsg, with an optional default. 
+        
+        If a default 
+        list of strings is provided, this will be in the TextMsg for the first 
+        sample of the first audio block and then will be cleared. This might 
+        be useful for loading something
+        at the very start of the program run.
+        """
+        self.strings = default.copy()
+
+    @doc_private
+    fn __repr__(self) -> String:
+        s = String("[")
+        for i in range(self.strings.__len__()):
+            s += String(self.strings[i])
+            if i < self.strings.__len__() - 1:
+                s += String(", ")
+        s += String("]")
+        return s
+    
+    @doc_private
+    fn __as_list__(self) -> List[String]:
+        return self.strings.copy()
+
+    @doc_private
+    fn write_to(self, mut writer: Some[Writer]):
+        writer.write("[ ")
+        for v in self.strings:
+            writer.write(v + " ")
+        writer.write("]")
+
+    fn __len__(self) -> Int:
+        """Return the number of strings in this TextMsg. This dunder can be used as:
+        
+        ```mojo
+        txt = TextMsg(["hello", "world"])
+        len(txt) # returns 2
+        ```
+        
+        """
+        return len(self.strings)
