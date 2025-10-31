@@ -9,9 +9,11 @@ from .Oversampling import Oversampling
 
 from mmm_src.MMMTraits import *
 
-struct Lag[lag: Float64 = 0.02,N: Int = 1](Representable, Movable, Copyable):
+struct Lag[N: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
-    ``Lag[N, lag](world_ptr)``
+
+    ``Lag[N](world_ptr, lag=0.02)``
+
     Parameters:
         N: Number of channels to process in parallel.
         lag: Lag time in seconds.
@@ -21,11 +23,13 @@ struct Lag[lag: Float64 = 0.02,N: Int = 1](Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var val: SIMD[DType.float64, N]
     var b1: SIMD[DType.float64, N]
+    var lag: SIMD[DType.float64, N]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, N] = SIMD[DType.float64, N](0.02)):
         self.world_ptr = world_ptr
         self.val = SIMD[DType.float64, self.N](0.0)
         self.b1 = exp(-6.907755278982137 / (lag * self.world_ptr[0].sample_rate))
+        self.lag = lag
         
 
 
@@ -50,14 +54,22 @@ struct Lag[lag: Float64 = 0.02,N: Int = 1](Representable, Movable, Copyable):
 
         return self.val
 
+    @always_inline
+    fn set_lag_time(mut self, lag: SIMD[DType.float64, self.N]):
+        """Set a new lag time in seconds for each channel."""
+        self.lag = lag
+        self.b1 = exp(-6.907755278982137 / (lag * self.world_ptr[0].sample_rate))
+
 alias simd_width = simd_width_of[DType.float64]() * 2
 
 struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
-    var list: List[Lag[lag, simd_width]]
+    var list: List[Lag[simd_width]]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], lag_times: List[Float64]):
+
         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-        self.list = [Lag[lag, simd_width](world_ptr) for _ in range(num_simd)]
+        self.list = [Lag[simd_width](world_ptr, lag_times[i%N]) for i in range(num_simd)]
+
     @always_inline
     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
         vals = SIMD[DType.float64, simd_width](0.0)
@@ -600,6 +612,7 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("FIR")
 
+    @always_inline
     fn next(mut self: FIR, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         self.buffer[self.index] = input
         var output = SIMD[DType.float64, self.N](0.0)
@@ -677,6 +690,7 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("IIR")
 
+    @always_inline
     fn next(mut self: IIR, input: SIMD[DType.float64, self.N], coeffsbv: List[SIMD[DType.float64, self.N]], coeffsav: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         var temp = input - self.fb
         # calls the parallelized fir function, indicating the size of the simd vector to use
@@ -694,10 +708,11 @@ struct tf2[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("tf2")
 
+    @always_inline
     fn next(mut self: tf2, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
         return self.iir.next(input, coeffs[:3], coeffs[3:])
 
-
+@always_inline
 fn tf2s[N: Int = 1](coeffs: List[SIMD[DType.float64, N]], mut coeffs_out: List[SIMD[DType.float64, N]], sample_rate: Float64):
     var b2 = coeffs[0]
     var b1 = coeffs[1]
@@ -734,6 +749,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Reson")
 
+    @always_inline
     fn lpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
@@ -746,6 +762,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
 
         return self.tf2.next(input, self.coeffs)
 
+    @always_inline
     fn hpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q
@@ -758,6 +775,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
 
         return gain*input - self.tf2.next(input, self.coeffs)
 
+    @always_inline
     fn bpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         var wc = 2*pi*freq
         var a1 = 1/q

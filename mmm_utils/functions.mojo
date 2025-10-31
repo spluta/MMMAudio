@@ -1,5 +1,5 @@
 """
-MMM Utility Functions
+MMMAudioUtility Functions
 
 This module provides essential utility functions for audio processing and mathematical
 operations in the MMMAudio framework. All functions are optimized for SIMD operations
@@ -96,7 +96,7 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
     return 20.0 * log10(amp)
 
 @always_inline
-fn select(index: Float64, list: List[Float64]) -> Float64:
+fn select[dtype: DType, width: Int](index: SIMD[dtype, width], list: List[SIMD[dtype, width]]) -> SIMD[dtype, width]:
     index_int = Int(index) % len(list)
     index_mix = index - index_int
     val = list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
@@ -394,7 +394,7 @@ fn lagrange4[
         The interpolated sample.
     """
 
-    var o = 1.49999 + frac
+    alias o = 1.4999999999999999  # to avoid edge case issues
     var fd = o + frac
 
     # simd optimized!
@@ -405,8 +405,9 @@ fn lagrange4[
     var fdm3: SIMD[dtype, width] = SIMD[dtype, width](0.0)
     var fdm4: SIMD[dtype, width] = SIMD[dtype, width](0.0)
 
-    offsets = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
+    alias offsets = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
 
+    @parameter
     for i in range(width):
         var fd_vec = SIMD[dtype, 4](fd[i], fd[i], fd[i], fd[i])
 
@@ -424,6 +425,7 @@ fn lagrange4[
     var coeff3 = (0.0 - fd * fdm1 * fdm2 * fdm4) / 6.0
     var coeff4 = fd * fdm1 * fdm2 * fdm3 / 24.0
 
+    @parameter
     for i in range(width):
         coeffs: SIMD[dtype, 4] = SIMD[dtype, 4](coeff0[i], coeff1[i], coeff2[i], coeff3[i])
 

@@ -26,9 +26,13 @@ struct Latch[N: Int = 1](Copyable, Movable, Representable):
         return String("Latch")
 
     fn next(mut self, in_samp: SIMD[DType.float64, self.N], trig: SIMD[DType.bool, self.N]) -> SIMD[DType.float64, self.N]:
-        @parameter
-        for i in range(self.N):
-            if trig[i] and not self.last_trig[i]:
-                self.samp[i] = in_samp[i]  # Latch the sample when the trigger goes high
-            self.last_trig[i] = trig[i]
+        rising_edge: SIMD[DType.bool, self.N] = trig & ~self.last_trig
+        self.samp = rising_edge.select(in_samp, self.samp)
+        self.last_trig = trig
         return self.samp
+        # @parameter
+        # for i in range(self.N):
+        #     if trig[i] and not self.last_trig[i]:
+        #         self.samp[i] = in_samp[i]  # Latch the sample when the trigger goes high
+        #     self.last_trig[i] = trig[i]
+        # return self.samp

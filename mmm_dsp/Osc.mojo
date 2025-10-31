@@ -34,18 +34,27 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-        # Reset phase if trig has changed from 0 to positive value
-
         self.increment_phase(freq)
-
+        
         var resets = self.rising_bool_detector.next(trig)
-
-        @parameter
-        for i in range(self.N):
-            if resets[i]:
-                self.phase[i] = 0.0
-
+        
+        # SIMD conditional reset - no loop needed!
+        self.phase = resets.select(0.0, self.phase)
+        
         return (self.phase + phase_offset) % 1.0
+    # fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
+    #     # Reset phase if trig has changed from 0 to positive value
+
+    #     self.increment_phase(freq)
+
+    #     var resets = self.rising_bool_detector.next(trig)
+
+    #     @parameter
+    #     for i in range(self.N):
+    #         if resets[i]:
+    #             self.phase[i] = 0.0
+
+    #     return (self.phase + phase_offset) % 1.0
 
 struct OscType:
     alias sine: Int64 = 0
@@ -62,14 +71,18 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
-    Parameters:
+    ```
+        Osc[N=1, interp=OscType.sine, os_index=0](world_ptr)
+    ```
+
+    Params:
 
         N: Number of channels (default is 1).
-
         interp: Interpolation method (0 = linear, 1 = cubic, 2 = sinc; default is 0).
-        
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
 
+    Args:
+    
         world_ptr: Pointer to the MMMWorld instance.
 
     """
@@ -233,7 +246,10 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     #     return sample
 
 struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A sine wave oscillator."""
+    """A sine wave oscillator.
+    
+    This is a convenience struct as internally it uses Osc and indicates `osc_type = 0`
+    """
 
     var osc: Osc[N, os_index]  # Instance of the Oscillator
 

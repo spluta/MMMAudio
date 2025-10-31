@@ -1,7 +1,6 @@
 """Benjolin-inspired Synthesizer
 
-Based on the SuperCollider implementation by Hyppasus
-https://scsynth.org/t/benjolin-inspired-instrument/1074/1
+Based on the [SuperCollider implementation by Hyppasus](https://scsynth.org/t/benjolin-inspired-instrument/1074/1).
 
 Ported to MMMAudio by Ted Moore, October 2025
 """

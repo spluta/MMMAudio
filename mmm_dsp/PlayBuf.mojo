@@ -60,7 +60,6 @@ struct PlayBuf(Representable, Movable, Copyable):
             num_frames: The end frame for playback (default: -1).
         """
 
-        duration = buffer.get_duration()
         if num_frames < 0:
             num_frames2 = buffer.num_frames
         else:
@@ -82,14 +81,14 @@ struct PlayBuf(Representable, Movable, Copyable):
         if self.done:
             return out  # Return zeros if done
         else:
-            var freq = rate / duration  # Calculate step size based on rate and sample rate
+            var freq = rate / buffer.duration  # Calculate step size based on rate and sample rate
 
             if loop:
                 _ = self.impulse.next(freq, trig = trig) 
                 if self.impulse.phasor.phase >= self.reset_phase_point:
                     self.impulse.phasor.phase -= self.reset_phase_point
                 # for i in range(N):
-                out = buffer.read[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
+                out = buffer.read_phase[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
@@ -98,7 +97,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                     self.done = True  # Set done flag if phase is out of bounds
                     return out
                 else:
-                    out = buffer.read[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
+                    out = buffer.read_phase[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
             
             return out
 
@@ -156,7 +155,7 @@ struct Grain(Representable, Movable, Copyable):
 
         if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
-            self.num_frames =  (duration * buffer.get_buf_sample_rate()*rate)  # Calculate end frame based on duration
+            self.num_frames =  (duration * buffer.buf_sample_rate*rate)  # Calculate end frame based on duration
             self.rate = rate
             self.gain = gain
             self.pan = pan
@@ -173,7 +172,7 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if win_num == 0:
-            win = self.world_ptr[0].hann_window.read(0, self.win_phase, 0)
+            win = self.world_ptr[0].hann_window.read_phase(0, self.win_phase, 0)
         # Future window types can be added here with elif statements
         else:
             win = 1-2*abs(self.win_phase - 0.5) # hackey triangular window
@@ -321,7 +320,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
                 if self.pitch_ratio <= 1.0:
                     start_frame = Int(self.buffer.index)
                 else:
-                    start_frame = Int(self.buffer.index - ((win_size * self.world_ptr[0].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.get_num_frames())
+                    start_frame = Int(self.buffer.index - ((win_size * self.world_ptr[0].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.num_frames)
             if i == self.counter:
                 out += self.grains[i].next[win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, 0.0, gain)
             else:

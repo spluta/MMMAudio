@@ -56,8 +56,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         # calling .next on both oscillators gets both of their next samples
-        # at the same time as a SIMD operation
-        # [TODO] it seems that temp magically (multi-channel-expansion-ally) becomes a SIMD variable here. I think it would be good to be explained what's happening.
+        # at the same giving us a SIMD vector with two values in it
         temp = self.oscs.next(self.osc_freqs) 
 
         # modulate the volume with a slow LFO

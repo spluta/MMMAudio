@@ -1,8 +1,9 @@
-from mmm_src.MMMAudio import MMMAudio
+if True:
+    from mmm_src.MMMAudio import MMMAudio
 
-# instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
-mmm_audio.start_audio()
+    # instantiate and load the graph
+    mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
+    mmm_audio.start_audio()
 
 # this next chunk of code is all about using a midi keyboard to control the synth---------------
 

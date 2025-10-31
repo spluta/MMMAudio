@@ -27,7 +27,7 @@ struct TorchSynth(Representable, Movable, Copyable):
     var model_output: List[Float64]  # Output list from the model
     var model: MLP  # Placeholder for the model
     var inference_trig: Impulse
-    var lags: LagN[0.02, model_out_size]  # List of Lag processors for smoothing model outputs
+    var lags: LagN[model_out_size]  # List of Lag processors for smoothing model outputs
     # var lag_vals: InlineArray[Float64, model_out_size] # flattened list of lagged values
     # var lag_times: InlineArray[Float64, 1]
     var lag_vals: List[Float64]
@@ -70,7 +70,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
         self.lag_vals = [random_float64() for _ in range(model_out_size)]
-        self.lags = LagN[0.02, model_out_size](self.world_ptr)
+        self.lags = LagN[model_out_size](self.world_ptr, [0.1])
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
@@ -130,10 +130,10 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.lags.next(self.model_output, self.lag_vals)
 
         # uncomment to see the output of the model
-        var output_str = String("")
-        for i in range(len(self.lag_vals)):
-            output_str += String(self.lag_vals[i]) + " "
-        self.world_ptr[0].print(output_str)
+        # var output_str = String("")
+        # for i in range(len(self.lag_vals)):
+        #     output_str += String(self.lag_vals[i]) + " "
+        # self.world_ptr[0].print(output_str)
 
         # oscillator 1 -----------------------
 
@@ -146,7 +146,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         osc1 = self.osc1.next_interp(freq1, 0.0, False, [0,4,5,6], osc_frac1)
 
         # samplerate reduction
-        osc1 = self.latch1.next(osc1, self.impulse1.next(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
         osc1 = self.filt1.lpf(osc1, linexp(self.lag_vals[5], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[6], 0.0, 1.0, 0.707, 4.0))
 
         tanh_gain = linlin(self.lag_vals[7], 0.0, 1.0, 0.5, 10.0)
@@ -163,7 +163,7 @@ struct TorchSynth(Representable, Movable, Copyable):
         osc_frac2 = linlin(self.lag_vals[11], 0.0, 1.0, 0.0, 1.0)
         var osc2 = self.osc2.next_interp(freq2, 0.0, False, [0,4,5,6], osc_frac2)
 
-        osc2 = self.latch2.next(osc2, self.impulse2.next(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
 
         osc2 = self.filt2.lpf(osc2, linexp(self.lag_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[14], 0.0, 1.0, 0.707, 4.0))
 

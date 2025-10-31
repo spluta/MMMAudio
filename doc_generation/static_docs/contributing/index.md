@@ -2,28 +2,16 @@
 
 Thank you for your interest in contributing to MMMAudio! This guide will help you get started.
 
-## Development Setup
+## Code
 
-### Prerequisites
+Due to Mojo's Pythonic nature, contributing to the development of the MMMAudio's DSP framework is very approachable. Please do find and raise issues. If there are issues on the repo that you want to tackle, please get in touch!
 
-See the README.md file in the repo's root directory for how to get MMMAudio up and running.
+## Documentation
 
-## Contributing Guidelines
+Any changes to the code base need to be reflected in the documentation! PRs that don't include documentation won't be merged until documentation is completed.
 
-### Code Style
+Consult the documentation examples/style-guides in `doc_generation/examples`
 
-#### Python Code
-- Use type hints for all function signatures
-- Use Google-style docstrings
-
-#### Mojo Code
-- Follow Mojo style conventions
-- Use SIMD types for performance-critical code
-
-### Documentation
-
-- Consult the documentation examples/style-guides in `doc_generation/examples`
-
-### Code of Conduct
+## Code of Conduct
 
 Please be respectful and constructive in all interactions. We're building a welcoming community for audio developers of all skill levels.
