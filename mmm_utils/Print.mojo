@@ -31,3 +31,17 @@ struct Print(Representable, Copyable, Movable):
         """
         if self.impulse.next(freq) > 0.0:
             print(label,value)    
+
+    fn next[T: Writable](mut self, *value: T) -> None:
+        """
+        Print the value at a given frequency.
+
+        Arguments:
+            value: The value to print.
+            label: An optional label to prepend to the printed value.
+            freq: The frequency (in Hz) at which to print the value.
+        """
+        if self.impulse.next(10.0) > 0.0:
+            for v in value:
+                print(v, end=" ")
+            print()

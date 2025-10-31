@@ -16,13 +16,13 @@ mmm_audio.send_trig("trig_test")
 
 mmm_audio.send_trig("should_warn_re_trig")
 
-mmm_audio.send_list("test_list", [9.9,11.12])
+mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
 
 mmm_audio.send_text("text_test", "Hello, Messengers!")
 
 mmm_audio.send_float("vol", -100.0)
 mmm_audio.send_float("vol", -30.0)
 
-mmm_audio.send_float("tone_0.freq", 700)
-mmm_audio.send_float("freq_tone_0", 700)
+mmm_audio.send_float("tone_0.freq", 900)
+mmm_audio.send_float("tone_1.freq", 700)
 

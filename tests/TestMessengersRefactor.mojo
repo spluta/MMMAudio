@@ -10,6 +10,7 @@ struct Tone(Copyable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
+    var test_list: List[Float64]
     var m: Messenger
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
@@ -20,6 +21,8 @@ struct Tone(Copyable, Movable):
         self.m = Messenger(self.world_ptr,namespace)
 
         self.m.register(self.freq,"freq")
+        self.test_list = List[Float64](capacity=4)
+        self.m.register(self.test_list,"test_list")
 
     fn next(mut self) -> Float64:    
         self.m.update()
@@ -51,9 +54,9 @@ struct TestMessengersRefactor():
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
-
         self.printers[0].next(self.tone0.freq, "tone 0 freq: ")
-        self.printers[1].next(self.tone1.freq, "tone 1 freq: ")
+        self.printers[1].next(self.tone0.test_list[0], self.tone0.test_list[1], self.tone0.test_list[2], self.tone0.test_list[3])
+        # self.printers[1].next(self.tone1.freq, "tone 1 freq: ")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         out[0] = self.tone0.next()
