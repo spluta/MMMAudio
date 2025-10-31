@@ -230,7 +230,7 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return "CombFilter"
 
-struct LP_Comb[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
+struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
     """
     A simple comb filter with an integrated one-pole low-pass filter.
     

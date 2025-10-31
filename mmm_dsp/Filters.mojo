@@ -31,8 +31,6 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         self.b1 = exp(-6.907755278982137 / (lag * self.world_ptr[0].sample_rate))
         self.lag = lag
         
-
-
     fn __repr__(self) -> String:
         return String("Lag")
 
@@ -383,6 +381,7 @@ struct OnePole[N: Int = 1](Representable, Movable, Copyable):
         var output = (1 - abs(coef2)) * input + coef2 * self.last_samp
         self.last_samp = output
         return output
+
 
 # struct Integrator(Representable, Movable, Copyable):
 #     """
