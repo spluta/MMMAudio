@@ -4,37 +4,200 @@ from mmm_dsp.Buffer import Buffer
 from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time
+from collections import Set
 
-struct MiniMessenger(Movable, Copyable):
-    var lists: List[List[Float64]]
-    var triggered: Bool
-    var key: String
-    var grabbed: Bool
+struct ListMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: List[Float64]
 
-    fn __init__(out self, key: String):
-        self.key = key
-        self.lists = List[List[Float64]]()
-        self.grabbed = False
-        self.triggered = False
+    fn __init__(out self, value: List[Float64]):
+        self.retrieved = False
+        self.value = value.copy()
 
-    fn print_if_triggered(mut self):
-        if self.triggered:
-            print("Messenger", self.key, "triggered with values:", end=" ")
-            for val in self.lists:
-                for v in val:
-                    print(v, end=" ")
-                print()
+struct Float64Message(Movable, Copyable):
+    var retrieved: Bool
+    var value: Float64
+
+    fn __init__(out self, value: Float64):
+        self.retrieved = False
+        self.value = value
+
+struct GateMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: Bool
+
+    fn __init__(out self, value: Bool):
+        self.retrieved = False
+        self.value = value
+
+struct TextMessage(Movable, Copyable):
+    var values: List[String]
+    var retrieved: Bool
+
+    fn __init__(out self, values: List[String]):
+        self.values = values.copy()
+        self.retrieved = False
+
+struct MessengerManager(Movable, Copyable):
+
+    var list_msg_pool: Dict[String, List[Float64]]
+    var list_msgs: Dict[String, ListMessage]
     
-    fn clear_trigger(mut self):
-        if self.triggered and not self.grabbed:
-            print("Message", self.key, "was sent with no receiver!")
-        self.triggered = False
-        self.grabbed = False
+    var float_msg_pool: Dict[String, Float64]
+    var float_msgs: Dict[String, Float64Message]
+    
+    var gate_msg_pool: Dict[String, Bool]
+    var gate_msgs: Dict[String, GateMessage]
+    
+    var trig_msg_pool: Set[String]
+    # Rather than making a TrigMessage struct, we only need a Dict:
+    # Keys are the "trig names" that have been pooled, the Bools are
+    # whether or not they were retrieved this block.
+    var trig_msgs: Dict[String, Bool]
+    
+    # Text Messages need a List of Strings because one could image sending
+    # multiple pieces of information at once, for example multiple file paths
+    # to load.
+    var text_msg_pool: Dict[String, List[String]]
+    var text_msgs: Dict[String, TextMessage]
+
+    fn __init__(out self):
+
+        self.list_msg_pool = Dict[String, List[Float64]]()
+        self.list_msgs = Dict[String, ListMessage]()
+
+        self.float_msg_pool = Dict[String, Float64]()
+        self.float_msgs = Dict[String, Float64Message]()
+
+        self.gate_msg_pool = Dict[String, Bool]()
+        self.gate_msgs = Dict[String, GateMessage]()
+
+        self.trig_msg_pool = Set[String]()
+        self.trig_msgs = Dict[String, Bool]()
+        
+        self.text_msg_pool = Dict[String, List[String]]()
+        self.text_msgs = Dict[String, TextMessage]()
+
+    # update_* functions add messages to the pool to be transferred at the
+    # start of the next audio block. These functions are called from MMMAudioBridge
+    # when a message is sent from Python.
+    @always_inline
+    fn update_float_msg(mut self, key: String, value: Float64):
+        self.float_msg_pool[key] = value
+
+    @always_inline
+    fn update_gate_msg(mut self, key: String, value: Bool):
+        self.gate_msg_pool[key] = value
+
+    @always_inline
+    fn update_list_msg(mut self, key: String, values: List[Float64]):
+        self.list_msg_pool[key] = values.copy()
+
+    @always_inline
+    fn update_trig_msg(mut self, key: String):
+        self.trig_msg_pool.add(key)
+
+    @always_inline
+    fn update_text_msg(mut self, key: String, text: String) raises:
+        if not key in self.text_msg_pool:
+            self.text_msg_pool[key] = List[String]()
+        self.text_msg_pool[key].append(text)
+
+    fn transfer_msgs(mut self) raises:
+
+        for list_msg in self.list_msg_pool.take_items():
+            self.list_msgs[list_msg.key] = ListMessage(list_msg.value)
+
+        for float_msg in self.float_msg_pool.take_items():
+            self.float_msgs[float_msg.key] = Float64Message(float_msg.value)
+
+
+        for gate_msg in self.gate_msg_pool.take_items():
+            self.gate_msgs[gate_msg.key] = GateMessage(gate_msg.value)
+
+        for text_msg in self.text_msg_pool.take_items():
+            self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
+
+        for trig_msg_str in self.trig_msg_pool:
+            self.trig_msgs[trig_msg_str] = False  # Set retrieved Bool to False initially
+        # The other pools are Dicts so "take_items()" empties them, but since
+        # trig_msg_pool is a Set, we have to clear it manually:
+        self.trig_msg_pool.clear() 
+
+    # get_* functions retrieve messages from the Dicts *after* they have
+    # been transferred from the pools to the Dicts. These functions are called
+    # from a graph (likely via a Messenger instance) to get the latest message values.
+    @always_inline
+    fn get_float(mut self, key: String) raises -> Optional[Float64]:
+        if key in self.float_msgs:
+            self.float_msgs[key].retrieved = True
+            return self.float_msgs[key].value
+        return None
+
+    @always_inline
+    fn get_gate(mut self, key: String) raises -> Optional[Bool]:
+        if key in self.gate_msgs:
+            self.gate_msgs[key].retrieved = True
+            return self.gate_msgs[key].value
+        return None
+
+    @always_inline
+    fn get_list(mut self: Self, key: String) raises-> Optional[List[Float64]]:
+        if key in self.list_msgs:
+            self.list_msgs[key].retrieved = True
+            # Copy is ok here because it will only copy when there is a
+            # new list for it to use, which should be rare. If the user
+            # is, like, streaming lists of tons of values, they should
+            # be using a different method, such as loading the data into
+            # a buffer ahead of time and reading from that.
+            return self.list_msgs[key].value.copy()
+        return None
+
+    @always_inline
+    fn get_trig(mut self, key: String) -> Bool:
+        if key in self.trig_msgs:
+            self.trig_msgs[key] = True
+            return True
+        return False
+
+    # Unlike the other "get_*" functions, this one returns an Optional List of Strings
+    # because it doesn't make sense for there to be a default value for text messages.
+    @always_inline
+    fn get_text(mut self, key: String) raises -> Optional[List[String]]:
+        if key in self.text_msgs:
+            self.text_msgs[key].retrieved = True
+            # Copy here is ok because text messages are expected
+            # to be rare, so this shouldn't happen often.
+            return self.text_msgs[key].values.copy()
+        return None
+
+    fn empty_msg_dicts(mut self):
+        for list_msg in self.list_msgs.take_items():
+            if not list_msg.value.retrieved:
+                print("List message was not retrieved this block:", list_msg.key)
+
+        for float_msg in self.float_msgs.take_items():
+            if not float_msg.value.retrieved:
+                print("Float message was not retrieved this block:", float_msg.key)
+
+        for gate_msg in self.gate_msgs.take_items():
+            if not gate_msg.value.retrieved:
+                print("Gate message was not retrieved this block:", gate_msg.key)
+        
+        for trig_msg in self.trig_msgs.take_items():
+            if not trig_msg.value: # It wasn't retrieved this block
+                print("Trig message", trig_msg.key, "was not retrieved this block.")
+
+        for text_msg in self.text_msgs.take_items():
+            if not text_msg.value.retrieved:
+                print("Text message", text_msg.key, "was not retrieved this block.")
+                for val in text_msg.value.values:
+                    print("   Value:", val)
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
     var block_size: Int64
-    var osc_buffers: OscBuffers  # Instance of OscBuffers for managing oscillator buffers
+    var osc_buffers: OscBuffers
     var num_in_chans: Int64
     var num_out_chans: Int64
 
@@ -42,23 +205,20 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var screen_dims: List[Float64]  
      
-    var os_multiplier: List[Float64]  # List of multipliers for different oscillators
+    var os_multiplier: List[Float64]
 
     var mouse_x: Float64
     var mouse_y: Float64
 
     var block_state: Int64
     var top_of_block: Bool
-
-    var msg_pool: Dict[String, List[List[Float64]]]
-    var msg_dict: Dict[String, MiniMessenger]
-
-    var text_msg_dict: Dict[String, List[String]]
     
     # windows
     var hann_window: Buffer
 
     var buffers: List[Buffer]
+
+    var messengerManager: MessengerManager
 
     # var pointer_to_self: UnsafePointer[MMMWorld]
     var last_print_time: Float64
@@ -89,15 +249,12 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.block_state = 0
 
-        self.msg_pool = Dict[String, List[List[Float64]]]()
-        self.msg_dict = Dict[String, MiniMessenger]()
-
-        self.text_msg_dict = Dict[String, List[String]]()
-
         self.buffers = List[Buffer]()  # Initialize the list of buffers
         self.last_print_time = 0.0
         self.print_flag = 0
         self.last_print_flag = 0
+
+        self.messengerManager = MessengerManager()
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
@@ -110,80 +267,6 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
-
-    fn send_msg_to_pool(mut self, key_vals: PythonObject) raises :
-        """Puts a message into the message pool. key_vals is a list where the first item is the key (String) and the rest are Float64 values """
-        key = String(key_vals[0])
-        var list = List[Float64]()
-        for i in range(1, len(key_vals)):
-            list.append(Float64(key_vals[i]))
-        
-        if key == "mouse_x":
-            list[0] = list[0] / self.screen_dims[0]  # Normalize mouse x position
-            self.mouse_x = list[0]  # Update mouse x position in the world
-        elif key == "mouse_y":
-            list[0] = list[0] / self.screen_dims[1]  # Normalize mouse y position
-            self.mouse_y = list[0]  # Update mouse y position in the world
-        else:
-            # i wish you knew how difficult these 6 lines of code were
-            opt = self.msg_pool.get(key)
-            if opt:
-                self.msg_pool[key].append(list^)
-            else:
-                self.msg_pool[key] = List[List[Float64]]()
-                self.msg_pool[key].append(list^)
-
-    @always_inline
-    fn transfer_pooled_messages(mut self):
-        """Transfers messages from the message pool to the message dict, clearing the pool afterwards."""
-        # for ref pool_item in self.msg_pool.items():
-        for pool_item in self.msg_pool.take_items():
-            if pool_item.key in self.msg_dict:
-                try:
-                    ref messenger = self.msg_dict[pool_item.key]
-                    messenger.triggered = True
-                    messenger.lists.clear()
-                    messenger.lists = pool_item.value.copy() # if this could move instead of copy that would be great
-                except Exception:
-                    pass
-            else:
-                messenger = MiniMessenger(pool_item.key)
-                messenger.triggered = True  # set trigger to True
-                for val in pool_item.value:
-                    messenger.lists.append(val.copy())
-                self.msg_dict[pool_item.key] = messenger^
-
-    @always_inline
-    fn get_messenger(mut self, key: String, default: Float64 = 0.0) -> Optional[UnsafePointer[MiniMessenger]]:
-        if key in self.msg_dict:
-            try:
-                pointer = UnsafePointer(to=self.msg_dict[key])
-                pointer2 = Optional[UnsafePointer[MiniMessenger]](pointer)
-            except Exception:
-                pointer2 = None
-            return pointer2
-        else:
-            return None
-    
-    fn untrigger_all_messengers(mut self):
-        for ref item in self.msg_dict.items():
-            item.value.clear_trigger()
-
-    @always_inline
-    fn get_msg(mut self: Self, key: String) -> Optional[List[List[Float64]]]:
-        if self.block_state == 0:
-            return self.msg_pool.get(key)
-        return None
-
-    fn send_text_msg(mut self, key: String, mut list: List[String]):
-        self.text_msg_dict[key] = list.copy()
-
-    @always_inline
-    fn get_text_msgs(mut self: Self, key: String) -> Optional[List[String]]:
-
-        if self.block_state == 0:
-            return self.text_msg_dict.get(key)
-        return None
 
     @always_inline
     fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:

@@ -90,13 +90,12 @@ class MMMAudio:
         self.mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(self.sample_rate, self.blocksize)
         self.mmm_audio_bridge.set_channel_count((self.num_input_channels, self.num_output_channels))
 
-        # # Get screen size
+        # Get screen size
         screen_dims = pyautogui.size()
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
         # the mouse thread will always be running
         threading.Thread(target=asyncio.run, args=(self.get_mouse_position(0.01),)).start()
-
         self.p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
 
@@ -120,9 +119,8 @@ class MMMAudio:
     async def get_mouse_position(self, delay: float = 0.01):
         while True:
             x, y = pyautogui.position()
-            self.mmm_audio_bridge.send_msg(["mouse_x", x])
-            self.mmm_audio_bridge.send_msg(["mouse_y", y])
-            
+            self.mmm_audio_bridge.update_mouse_pos([ x, y ])
+
             await asyncio.sleep(delay)
 
     def get_samples(self, samples):
@@ -195,7 +193,7 @@ class MMMAudio:
             print("Stopping audio...")
             self.audio_stopper.set()
 
-    def send_msg(self, key, *args):
+    def send_float(self, key: str, value: float):
         """
         Send a message to the Mojo audio engine.
         
@@ -204,15 +202,44 @@ class MMMAudio:
             *args: Additional arguments for the message
         """
 
+        self.mmm_audio_bridge.update_float_msg([key, value])
+        
+    def send_gate(self, key: str, value: bool):
+        """
+        Send a gate message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            value: Boolean value for the gate
+        """
+
+        self.mmm_audio_bridge.update_gate_msg([key, value])
+
+    def send_trig(self, key: str):
+        """
+        Send a trigger message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+        """
+
+        self.mmm_audio_bridge.update_trig_msg([key])
+        
+    def send_list(self, key: str, values: list):
+        """
+        Send a list message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            values: List of float values
+        """
+
         key_vals = [key]  # Start with the key
-        # if it gets a list as the first argument, unpack it
-        if len(args) == 1 and isinstance(args[0], list):
-            args = args[0]
-        key_vals.extend([float(arg) for arg in args])
+        key_vals.extend([float(val) for val in values])
 
-        self.mmm_audio_bridge.send_msg(key_vals)
+        self.mmm_audio_bridge.update_list_msg(key_vals)
 
-    def send_text_msg(self, key, *args):
+    def send_text(self, key, *args):
         """
         Send a message to the Mojo audio engine.
         
@@ -224,8 +251,7 @@ class MMMAudio:
         key_vals = [key]  # Start with the key
         key_vals.extend([str(arg) for arg in args])
 
-        self.mmm_audio_bridge.send_text_msg(key_vals)
-
+        self.mmm_audio_bridge.update_text_msg(key_vals)
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
