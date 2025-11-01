@@ -161,6 +161,9 @@ struct GateMsg(Representable, Boolable, Writable):
     It works like a boolean in all places, but different from a boolean it can be
     registered with a Messenger under a user specified name.
 
+    It only make sense to use GateMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
+
     For a usage example, see the [TODO] file in 'Examples.'
 
     [TODO]: Does this need to exist or should the user just use a Bool directly,
@@ -198,7 +201,12 @@ struct TrigMsg(Representable, Writable, Boolable):
 
     It is either True (triggered) or False (not triggered). 
     It works like a boolean in all places, but different from a boolean it can be
-    registered with a Messenger under a user specified name. The Messenger checks for any
+    registered with a Messenger under a user specified name. 
+    
+    It only make sense to use TrigMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
+    
+    The Messenger checks for any
     'triggers' sent under the specified name at the start of each audio block, and sets
     the TrigMsg's state accordingly. If there is a trigger under the name, this TrigMsg
     will be True for 1 sample (the first of the audio block), and then automatically reset to
@@ -240,6 +248,8 @@ struct TextMsg(Representable, Writable, Sized):
     """A 'Text' message that can be sent from Python. 
     
     It is essentially a list of strings.
+    It only makes sense to use TextMsg if it is registered with a Messenger.
+
     It works like a List[String] in all places, but different from a List[String] it can be
     registered with a Messenger under a user specified name. This is a list rather than a single string
     because it might be necessary to send multiple pieces of information at once, for example a lot of buffers
