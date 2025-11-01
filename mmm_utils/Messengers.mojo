@@ -11,6 +11,7 @@ struct Messenger(Copyable, Movable):
     var list_dict: Dict[String, UnsafePointer[List[Float64]]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
     var float64_dict: Dict[String, UnsafePointer[Float64]]
+    var int_dict: Dict[String, UnsafePointer[Int64]]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
@@ -42,6 +43,7 @@ struct Messenger(Copyable, Movable):
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
+        self.int_dict = Dict[String, UnsafePointer[Int64]]()
         self.all_keys = Set[String]()
 
     fn update(self) -> None:
@@ -72,6 +74,10 @@ struct Messenger(Copyable, Movable):
                         item.value[].strings = opt.value().copy()
                 for ref item in self.float64_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_float(item.key)
+                    if opt:
+                        item.value[] = opt.value()
+                for ref item in self.int_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_int(item.key)
                     if opt:
                         item.value[] = opt.value()
             except error:
@@ -139,6 +145,14 @@ struct Messenger(Copyable, Movable):
         """
         fullname = self.check_key_collision(name)
         self.text_dict[fullname] = UnsafePointer(to=param)
+
+    fn register(mut self, ref param: Int64, name: String) -> None:
+        """Register a `Int64` with this `Messenger` under a specified `name`.
+
+        Note that `.register()` is overloaded for different types.
+        """
+        fullname = self.check_key_collision(name)
+        self.int_dict[fullname] = UnsafePointer(to=param)
 
 struct GateMsg(Representable, Boolable, Writable):
     """A 'Gate' that can be controlled from Python.

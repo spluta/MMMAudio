@@ -37,10 +37,12 @@ struct TestMessengersRefactor():
     var vol: Float64
     var tone_list: List[Tone]
     var printers: List[Print]
+    var test_int: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
+        self.test_int = 0
 
         self.tone_list = List[Tone](capacity=2)
         for i in range(2):
@@ -52,12 +54,15 @@ struct TestMessengersRefactor():
         self.printers = List[Print](capacity=2)
 
         self.m.register(self.vol,"vol")
+        self.m.register(self.test_int,"test_int")
 
         for i in range(2):
             self.printers.append(Print(world_ptr))
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
+
+        self.printers[0].next(self.test_int,"TestMessengersRefactor test_int:")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         out[0] = self.tone_list[0].next()

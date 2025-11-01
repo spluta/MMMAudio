@@ -142,6 +142,16 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
+    fn update_int_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+
+        var key = String(key_vals[0])
+        var value = Int64(key_vals[1])
+
+        py_self[0].world_ptr[0].messengerManager.update_int_msg(key, value)
+
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
     fn next(py_self: UnsafePointer[Self], in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 
         py_self[0].loc_in_buffer = in_buffer.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float32]()
@@ -172,6 +182,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             .def_method[MMMAudioBridge.update_trig_msg]("update_trig_msg")
             .def_method[MMMAudioBridge.update_list_msg]("update_list_msg")
             .def_method[MMMAudioBridge.update_text_msg]("update_text_msg")
+            .def_method[MMMAudioBridge.update_int_msg]("update_int_msg")
             .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
             .def_method[MMMAudioBridge.set_channel_count]("set_channel_count")
         )

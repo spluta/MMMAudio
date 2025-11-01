@@ -38,6 +38,14 @@ struct TextMessage(Movable, Copyable):
         self.values = values.copy()
         self.retrieved = False
 
+struct Int64Message(Movable, Copyable):
+    var retrieved: Bool
+    var value: Int64
+
+    fn __init__(out self, value: Int64):
+        self.retrieved = False
+        self.value = value
+
 struct MessengerManager(Movable, Copyable):
 
     var list_msg_pool: Dict[String, List[Float64]]
@@ -48,7 +56,10 @@ struct MessengerManager(Movable, Copyable):
     
     var gate_msg_pool: Dict[String, Bool]
     var gate_msgs: Dict[String, GateMessage]
-    
+
+    var int_msg_pool: Dict[String, Int64]
+    var int_msgs: Dict[String, Int64Message]
+
     var trig_msg_pool: Set[String]
     # Rather than making a TrigMessage struct, we only need a Dict:
     # Keys are the "trig names" that have been pooled, the Bools are
@@ -74,6 +85,9 @@ struct MessengerManager(Movable, Copyable):
 
         self.trig_msg_pool = Set[String]()
         self.trig_msgs = Dict[String, Bool]()
+
+        self.int_msg_pool = Dict[String, Int64]()
+        self.int_msgs = Dict[String, Int64Message]()
         
         self.text_msg_pool = Dict[String, List[String]]()
         self.text_msgs = Dict[String, TextMessage]()
@@ -103,6 +117,10 @@ struct MessengerManager(Movable, Copyable):
             self.text_msg_pool[key] = List[String]()
         self.text_msg_pool[key].append(text)
 
+    @always_inline
+    fn update_int_msg(mut self, key: String, value: Int64):
+        self.int_msg_pool[key] = value
+
     fn transfer_msgs(mut self) raises:
 
         for list_msg in self.list_msg_pool.take_items():
@@ -117,6 +135,9 @@ struct MessengerManager(Movable, Copyable):
 
         for text_msg in self.text_msg_pool.take_items():
             self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
+
+        for int_msg in self.int_msg_pool.take_items():
+            self.int_msgs[int_msg.key] = Int64Message(int_msg.value)
 
         for trig_msg_str in self.trig_msg_pool:
             self.trig_msgs[trig_msg_str] = False  # Set retrieved Bool to False initially
@@ -171,6 +192,13 @@ struct MessengerManager(Movable, Copyable):
             return self.text_msgs[key].values.copy()
         return None
 
+    @always_inline
+    fn get_int(mut self, key: String) raises -> Optional[Int64]:
+        if key in self.int_msgs:
+            self.int_msgs[key].retrieved = True
+            return self.int_msgs[key].value
+        return None
+
     fn empty_msg_dicts(mut self):
         for list_msg in self.list_msgs.take_items():
             if not list_msg.value.retrieved:
@@ -193,6 +221,10 @@ struct MessengerManager(Movable, Copyable):
                 print("Text message", text_msg.key, "was not retrieved this block.")
                 for val in text_msg.value.values:
                     print("   Value:", val)
+
+        for int_msg in self.int_msgs.take_items():
+            if not int_msg.value.retrieved:
+                print("Int message", int_msg.key, "was not retrieved this block.")
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
