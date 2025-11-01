@@ -12,7 +12,7 @@ struct Tone(Messagable):
     var freq: Float64
     var test_list: List[Float64]
     var m: Messenger
-    var start: Bool
+    var file_name: TextMsg
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
         self.world_ptr = world_ptr
@@ -21,14 +21,17 @@ struct Tone(Messagable):
         print("freq mem location Tone init: ", UnsafePointer(to=self.freq))
         self.m = Messenger(self.world_ptr,namespace)
         self.test_list = List[Float64](capacity=4)
-        self.start = True
+        self.file_name = TextMsg(["default.wav"])
 
     fn register_messages(mut self):
         self.m.register(self.freq,"freq")
         self.m.register(self.test_list,"test_list")
+        self.m.register(self.file_name, "file_name")
 
     fn next(mut self) -> Float64:
         self.m.update()
+        
+        print(self.file_name.strings[0])
         return self.osc.next(self.freq)
 
 struct TestMessengersRefactor():

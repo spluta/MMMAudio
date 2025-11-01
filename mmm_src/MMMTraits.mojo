@@ -1,5 +1,6 @@
 trait Messagable(Copyable, Movable):
-    fn register_messages(mut self): ...
+    fn register_messages(mut self):
+        pass
 
 # from mmm_src.MMMWorld import MMMWorld
 # from sys import simd_width_of

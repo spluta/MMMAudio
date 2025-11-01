@@ -18,7 +18,8 @@ mmm_audio.send_trig("should_warn_re_trig")
 
 mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
 
-mmm_audio.send_text("text_test", "Hello, Messengers!")
+mmm_audio.send_text("tone_0.file_name", "poop.wav")
+mmm_audio.stop_audio()
 
 mmm_audio.send_float("vol", -100.0)
 mmm_audio.send_float("vol", -30.0)

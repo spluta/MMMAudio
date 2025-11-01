@@ -222,7 +222,7 @@ struct TrigMsg(Representable, Writable, Boolable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TextMsg(Representable, Writable, Sized):
+struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     """A 'Text' message that can be sent from Python. 
     
     It is essentially a list of strings.
@@ -245,6 +245,7 @@ struct TextMsg(Representable, Writable, Sized):
     """
 
     var strings: List[String]
+    var received_message: Bool
 
     fn __init__(out self, default: List[String] = List[String]()):
         """Initialize the TextMsg, with an optional default. 
@@ -256,6 +257,7 @@ struct TextMsg(Representable, Writable, Sized):
         at the very start of the program run.
         """
         self.strings = default.copy()
+        self.received_message = False
 
     @doc_private
     fn __repr__(self) -> String:
@@ -288,3 +290,17 @@ struct TextMsg(Representable, Writable, Sized):
         
         """
         return len(self.strings)
+    
+    fn __bool__(self) -> Bool:
+        """Return True if this TextMsg has received any strings, False otherwise.
+        
+        This dunder can be used as:
+        
+        ```mojo
+        txt = TextMsg()
+        if txt:
+            # do something if there are strings in the TextMsg
+        ```
+        
+        """
+        return len(self.strings) > 0
