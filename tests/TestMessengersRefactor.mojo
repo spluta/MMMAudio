@@ -66,10 +66,10 @@ struct TestMessengersRefactor():
         self.m.update()
 
         if len(self.txt) > 0:
-            self.printers[0].next(self.txt[0],"TextMsg txt 0:")
+            print("TextMsg txt 0: ",self.txt[0])
 
         if len(self.txt) > 1:
-            self.printers[1].next(self.txt[1],"TextMsg txt 1:")
+            print("TextMsg txt 1: ",self.txt[1])
 
         if self.test_int > 0:
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
