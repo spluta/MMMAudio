@@ -115,7 +115,7 @@ struct MessengerManager(Movable, Copyable):
     fn update_text_msg(mut self, key: String, text: List[String]) raises:
         if not key in self.text_msg_pool:
             self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].extend(text)
+        self.text_msg_pool[key].extend(text.copy())
 
     @always_inline
     fn update_int_msg(mut self, key: String, value: Int64):

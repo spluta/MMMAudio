@@ -283,6 +283,10 @@ struct TextMsg(Representable, Writable, Sized):
 
     fn __as_list__(self) -> List[String]:
         return self.strings.copy()
+    
+    fn __iter__(self) -> _TextMsgIter:
+        """Return an iterator over the strings in this TextMsg."""
+        return _TextMsgIter(self.strings)
 
     @doc_private
     fn write_to(self, mut writer: Some[Writer]):
@@ -312,7 +316,49 @@ struct TextMsg(Representable, Writable, Sized):
         
         """
         return self.strings[index]
+    
+    fn __bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it.
+        
+        This is useful for checking if any text messages have arrived.
+        
+        ```mojo
+        txt = TextMsg()
+        if txt:
+            do_something(txt[0])
+        ```
 
-    fn __as_bool__(self) -> Bool:
-        """A TextMsg is considered 'True' if it has at least one string in it."""
+        > Note that you'll still need to index into the List inside the TextMsg 
+        to get the actual strings! If it's possible that there are multiple strings,
+        best practices would be:
+
+        ```mojo
+        self.txt = TextMsg()
+        # ...
+        if self.txt:
+            for t in self.txt:
+                do_something(t)
+        ```
+        """
         return len(self.strings) > 0
+
+@doc_private
+struct _TextMsgIter:
+    """Iterator for TextMsg."""
+    var strings: List[String]
+    var index: Int
+
+    fn __init__(out self, strings: List[String]):
+        self.strings = strings
+        self.index = 0
+
+    fn __next__(mut self) -> String:
+        var result = self.strings[self.index]
+        self.index += 1
+        return result
+
+    fn __has_next__(self) -> Bool:
+        return self.index < len(self.strings)
+
+    fn __len__(self) -> Int:
+        return len(self.strings) - self.index
