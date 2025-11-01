@@ -112,10 +112,10 @@ struct MessengerManager(Movable, Copyable):
         self.trig_msg_pool.add(key)
 
     @always_inline
-    fn update_text_msg(mut self, key: String, text: String) raises:
+    fn update_text_msg(mut self, key: String, text: List[String]) raises:
         if not key in self.text_msg_pool:
             self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].append(text)
+        self.text_msg_pool[key].extend(text)
 
     @always_inline
     fn update_int_msg(mut self, key: String, value: Int64):

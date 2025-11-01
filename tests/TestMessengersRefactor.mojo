@@ -38,11 +38,13 @@ struct TestMessengersRefactor():
     var tone_list: List[Tone]
     var printers: List[Print]
     var test_int: Int64
+    var txt: TextMsg
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
         self.test_int = 0
+        self.txt = TextMsg()
 
         self.tone_list = List[Tone](capacity=2)
         for i in range(2):
@@ -51,18 +53,28 @@ struct TestMessengersRefactor():
 
         print("tone 0 freq mem location in TestMessengersRefactor init: ", UnsafePointer(to=self.tone_list[0].freq))
         self.vol = -24.0
-        self.printers = List[Print](capacity=2)
+        self.printers = List[Print](capacity=4)
 
         self.m.register(self.vol,"vol")
         self.m.register(self.test_int,"test_int")
+        self.m.register(self.txt,"text_test")
 
-        for i in range(2):
+        for i in range(4):
             self.printers.append(Print(world_ptr))
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
 
-        self.printers[0].next(self.test_int,"TestMessengersRefactor test_int:")
+        if len(self.txt) > 0:
+            self.printers[0].next(self.txt[0],"TextMsg txt 0:")
+
+        if len(self.txt) > 1:
+            self.printers[1].next(self.txt[1],"TextMsg txt 1:")
+
+        if self.test_int > 0:
+            self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
+
+        self.printers[3].next(self.vol,"TestMessengersRefactor vol:")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         out[0] = self.tone_list[0].next()

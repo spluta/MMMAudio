@@ -302,3 +302,14 @@ struct TextMsg(Representable, Writable, Sized):
         
         """
         return len(self.strings)
+
+    fn __getitem__(self, index: Int) -> String:
+        """Get the string at the specified index. This dunder can be used as:
+        
+        ```mojo
+        txt = TextMsg(["hello", "world"])
+        first = txt[0] # first is "hello"
+        ```
+        
+        """
+        return self.strings[index]

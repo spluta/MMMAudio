@@ -135,7 +135,7 @@ struct MMMAudioBridge(Representable, Movable):
     fn update_text_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         var key = String(key_vals[0])
-        var text = String(key_vals[1])
+        var text = [String(s) for s in key_vals[1:]]
 
         py_self[0].world_ptr[0].messengerManager.update_text_msg(key, text)
 
