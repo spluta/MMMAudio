@@ -252,6 +252,17 @@ class MMMAudio:
         key_vals.extend([str(arg) for arg in args])
 
         self.mmm_audio_bridge.update_text_msg(key_vals)
+        
+    def send_int(self, key: str, value: int) -> None:
+        """
+        Send an integer message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            value: Integer value
+        """
+
+        self.mmm_audio_bridge.update_int_msg([key, value])
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
