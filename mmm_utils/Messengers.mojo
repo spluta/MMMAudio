@@ -280,8 +280,7 @@ struct TextMsg(Representable, Writable, Sized):
                 s += String(", ")
         s += String("]")
         return s
-    
-    @doc_private
+
     fn __as_list__(self) -> List[String]:
         return self.strings.copy()
 
@@ -313,3 +312,7 @@ struct TextMsg(Representable, Writable, Sized):
         
         """
         return self.strings[index]
+
+    fn __as_bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it."""
+        return len(self.strings) > 0
