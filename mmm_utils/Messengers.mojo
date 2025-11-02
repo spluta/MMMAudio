@@ -11,6 +11,7 @@ struct Messenger(Copyable, Movable):
     var list_dict: Dict[String, UnsafePointer[List[Float64]]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
     var float64_dict: Dict[String, UnsafePointer[Float64]]
+    var int_dict: Dict[String, UnsafePointer[Int64]]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
@@ -42,6 +43,7 @@ struct Messenger(Copyable, Movable):
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
+        self.int_dict = Dict[String, UnsafePointer[Int64]]()
         self.all_keys = Set[String]()
 
     fn update(self) -> None:
@@ -72,6 +74,10 @@ struct Messenger(Copyable, Movable):
                         item.value[].strings = opt.value().copy()
                 for ref item in self.float64_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_float(item.key)
+                    if opt:
+                        item.value[] = opt.value()
+                for ref item in self.int_dict.items():
+                    var opt = self.world_ptr[].messengerManager.get_int(item.key)
                     if opt:
                         item.value[] = opt.value()
             except error:
@@ -140,12 +146,23 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.text_dict[fullname] = UnsafePointer(to=param)
 
-struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
+    fn register(mut self, ref param: Int64, name: String) -> None:
+        """Register a `Int64` with this `Messenger` under a specified `name`.
+
+        Note that `.register()` is overloaded for different types.
+        """
+        fullname = self.check_key_collision(name)
+        self.int_dict[fullname] = UnsafePointer(to=param)
+
+struct GateMsg(Representable, Boolable, Writable):
     """A 'Gate' that can be controlled from Python.
 
     It is either True (on) or False (off). 
     It works like a boolean in all places, but different from a boolean it can be
     registered with a Messenger under a user specified name.
+
+    It only make sense to use GateMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
 
     For a usage example, see the [TODO] file in 'Examples.'
 
@@ -184,7 +201,12 @@ struct TrigMsg(Representable, Writable, Boolable):
 
     It is either True (triggered) or False (not triggered). 
     It works like a boolean in all places, but different from a boolean it can be
-    registered with a Messenger under a user specified name. The Messenger checks for any
+    registered with a Messenger under a user specified name. 
+    
+    It only make sense to use TrigMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
+    
+    The Messenger checks for any
     'triggers' sent under the specified name at the start of each audio block, and sets
     the TrigMsg's state accordingly. If there is a trigger under the name, this TrigMsg
     will be True for 1 sample (the first of the audio block), and then automatically reset to
@@ -226,6 +248,8 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     """A 'Text' message that can be sent from Python. 
     
     It is essentially a list of strings.
+    It only makes sense to use TextMsg if it is registered with a Messenger.
+
     It works like a List[String] in all places, but different from a List[String] it can be
     registered with a Messenger under a user specified name. This is a list rather than a single string
     because it might be necessary to send multiple pieces of information at once, for example a lot of buffers
@@ -268,8 +292,7 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
                 s += String(", ")
         s += String("]")
         return s
-    
-    @doc_private
+
     fn __as_list__(self) -> List[String]:
         return self.strings.copy()
 
@@ -290,17 +313,18 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
         
         """
         return len(self.strings)
-    
-    fn __bool__(self) -> Bool:
-        """Return True if this TextMsg has received any strings, False otherwise.
-        
-        This dunder can be used as:
+
+    fn __getitem__(self, index: Int) -> String:
+        """Get the string at the specified index. This dunder can be used as:
         
         ```mojo
-        txt = TextMsg()
-        if txt:
-            # do something if there are strings in the TextMsg
+        txt = TextMsg(["hello", "world"])
+        first = txt[0] # first is "hello"
         ```
         
         """
+        return self.strings[index]
+
+    fn __as_bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it."""
         return len(self.strings) > 0

@@ -228,7 +228,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_trig_msg([key])
         
-    def send_list(self, key: str, values: list):
+    def send_list(self, key: str, values: list[float]):
         """
         Send a list message to the Mojo audio engine.
         
@@ -238,11 +238,11 @@ class MMMAudio:
         """
 
         key_vals = [key]  # Start with the key
-        key_vals.extend([float(val) for val in values])
+        key_vals.extend([str(v) for v in values])
 
         self.mmm_audio_bridge.update_list_msg(key_vals)
 
-    def send_text(self, key, *args):
+    def send_text(self, key, arg: str | list[str]):
         """
         Send a message to the Mojo audio engine.
         
@@ -252,9 +252,20 @@ class MMMAudio:
         """
 
         key_vals = [key]  # Start with the key
-        key_vals.extend([str(arg) for arg in args])
+        key_vals.extend(arg if isinstance(arg, list) else [arg])
 
         self.mmm_audio_bridge.update_text_msg(key_vals)
+        
+    def send_int(self, key: str, value: int) -> None:
+        """
+        Send an integer message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            value: Integer value
+        """
+
+        self.mmm_audio_bridge.update_int_msg([key, value])
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
