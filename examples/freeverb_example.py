@@ -33,16 +33,16 @@ window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
 layout = QVBoxLayout()
 
 # Create a slider
-roomsize_slider = Handle("room size", ControlSpec(0, 1.0, 4), 0.5, callback=lambda v: mmm_audio.send_msg("room_size", v), run_callback_on_init=True)
+roomsize_slider = Handle("room size", ControlSpec(0, 1.0, 4), 0.5, callback=lambda v: mmm_audio.send_float("room_size", v), run_callback_on_init=True)
 layout.addWidget(roomsize_slider)
 
-lpf = Handle("lpf",ControlSpec(100.0, 20000.0, 0.5), 2000, callback=lambda v: mmm_audio.send_msg("lpf_comb", v), run_callback_on_init=True)
+lpf = Handle("lpf",ControlSpec(100.0, 20000.0, 0.5), 2000, callback=lambda v: mmm_audio.send_float("lpf_comb", v), run_callback_on_init=True)
 layout.addWidget(lpf)
 
-added_space = Handle("added space",ControlSpec(0.2, 1.0), 0.0, callback=lambda v: mmm_audio.send_msg("added_space", v), run_callback_on_init=True)
+added_space = Handle("added space",ControlSpec(0.2, 1.0), 0.0, callback=lambda v: mmm_audio.send_float("added_space", v), run_callback_on_init=True)
 layout.addWidget(added_space)
 
-mix_slider = Handle("mix",ControlSpec(0.1, 1.0, 0.5), 0.2, callback=lambda v: mmm_audio.send_msg("mix", v), run_callback_on_init=True)
+mix_slider = Handle("mix",ControlSpec(0.1, 1.0, 0.5), 0.2, callback=lambda v: mmm_audio.send_float("mix", v), run_callback_on_init=True)
 layout.addWidget(mix_slider)
 
 # Set the layout for the main window

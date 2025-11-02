@@ -111,6 +111,7 @@ struct Messenger(Copyable, Movable):
         """
 
         fullname = self.check_key_collision(name)
+        print(fullname)
         self.float64_dict[fullname] = UnsafePointer(to=param)
 
     fn register(mut self, ref param: GateMsg, name: String) -> None:
@@ -196,7 +197,7 @@ struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TrigMsg(Representable, Writable, Boolable):
+struct TrigMsg(Representable, Writable, Boolable, Copyable, Movable):
     """A 'Trigger' that can be controlled from Python.
 
     It is either True (triggered) or False (not triggered). 
