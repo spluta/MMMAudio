@@ -45,7 +45,6 @@ struct TorchSynth(Movable, Copyable):
 
         # load the trained model
         self.model = MLP(world_ptr,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
-        self.model.register_messages()
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())

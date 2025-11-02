@@ -25,9 +25,6 @@ mmm_audio.send_float("tone_1.freq", 700)
 
 mmm_audio.send_int("test_int", 0)
 
-mmm_audio.send_trig("test_bool")
-mmm_audio.stop_audio()
-
 # mmm_audio.send_int("should_warn_re_int", 7)
 
 mmm_audio.send_text("tone_0.file_name", ["wavy.wav", "gravy.wav"])

@@ -13,19 +13,21 @@ struct Messenger(Copyable, Movable):
     var float64_dict: Dict[String, UnsafePointer[Float64]]
     var int_dict: Dict[String, UnsafePointer[Int64]]
 
-    @staticmethod
-    fn make_key(namespace: String, name: String) -> String:
-        """Create a full key name with optional namespace.
+    var key_dict: Dict[String, String]  # maps short names to full names with namespace
 
-        Args:
-            namespace: An optional `String` namespace.
-            name: The base `String` name.
+    # @staticmethod
+    # fn make_key(namespace: String, name: String) -> String:
+    #     """Create a full key name with optional namespace.
 
-        Returns:
-            A `String` representing the full key.
-        """
+    #     Args:
+    #         namespace: An optional `String` namespace.
+    #         name: The base `String` name.
 
-        return namespace + "." + name
+    #     Returns:
+    #         A `String` representing the full key.
+    #     """
+
+    #     return namespace + "." + name
 
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
@@ -60,6 +62,8 @@ struct Messenger(Copyable, Movable):
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
         self.int_dict = Dict[String, UnsafePointer[Int64]]()
         self.all_keys = Set[String]()
+
+        self.key_dict = Dict[String, String]()
 
     fn update(self) -> None:
         """This function checks the MMMAudioWorld for any new messages that arrived during the last audio
@@ -106,45 +110,39 @@ struct Messenger(Copyable, Movable):
             for ref item in self.text_dict.items():
                 item.value[].strings.clear()
 
-    fn update(mut self, mut param: Float64, name: String) -> None:
-        """Update a registered `Float64` with a new value from Python.
-
-        Args:
-            param: A reference to the registered `Float64` to update.
-            name: The name under which the `Float64` was registered.
-
-        Returns:
-            None
-        """
-        if self.world_ptr[].top_of_block:
+    fn get_long_name(mut self, name: String) -> String:
+        var long_name = self.key_dict.get(name)
+        if not long_name:
             if self.namespace:
-                key = self.namespace.value() + "." + name
+                long_name = self.namespace.value()+"."+name
             else:
-                key = name
+                long_name = name
+            print("adding long name: ", long_name.value())
+            self.key_dict[name] = long_name.value()
+        return long_name.value()
+
+    fn update(mut self, mut param: Float64, name: String) -> None:
+        if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_float(key)
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_long_name(name))
                 if opt:
                     param = opt.value()
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
-    fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
-        """Update a registered `List[Float64]` with a new value from Python.
-
-        Args:
-            param: A reference to the registered `Float64` to update.
-            name: The name under which the `Float64` was registered.
-
-        Returns:
-            None
-        """
+    fn update(mut self, mut param: Int64, name: String) -> None:
         if self.world_ptr[].top_of_block:
-            # if self.namespace:
-            #     key = self.namespace.value() + "." + name
-            # else:
-            #     key = name
             try:
-                var opt = self.world_ptr[].messengerManager.get_list(name)
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_long_name(name))
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating int message. Error: ", error)
+
+    fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_list(self.get_long_name(name))
                 if opt:
                     param = opt.value().copy()
                 return opt.__bool__()
@@ -152,25 +150,40 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float message. Error: ", error)
         return False
 
-    fn update(mut self, mut param: Bool, name: String) -> None:
-        """Update a registered `Bool` with a new value from Python.
-
-        Args:
-            param: A reference to the registered `Float64` to update.
-            name: The name under which the `Float64` was registered.
-
-        Returns:
-            None
-        """
+    fn update[trig_gate: Int=1](mut self, mut param: Bool, name: String) -> None:
         if self.world_ptr[].top_of_block:
-            if self.namespace:
-                key = self.namespace.value() + "." + name
+            @parameter
+            if trig_gate == 0:
+                param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name))
             else:
-                key = name
+                try:
+                    var opt = self.world_ptr[].messengerManager.get_gate(self.get_long_name(name))
+                    if opt:
+                        param = opt.value()    
+                except error:
+                    print("Error occurred while updating bool message. Error: ", error)
+
+    fn update(mut self, mut param: String, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
             try:
-                param = self.world_ptr[].messengerManager.get_trig(key)
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name))
+                if opt:
+                    param = opt.value()[0]
+                return opt.__bool__()
             except error:
-                print("Error occurred while updating float message. Error: ", error)
+                print("Error occurred while updating text message. Error: ", error)
+        return False
+
+    fn update(mut self, mut param: List[String], name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name))
+                if opt:
+                    param = opt.value().copy()
+                return opt.__bool__()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+        return False
 
     @doc_private
     fn check_key_collision(mut self, read name: String) -> String:

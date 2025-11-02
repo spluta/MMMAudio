@@ -25,7 +25,6 @@ struct TrigSynthVoice(Movable, Copyable):
     var note: List[Float64]
 
     var messenger: Messenger
-    var note_key: String
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], name_space: String = ""):
         self.world_ptr = world_ptr
@@ -40,13 +39,12 @@ struct TrigSynthVoice(Movable, Copyable):
         self.bend_mul = 1.0
 
         self.messenger = Messenger(self.world_ptr, name_space)
-        self.note_key = Messenger.make_key(name_space, "note")
 
         self.note = List[Float64]()
 
     @always_inline
     fn next(mut self) -> Float64:
-        make_note = self.messenger.update(self.note, self.note_key)
+        make_note = self.messenger.update(self.note, "note")
 
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
         if not self.env.is_active and not make_note:
@@ -93,20 +91,16 @@ struct TrigSynth(Movable, Copyable):
         self.voices = List[TrigSynthVoice]()
         for i in range(self.num_voices):
             self.voices.append(TrigSynthVoice(self.world_ptr, "voice_"+String(i)))
-            # self.voices[-1].register_messages()
 
         self.svf = SVF(self.world_ptr)
         self.filt_lag = Lag(self.world_ptr, 0.1)
         self.filt_freq = 1000.0
         self.bend_mul = 1.0
 
-    fn register_messages(mut self):
-        self.messenger.register(self.filt_freq, "filt_freq")
-        self.messenger.register(self.bend_mul, "bend_mul")
-
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.messenger.update()
+        self.messenger.update(self.filt_freq, "filt_freq")
+        self.messenger.update(self.bend_mul, "bend_mul")
         # self.world_ptr[0].print(String(self.filt_freq) + String(self.bend_mul))
         if self.world_ptr[0].top_of_block:
             for i in range(len(self.voices)):
@@ -134,7 +128,6 @@ struct Midi_Sequencer(Representable, Movable, Copyable):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list
 
         self.trig_synth = TrigSynth(world_ptr)  # Initialize the TrigSynth with the world instance
-        self.trig_synth.register_messages()
 
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")

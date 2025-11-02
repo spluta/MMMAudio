@@ -13,7 +13,6 @@ struct Tone(Messagable):
     var test_list: List[Float64]
     var m: Messenger
     var file_name: TextMsg
-    var test_bool: Bool
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
         self.world_ptr = world_ptr
@@ -23,23 +22,14 @@ struct Tone(Messagable):
         self.m = Messenger(self.world_ptr,namespace)
         self.test_list = List[Float64](capacity=4)
         self.file_name = TextMsg(["default.wav"])
-        self.test_bool = False
 
     fn register_messages(mut self):
-        # self.m.register(self.freq,"freq")
+        self.m.register(self.freq,"freq")
         self.m.register(self.test_list,"test_list")
         self.m.register(self.file_name, "file_name")
 
     fn next(mut self) -> Float64:
         self.m.update()
-        self.m.update[0](self.test_bool, "test_bool")
-        self.m.update(self.freq, "freq")
-
-        if self.world_ptr[0].top_of_block:
-            pass
-            # print("test_bool in Tone next(): ", self.test_bool)
-            # print("freq in Tone next(): ", self.freq)
-
         if self.file_name:
             for i in range(len(self.file_name)):
                 print(self.file_name[i])

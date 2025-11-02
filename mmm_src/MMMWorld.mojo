@@ -104,18 +104,18 @@ struct MessengerManager(Movable, Copyable):
         self.gate_msg_pool[key] = value
 
     @always_inline
-    fn update_list_msg(mut self, key: String, values: List[Float64]):
-        self.list_msg_pool[key] = values.copy()
+    fn update_list_msg(mut self, key: String, var values: List[Float64]):
+        self.list_msg_pool[key] = values^
 
     @always_inline
     fn update_trig_msg(mut self, key: String):
         self.trig_msg_pool.add(key)
 
     @always_inline
-    fn update_text_msg(mut self, key: String, text: List[String]) raises:
+    fn update_text_msg(mut self, key: String, var text: List[String]) raises:
         if not key in self.text_msg_pool:
             self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].extend(text)
+        self.text_msg_pool[key].extend(text^)
 
     @always_inline
     fn update_int_msg(mut self, key: String, value: Int64):
@@ -149,21 +149,21 @@ struct MessengerManager(Movable, Copyable):
     # been transferred from the pools to the Dicts. These functions are called
     # from a graph (likely via a Messenger instance) to get the latest message values.
     @always_inline
-    fn get_float(mut self, key: String) raises -> Optional[Float64]:
+    fn get_float(mut self, ref key: String) raises -> Optional[Float64]:
         if key in self.float_msgs:
             self.float_msgs[key].retrieved = True
             return self.float_msgs[key].value
         return None
 
     @always_inline
-    fn get_gate(mut self, key: String) raises -> Optional[Bool]:
+    fn get_gate(mut self, ref key: String) raises -> Optional[Bool]:
         if key in self.gate_msgs:
             self.gate_msgs[key].retrieved = True
             return self.gate_msgs[key].value
         return None
 
     @always_inline
-    fn get_list(mut self: Self, key: String) raises-> Optional[List[Float64]]:
+    fn get_list(mut self: Self, ref key: String) raises-> Optional[List[Float64]]:
         if key in self.list_msgs:
             self.list_msgs[key].retrieved = True
             # Copy is ok here because it will only copy when there is a
@@ -175,7 +175,7 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn get_trig(mut self, key: String) -> Bool:
+    fn get_trig(mut self, ref key: String) -> Bool:
         if key in self.trig_msgs:
             self.trig_msgs[key] = True
             return True
@@ -184,7 +184,7 @@ struct MessengerManager(Movable, Copyable):
     # Unlike the other "get_*" functions, this one returns an Optional List of Strings
     # because it doesn't make sense for there to be a default value for text messages.
     @always_inline
-    fn get_text(mut self, key: String) raises -> Optional[List[String]]:
+    fn get_text(mut self, ref key: String) raises -> Optional[List[String]]:
         if key in self.text_msgs:
             self.text_msgs[key].retrieved = True
             # Copy here is ok because text messages are expected
@@ -193,7 +193,7 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn get_int(mut self, key: String) raises -> Optional[Int64]:
+    fn get_int(mut self, ref key: String) raises -> Optional[Int64]:
         if key in self.int_msgs:
             self.int_msgs[key].retrieved = True
             return self.int_msgs[key].value
