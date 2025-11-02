@@ -44,7 +44,7 @@ struct TorchSynth(Movable, Copyable):
         self.osc2 = Osc[1, 2, 1](world_ptr)
 
         # load the trained model
-        self.model = MLP(world_ptr,"examples/nn_trainings/model_traced.pt", trig_rate=25.0)
+        self.model = MLP(world_ptr,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
         self.model.register_messages()
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
