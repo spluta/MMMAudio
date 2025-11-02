@@ -10,7 +10,7 @@ from mmm_src.MMMTraits import *
 
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
-struct TrigSynthVoice(Messagable):
+struct TrigSynthVoice(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var env_params: EnvParams
@@ -23,8 +23,7 @@ struct TrigSynthVoice(Messagable):
     var bend_mul: Float64
 
     var trig: Bool
-    var freq: Float64
-    var vol: Float64
+    var note: List[Float64]
     var printer: Print
 
     var messenger: Messenger
@@ -44,36 +43,26 @@ struct TrigSynthVoice(Messagable):
         self.messenger = Messenger(self.world_ptr, name_space)
 
         self.trig = False
-        self.freq = 100.0
-        self.vol = 1.0
+        self.note = List[Float64]()
         self.printer = Print(self.world_ptr)
-
-    fn register_messages(mut self):
-        pass
-        # self.messenger.register(self.vol, "vol")
-        # self.messenger.register(self.freq, "freq")
-        # self.messenger.register(self.trig, "trig")
 
     @always_inline
     fn next(mut self) -> Float64:
-        self.messenger.update()
-        self.messenger.update(self.vol, "vol")
-        self.messenger.update(self.freq, "freq")
-        self.messenger.update(self.trig, "trig")
-        # self.printer.next(self.freq, 1)
+        make_note = self.messenger.update(self.note, "note")
+
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
-        if not self.env.is_active and not self.trig:
+        if not self.env.is_active and not make_note:
             return 0.0
         else:
-            bend_freq = self.freq * self.bend_mul
+            bend_freq = self.note[0] * self.bend_mul
             var mod_value = self.mod.next(bend_freq * 1.5)  # Modulator frequency is 3 times the carrier frequency
-            var env = self.env.next(self.env_params, self.trig)  # Trigger the envelope if trig is True
+            var env = self.env.next(self.env_params, make_note)  # Trigger the envelope if trig is True
 
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
             var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=2)  
 
             car_value += self.sub.next(bend_freq * 0.5) # Add a sub oscillator one octave below the carrier
-            car_value = car_value * 0.1 * env * self.vol
+            car_value = car_value * 0.1 * env * self.note[1]  # Scale the output by the envelope and note velocity
 
             return car_value
 
@@ -116,8 +105,6 @@ struct TrigSynth(Movable, Copyable):
     fn register_messages(mut self):
         self.messenger.register(self.filt_freq, "filt_freq")
         self.messenger.register(self.bend_mul, "bend_mul")
-        for i in range(len(self.voices)):
-            self.voices[i].register_messages()
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:

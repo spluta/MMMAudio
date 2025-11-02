@@ -113,6 +113,30 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
+    fn update(mut self, mut param: List[Float64], name: String) -> Bool:
+        """Update a registered `List[Float64]` with a new value from Python.
+
+        Args:
+            param: A reference to the registered `Float64` to update.
+            name: The name under which the `Float64` was registered.
+
+        Returns:
+            None
+        """
+        if self.world_ptr[].top_of_block:
+            if self.namespace:
+                key = self.namespace.value() + "." + name
+            else:
+                key = name
+            try:
+                var opt = self.world_ptr[].messengerManager.get_list(key)
+                if opt:
+                    param = opt.value().copy()
+                return opt.__bool__()
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+        return False
+
     fn update(mut self, mut param: Bool, name: String) -> None:
         """Update a registered `Bool` with a new value from Python.
 
