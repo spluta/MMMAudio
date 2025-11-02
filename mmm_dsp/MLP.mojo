@@ -1,10 +1,11 @@
 from python import PythonObject
 from python import Python
 from mmm_dsp.Osc import Impulse
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messengers import *
 from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMTraits import *
 
-struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, Copyable): 
+struct MLP[input_size: Int = 2, output_size: Int = 16](Messagable): 
     """
     A Mojo wrapper for a PyTorch MLP model using Python interop.
 
@@ -20,14 +21,16 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
     var model: PythonObject  
     var MLP: PythonObject  
     var torch: PythonObject  
-    var model_input: InlineArray[Float64, input_size]  # Input list for audio synthesis
-    var model_output: InlineArray[Float64, output_size]  # Output list from the model
+    var model_input: InlineArray[Float64, input_size]  
+    var model_output: InlineArray[Float64, output_size]  
+    var fake_model_output: List[Float64]
     var inference_trig: Impulse
-    var inference_gate: Bool
+    var inference_gate: GateMsg
     var trig_rate: Float64
     var messenger: Messenger
+    var file_name: TextMsg
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], file_name: String, trig_rate: Float64 = 25.0):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], file_name: String, name_space: Optional[String] = None, trig_rate: Float64 = 25.0):
         self.world_ptr = world_ptr
         self.py_input = PythonObject(None) 
         self.py_output = PythonObject(None) 
@@ -36,10 +39,12 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
         self.torch = PythonObject(None) 
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
+        self.fake_model_output = List[Float64](0.0)    
         self.inference_trig = Impulse(self.world_ptr)
-        self.inference_gate = False
+        self.inference_gate = GateMsg(True)
         self.trig_rate = trig_rate
-        self.messenger = Messenger(world_ptr)
+        self.messenger = Messenger(world_ptr, name_space)
+        self.file_name = TextMsg()
 
         try:
             # Python.add_to_path("neural_nets/MLP.py")
@@ -51,13 +56,18 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
             for _ in range (5):
                 self.model(self.torch.randn(1, input_size))  # warm it up CHris
 
-            self.inference_gate = True
+            self.inference_gate.state = True
             print("Torch model loaded successfully")
 
         except ImportError:
             print("Error importing MLP_py or torch module")
     
-    fn reload_model(mut self: MLP, file_name: String):
+    fn register_messages(mut self):
+        self.messenger.register(self.file_name, "load_mlp_training")
+        self.messenger.register(self.inference_gate, "toggle_inference")
+        self.messenger.register(self.fake_model_output, "fake_model_output")
+
+    fn reload_model(mut self: MLP, var file_name: String):
         """
         Reload the MLP model from a specified file.
 
@@ -82,30 +92,21 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
         Process the input through the MLP model.
             
         """
-        if self.world_ptr[0].top_of_block:
-            # this will return a tuple (model_path(String), triggered(Bool))
-            load_msg = self.text_messenger.get_text_msg_val("load_mlp_training")
-            if load_msg != "":
-                print("loading new model", end="\n")
-                self.reload_model(load_msg)
+        self.messenger.update()
+        if self.file_name:
+            print("loading model from file: ", self.file_name.strings[0])
+            self.reload_model(self.file_name.strings[0])
 
-
-            self.inference_gate = self.messenger.get_val("toggle_inference", 1.0) == 1.0
-
-            if not self.inference_gate:
-                triggered = self.messenger.triggered("model_output")
-                if triggered:
-                    print("receiving model output values", end="\n")
-                    model_output = self.messenger.get_list("model_output")
-                    num = Int(min(self.output_size, len(model_output)))
-                    for i in range(num):
-                        self.model_output[i] = model_output[i]
+        if not self.inference_gate:
+            # self.world_ptr[0].print(self.fake_model_output)
+            for i in range(self.output_size):
+                if i < len(self.fake_model_output):
+                    self.model_output[Int(i)] = self.fake_model_output[i]
 
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
             if self.torch is None:
                 return 
-
             try:
                 for i in range(self.input_size):
                     self.py_input[0][i] = self.model_input[Int(i)]

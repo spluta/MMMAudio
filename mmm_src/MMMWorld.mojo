@@ -282,5 +282,23 @@ struct MMMWorld(Representable, Movable, Copyable):
                 self.print_flag = 0
             if self.print_flag == 1:
                 print(label,String(value))
+    
+    @always_inline
+    fn print[N: Int](mut self, value: List[SIMD[DType.float64, N]], label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
+
+        if self.block_state == 0:
+            current_time = time.perf_counter()
+            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+            if self.print_flag == 0:
+                if current_time - self.last_print_time >= 1.0 / freq:
+                    self.last_print_time = current_time
+                    self.print_flag = 1
+            elif self.print_flag == 1:
+                self.print_flag = 0
+            if self.print_flag == 1:
+                out_str = label
+                for i in range(len(value)):
+                    out_str = out_str + String(value[i]) + end_str
+                print(out_str)
 
 

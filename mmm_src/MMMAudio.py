@@ -119,6 +119,9 @@ class MMMAudio:
     async def get_mouse_position(self, delay: float = 0.01):
         while True:
             x, y = pyautogui.position()
+            x = x / pyautogui.size().width
+            y = y / pyautogui.size().height
+            
             self.mmm_audio_bridge.update_mouse_pos([ x, y ])
 
             await asyncio.sleep(delay)

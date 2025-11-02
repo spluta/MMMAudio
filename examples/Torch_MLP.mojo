@@ -16,7 +16,7 @@ alias model_out_size = 16  # Define the output size of the model
 alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
 
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
-struct TorchSynth(Representable, Movable, Copyable):
+struct TorchSynth(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var osc1: Osc[1, 2, 1]
     var osc2: Osc[1, 2, 1]
@@ -38,9 +38,6 @@ struct TorchSynth(Representable, Movable, Copyable):
     var dc1: DCTrap
     var dc2: DCTrap
 
-    var received_outputs: List[Float64]
-    var toggle_receive_outputs: Float64
-
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc1 = Osc[1, 2, 1](world_ptr)
@@ -48,6 +45,7 @@ struct TorchSynth(Representable, Movable, Copyable):
 
         # load the trained model
         self.model = MLP(world_ptr,"examples/nn_trainings/model_traced.pt", trig_rate=25.0)
+        self.model.register_messages()
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
@@ -65,12 +63,6 @@ struct TorchSynth(Representable, Movable, Copyable):
         self.filt2 = SVF(self.world_ptr)
         self.dc1 = DCTrap(self.world_ptr)
         self.dc2 = DCTrap(self.world_ptr)
-
-        self.received_outputs = List[Float64]()
-        self.toggle_receive_outputs = 0
-
-    fn __repr__(self) -> String:
-        return String("OscSynth")
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:

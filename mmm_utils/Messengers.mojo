@@ -140,7 +140,7 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.text_dict[fullname] = UnsafePointer(to=param)
 
-struct GateMsg(Representable, Boolable, Writable):
+struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
     """A 'Gate' that can be controlled from Python.
 
     It is either True (on) or False (off). 
