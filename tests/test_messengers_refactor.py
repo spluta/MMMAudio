@@ -15,21 +15,22 @@ mmm_audio.start_audio()
 
 # mmm_audio.send_trig("should_warn_re_trig")
 
-# mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
+mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
 
 # mmm_audio.send_float("vol", -100.0)
-mmm_audio.send_float("vol", -30.0)
+mmm_audio.send_float("vol", -100.0)
 
-# mmm_audio.send_float("tone_0.freq", 900)
-# mmm_audio.send_float("tone_1.freq", 700)
+mmm_audio.send_float("tone_0.freq", 900)
+mmm_audio.send_float("tone_1.freq", 700)
 
 mmm_audio.send_int("test_int", 0)
 
 # mmm_audio.send_int("should_warn_re_int", 7)
 
-mmm_audio.send_text("tone_0.file_name", "poop.wav")
+mmm_audio.send_text("tone_0.file_name", ["wavy.wav", "gravy.wav"])
+mmm_audio.send_text("tone_0.file_name", "wavy.wav", "gravy.wav")
 mmm_audio.stop_audio()
 
-mmm_audio.send_text("text_test", ["Line 1", "Line 2"])
+mmm_audio.send_text("text_test", *["Line 1", "Line 2"])
 
 mmm_audio.stop_audio()

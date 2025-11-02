@@ -12,6 +12,7 @@ import mojo.importer
 import matplotlib.pyplot as plt
 
 import pyautogui
+from sympy import arg
 import mmm_src.Scheduler as Scheduler
 
 from math import ceil
@@ -228,7 +229,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_trig_msg([key])
         
-    def send_list(self, key: str, values: list[float]):
+    def send_list(self, key: str, *args):
         """
         Send a list message to the Mojo audio engine.
         
@@ -237,22 +238,48 @@ class MMMAudio:
             values: List of float values
         """
 
+        # key_vals = [key]  # Start with the key
+        # key_vals.extend([v for v in values])
+
         key_vals = [key]  # Start with the key
-        key_vals.extend([v for v in values])
+        if isinstance(args[0], list):
+            for arg in args[0]:
+                key_vals.append(float(arg))
+        else:
+            for arg in args:
+                key_vals.append(float(arg))
 
         self.mmm_audio_bridge.update_list_msg(key_vals)
 
-    def send_text(self, key, arg: str | list[str]):
+    # def send_text(self, key, arg: str | list[str]):
+    #     """
+    #     Send a message to the Mojo audio engine.
+        
+    #     Args:
+    #         key: Key for the message 
+    #         *args: Additional arguments for the message
+    #     """
+    #     print(1)
+    #     key_vals = [key]  # Start with the key
+    #     key_vals.extend(arg if isinstance(arg, list) else [arg])
+
+        # self.mmm_audio_bridge.update_text_msg(key_vals)
+
+    def send_text(self, key, *args):
         """
-        Send a message to the Mojo audio engine.
+        Send a text message to the Mojo audio engine.
         
         Args:
             key: Key for the message 
             *args: Additional arguments for the message
         """
-
         key_vals = [key]  # Start with the key
-        key_vals.extend(arg if isinstance(arg, list) else [arg])
+        if isinstance(args[0], list):
+            for arg in args[0]:
+                key_vals.append(str(arg))
+        else:
+            for arg in args:
+                key_vals.append(str(arg))
 
         self.mmm_audio_bridge.update_text_msg(key_vals)
         

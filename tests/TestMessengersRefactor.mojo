@@ -30,8 +30,12 @@ struct Tone(Messagable):
 
     fn next(mut self) -> Float64:
         self.m.update()
-        
-        print(self.file_name.strings[0])
+        if self.file_name:
+            for i in range(len(self.file_name)):
+                print(self.file_name[i])
+        # self.world_ptr[0].print(self.test_list)
+
+        # self.world_ptr[0].print(self.freq)
         return self.osc.next(self.freq)
 
 struct TestMessengersRefactor():
@@ -71,16 +75,12 @@ struct TestMessengersRefactor():
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
 
-        if len(self.txt) > 0:
-            self.printers[0].next(self.txt[0],"TextMsg txt 0:")
-
-        if len(self.txt) > 1:
-            self.printers[1].next(self.txt[1],"TextMsg txt 1:")
+        if self.txt:
+            for i in range(len(self.txt)):
+                print("TextMsg txt " + String(i) + ":", self.txt[i])
 
         if self.test_int > 0:
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
-
-        self.printers[3].next(self.vol,"TestMessengersRefactor vol:")
 
         if self.trig:
             print("TrigMsg received trig!")
