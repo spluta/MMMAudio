@@ -13,6 +13,21 @@ struct Messenger(Copyable, Movable):
     var float64_dict: Dict[String, UnsafePointer[Float64]]
     var int_dict: Dict[String, UnsafePointer[Int64]]
 
+    @staticmethod
+    fn make_key(namespace: String, name: String) -> String:
+        """Create a full key name with optional namespace.
+
+        Args:
+            namespace: An optional `String` namespace.
+            name: The base `String` name.
+
+        Returns:
+            A `String` representing the full key.
+        """
+
+        return namespace + "." + name
+
+
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
 
@@ -113,7 +128,7 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
-    fn update(mut self, mut param: List[Float64], name: String) -> Bool:
+    fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
         """Update a registered `List[Float64]` with a new value from Python.
 
         Args:
@@ -124,12 +139,12 @@ struct Messenger(Copyable, Movable):
             None
         """
         if self.world_ptr[].top_of_block:
-            if self.namespace:
-                key = self.namespace.value() + "." + name
-            else:
-                key = name
+            # if self.namespace:
+            #     key = self.namespace.value() + "." + name
+            # else:
+            #     key = name
             try:
-                var opt = self.world_ptr[].messengerManager.get_list(key)
+                var opt = self.world_ptr[].messengerManager.get_list(name)
                 if opt:
                     param = opt.value().copy()
                 return opt.__bool__()

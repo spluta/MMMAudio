@@ -22,13 +22,12 @@ struct TrigSynthVoice(Movable, Copyable):
 
     var bend_mul: Float64
 
-    var trig: Bool
     var note: List[Float64]
-    var printer: Print
 
     var messenger: Messenger
+    var note_key: String
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], name_space: Optional[String] = None):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], name_space: String = ""):
         self.world_ptr = world_ptr
 
         self.mod = Osc(self.world_ptr)
@@ -41,14 +40,13 @@ struct TrigSynthVoice(Movable, Copyable):
         self.bend_mul = 1.0
 
         self.messenger = Messenger(self.world_ptr, name_space)
+        self.note_key = Messenger.make_key(name_space, "note")
 
-        self.trig = False
         self.note = List[Float64]()
-        self.printer = Print(self.world_ptr)
 
     @always_inline
     fn next(mut self) -> Float64:
-        make_note = self.messenger.update(self.note, "note")
+        make_note = self.messenger.update(self.note, self.note_key)
 
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
         if not self.env.is_active and not make_note:
