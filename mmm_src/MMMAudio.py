@@ -238,7 +238,7 @@ class MMMAudio:
         """
 
         key_vals = [key]  # Start with the key
-        key_vals.extend([str(v) for v in values])
+        key_vals.extend([v for v in values])
 
         self.mmm_audio_bridge.update_list_msg(key_vals)
 

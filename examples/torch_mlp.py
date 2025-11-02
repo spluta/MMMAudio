@@ -32,6 +32,7 @@ def make_setting():
     setting = []
     for _ in range(out_size):
         setting.append(random())
+    print("setting =", setting)
     mmm_audio.send_list("fake_model_output", setting)
 
     return setting

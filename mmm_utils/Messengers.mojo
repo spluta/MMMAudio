@@ -154,7 +154,7 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.int_dict[fullname] = UnsafePointer(to=param)
 
-struct GateMsg(Representable, Boolable, Writable):
+struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
     """A 'Gate' that can be controlled from Python.
 
     It is either True (on) or False (off). 
@@ -326,5 +326,9 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
         return self.strings[index]
 
     fn __as_bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it."""
+        return len(self.strings) > 0
+
+    fn __bool__(self) -> Bool:
         """A TextMsg is considered 'True' if it has at least one string in it."""
         return len(self.strings) > 0
