@@ -22,7 +22,7 @@ struct TrigSynthVoice(Messagable):
 
     var bend_mul: Float64
 
-    var trig: TrigMsg
+    var trig: Bool
     var freq: Float64
     var vol: Float64
     var printer: Print
@@ -43,19 +43,23 @@ struct TrigSynthVoice(Messagable):
 
         self.messenger = Messenger(self.world_ptr, name_space)
 
-        self.trig = TrigMsg(False)
+        self.trig = False
         self.freq = 100.0
         self.vol = 1.0
         self.printer = Print(self.world_ptr)
 
     fn register_messages(mut self):
-        self.messenger.register(self.vol, "vol")
-        self.messenger.register(self.freq, "freq")
-        self.messenger.register(self.trig, "trig")
+        pass
+        # self.messenger.register(self.vol, "vol")
+        # self.messenger.register(self.freq, "freq")
+        # self.messenger.register(self.trig, "trig")
 
     @always_inline
     fn next(mut self) -> Float64:
         self.messenger.update()
+        self.messenger.update(self.vol, "vol")
+        self.messenger.update(self.freq, "freq")
+        self.messenger.update(self.trig, "trig")
         # self.printer.next(self.freq, 1)
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
         if not self.env.is_active and not self.trig:
@@ -63,7 +67,7 @@ struct TrigSynthVoice(Messagable):
         else:
             bend_freq = self.freq * self.bend_mul
             var mod_value = self.mod.next(bend_freq * 1.5)  # Modulator frequency is 3 times the carrier frequency
-            var env = self.env.next(self.env_params, self.trig.state)  # Trigger the envelope if trig is True
+            var env = self.env.next(self.env_params, self.trig)  # Trigger the envelope if trig is True
 
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
             var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=2)  

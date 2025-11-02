@@ -51,7 +51,7 @@ struct Messenger(Copyable, Movable):
         block. If it finds any, they will be available in the variables registered with the Messenger. This
         function should be called in the Synth's `.next()` function, so it runs every audio sample (it will only *actually* check for messages at the top of each audio block).
         """
-        if self.world_ptr[].block_state == 0:
+        if self.world_ptr[].top_of_block:
             try:
                 # This all goes in a try block because all of the get_* functions are
                 # marked "raises." They need to because that is required in order to 
@@ -90,7 +90,49 @@ struct Messenger(Copyable, Movable):
                 item.value[].state = False
             for ref item in self.text_dict.items():
                 item.value[].strings.clear()
-                
+
+    fn update(mut self, mut param: Float64, name: String) -> None:
+        """Update a registered `Float64` with a new value from Python.
+
+        Args:
+            param: A reference to the registered `Float64` to update.
+            name: The name under which the `Float64` was registered.
+
+        Returns:
+            None
+        """
+        if self.world_ptr[].top_of_block:
+            if self.namespace:
+                key = self.namespace.value() + "." + name
+            else:
+                key = name
+            try:
+                var opt = self.world_ptr[].messengerManager.get_float(key)
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+
+    fn update(mut self, mut param: Bool, name: String) -> None:
+        """Update a registered `Bool` with a new value from Python.
+
+        Args:
+            param: A reference to the registered `Float64` to update.
+            name: The name under which the `Float64` was registered.
+
+        Returns:
+            None
+        """
+        if self.world_ptr[].top_of_block:
+            if self.namespace:
+                key = self.namespace.value() + "." + name
+            else:
+                key = name
+            try:
+                param = self.world_ptr[].messengerManager.get_trig(key)
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+
     @doc_private
     fn check_key_collision(mut self, read name: String) -> String:
         fullname = name
@@ -111,7 +153,6 @@ struct Messenger(Copyable, Movable):
         """
 
         fullname = self.check_key_collision(name)
-        print(fullname)
         self.float64_dict[fullname] = UnsafePointer(to=param)
 
     fn register(mut self, ref param: GateMsg, name: String) -> None:
