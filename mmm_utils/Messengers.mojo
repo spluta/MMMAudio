@@ -150,10 +150,10 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float message. Error: ", error)
         return False
 
-    fn update[trig_gate: Int=1](mut self, mut param: Bool, name: String) -> None:
+    fn update[is_Trig: Bool=False](mut self, mut param: Bool, name: String) -> None:
         if self.world_ptr[].top_of_block:
             @parameter
-            if trig_gate == 0:
+            if is_Trig:
                 param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name))
             else:
                 try:
