@@ -85,9 +85,11 @@ struct TestMessengersRefactor():
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update()
 
-        if self.txt:
-            for i in range(len(self.txt)):
-                print("TextMsg txt " + String(i) + ":", self.txt[i])
+        if len(self.txt) > 0:
+            print("TextMsg txt 0: ",self.txt[0])
+
+        if len(self.txt) > 1:
+            print("TextMsg txt 1: ",self.txt[1])
 
         if self.test_int > 0:
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
