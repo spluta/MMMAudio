@@ -72,10 +72,11 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 # This graph is what MMMAudio will call upon to make sound with (because
 # it is the struct that has the same name as this).
 
-struct ManyOscillators(Representable, Movable, Copyable):
+struct ManyOscillators(Messagable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synths: List[StereoBeatingSines]  # Instances of the StereoBeatingSines synth
     var messenger: Messenger
+    var num_pairs: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -84,17 +85,29 @@ struct ManyOscillators(Representable, Movable, Copyable):
         self.synths = List[StereoBeatingSines]()
 
         self.messenger = Messenger(self.world_ptr)
+        self.num_pairs = 10
 
         # add 10 pairs to the list
-        for _ in range(10):
+        for _ in range(self.num_pairs):
             self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
+        self.register_messages()
 
-    fn __repr__(self) -> String:
-        return String("ManyOscillators")
+    fn register_messages(mut self):
+        self.messenger.register(self.num_pairs, "set_num_pairs")
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.get_msgs()
+        self.messenger.update()
+        if self.world_ptr[0].top_of_block:
+            if len(self.synths) != Int(self.num_pairs):
+                if self.num_pairs > len(self.synths):
+                    # add more
+                    for _ in range(self.num_pairs - len(self.synths)):
+                        self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
+                else:
+                    # remove some
+                    for _ in range(len(self.synths) - self.num_pairs):
+                        _ = self.synths.pop()
 
         # sum all the stereo outs from the N synths
         sum = SIMD[DType.float64, 2](0.0, 0.0)
@@ -102,22 +115,3 @@ struct ManyOscillators(Representable, Movable, Copyable):
             sum += self.synths[i].next()
 
         return sum
-
-    fn get_msgs(mut self):
-        # get any messages sent from Python to the Mojo program
-
-        # if there is a message called "set_num_pairs", num will either return the value sent with "set_num_pairs" or if no value has been sent, it will return the default value of 10
-        if self.world_ptr[0].top_of_block:
-            num = self.messenger.get_val("set_num_pairs", 10)
-
-            if num != len(self.synths):
-                print("Changing number of synths to:", Int(num))
-                # adjust the list of synths
-                if Int(num) > len(self.synths):
-                    # add more
-                    for _ in range(Int(num) - len(self.synths)):
-                        self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
-                else:
-                    # remove some
-                    for _ in range(len(self.synths) - Int(num)):
-                        _ = self.synths.pop()

@@ -28,7 +28,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
     var lp_comb7: LP_Comb[N]
 
     var temp: List[Float64]
-    var allpass_combs: List[Allpass_Comb[N]]
+    var allpass_combs: List[Allpass_Comb[N, 0]]
     var feedback: List[Float64]
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
@@ -48,7 +48,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         self.lp_comb7 = LP_Comb[N](self.world_ptr, 0.04)
 
         self.temp = [0.0 for _ in range(8)]
-        self.allpass_combs = [Allpass_Comb[N](self.world_ptr, 0.015) for _ in range(4)]
+        self.allpass_combs = [Allpass_Comb[N, 0](self.world_ptr, 0.015) for _ in range(4)]
         
         self.feedback = [0.0]
         self.lp_comb_lpfreq = [1000.0]

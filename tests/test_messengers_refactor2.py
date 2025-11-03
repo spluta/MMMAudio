@@ -20,13 +20,10 @@ mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
 # mmm_audio.send_float("vol", -100.0)
 mmm_audio.send_float("vol", -100.0)
 
-mmm_audio.send_float("tone_0.freq", 500)
+mmm_audio.send_float("tone_0.freq", 900)
 mmm_audio.send_float("tone_1.freq", 700)
 
 mmm_audio.send_int("test_int", 0)
-
-mmm_audio.send_trig("test_bool")
-mmm_audio.stop_audio()
 
 # mmm_audio.send_int("should_warn_re_int", 7)
 
