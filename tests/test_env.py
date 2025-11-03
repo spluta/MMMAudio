@@ -7,7 +7,7 @@ mmm_audio = MMMAudio(128, graph_name="TestEnv", package_name="tests")
 
 mmm_audio.plot(256)
 
-mmm_audio.send_msg("mul", -1)
+mmm_audio.send_float("mul", 0.5)
 
 mmm_audio.start_audio()
 

@@ -13,6 +13,23 @@ struct Messenger(Copyable, Movable):
     var float64_dict: Dict[String, UnsafePointer[Float64]]
     var int_dict: Dict[String, UnsafePointer[Int64]]
 
+    var key_dict: Dict[String, String]  # maps short names to full names with namespace
+
+    # @staticmethod
+    # fn make_key(namespace: String, name: String) -> String:
+    #     """Create a full key name with optional namespace.
+
+    #     Args:
+    #         namespace: An optional `String` namespace.
+    #         name: The base `String` name.
+
+    #     Returns:
+    #         A `String` representing the full key.
+    #     """
+
+    #     return namespace + "." + name
+
+
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
 
@@ -46,12 +63,14 @@ struct Messenger(Copyable, Movable):
         self.int_dict = Dict[String, UnsafePointer[Int64]]()
         self.all_keys = Set[String]()
 
+        self.key_dict = Dict[String, String]()
+
     fn update(self) -> None:
         """This function checks the MMMAudioWorld for any new messages that arrived during the last audio
         block. If it finds any, they will be available in the variables registered with the Messenger. This
         function should be called in the Synth's `.next()` function, so it runs every audio sample (it will only *actually* check for messages at the top of each audio block).
         """
-        if self.world_ptr[].block_state == 0:
+        if self.world_ptr[].top_of_block:
             try:
                 # This all goes in a try block because all of the get_* functions are
                 # marked "raises." They need to because that is required in order to 
@@ -90,7 +109,87 @@ struct Messenger(Copyable, Movable):
                 item.value[].state = False
             for ref item in self.text_dict.items():
                 item.value[].strings.clear()
-                
+
+    fn get_long_name(mut self, name: String) raises -> UnsafePointer[String]:
+        var contains = self.key_dict.__contains__(name)
+
+        if not contains:
+            if self.namespace:
+                long_name = self.namespace.value()+"."+name
+            else:
+                long_name = name
+            print("adding long name: ", long_name)
+            self.key_dict[name] = long_name
+
+        return UnsafePointer(to=self.key_dict[name])
+
+    fn update(mut self, mut param: Float64, name: String) -> None:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+
+    fn update(mut self, mut param: Int64, name: String) -> None:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating int message. Error: ", error)
+
+    fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_list(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value().copy()
+                return opt.__bool__()
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+        return False
+
+    fn update[is_Trig: Bool=False](mut self, mut param: Bool, name: String) -> None:
+        if self.world_ptr[].top_of_block:
+            @parameter
+            if is_Trig:
+                try:
+                    param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
+                except error:
+                    print("Error occurred while updating trig message. Error: ", error)
+            else:
+                try:
+                    var opt = self.world_ptr[].messengerManager.get_gate(self.get_long_name(name)[])
+                    if opt:
+                        param = opt.value()    
+                except error:
+                    print("Error occurred while updating bool message. Error: ", error)
+
+    fn update(mut self, mut param: String, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value()[0]
+                return opt.__bool__()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+        return False
+
+    fn update(mut self, mut param: List[String], name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value().copy()
+                return opt.__bool__()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+        return False
+
     @doc_private
     fn check_key_collision(mut self, read name: String) -> String:
         fullname = name
@@ -154,12 +253,15 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.int_dict[fullname] = UnsafePointer(to=param)
 
-struct GateMsg(Representable, Boolable, Writable):
+struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
     """A 'Gate' that can be controlled from Python.
 
     It is either True (on) or False (off). 
     It works like a boolean in all places, but different from a boolean it can be
     registered with a Messenger under a user specified name.
+
+    It only make sense to use GateMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
 
     For a usage example, see the [TODO] file in 'Examples.'
 
@@ -193,12 +295,17 @@ struct GateMsg(Representable, Boolable, Writable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TrigMsg(Representable, Writable, Boolable):
+struct TrigMsg(Representable, Writable, Boolable, Copyable, Movable):
     """A 'Trigger' that can be controlled from Python.
 
     It is either True (triggered) or False (not triggered). 
     It works like a boolean in all places, but different from a boolean it can be
-    registered with a Messenger under a user specified name. The Messenger checks for any
+    registered with a Messenger under a user specified name. 
+    
+    It only make sense to use TrigMsg if it is registered with a Messenger. Otherwise 
+    you can just use a Bool directly.
+    
+    The Messenger checks for any
     'triggers' sent under the specified name at the start of each audio block, and sets
     the TrigMsg's state accordingly. If there is a trigger under the name, this TrigMsg
     will be True for 1 sample (the first of the audio block), and then automatically reset to
@@ -236,10 +343,12 @@ struct TrigMsg(Representable, Writable, Boolable):
     fn write_to(self, mut writer: Some[Writer]):
         writer.write(self.state)
 
-struct TextMsg(Representable, Writable, Sized):
+struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     """A 'Text' message that can be sent from Python. 
     
     It is essentially a list of strings.
+    It only makes sense to use TextMsg if it is registered with a Messenger.
+
     It works like a List[String] in all places, but different from a List[String] it can be
     registered with a Messenger under a user specified name. This is a list rather than a single string
     because it might be necessary to send multiple pieces of information at once, for example a lot of buffers
@@ -259,6 +368,7 @@ struct TextMsg(Representable, Writable, Sized):
     """
 
     var strings: List[String]
+    var received_message: Bool
 
     fn __init__(out self, default: List[String] = List[String]()):
         """Initialize the TextMsg, with an optional default. 
@@ -270,6 +380,7 @@ struct TextMsg(Representable, Writable, Sized):
         at the very start of the program run.
         """
         self.strings = default.copy()
+        self.received_message = False
 
     @doc_private
     fn __repr__(self) -> String:
@@ -328,37 +439,10 @@ struct TextMsg(Representable, Writable, Sized):
             do_something(txt[0])
         ```
 
-        > Note that you'll still need to index into the List inside the TextMsg 
-        to get the actual strings! If it's possible that there are multiple strings,
-        best practices would be:
-
-        ```mojo
-        self.txt = TextMsg()
-        # ...
-        if self.txt:
-            for t in self.txt:
-                do_something(t)
-        ```
-        """
+    fn __as_bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it."""
         return len(self.strings) > 0
 
-@doc_private
-struct _TextMsgIter:
-    """Iterator for TextMsg."""
-    var strings: List[String]
-    var index: Int
-
-    fn __init__(out self, strings: List[String]):
-        self.strings = strings
-        self.index = 0
-
-    fn __next__(mut self) -> String:
-        var result = self.strings[self.index]
-        self.index += 1
-        return result
-
-    fn __has_next__(self) -> Bool:
-        return self.index < len(self.strings)
-
-    fn __len__(self) -> Int:
-        return len(self.strings) - self.index
+    fn __bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it."""
+        return len(self.strings) > 0

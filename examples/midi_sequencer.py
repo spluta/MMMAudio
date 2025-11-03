@@ -9,17 +9,26 @@ if True:
 
 # the python host grabs the midi and sends the midi messages to the mojo audio engine
 
+mmm_audio.send_float("filt_freq", 2000.0)  # initial filter frequency
+mmm_audio.send_float("bend_mul", 1.2)  # initial filter frequency
+
+mmm_audio.send_list("voice_0.note", [1000.0, 1.0]) 
+
 def midi_func():
     import threading
     import mido
     import time
-    from mmm_utils.functions import linexp, linlin
+    from mmm_utils.functions import linexp, linlin, midicps, cpsmidi
+    from mmm_src.Patterns import Pseq, Pxrand
 
     # find your midi devices
     mido.get_input_names()
 
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+
+
+    voice_seq = Pseq(list(range(8)))
 
     # Create stop event
     global stop_event
@@ -32,18 +41,17 @@ def midi_func():
 
                 if msg.type in ["note_on", "control_change", "pitchwheel"]:
                     if msg.type == "note_on":
-                        msg2 = [1, msg.note, msg.velocity]
-                    
+                        voice = "voice_" + str(voice_seq.next())
+                        print(f"Note On: {msg.note} Velocity: {msg.velocity} Voice: {voice}")
+                        mmm_audio.send_list(voice +".note", [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
+
                     elif msg.type == "control_change":
                         if msg.control == 34:  # Mod wheel
                             # on the desired cc, scale the value exponentially from 100 to 4000
                             # it is best practice to scale midi cc values in the host, rather than in the audio engine
-                            msg2 = [msg.channel, msg.control, linexp(msg.value, 0, 127, 100, 4000)]
-                        else:
-                            msg2 = [msg.channel, msg.control, msg.value]
+                            mmm_audio.send_float("filt_freq", linexp(msg.value, 0, 127, 100, 4000))
                     elif msg.type == "pitchwheel":
-                        msg2 = [msg.channel, linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625)]
-                    mmm_audio.send_msg(msg.type, *msg2)
+                        mmm_audio.send_float("bend_mul", linlin(msg.pitch, -8192, 8191, 0.9375, 1.0625))
             time.sleep(0.01)
 
     # Start the thread
@@ -67,6 +75,8 @@ from mmm_utils.functions import midicps, cpsmidi
 global scheduler
 scheduler = mmm_audio.scheduler
 
+voice_seq = Pseq(list(range(8)))
+
 async def trig_synth(wait):
     """A counter coroutine"""
     count_to = np.random.choice([7, 11, 13, 17]).item()
@@ -75,8 +85,8 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        note = cpsmidi(mult_seq.next() * fund)
-        mmm_audio.send_msg("note_on", 0, note, 100)
+        voice = "voice_" + str(voice_seq.next())
+        mmm_audio.send_list(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         i = (i + 1) % count_to
         if i == 0:

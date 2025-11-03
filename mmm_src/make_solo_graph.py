@@ -40,6 +40,9 @@ struct MMMGraph(Representable, Movable):
                 self.world_ptr[0].top_of_block = False
                 self.world_ptr[0].messengerManager.empty_msg_dicts()
 
+            if self.world_ptr[0].top_of_block:
+                self.world_ptr[0].print_counter += 1
+
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world_ptr[0].num_in_chans):
                 self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 

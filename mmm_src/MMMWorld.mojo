@@ -92,6 +92,7 @@ struct MessengerManager(Movable, Copyable):
         self.text_msg_pool = Dict[String, List[String]]()
         self.text_msgs = Dict[String, TextMessage]()
 
+
     # update_* functions add messages to the pool to be transferred at the
     # start of the next audio block. These functions are called from MMMAudioBridge
     # when a message is sent from Python.
@@ -104,18 +105,18 @@ struct MessengerManager(Movable, Copyable):
         self.gate_msg_pool[key] = value
 
     @always_inline
-    fn update_list_msg(mut self, key: String, values: List[Float64]):
-        self.list_msg_pool[key] = values.copy()
+    fn update_list_msg(mut self, key: String, var values: List[Float64]):
+        self.list_msg_pool[key] = values^
 
     @always_inline
     fn update_trig_msg(mut self, key: String):
         self.trig_msg_pool.add(key)
 
     @always_inline
-    fn update_text_msg(mut self, key: String, text: List[String]) raises:
+    fn update_text_msg(mut self, key: String, var text: List[String]) raises:
         if not key in self.text_msg_pool:
             self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].extend(text.copy())
+        self.text_msg_pool[key].extend(text^)
 
     @always_inline
     fn update_int_msg(mut self, key: String, value: Int64):
@@ -149,21 +150,21 @@ struct MessengerManager(Movable, Copyable):
     # been transferred from the pools to the Dicts. These functions are called
     # from a graph (likely via a Messenger instance) to get the latest message values.
     @always_inline
-    fn get_float(mut self, key: String) raises -> Optional[Float64]:
+    fn get_float(mut self, ref key: String) raises -> Optional[Float64]:
         if key in self.float_msgs:
             self.float_msgs[key].retrieved = True
             return self.float_msgs[key].value
         return None
 
     @always_inline
-    fn get_gate(mut self, key: String) raises -> Optional[Bool]:
+    fn get_gate(mut self, ref key: String) raises -> Optional[Bool]:
         if key in self.gate_msgs:
             self.gate_msgs[key].retrieved = True
             return self.gate_msgs[key].value
         return None
 
     @always_inline
-    fn get_list(mut self: Self, key: String) raises-> Optional[List[Float64]]:
+    fn get_list(mut self: Self, ref key: String) raises-> Optional[List[Float64]]:
         if key in self.list_msgs:
             self.list_msgs[key].retrieved = True
             # Copy is ok here because it will only copy when there is a
@@ -175,7 +176,7 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn get_trig(mut self, key: String) -> Bool:
+    fn get_trig(mut self, ref key: String) -> Bool:
         if key in self.trig_msgs:
             self.trig_msgs[key] = True
             return True
@@ -184,7 +185,7 @@ struct MessengerManager(Movable, Copyable):
     # Unlike the other "get_*" functions, this one returns an Optional List of Strings
     # because it doesn't make sense for there to be a default value for text messages.
     @always_inline
-    fn get_text(mut self, key: String) raises -> Optional[List[String]]:
+    fn get_text(mut self, ref key: String) raises -> Optional[List[String]]:
         if key in self.text_msgs:
             self.text_msgs[key].retrieved = True
             # Copy here is ok because text messages are expected
@@ -193,7 +194,7 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn get_int(mut self, key: String) raises -> Optional[Int64]:
+    fn get_int(mut self, ref key: String) raises -> Optional[Int64]:
         if key in self.int_msgs:
             self.int_msgs[key].retrieved = True
             return self.int_msgs[key].value
@@ -257,6 +258,8 @@ struct MMMWorld(Representable, Movable, Copyable):
     var print_flag: Int64
     var last_print_flag: Int64
 
+    var print_counter: UInt16
+
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
         self.block_size = block_size
@@ -288,6 +291,8 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.messengerManager = MessengerManager()
 
+        self.print_counter = 0
+
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
@@ -301,18 +306,30 @@ struct MMMWorld(Representable, Movable, Copyable):
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
     @always_inline
-    fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
+    fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+        if self.top_of_block:
+            if self.print_counter % n_blocks == 0:
+                @parameter
+                for i in range(values.__len__()):
+                    print(values[i], end=" ")
+                print("")
 
-        if self.block_state == 0:
-            current_time = time.perf_counter()
-            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-            if self.print_flag == 0:
-                if current_time - self.last_print_time >= 1.0 / freq:
-                    self.last_print_time = current_time
-                    self.print_flag = 1
-            elif self.print_flag == 1:
-                self.print_flag = 0
-            if self.print_flag == 1:
-                print(label,String(value))
+    # @always_inline
+    # fn print[N: Int](mut self, value: List[SIMD[DType.float64, N]], label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
+
+    #     if self.block_state == 0:
+    #         current_time = time.perf_counter()
+    #         # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+    #         if self.print_flag == 0:
+    #             if current_time - self.last_print_time >= 1.0 / freq:
+    #                 self.last_print_time = current_time
+    #                 self.print_flag = 1
+    #         elif self.print_flag == 1:
+    #             self.print_flag = 0
+    #         if self.print_flag == 1:
+    #             out_str = label
+    #             for i in range(len(value)):
+    #                 out_str = out_str + String(value[i]) + end_str
+    #             print(out_str)
 
 
