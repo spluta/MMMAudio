@@ -98,6 +98,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
         if not self.inference_gate:
             if fake_output:
+                @parameter
                 for i in range(self.output_size):
                     if i < len(self.fake_model_output):
                         self.model_output[Int(i)] = self.fake_model_output[i]
@@ -107,6 +108,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
             if self.torch is None:
                 return 
             try:
+                @parameter
                 for i in range(self.input_size):
                     self.py_input[0][i] = self.model_input[Int(i)]
                 self.py_output = self.model(self.py_input)  # Run the model with the input
@@ -115,6 +117,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
             try:
                 py_output = self.model(self.py_input)  # Run the model with the input
+                @parameter
                 for i in range(self.output_size):
                     self.model_output[Int(i)] = Float64(py_output[0][i].item())  # Convert each output to Float64
             except Exception:

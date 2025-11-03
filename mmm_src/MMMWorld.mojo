@@ -92,6 +92,7 @@ struct MessengerManager(Movable, Copyable):
         self.text_msg_pool = Dict[String, List[String]]()
         self.text_msgs = Dict[String, TextMessage]()
 
+
     # update_* functions add messages to the pool to be transferred at the
     # start of the next audio block. These functions are called from MMMAudioBridge
     # when a message is sent from Python.
@@ -257,6 +258,8 @@ struct MMMWorld(Representable, Movable, Copyable):
     var print_flag: Int64
     var last_print_flag: Int64
 
+    var print_counter: UInt16
+
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
         self.sample_rate = sample_rate
         self.block_size = block_size
@@ -288,6 +291,8 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.messengerManager = MessengerManager()
 
+        self.print_counter = 0
+
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
@@ -301,36 +306,30 @@ struct MMMWorld(Representable, Movable, Copyable):
         return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
     @always_inline
-    fn print[T: Stringable](mut self, value: T, label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
+    fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+        if self.top_of_block:
+            if self.print_counter % n_blocks == 0:
+                @parameter
+                for i in range(values.__len__()):
+                    print(values[i], end=" ")
+                print("")
 
-        if self.block_state == 0:
-            current_time = time.perf_counter()
-            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-            if self.print_flag == 0:
-                if current_time - self.last_print_time >= 1.0 / freq:
-                    self.last_print_time = current_time
-                    self.print_flag = 1
-            elif self.print_flag == 1:
-                self.print_flag = 0
-            if self.print_flag == 1:
-                print(label,String(value))
-    
-    @always_inline
-    fn print[N: Int](mut self, value: List[SIMD[DType.float64, N]], label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
+    # @always_inline
+    # fn print[N: Int](mut self, value: List[SIMD[DType.float64, N]], label: String = "", freq: Float64 = 10.0, end_str: String = " ") -> None:
 
-        if self.block_state == 0:
-            current_time = time.perf_counter()
-            # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
-            if self.print_flag == 0:
-                if current_time - self.last_print_time >= 1.0 / freq:
-                    self.last_print_time = current_time
-                    self.print_flag = 1
-            elif self.print_flag == 1:
-                self.print_flag = 0
-            if self.print_flag == 1:
-                out_str = label
-                for i in range(len(value)):
-                    out_str = out_str + String(value[i]) + end_str
-                print(out_str)
+    #     if self.block_state == 0:
+    #         current_time = time.perf_counter()
+    #         # this is really hacky, but we only want the print flag to be on for one sample at the top of the loop only if current time has exceed last print time
+    #         if self.print_flag == 0:
+    #             if current_time - self.last_print_time >= 1.0 / freq:
+    #                 self.last_print_time = current_time
+    #                 self.print_flag = 1
+    #         elif self.print_flag == 1:
+    #             self.print_flag = 0
+    #         if self.print_flag == 1:
+    #             out_str = label
+    #             for i in range(len(value)):
+    #                 out_str = out_str + String(value[i]) + end_str
+    #             print(out_str)
 
 

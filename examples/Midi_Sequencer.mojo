@@ -101,7 +101,7 @@ struct TrigSynth(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.filt_freq, "filt_freq")
         self.messenger.update(self.bend_mul, "bend_mul")
-        # self.world_ptr[0].print(String(self.filt_freq) + String(self.bend_mul))
+        # self.world_ptr[0].print(self.filt_freq, self.bend_mul)
         if self.world_ptr[0].top_of_block:
             for i in range(len(self.voices)):
                 self.voices[i].bend_mul = self.bend_mul

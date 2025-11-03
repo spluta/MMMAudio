@@ -85,10 +85,7 @@ struct TorchSynth(Movable, Copyable):
                     self.lag_vals[idx] = lagged_output[j]
 
         # uncomment to see the output of the model
-        # var output_str = String("")
-        # for i in range(len(self.lag_vals)):
-        #     output_str += String(self.lag_vals[i]) + " "
-        # self.world_ptr[0].print(output_str)
+        # self.world_ptr[0].print(self.lag_vals[0], self.lag_vals[1], self.lag_vals[2], self.lag_vals[3], self.lag_vals[4], self.lag_vals[5], self.lag_vals[6], self.lag_vals[7], self.lag_vals[8], self.lag_vals[9], self.lag_vals[10], self.lag_vals[11], self.lag_vals[12], self.lag_vals[13], self.lag_vals[14], self.lag_vals[15])
 
         # oscillator 1 -----------------------
 

@@ -18,6 +18,7 @@ struct TestEnv(Movable, Copyable):
     var synth: Osc
     var messenger: Messenger
     var impulse: Impulse
+    var mul: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -26,23 +27,20 @@ struct TestEnv(Movable, Copyable):
         self.synth = Osc(self.world_ptr)
         self.messenger = Messenger(world_ptr)
         self.impulse = Impulse(self.world_ptr)
-        
+        self.mul = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        mul =self.messenger.get_val("mul", 1.0)
-        if self.messenger.triggered("mul"):
-            for ref val in self.env_params.values:
-                val *= mul
+        self.messenger.update(self.mul, "mul")
         trig = self.impulse.next_bool(1.0, SIMD[DType.bool, 1](fill=False))
         self.env_params.time_warp = 1 #linexp(self.world_ptr[0].mouse_x, 0.0, 1.0, 0.1, 10.0)
         self.env_params.curves[0] = linlin(self.world_ptr[0].mouse_y, 0.0, 1.0, 4.0, 4.0)
         # self.env_params.curves[0] = self.messenger.get_val("curve", 1)
         env = self.env.next(self.env_params, trig[0])  # get the next value of the envelope
 
-        self.world_ptr[0].print(String(self.env.rising_bool_detector.state) + " " + String(self.env.is_active) + " " + String(self.env.sweep.phase) + " " + String(self.env.sweep.phase) + " " + String(self.env.trig_point) + " " + String(self.env.last_asr))
+        self.world_ptr[0].print(self.env.rising_bool_detector.state, self.env.is_active, self.env.sweep.phase, self.env.sweep.phase, self.env.trig_point, self.env.last_asr)
 
         sample = self.synth.next(500)
-        return env * sample * 0.1
+        return env * sample * self.mul
 
 
 
