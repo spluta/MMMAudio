@@ -110,21 +110,23 @@ struct Messenger(Copyable, Movable):
             for ref item in self.text_dict.items():
                 item.value[].strings.clear()
 
-    fn get_long_name(mut self, name: String) -> String:
-        var long_name = self.key_dict.get(name)
-        if not long_name:
+    fn get_long_name(mut self, name: String) raises -> UnsafePointer[String]:
+        var contains = self.key_dict.__contains__(name)
+
+        if not contains:
             if self.namespace:
                 long_name = self.namespace.value()+"."+name
             else:
                 long_name = name
-            print("adding long name: ", long_name.value())
-            self.key_dict[name] = long_name.value()
-        return long_name.value()
+            print("adding long name: ", long_name)
+            self.key_dict[name] = long_name
+
+        return UnsafePointer(to=self.key_dict[name])
 
     fn update(mut self, mut param: Float64, name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_float(self.get_long_name(name))
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_long_name(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -133,7 +135,7 @@ struct Messenger(Copyable, Movable):
     fn update(mut self, mut param: Int64, name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_int(self.get_long_name(name))
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_long_name(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -142,7 +144,7 @@ struct Messenger(Copyable, Movable):
     fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_list(self.get_long_name(name))
+                var opt = self.world_ptr[].messengerManager.get_list(self.get_long_name(name)[])
                 if opt:
                     param = opt.value().copy()
                 return opt.__bool__()
@@ -154,10 +156,13 @@ struct Messenger(Copyable, Movable):
         if self.world_ptr[].top_of_block:
             @parameter
             if is_Trig:
-                param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name))
+                try:
+                    param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
+                except error:
+                    print("Error occurred while updating trig message. Error: ", error)
             else:
                 try:
-                    var opt = self.world_ptr[].messengerManager.get_gate(self.get_long_name(name))
+                    var opt = self.world_ptr[].messengerManager.get_gate(self.get_long_name(name)[])
                     if opt:
                         param = opt.value()    
                 except error:
@@ -166,7 +171,7 @@ struct Messenger(Copyable, Movable):
     fn update(mut self, mut param: String, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name))
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
                 if opt:
                     param = opt.value()[0]
                 return opt.__bool__()
@@ -177,7 +182,7 @@ struct Messenger(Copyable, Movable):
     fn update(mut self, mut param: List[String], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name))
+                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
                 if opt:
                     param = opt.value().copy()
                 return opt.__bool__()
