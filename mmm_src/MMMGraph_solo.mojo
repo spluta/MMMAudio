@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from tests.TestOnePole import TestOnePole
+from tests.TestOsc import TestOsc
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph_ptr: UnsafePointer[TestOnePole]
+    var graph_ptr: UnsafePointer[TestOsc]
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,8 +16,8 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph_ptr = UnsafePointer[TestOnePole].alloc(1)
-        __get_address_as_uninit_lvalue(self.graph_ptr.address) = TestOnePole(self.world_ptr)
+        self.graph_ptr = UnsafePointer[TestOsc].alloc(1)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = TestOsc(self.world_ptr)
         
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans

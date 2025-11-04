@@ -6,21 +6,30 @@ from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import Osc
 from mmm_utils.functions import *
+from algorithm import parallelize
 
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct TestOsc[N: Int = 2](Movable, Copyable):
+struct TestOsc[N: Int = 1, num: Int = 6000](Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var osc: Osc[N]
+    var osc: List[Osc]
+    var freqs: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.osc = Osc[N](world_ptr)
+        self.osc = [Osc(world_ptr) for _ in range(self.num)]
+        self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]
 
-    fn next(mut self) -> SIMD[DType.float64, self.N]:
-        sample = self.osc.next()
-        return sample * 0.1
+    fn next(mut self) -> Float64:
+        sample = 0.0
 
+        for i in range(self.num):
+            sample += self.osc[i].next(self.freqs[i]) 
+        return sample * (0.2 / self.num)
 
-        
+        # @parameter
+        # for i in range(self.num//2):
+        #     samples += SIMD[DType.float64, 2](self.osc[i*2].next(self.freqs[i*2]), self.osc[i*2+1].next(self.freqs[i*2+1]))
+
+        # return samples.reduce_add() * (0.2 / Float64(self.num))
