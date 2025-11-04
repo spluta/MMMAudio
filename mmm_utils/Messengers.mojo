@@ -394,6 +394,10 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
 
     fn __as_list__(self) -> List[String]:
         return self.strings.copy()
+    
+    fn __iter__(self) -> _TextMsgIter:
+        """Return an iterator over the strings in this TextMsg."""
+        return _TextMsgIter(self.strings)
 
     @doc_private
     fn write_to(self, mut writer: Some[Writer]):
@@ -423,6 +427,17 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
         
         """
         return self.strings[index]
+    
+    fn __bool__(self) -> Bool:
+        """A TextMsg is considered 'True' if it has at least one string in it.
+        
+        This is useful for checking if any text messages have arrived.
+        
+        ```mojo
+        txt = TextMsg()
+        if txt:
+            do_something(txt[0])
+        ```
 
     fn __as_bool__(self) -> Bool:
         """A TextMsg is considered 'True' if it has at least one string in it."""
