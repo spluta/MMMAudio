@@ -2,8 +2,7 @@ from math import sin, floor
 from random import random_float64
 from mmm_utils.functions import *
 from mmm_src.MMMWorld import MMMWorld
-from .OscBuffers import OscBuffers
-from .Buffer import Buffer
+from .Buffer import *
 from .Filters import *
 from .Oversampling import Oversampling
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
@@ -24,13 +23,9 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         return String("Phasor")
 
     fn increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.N]):
-        # freq2 = clip(freq, -self.world_ptr[0].sample_rate, self.world_ptr[0].sample_rate) 
         self.phase += (freq * self.freq_mul)
-        # wouldn't this be redundant?
-        # for i in range(self.N):
-        #     if self.phase[i] > 1.0:
-        #         self.phase[i] = self.phase[i] - floor(self.phase[i])
-        self.phase = self.phase - floor(self.phase)  # Wrap phase to [0.0, 1.0]
+
+        self.phase = self.phase - floor(self.phase)  
 
     @always_inline
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
@@ -42,19 +37,6 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         self.phase = resets.select(0.0, self.phase)
         
         return (self.phase + phase_offset) % 1.0
-    # fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-    #     # Reset phase if trig has changed from 0 to positive value
-
-    #     self.increment_phase(freq)
-
-    #     var resets = self.rising_bool_detector.next(trig)
-
-    #     @parameter
-    #     for i in range(self.N):
-    #         if resets[i]:
-    #             self.phase[i] = 0.0
-
-    #     return (self.phase + phase_offset) % 1.0
 
 struct OscType:
     alias sine: Int64 = 0
@@ -160,8 +142,6 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             
             return self.oversampling.get_sample()
 
-    # self.osc1.next2(freq1, 0.0, 0.0, [0,4,5,6], osc_frac1, 2, 4)
-    # next2 interpolates between N different buffers 
     @always_inline
     fn next_interp(mut self: Osc, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_types: List[Int64] = [0,4,5,6], osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
         """
@@ -183,12 +163,14 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         """
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
-        var osc_frac2 = Float64(len(osc_types)-1) * osc_frac
+        var len_m1 = len(osc_types)-1
+
+        var osc_frac2 = Float64(len_m1) * osc_frac
 
         var osc_type0: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](osc_frac2)
         var osc_type1 = SIMD[DType.int64, self.N](osc_type0 + 1)
-        osc_type0 = clip(osc_type0, 0, len(osc_types)-1)
-        osc_type1 = clip(osc_type1, 0, len(osc_types)-1)
+        osc_type0 = clip(osc_type0, 0,  len_m1)
+        osc_type1 = clip(osc_type1, 0, len_m1)
         @parameter
         for i in range(self.N):
             osc_type0[i] = osc_types[osc_type0[i]]
@@ -230,20 +212,80 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                         sample1[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type1[j])
                 self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))
             return self.oversampling.get_sample()
+    
+    @always_inline
+    fn next_interp(mut self: Osc, buffer: Buffer, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
+        """
+        Variable Wavetable Oscillator: Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal and the same list of waveform types to interpolate between.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz (default is 100.0).
 
-    # I don't think this makes sense
-    # for any buffer that is not an OscBuffer
-    # fn next(mut self: Osc, mut buffer: Buffer, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, interp: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](0)) -> SIMD[DType.float64, self.N]:
-    #     sample = SIMD[DType.float64, self.N](0.0)
-    #     if interp == 2:
-    #         last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
-    #         phase = self.phasor.next(freq, phase_offset)  # Update the phase
-    #         sample = SIMD[DType.float64, self.N](0.0)
-    #         # sample = buffer.read_sinc(0, phase, last_phase)  # Get the next sample from the Oscillator buffer using sinc interpolation
-    #     else:
-    #         phase = self.phasor.next(freq, phase_offset)  # Update the phase
-    #         sample = buffer.read(0, phase, interp) 
-    #     return sample
+            phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
+
+            trig: Trigger signal to reset the phase (default is 0.0).
+
+            osc_types: List of waveform types to interpolate between (default is [0,4,5,6] - sine, triangle, saw, square).
+
+            trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
+
+            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
+
+        """
+        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+
+        var len_m1 = buffer.num_chans-1
+
+        var chan0_fl = Float64(len_m1) * (osc_frac % 1.0)
+
+        var chan0: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](chan0_fl)
+        var chan1 = SIMD[DType.int64, self.N](chan0 + 1)
+        # # osc_type0 = clip(osc_type0, 0, len_m1)
+        # # osc_type1 = clip(osc_type1, 0, len_m1)
+
+        # @parameter
+        # for i in range(self.N):
+        #     osc_type0[i] = osc_types[osc_type0[i]]
+        #     osc_type1[i] = osc_types[osc_type1[i]]
+
+        osc_frac2 = chan0_fl - floor(chan0_fl)
+
+        var sample0 = SIMD[DType.float64, self.N](0.0)
+        var sample1 = SIMD[DType.float64, self.N](0.0)
+
+        @parameter
+        if os_index == 0:
+            var last_phase = self.phasor.phase
+            var phase = self.phasor.next(freq, phase_offset, trig_mask)
+            @parameter
+            for j in range(self.N):
+                @parameter
+                if interp == 2:
+                    sample0[j] = buffer.read_sinc(phase[j], last_phase[j], chan0[j])
+                    sample1[j] = buffer.read_sinc(phase[j], last_phase[j], chan1[j])
+
+                else:
+                    sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
+                    sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
+            return lerp(sample0, sample1, osc_frac2)
+        else:
+            alias times_os_int = 2**os_index
+            @parameter
+            for i in range(times_os_int):
+                var last_phase = self.phasor.phase
+                var phase = self.phasor.next(freq, phase_offset, trig_mask)
+                @parameter
+                for j in range(self.N):
+                    @parameter
+                    if interp == 2:
+                        sample0[j] = buffer.read_sinc(phase[j], last_phase[j], chan0[j])
+                        sample1[j] = buffer.read_sinc(phase[j], last_phase[j], chan1[j])
+                    else:
+                        sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
+                        sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
+                self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))
+            return self.oversampling.get_sample()
+
 
 struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
     """A sine wave oscillator.
@@ -502,29 +544,4 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
         return self.phase
 
-# struct Sweep(Representable, Movable, Copyable):
-#     var phase: Float64
-#     var freq_mul: Float64
-#     var last_trig: Float64 # Track the last reset state
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         self.phase = 0.0
-#         self.freq_mul = 1.0 / world_ptr[0].sample_rate  # self.world_ptr[0].sample_rate is the sample rate of the audio system
-#         self.last_trig = 0.0  # Initialize last reset state
-
-#     fn __repr__(self) -> String:
-#         return String("Sweep")
-
-#     fn increment_phase(mut self: Sweep, freq: Float64):
-#         self.phase += (freq * self.freq_mul)
-
-#     @always_inline
-#     fn next(mut self: Sweep, freq: Float64 = 100.0, trig: Bool = False) -> Float64:
-#         # Reset phase if reset signal has changed from 0 to positive value
-#         if trig > 0.0 and self.last_trig <= 0.0:
-#             self.phase = 0.0
-#         else:
-#             self.increment_phase(freq)
-#         self.last_trig = trig
-#         return self.phase
 

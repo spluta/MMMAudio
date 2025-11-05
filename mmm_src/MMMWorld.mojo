@@ -1,5 +1,5 @@
 from python import PythonObject
-from mmm_dsp.OscBuffers import OscBuffers
+from mmm_dsp.Buffer import OscBuffers
 from mmm_dsp.Buffer import Buffer
 from mmm_utils.Windows import *
 from mmm_utils.Print import Print
