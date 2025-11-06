@@ -8,15 +8,15 @@ mmm_audio.start_audio()
 
 # bell
 
-mmm_audio.send_msg("m_freq", 280.0)
-mmm_audio.send_msg("c_freq", 200.0)
+mmm_audio.send_float("m_freq", 280.0)
+mmm_audio.send_float("c_freq", 200.0)
 mmm_audio.send_msg("amp_vals",0.0,1.0,0.2,0.0)
 mmm_audio.send_msg("amp_times",0.001,1.8,1.7)
 mmm_audio.send_msg("amp_curves", 1,1,1)
 mmm_audio.send_msg("index_vals", 10.0,2.0,0.0)
 mmm_audio.send_msg("index_times", 1.8,1.7)
 mmm_audio.send_msg("index_curves", 1,1)
-mmm_audio.send_msg("trigger", 1.0)
+mmm_audio.send_trig("trigger", True)
 
 # woodblock
 mmm_audio.send_msg("m_freq", 55.0)

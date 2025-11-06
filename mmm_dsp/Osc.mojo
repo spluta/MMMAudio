@@ -214,7 +214,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             return self.oversampling.get_sample()
     
     @always_inline
-    fn next_interp(mut self: Osc, buffer: Buffer, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
+    fn next_interp(mut self: Osc, ref buffer: Buffer, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
         """
         Variable Wavetable Oscillator: Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal and the same list of waveform types to interpolate between.
         
@@ -240,13 +240,6 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
 
         var chan0: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](chan0_fl)
         var chan1 = SIMD[DType.int64, self.N](chan0 + 1)
-        # # osc_type0 = clip(osc_type0, 0, len_m1)
-        # # osc_type1 = clip(osc_type1, 0, len_m1)
-
-        # @parameter
-        # for i in range(self.N):
-        #     osc_type0[i] = osc_types[osc_type0[i]]
-        #     osc_type1[i] = osc_types[osc_type1[i]]
 
         osc_frac2 = chan0_fl - floor(chan0_fl)
 

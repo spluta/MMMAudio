@@ -23,20 +23,20 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
         self.pan_osc = Phasor(self.world_ptr)
         self.pan_az = PanAz(self.world_ptr)
-        self.num_speakers = 2  # default to 2 speakers
+        self.num_speakers = 7  # default to 2 speakers
         self.messenger = Messenger(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 8]:
-        self.freq = self.messenger.get_val("freq", 440.0)
-        self.num_speakers = Int64(self.messenger.get_val("num_speakers", 2))
+        self.messenger.update(self.freq, "freq")
+        self.messenger.update(self.num_speakers, "num_speakers")
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
         panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers) * 0.1
 
-        return panned
+        return SIMD[DType.float64, 8](panned[0], panned[2], panned[1], 0.0, panned[6], panned[3], panned[5], panned[4])
 
 
 # there can only be one graph in an MMMAudio instance

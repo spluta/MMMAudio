@@ -57,6 +57,17 @@ class Pseq:
         if self.index > len(self.list):
             self.index = 0
         return self.list[self.index]
+
+    def go_back(self, n=1):
+        """
+        Move the sequence index back by n steps.
+        
+        Args:
+            n: Number of steps to move back in the sequence
+        """
+        if not self.list:
+            return
+        self.index = (self.index - n) % len(self.list)
     
 class Prand:
     """

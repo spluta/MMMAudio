@@ -31,9 +31,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         """
         # Use the world instance directly instead of trying to copy it
         self.world_ptr = world_ptr
-        # print("PlayBuf initialized with world sample rate:", self.world_ptr[0].sample_rate)  # Debug print
         self.impulse = Impulse(world_ptr)
-        # self.num_chans = num_chans
         self.sample_rate = self.world_ptr[0].sample_rate  # Sample rate from the MMMWorld instance
         self.done = True
         self.rising_bool_detector = RisingBoolDetector()
@@ -88,7 +86,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                 if self.impulse.phasor.phase >= self.reset_phase_point:
                     self.impulse.phasor.phase -= self.reset_phase_point
                 # for i in range(N):
-                out = buffer.read_phase[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
+                out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
@@ -97,7 +95,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                     self.done = True  # Set done flag if phase is out of bounds
                     return out
                 else:
-                    out = buffer.read_phase[N](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0, 1)  # Read the sample from the buffer at the current phase
+                    out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             
             return out
 
@@ -172,7 +170,7 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if win_num == 0:
-            win = self.world_ptr[0].hann_window.read_phase(0, self.win_phase, 0)
+            win = self.world_ptr[0].hann_window.read_phase(0, self.win_phase)
         # Future window types can be added here with elif statements
         else:
             win = 1-2*abs(self.win_phase - 0.5) # hackey triangular window

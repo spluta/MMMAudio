@@ -74,7 +74,7 @@ struct Buffer(Buffable):
 
         self.sinc_interpolator = Sinc_Interpolator[4, 14](Int(self.num_frames))
         
-    fn __init__(out self, filename: String):
+    fn __init__(out self, filename: String, chans_per_channel: Int64 = 1):
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
@@ -109,15 +109,23 @@ struct Buffer(Buffable):
 
                 self.buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
 
-                self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
-                self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
 
-                if len(py_data[1].shape) == 1:
-                    # Mono file
-                    self.num_chans = 1
+
+                if chans_per_channel > 1:
+                    # If chans_per_channel is specified, calculate num_chans accordingly
+                    total_samples = py_data[1].shape[0]
+                    self.num_chans = chans_per_channel
+                    self.num_frames = Float64(total_samples) / Float64(chans_per_channel)
+                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
                 else:
-                    # Multi-channel file
-                    self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+                    self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
+                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
+                    if len(py_data[1].shape) == 1:
+                        # Mono file
+                        self.num_chans = 1
+                    else:
+                        # Multi-channel file
+                        self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
 
                 print("num_chans:", self.num_chans, "num_frames:", self.num_frames)  # Print the shape of the data array for debugging
 
@@ -133,11 +141,20 @@ struct Buffer(Buffable):
                 # this returns a pointer to an interleaved array of floats
                 data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
 
-                for c in range(self.num_chans):
-                    channel_data = List[Float64]()
-                    for f in range(Int64(self.num_frames)):
-                        channel_data.append(data_ptr[(f * self.num_chans) + c])
-                    self.data.append(channel_data^)
+                # wavetables are stored in ordered channels, not interleaved
+                if chans_per_channel > 1:
+                    for c in range(self.num_chans):
+                        channel_data = List[Float64]()
+                        for f in range(Int64(self.num_frames)):
+                            channel_data.append(data_ptr[(c * Int64(self.num_frames)) + f])
+                        self.data.append(channel_data^)
+                else:
+                    # normal multi-channel interleaved data
+                    for c in range(self.num_chans):
+                        channel_data = List[Float64]()
+                        for f in range(Int64(self.num_frames)):
+                            channel_data.append(data_ptr[(f * self.num_chans) + c])
+                        self.data.append(channel_data^)
 
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging
             except:
@@ -296,7 +313,7 @@ struct Sinc_Interpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyabl
     fn __repr__(self) -> String:
         return String("Sinc_Interpolator(ripples: " + String(self.ripples) + ", table_size: " + String(self.table_size) + ")")
 
-    fn next(self: Sinc_Interpolator, sp: Int64, sinc_offset: Int64, sinc_mult: Int64, frac: Float64) -> Float64:
+    fn interp_points(self: Sinc_Interpolator, sp: Int64, sinc_offset: Int64, sinc_mult: Int64, frac: Float64) -> Float64:
         sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
         
         idxA = sinc_indexA & self.mask
@@ -333,7 +350,7 @@ struct Sinc_Interpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyabl
                     spaced_point = (loc_point / spacing) * spacing
                     sinc_offset = loc_point - spaced_point
                     
-                    sinc_value = self.next(sp, sinc_offset, sinc_mult, frac)
+                    sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
                     out += sinc_value * buffer.get_item(channel, spaced_point)
         
         return out

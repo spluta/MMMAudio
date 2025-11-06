@@ -409,10 +409,10 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     fn __len__(self) -> Int:
         """Return the number of strings in this TextMsg. This dunder can be used as:
         
-        ```mojo
-        txt = TextMsg(["hello", "world"])
-        len(txt) # returns 2
-        ```
+        # ```mojo
+        # txt = TextMsg(["hello", "world"])
+        # len(txt) # returns 2
+        # ```
         
         """
         return len(self.strings)
@@ -438,11 +438,9 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
         if txt:
             do_something(txt[0])
         ```
-
-    fn __as_bool__(self) -> Bool:
-        """A TextMsg is considered 'True' if it has at least one string in it."""
+        """
         return len(self.strings) > 0
 
-    fn __bool__(self) -> Bool:
-        """A TextMsg is considered 'True' if it has at least one string in it."""
+    fn __as_bool__(self) -> Bool:
+        #"""A TextMsg is considered 'True' if it has at least one string in it."""
         return len(self.strings) > 0
