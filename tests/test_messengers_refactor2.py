@@ -6,10 +6,10 @@ mmm_audio.start_audio()
 
 # mmm_audio.send_float("should_warn_re_float", 2.5)
 
-# mmm_audio.send_gate("gate_test", True)
-# mmm_audio.send_gate("gate_test", False)
+# mmm_audio.send_gate("bool_test", True)
+# mmm_audio.send_gate("bool_test", False)
 
-# mmm_audio.send_gate("should_warn_re_gate", True)
+# mmm_audio.send_gate("should_warn_re_bool", True)
 
 # mmm_audio.send_trig("trig_test")
 

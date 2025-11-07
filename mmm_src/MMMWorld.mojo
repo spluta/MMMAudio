@@ -22,7 +22,7 @@ struct Float64Message(Movable, Copyable):
         self.retrieved = False
         self.value = value
 
-struct GateMessage(Movable, Copyable):
+struct BoolMessage(Movable, Copyable):
     var retrieved: Bool
     var value: Bool
 
@@ -54,8 +54,8 @@ struct MessengerManager(Movable, Copyable):
     var float_msg_pool: Dict[String, Float64]
     var float_msgs: Dict[String, Float64Message]
     
-    var gate_msg_pool: Dict[String, Bool]
-    var gate_msgs: Dict[String, GateMessage]
+    var bool_msg_pool: Dict[String, Bool]
+    var bool_msgs: Dict[String, BoolMessage]
 
     var int_msg_pool: Dict[String, Int64]
     var int_msgs: Dict[String, Int64Message]
@@ -80,8 +80,8 @@ struct MessengerManager(Movable, Copyable):
         self.float_msg_pool = Dict[String, Float64]()
         self.float_msgs = Dict[String, Float64Message]()
 
-        self.gate_msg_pool = Dict[String, Bool]()
-        self.gate_msgs = Dict[String, GateMessage]()
+        self.bool_msg_pool = Dict[String, Bool]()
+        self.bool_msgs = Dict[String, BoolMessage]()
 
         self.trig_msg_pool = Set[String]()
         self.trig_msgs = Dict[String, Bool]()
@@ -101,8 +101,8 @@ struct MessengerManager(Movable, Copyable):
         self.float_msg_pool[key] = value
 
     @always_inline
-    fn update_gate_msg(mut self, key: String, value: Bool):
-        self.gate_msg_pool[key] = value
+    fn update_bool_msg(mut self, key: String, value: Bool):
+        self.bool_msg_pool[key] = value
 
     @always_inline
     fn update_list_msg(mut self, key: String, var values: List[Float64]):
@@ -131,8 +131,8 @@ struct MessengerManager(Movable, Copyable):
             self.float_msgs[float_msg.key] = Float64Message(float_msg.value)
 
 
-        for gate_msg in self.gate_msg_pool.take_items():
-            self.gate_msgs[gate_msg.key] = GateMessage(gate_msg.value)
+        for bool_msg in self.bool_msg_pool.take_items():
+            self.bool_msgs[bool_msg.key] = BoolMessage(bool_msg.value)
 
         for text_msg in self.text_msg_pool.take_items():
             self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
@@ -157,10 +157,10 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn get_gate(mut self, ref key: String) raises -> Optional[Bool]:
-        if key in self.gate_msgs:
-            self.gate_msgs[key].retrieved = True
-            return self.gate_msgs[key].value
+    fn get_bool(mut self, ref key: String) raises -> Optional[Bool]:
+        if key in self.bool_msgs:
+            self.bool_msgs[key].retrieved = True
+            return self.bool_msgs[key].value
         return None
 
     @always_inline
@@ -209,9 +209,9 @@ struct MessengerManager(Movable, Copyable):
             if not float_msg.value.retrieved:
                 print("Float message was not retrieved this block:", float_msg.key)
 
-        for gate_msg in self.gate_msgs.take_items():
-            if not gate_msg.value.retrieved:
-                print("Gate message was not retrieved this block:", gate_msg.key)
+        for bool_msg in self.bool_msgs.take_items():
+            if not bool_msg.value.retrieved:
+                print("Bool message was not retrieved this block:", bool_msg.key)
         
         for trig_msg in self.trig_msgs.take_items():
             if not trig_msg.value: # It wasn't retrieved this block

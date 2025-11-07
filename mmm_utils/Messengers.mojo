@@ -7,7 +7,7 @@ struct Messenger(Copyable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var all_keys: Set[String]
     var gate_dict: Dict[String, UnsafePointer[GateMsg]]
-    var trig_dict: Dict[String, UnsafePointer[TrigMsg]]
+    var trig_dict: Dict[String, UnsafePointer[Trig]]
     var list_dict: Dict[String, UnsafePointer[List[Float64]]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
     var float64_dict: Dict[String, UnsafePointer[Float64]]
@@ -56,7 +56,7 @@ struct Messenger(Copyable, Movable):
         self.world_ptr = world_ptr
         self.namespace = namespace
         self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
-        self.trig_dict = Dict[String, UnsafePointer[TrigMsg]]()
+        self.trig_dict = Dict[String, UnsafePointer[Trig]]()
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
         self.float64_dict = Dict[String, UnsafePointer[Float64]]()
@@ -221,8 +221,8 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.gate_dict[fullname] = UnsafePointer(to=param)
 
-    fn register(mut self, ref param: TrigMsg, name: String) -> None:
-        """Register a `TrigMsg` with this `Messenger` under a specified `name`.
+    fn register(mut self, ref param: Trig, name: String) -> None:
+        """Register a `Trig` with this `Messenger` under a specified `name`.
         
         Note that `.register()` is overloaded for different types.  
         """
@@ -253,61 +253,19 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.int_dict[fullname] = UnsafePointer(to=param)
 
-struct GateMsg(Representable, Boolable, Writable, Copyable, Movable):
-    """A 'Gate' that can be controlled from Python.
-
-    It is either True (on) or False (off). 
-    It works like a boolean in all places, but different from a boolean it can be
-    registered with a Messenger under a user specified name.
-
-    It only make sense to use GateMsg if it is registered with a Messenger. Otherwise 
-    you can just use a Bool directly.
-
-    For a usage example, see the [TODO] file in 'Examples.'
-
-    [TODO]: Does this need to exist or should the user just use a Bool directly,
-    and be able to register it with a Messenger just like Float64?
-    """
-
-    var state: Bool
-
-    fn __init__(out self, default: Bool = False):
-        """Initialize the GateMsg.
-
-        Args:
-            default: The starting state for the GateMsg.
-        """
-        self.state = default
-
-    @doc_private
-    fn __as_bool__(self) -> Bool:
-        return self.state
-
-    @doc_private
-    fn __bool__(self) -> Bool:
-        return self.state
-
-    @doc_private
-    fn __repr__(self) -> String:
-        return String(self.state)
-    
-    @doc_private
-    fn write_to(self, mut writer: Some[Writer]):
-        writer.write(self.state)
-
-struct TrigMsg(Representable, Writable, Boolable, Copyable, Movable):
+struct Trig(Representable, Writable, Boolable, Copyable, Movable):
     """A 'Trigger' that can be controlled from Python.
 
     It is either True (triggered) or False (not triggered). 
     It works like a boolean in all places, but different from a boolean it can be
     registered with a Messenger under a user specified name. 
     
-    It only make sense to use TrigMsg if it is registered with a Messenger. Otherwise 
+    It only make sense to use Trig if it is registered with a Messenger. Otherwise 
     you can just use a Bool directly.
     
     The Messenger checks for any
     'triggers' sent under the specified name at the start of each audio block, and sets
-    the TrigMsg's state accordingly. If there is a trigger under the name, this TrigMsg
+    the Trig's state accordingly. If there is a trigger under the name, this Trig
     will be True for 1 sample (the first of the audio block), and then automatically reset to
     False for the rest of the block.
 
@@ -316,13 +274,13 @@ struct TrigMsg(Representable, Writable, Boolable, Copyable, Movable):
     var state: Bool
 
     fn __init__(out self, starting_state: Bool = False):
-        """Initialize the TrigMsg with an optional starting state. 
+        """Initialize the Trig with an optional starting state. 
         
         If the starting
-        state is set to True, this TrigMsg will be true for the first sample of the
+        state is set to True, this Trig will be true for the first sample of the
         first audio block and then go down to False on the very next sample. This might be
         useful for initializing some process at the beginning of the audio thread, but note
-        that many processes look for a *change* from low to high, so if this TrigMsg starts 
+        that many processes look for a *change* from low to high, so if this Trig starts 
         high it might not trigger as expected.
         """
         self.state = starting_state

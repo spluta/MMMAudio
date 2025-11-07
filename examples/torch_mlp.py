@@ -18,8 +18,8 @@ mmm_audio.stop_audio()
 # below is the code to make a new training --------------------------------
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_gate("mlp1.toggle_inference", True)
-mmm_audio.send_gate("mlp1.toggle_inference", False)
+mmm_audio.send_bool("mlp1.toggle_inference", True)
+mmm_audio.send_bool("mlp1.toggle_inference", False)
 
 # how many outputs does your mlp have?
 out_size = 16
@@ -95,4 +95,4 @@ do_the_training()
 mmm_audio.send_text("mlp1.load_mlp_training", "examples/nn_trainings/model_traced.pt")  
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_gate("mlp1.toggle_inference", True)
+mmm_audio.send_bool("mlp1.toggle_inference", True)

@@ -71,14 +71,14 @@ def midi_func():
                             voice_msg = "voice_" + str(voice)
                             print(f"Note On: {msg.note} Velocity: {msg.velocity} Voice: {voice}")
                             mmm_audio.send_float(voice_msg +".freq", midicps(msg.note))  # note freq and velocity scaled 0 to 1
-                            mmm_audio.send_gate(voice_msg +".gate", True)  # note freq and velocity scaled 0 to 1
+                            mmm_audio.send_bool(voice_msg +".bool", True)  # note freq and velocity scaled 0 to 1
                     if msg.type == "note_off":
                         for i, note in enumerate(busy_list):
                             if note == msg.note:
                                 busy_list[i] = -1
                                 voice_msg = "voice_" + str(i)
                                 print(f"Note Off: {msg.note} Voice: {i}")
-                                mmm_audio.send_gate(voice_msg +".gate", False)  # note freq and velocity scaled 0 to 1
+                                mmm_audio.send_bool(voice_msg +".bool", False)  # note freq and velocity scaled 0 to 1
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices
