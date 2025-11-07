@@ -5,6 +5,7 @@ from mmm_dsp.Filters import *
 from sys import simd_width_of
 from algorithm import vectorize
 from mmm_dsp.Filters import VAOnePole, DCTrap
+from math import log
 
 alias simd_width = simd_width_of[DType.float64]()*2
 
@@ -184,8 +185,17 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
         return lagrange4(p0, p1, p2, p3, p4, frac)
 
+fn calc_feedback[N: Int = 1](delaytime: SIMD[DType.float64, N], decaytime: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+      alias log001: Float64 = log(0.001)
 
-struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
+      zero: SIMD[DType.bool, N] = delaytime.eq(0) or decaytime.eq(0)
+      dec_pos: SIMD[DType.bool, N] = decaytime.ge(0)
+
+      absret = exp(log001 * delaytime / abs(decaytime))
+
+      return zero.select(SIMD[DType.float64, N](0.0), dec_pos.select(absret, -absret))
+
+struct Comb[N: Int = 1, interp: Int = 2](Movable, Copyable):
     """
     A simple comb filter using a delay line with feedback.
     
@@ -220,15 +230,13 @@ struct Comb[N: Int = 1, interp: Int = 2](Representable, Movable, Copyable):
         temp = input + out * clip(feedback, 0.0, 1.0)  # Apply feedback
 
         self.fb = temp
-        # writes to the buffer here instead
-        # @parameter
-        # for i in range(self.N):
-        #     self.fb[i] = temp[i] # Apply feedback
 
         return out  # Return the delayed sample
 
-    fn __repr__(self) -> String:
-        return "CombFilter"
+    fn next_decaytime(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], decay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+        """Process one sample through the comb filter with decay time calculation."""
+        feedback = calc_feedback(delay_time, decay_time)
+        return self.next(input, delay_time, feedback)
 
 struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
     """
@@ -281,7 +289,7 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
+struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movable, Copyable):
     """
     A simple all-pass comb filter using a delay line with feedback.
     
@@ -303,7 +311,7 @@ struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyabl
         self.allpass_feedback = 0.0
         self.last_delay = SIMD[DType.float64, self.N](0.0)
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback_coef: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
         """Process one sample through the all-pass comb filter
 
         Args:
@@ -312,17 +320,20 @@ struct Allpass_Comb[N: Int = 1, interp: Int = 3](Representable, Movable, Copyabl
         Returns:
           The processed output sample.
         """
+        
         temp = self.allpass_feedback + input
         temp2 = self.delay.next(temp, delay_time)  # Get the delayed sample and write to the delay line
-        self.allpass_feedback = (temp2 * 0.5)
-        
-        out2 = temp * -0.5 + self.last_delay
+        self.allpass_feedback = (temp2 * (-feedback_coef))
+
+        out2 = temp * feedback_coef + self.last_delay
         self.last_delay = temp2
 
         return out2
 
-    fn __repr__(self) -> String:
-        return "Allpass_Comb"
+    fn next_decaytime(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], decay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+        """Process one sample through the all-pass comb filter with decay time calculation."""
+        feedback = calc_feedback(delay_time, decay_time)
+        return self.next(input, delay_time, feedback)
 
 struct FB_Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
