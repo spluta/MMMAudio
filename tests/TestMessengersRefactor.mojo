@@ -6,14 +6,15 @@ from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
-struct Tone(Messagable):
+struct Tone(Copyable,Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
     var test_list: List[Float64]
     var m: Messenger
     var file_name: TextMsg
-    var test_bool: Bool
+    var test_gate: Bool
+    var test_trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
         self.world_ptr = world_ptr
@@ -23,17 +24,17 @@ struct Tone(Messagable):
         self.m = Messenger(self.world_ptr,namespace)
         self.test_list = List[Float64](capacity=4)
         self.file_name = TextMsg(["default.wav"])
-        self.test_bool = False
-
-    fn register_messages(mut self):
-        # self.m.register(self.freq,"freq")
-        self.m.register(self.test_list,"test_list")
-        self.m.register(self.file_name, "file_name")
+        self.test_gate = False
+        self.test_trig = Trig()
 
     fn next(mut self) -> Float64:
-        self.m.update()
-        self.m.update[0](self.test_bool, "test_bool")
+        self.m.update(self.test_gate, "test_gate")
         self.m.update(self.freq, "freq")
+        self.m.update(self.test_trig, "test_trig")
+        self.m.update(self.file_name, "file_name")
+
+        if self.test_trig:
+            print("test trig successful")
 
         if self.world_ptr[0].top_of_block:
             pass
@@ -56,19 +57,18 @@ struct TestMessengersRefactor():
     var printers: List[Print]
     var test_int: Int64
     var txt: TextMsg
-    var trig: TrigMsg
+    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
         self.test_int = 0
         self.txt = TextMsg(List[String]("hello","there","general","kenobi"))
-        self.trig = TrigMsg(True)
+        self.trig = Trig()
 
         self.tone_list = List[Tone](capacity=2)
         for i in range(2):
             self.tone_list.append(Tone(self.world_ptr, "tone_"+String(i)))
-            self.tone_list[i].register_messages()
 
         print("tone 0 freq mem location in TestMessengersRefactor init: ", UnsafePointer(to=self.tone_list[0].freq))
         self.vol = -24.0
@@ -99,7 +99,7 @@ struct TestMessengersRefactor():
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
 
         if self.trig:
-            print("TrigMsg received trig!")
+            print("Trig received trig!")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         out[0] = self.tone_list[0].next()

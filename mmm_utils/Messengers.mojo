@@ -78,7 +78,7 @@ struct Messenger(Copyable, Movable):
                 for ref item in self.bool_dict.items():
                     var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_bool(item.key)
                     if opt:
-                        item.value[].state = opt.value()
+                        item.value[] = opt.value()
                 for ref item in self.trig_dict.items():
                     var opt = self.world_ptr[].messengerManager.get_trig(item.key)
                     if opt:
@@ -161,11 +161,10 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
-    fn update(mut self, mut param: Trig, name: String) -> Bool:
+    fn update(mut self, mut param: Trig, name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:
-                param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
-                return param.__bool__()
+                param.state = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
 
@@ -356,7 +355,7 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     
     fn __iter__(self) -> _TextMsgIter:
         """Return an iterator over the strings in this TextMsg."""
-        return _TextMsgIter(self.strings)
+        return _TextMsgIter(UnsafePointer(to=self.strings))
 
     @doc_private
     fn write_to(self, mut writer: Some[Writer]):
@@ -390,16 +389,44 @@ struct TextMsg(Representable, Writable, Sized, Copyable, Movable):
     fn __bool__(self) -> Bool:
         """A TextMsg is considered 'True' if it has at least one string in it.
         
-        This is useful for checking if any text messages have arrived.
-        
-        ```mojo
-        txt = TextMsg()
-        if txt:
-            do_something(txt[0])
-        ```
+        This is useful for checking if any text messages have arrived. See `__as_bool__` for more details.
         """
         return len(self.strings) > 0
 
     fn __as_bool__(self) -> Bool:
-        #"""A TextMsg is considered 'True' if it has at least one string in it."""
+        """A TextMsg is considered 'True' if it has at least one string in it.
+        
+        > Note that you'll still need to index into the List inside the TextMsg 
+        to get the actual strings! If it's possible that there are multiple strings,
+        best practices would be:
+
+        ```mojo
+        self.txt = TextMsg()
+        # ...
+        if self.txt:
+            for t in self.txt:
+                do_something(t)
+        ```
+        """
         return len(self.strings) > 0
+
+@doc_private
+struct _TextMsgIter:
+    """Iterator for TextMsg."""
+    var strings: UnsafePointer[List[String]]
+    var index: Int
+
+    fn __init__(out self, strings: UnsafePointer[List[String]]):
+        self.strings = strings
+        self.index = 0
+
+    fn __next__(mut self) -> String:
+        var result = self.strings[][self.index]
+        self.index += 1
+        return result
+
+    fn __has_next__(self) -> Bool:
+        return self.index < len(self.strings[])
+
+    fn __len__(self) -> Int:
+        return len(self.strings[]) - self.index

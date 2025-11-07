@@ -6,10 +6,10 @@ mmm_audio.start_audio()
 
 # mmm_audio.send_float("should_warn_re_float", 2.5)
 
-# mmm_audio.send_gate("bool_test", True)
-# mmm_audio.send_gate("bool_test", False)
+mmm_audio.send_bool("test_trig", True)
+# mmm_audio.send_bool("bool_test", False)
 
-# mmm_audio.send_gate("should_warn_re_bool", True)
+# mmm_audio.send_bool("should_warn_re_bool", True)
 
 # mmm_audio.send_trig("trig_test")
 
@@ -18,7 +18,7 @@ mmm_audio.start_audio()
 mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
 
 # mmm_audio.send_float("vol", -100.0)
-mmm_audio.send_float("vol", -100.0)
+mmm_audio.send_float("vol", -10.0)
 
 mmm_audio.send_float("tone_0.freq", 900)
 mmm_audio.send_float("tone_1.freq", 700)

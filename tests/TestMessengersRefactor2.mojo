@@ -46,14 +46,14 @@ struct TestMessengersRefactor():
     var printers: List[Print]
     var test_int: Int64
     var txt: TextMsg
-    var trig: TrigMsg
+    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
         self.test_int = 0
         self.txt = TextMsg(List[String]("hello","there","general","kenobi"))
-        self.trig = TrigMsg(True)
+        self.trig = Trig()
 
         self.tone_list = List[Tone](capacity=2)
         for i in range(2):
@@ -83,7 +83,7 @@ struct TestMessengersRefactor():
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
 
         if self.trig:
-            print("TrigMsg received trig!")
+            print("Trig received trig!")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         out[0] = self.tone_list[0].next()
