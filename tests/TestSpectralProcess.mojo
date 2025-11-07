@@ -1,0 +1,99 @@
+from mmm_src.MMMWorld import *
+from mmm_dsp.BufferedProcess import *
+from mmm_dsp.SpectralProcess import *
+from mmm_utils.Messengers import Messenger
+from mmm_utils.Print import Print
+from mmm_utils.Windows import WindowTypes
+from mmm_dsp.PlayBuf import PlayBuf
+from mmm_utils.functions import select
+from mmm_utils.functions import dbamp
+from random import random
+
+# User defined struct that just operates on two lists
+# and therefore is useful for operating on mags and phases.
+# Things like this can basically be used like the PV_
+# pattern in SuperCollider, stringing together a bunch of
+# operations on the mags and phases.
+struct BinScramble(Copyable,Movable):
+    var swaps: List[Tuple[Int64,Int64]]
+    var nbins: Int64
+    var nscrambles: Int64
+    var scramble_range: Int64
+
+    fn __init__(out self, nbins: Int64, nscrambles: Int64):
+        self.nbins = nbins
+        self.nscrambles = nscrambles
+        self.swaps = List[Tuple[Int64,Int64]]()
+        self.scramble_range = 10
+        self.new_swaps()
+
+    fn new_swaps(mut self) -> None:
+        self.swaps.clear()
+        for _ in range(self.nscrambles):
+            i = random.random_si64(0, self.nbins - 1)
+            minj = max(i - self.scramble_range,0)
+            maxj = min(i + self.scramble_range, self.nbins - 1)
+            j = random.random_si64(minj, maxj)
+            self.swaps.append((i,j))
+
+    fn next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+        for (i,j) in self.swaps:
+            temp_mag = magnitudes[i]
+            magnitudes[i] = magnitudes[j]
+            magnitudes[j] = temp_mag
+            temp_phase = phases[i]
+            phases[i] = phases[j]
+            phases[j] = temp_phase
+
+# User defined struct that implements Spectral Processable
+struct ScrambleAndLowPass[window_size: Int = 1024](SpectralProcessable):
+    var world_ptr: UnsafePointer[MMMWorld]
+    var m: Messenger
+    var bin: Int64
+    var bin_scramble: BinScramble
+    var trig: Bool
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.bin = (window_size // 2) + 1
+        self.m = Messenger(world_ptr)
+        self.bin_scramble = BinScramble(nbins=(window_size // 2) + 1, nscrambles=20)
+        self.trig = False
+
+    fn get_messages(mut self) -> None:
+        self.m.update(self.bin,"lpbin")
+        self.m.update(self.bin_scramble.nscrambles,"nscrambles")
+        self.m.update(self.bin_scramble.scramble_range,"scramble_range")
+        self.m.update[True](self.trig,"rescramble")
+        if self.trig:
+            self.bin_scramble.new_swaps()
+
+    fn next_spectral_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+        self.bin_scramble.next(magnitudes,phases)
+        for i in range(self.bin,(window_size // 2) + 1):
+            magnitudes[i] *= 0.0
+
+# User's Main Synth
+struct TestSpectralProcess(Movable, Copyable):
+    var world_ptr: UnsafePointer[MMMWorld]
+    var buffer: Buffer
+    var playBuf: PlayBuf
+    var fftlowpass: SpectralProcess[ScrambleAndLowPass,1024,512,None,WindowTypes.hann]
+    var m: Messenger
+    var ps: List[Print]
+    var which: Float64
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.buffer = Buffer("resources/Shiverer.wav")
+        self.playBuf = PlayBuf(self.world_ptr) 
+        self.fftlowpass = SpectralProcess[ScrambleAndLowPass[1024],1024,512,None,WindowTypes.hann](self.world_ptr,process=ScrambleAndLowPass(self.world_ptr))
+        self.m = Messenger(world_ptr)
+        self.ps = List[Print](length=2,fill=Print(world_ptr))
+        self.which = 0
+
+    fn next(mut self) -> SIMD[DType.float64,2]:
+        i = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
+        o = self.fftlowpass.next(i)
+        return SIMD[DType.float64,2](o,o)
+

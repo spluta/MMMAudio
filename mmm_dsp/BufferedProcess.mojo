@@ -1,5 +1,4 @@
 from mmm_src.MMMWorld import *
-from mmm_utils.Print import Print
 from mmm_utils.Windows import *
 
 # Eventually, I think it would be better for the user defined BufferProcessable
@@ -58,6 +57,16 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var output_attenuation_window: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
+        """Initializes a BufferedProcess struct.
+
+        Arguments:
+            world_ptr: A pointer to the MMMWorld.
+            process: A user defined struct that implements the BufferedProcessable trait.
+
+        Returns:
+            An initialized BufferedProcess struct.
+        """
+        
         self.world_ptr = world_ptr
         self.input_buffer_write_head = 0
         self.output_buffer_write_head = 0
@@ -96,6 +105,12 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
         and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
+
+        Arguments:
+            input: The next input sample to process.
+        
+        Returns:
+            The next output sample.
         """
         if self.world_ptr[].top_of_block:
             self.process.get_messages()
