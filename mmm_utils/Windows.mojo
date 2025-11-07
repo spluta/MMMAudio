@@ -2,6 +2,12 @@ from math import pi, exp, sin, sqrt, cos
 from memory import memset_zero
 from python import Python
 
+struct WindowTypes:
+    alias hann: Int = 0
+    alias hamming: Int = 1
+    alias blackman: Int = 2
+    alias kaiser: Int = 3
+
 fn bessel_i0(x: Float64) -> Float64:
     """
     Calculate the modified Bessel function of the first kind, order 0 (I₀).
