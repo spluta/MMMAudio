@@ -24,7 +24,7 @@ def midi_func():
     import mido
     import time
     from mmm_utils.functions import linexp, linlin, midicps, cpsmidi
-    from mmm_src.Patterns import Pseq, Pxrand
+    from mmm_src.Patterns import PVoiceAllocator
 
     # find your midi devices
     mido.get_input_names()
@@ -32,24 +32,7 @@ def midi_func():
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
-
-    voice_seq = Pseq(list(range(8)))
-
-    busy_list = [-1]*8  
-
-    voice_seq = Pseq(list(range(8)))
-    
-    def get_free_voice(note):
-        counter = 0
-        found = False
-        while not found and counter < 8:
-            voice = voice_seq.next()
-            if busy_list[voice] == -1:
-                busy_list[voice] = note
-                found = True
-                return voice
-            counter += 1
-        return -1  # all voices are busy
+    voice_allocator = PVoiceAllocator(8)
 
     # Create stop event
     global stop_event
@@ -62,8 +45,7 @@ def midi_func():
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
                     if msg.type == "note_on":
-                        voice = get_free_voice(msg.note)
-                        print(voice_seq)
+                        voice = voice_allocator.get_free_voice(msg.note)
                         if voice == -1:
                             print("No free voice available")
                             continue
@@ -73,12 +55,11 @@ def midi_func():
                             mmm_audio.send_float(voice_msg +".freq", midicps(msg.note))  # note freq and velocity scaled 0 to 1
                             mmm_audio.send_gate(voice_msg +".gate", True)  # note freq and velocity scaled 0 to 1
                     if msg.type == "note_off":
-                        for i, note in enumerate(busy_list):
-                            if note == msg.note:
-                                busy_list[i] = -1
-                                voice_msg = "voice_" + str(i)
-                                print(f"Note Off: {msg.note} Voice: {i}")
-                                mmm_audio.send_gate(voice_msg +".gate", False)  # note freq and velocity scaled 0 to 1
+                        found, voice = voice_allocator.release_voice(msg.note)
+                        if found:
+                            voice_msg = "voice_" + str(voice)
+                            print(f"Note Off: {msg.note} Voice: {voice}")
+                            mmm_audio.send_gate(voice_msg +".gate", False)  # note freq and velocity scaled 0 to 1
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices
