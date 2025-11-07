@@ -6,7 +6,7 @@ struct Messenger(Copyable, Movable):
     var namespace: Optional[String]
     var world_ptr: UnsafePointer[MMMWorld]
     var all_keys: Set[String]
-    var gate_dict: Dict[String, UnsafePointer[GateMsg]]
+    var bool_dict: Dict[String, UnsafePointer[Bool]]
     var trig_dict: Dict[String, UnsafePointer[Trig]]
     var list_dict: Dict[String, UnsafePointer[List[Float64]]]
     var text_dict: Dict[String, UnsafePointer[TextMsg]]
@@ -55,7 +55,7 @@ struct Messenger(Copyable, Movable):
 
         self.world_ptr = world_ptr
         self.namespace = namespace
-        self.gate_dict = Dict[String, UnsafePointer[GateMsg]]()
+        self.bool_dict = Dict[String, UnsafePointer[Bool]]()
         self.trig_dict = Dict[String, UnsafePointer[Trig]]()
         self.list_dict = Dict[String, UnsafePointer[List[Float64]]]()
         self.text_dict = Dict[String, UnsafePointer[TextMsg]]()
@@ -75,8 +75,8 @@ struct Messenger(Copyable, Movable):
                 # This all goes in a try block because all of the get_* functions are
                 # marked "raises." They need to because that is required in order to 
                 # access non-copies of the values in the message Dicts.
-                for ref item in self.gate_dict.items():
-                    var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_gate(item.key)
+                for ref item in self.bool_dict.items():
+                    var opt: Optional[Bool] = self.world_ptr[].messengerManager.get_bool(item.key)
                     if opt:
                         item.value[].state = opt.value()
                 for ref item in self.trig_dict.items():
@@ -152,21 +152,22 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float message. Error: ", error)
         return False
 
-    fn update[is_Trig: Bool=False](mut self, mut param: Bool, name: String) -> None:
+    fn update(mut self, mut param: Bool, name: String) -> None:
         if self.world_ptr[].top_of_block:
-            @parameter
-            if is_Trig:
-                try:
-                    param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
-                except error:
-                    print("Error occurred while updating trig message. Error: ", error)
-            else:
-                try:
-                    var opt = self.world_ptr[].messengerManager.get_gate(self.get_long_name(name)[])
-                    if opt:
-                        param = opt.value()    
-                except error:
-                    print("Error occurred while updating bool message. Error: ", error)
+            try:
+                var opt = self.world_ptr[].messengerManager.get_bool(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value()    
+            except error:
+                print("Error occurred while updating bool message. Error: ", error)
+
+    fn update(mut self, mut param: Trig, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                param = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
+                return param.__bool__()
+            except error:
+                print("Error occurred while updating trig message. Error: ", error)
 
     fn update(mut self, mut param: String, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
@@ -212,14 +213,14 @@ struct Messenger(Copyable, Movable):
         fullname = self.check_key_collision(name)
         self.float64_dict[fullname] = UnsafePointer(to=param)
 
-    fn register(mut self, ref param: GateMsg, name: String) -> None:
-        """Register a `GateMsg` with this `Messenger` under a specified `name`.  
-        
+    fn register(mut self, ref param: Bool, name: String) -> None:
+        """Register a `Bool` with this `Messenger` under a specified `name`.  
+
         Note that `.register()` is overloaded for different types.  
         """
 
         fullname = self.check_key_collision(name)
-        self.gate_dict[fullname] = UnsafePointer(to=param)
+        self.bool_dict[fullname] = UnsafePointer(to=param)
 
     fn register(mut self, ref param: Trig, name: String) -> None:
         """Register a `Trig` with this `Messenger` under a specified `name`.
@@ -259,8 +260,8 @@ struct Trig(Representable, Writable, Boolable, Copyable, Movable):
     It is either True (triggered) or False (not triggered). 
     It works like a boolean in all places, but different from a boolean it can be
     registered with a Messenger under a user specified name. 
-    
-    It only make sense to use Trig if it is registered with a Messenger. Otherwise 
+
+    It only make sense to use Trig if it is registered with a Messenger. Otherwise
     you can just use a Bool directly.
     
     The Messenger checks for any
