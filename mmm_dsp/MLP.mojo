@@ -88,20 +88,22 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         Process the input through the MLP model.
             
         """
-        new_file = self.messenger.update(self.file_name, "load_mlp_training")
         self.messenger.update(self.inference_gate, "toggle_inference")
-        fake_output = self.messenger.update(self.fake_model_output, "fake_model_output")
-
-        if new_file:
-            print("loading model from file: ", new_file)
-            self.reload_model(self.file_name)
+        
+        if self.messenger.check_texts("load_mlp_training"):
+            file_name = ""
+            self.messenger.update(file_name, "load_mlp_training")
+            print("loading model from file: ", file_name)
+            self.reload_model(file_name)
 
         if not self.inference_gate:
-            if fake_output:
+            if self.messenger.check_floats("fake_model_output"):
+                fake_model_output = List[Float64]()
+                self.messenger.update(fake_model_output, "fake_model_output")
                 @parameter
                 for i in range(self.output_size):
-                    if i < len(self.fake_model_output):
-                        self.model_output[Int(i)] = self.fake_model_output[i]
+                    if i < len(fake_model_output):
+                        self.model_output[Int(i)] = fake_model_output[i]
 
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
