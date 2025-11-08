@@ -8,21 +8,6 @@ struct Messenger(Copyable, Movable):
 
     var key_dict: Dict[String, String]  # maps short names to full names with namespace
 
-    # @staticmethod
-    # fn make_key(namespace: String, name: String) -> String:
-    #     """Create a full key name with optional namespace.
-
-    #     Args:
-    #         namespace: An optional `String` namespace.
-    #         name: The base `String` name.
-
-    #     Returns:
-    #         A `String` representing the full key.
-    #     """
-
-    #     return namespace + "." + name
-
-
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
 
@@ -72,6 +57,15 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
+    fn check_float(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_float(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking float message. Error: ", error)
+        return False
+
     fn update(mut self, mut param: Int64, name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:
@@ -80,17 +74,44 @@ struct Messenger(Copyable, Movable):
                     param = opt.value()
             except error:
                 print("Error occurred while updating int message. Error: ", error)
-
-    fn update(mut self, mut param: List[Float64], ref name: String) -> Bool:
+    
+    fn check_int(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_list(self.get_long_name(name)[])
+                temp = self.world_ptr[].messengerManager.check_int(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking int message. Error: ", error)
+        return False
+
+    fn update(mut self, mut param: List[Int64], ref name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_ints(self.get_long_name(name)[])
                 if opt:
                     param = opt.value().copy()
-                return opt.__bool__()
             except error:
-                print("Error occurred while updating float message. Error: ", error)
+                print("Error occurred while updating int list message. Error: ", error)
+
+
+    fn check_ints(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_ints(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking int list message. Error: ", error)
         return False
+
+
+    fn update(mut self, mut param: List[Float64], ref name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value().copy()
+            except error:
+                print("Error occurred while updating float list message. Error: ", error)
 
     fn check_floats(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
@@ -110,6 +131,33 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
+    fn check_gate(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_gate(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking gate message. Error: ", error)
+        return False
+
+    fn update(mut self, mut param: List[Bool], name: String) -> None:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_gates(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value().copy()
+            except error:
+                print("Error occurred while updating bool message. Error: ", error)
+
+    fn check_gates(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_gates(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking gate message. Error: ", error)
+        return False
+
     fn update(mut self, mut param: Trig, name: String) -> None:
         if self.world_ptr[].top_of_block or self.world_ptr[].block_state == 1:
             try:
@@ -117,27 +165,50 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
 
-    fn update(mut self, mut param: String, name: String) -> Bool:
+    fn check_trig(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
-                if opt:
-                    param = opt.value()[0]
-                return opt.__bool__()
+                temp = self.world_ptr[].messengerManager.check_trig(self.get_long_name(name)[])
+                return temp
             except error:
-                print("Error occurred while updating text message. Error: ", error)
+                print("Error occurred while checking trig message. Error: ", error)
         return False
 
-    fn update(mut self, mut param: List[String], name: String) -> Bool:
+    fn update(mut self, mut param: String, name: String):
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_text(self.get_long_name(name)[])
+                var opt = self.world_ptr[].messengerManager.get_texts(self.get_long_name(name)[])
                 if opt:
-                    param = opt.value().copy()
-                return opt.__bool__()
+                    param = opt.value()[0]
             except error:
                 print("Error occurred while updating text message. Error: ", error)
+
+    fn check_texts(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_texts(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking text message. Error: ", error)
         return False
+
+    fn update(mut self, mut param: List[String], name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_texts(self.get_long_name(name)[])
+                if opt:
+                    param = opt.value().copy()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+
+    # fn check_texts(mut self, name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             temp = self.world_ptr[].messengerManager.check_texts(self.get_long_name(name)[])
+    #             return temp
+    #         except error:
+    #             print("Error occurred while checking texts message. Error: ", error)
+    #     return False
 
 struct Trig(Representable, Writable, Boolable, Copyable, Movable):
     """A 'Trigger' that can be controlled from Python.

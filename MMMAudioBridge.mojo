@@ -101,6 +101,17 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
+    fn update_gates_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+
+        key = String(key_vals[0])
+        values = List[Bool]()
+        for i in range(1, len(key_vals)):
+            values.append(Bool(key_vals[i]))
+
+        py_self[0].world_ptr[0].messengerManager.update_gates_msg(key, values^)
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
     fn update_gate_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
@@ -111,14 +122,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_list_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_floats_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = List[Float64]()
         for i in range(1, len(key_vals)):
             values.append(Float64(key_vals[i]))
 
-        py_self[0].world_ptr[0].messengerManager.update_list_msg(key, values^)
+        py_self[0].world_ptr[0].messengerManager.update_floats_msg(key, values^)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -128,6 +139,18 @@ struct MMMAudioBridge(Representable, Movable):
         key = String(key_vals[0])
 
         py_self[0].world_ptr[0].messengerManager.update_trig_msg(key)
+
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
+    fn update_trigs_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+
+        key = String(key_vals[0])
+        values = List[Bool]()
+        for i in range(1, len(key_vals)):
+            values.append(Bool(key_vals[i]))
+
+        py_self[0].world_ptr[0].messengerManager.update_trigs_msg(key, values^)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -148,6 +171,18 @@ struct MMMAudioBridge(Representable, Movable):
         var value = Int64(key_vals[1])
 
         py_self[0].world_ptr[0].messengerManager.update_int_msg(key, value)
+
+        return PythonObject(None)  # Return a PythonObject wrapping None
+
+    @staticmethod
+    fn update_ints_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+
+        var key = String(key_vals[0])
+        var values = List[Int64]()
+        for i in range(1, len(key_vals)):
+            values.append(Int64(key_vals[i]))
+
+        py_self[0].world_ptr[0].messengerManager.update_ints_msg(key, values^)
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
@@ -178,11 +213,14 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             .def_method[MMMAudioBridge.set_screen_dims]("set_screen_dims")
             .def_method[MMMAudioBridge.update_mouse_pos]("update_mouse_pos")
             .def_method[MMMAudioBridge.update_gate_msg]("update_gate_msg")
+            .def_method[MMMAudioBridge.update_gates_msg]("update_gates_msg")
             .def_method[MMMAudioBridge.update_float_msg]("update_float_msg")
             .def_method[MMMAudioBridge.update_trig_msg]("update_trig_msg")
-            .def_method[MMMAudioBridge.update_list_msg]("update_list_msg")
+            .def_method[MMMAudioBridge.update_trigs_msg]("update_trigs_msg")
+            .def_method[MMMAudioBridge.update_floats_msg]("update_floats_msg")
             .def_method[MMMAudioBridge.update_text_msg]("update_text_msg")
             .def_method[MMMAudioBridge.update_int_msg]("update_int_msg")
+            .def_method[MMMAudioBridge.update_ints_msg]("update_ints_msg")
             .def_method[MMMAudioBridge.send_raw_hid]("send_raw_hid")
             .def_method[MMMAudioBridge.set_channel_count]("set_channel_count")
         )

@@ -207,29 +207,8 @@ class MMMAudio:
         """
 
         self.mmm_audio_bridge.update_float_msg([key, value])
-        
-    def send_gate(self, key: str, value: bool):
-        """
-        Send a gate message to the Mojo audio engine.
-        
-        Args:
-            key: Key for the message 
-            value: Boolean value for the gate
-        """
 
-        self.mmm_audio_bridge.update_gate_msg([key, value])
-
-    def send_trig(self, key: str):
-        """
-        Send a trigger message to the Mojo audio engine.
-        
-        Args:
-            key: Key for the message 
-        """
-
-        self.mmm_audio_bridge.update_trig_msg([key])
-        
-    def send_list(self, key: str, *args):
+    def send_floats(self, key: str, *args):
         """
         Send a list message to the Mojo audio engine.
         
@@ -249,23 +228,101 @@ class MMMAudio:
             for arg in args:
                 key_vals.append(float(arg))
 
-        self.mmm_audio_bridge.update_list_msg(key_vals)
-
-    # def send_text(self, key, arg: str | list[str]):
-    #     """
-    #     Send a message to the Mojo audio engine.
+        self.mmm_audio_bridge.update_floats_msg(key_vals)
         
-    #     Args:
-    #         key: Key for the message 
-    #         *args: Additional arguments for the message
-    #     """
-    #     print(1)
-    #     key_vals = [key]  # Start with the key
-    #     key_vals.extend(arg if isinstance(arg, list) else [arg])
+    def send_gate(self, key: str, value: bool):
+        """
+        Send a gate message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            value: Boolean value for the gate
+        """
 
-        # self.mmm_audio_bridge.update_text_msg(key_vals)
+        self.mmm_audio_bridge.update_gate_msg([key, value])
 
-    def send_text(self, key, *args):
+    def send_gates(self, key: str, *args):
+        """
+        Send a list message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            values: List of float values
+        """
+
+        key_vals = [key]  # Start with the key
+        if isinstance(args[0], list):
+            for arg in args[0]:
+                key_vals.append(bool(arg))
+        else:
+            for arg in args:
+                key_vals.append(bool(arg))
+
+        self.mmm_audio_bridge.update_gates_msg(key_vals)
+
+    def send_trig(self, key: str):
+        """
+        Send a trigger message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+        """
+
+        self.mmm_audio_bridge.update_trig_msg([key])
+    
+    def send_trigs(self, key: str, *args):
+        """
+        Send a list message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            values: List of float values
+        """
+
+        key_vals = [key]  # Start with the key
+        if isinstance(args[0], list):
+            for arg in args[0]:
+                key_vals.append(bool(arg))
+        else:
+            for arg in args:
+                key_vals.append(bool(arg))
+
+        self.mmm_audio_bridge.update_trigs_msg(key_vals)
+
+    def send_int(self, key: str, value: int) -> None:
+        """
+        Send an integer message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            value: Integer value
+        """
+
+        self.mmm_audio_bridge.update_int_msg([key, value])
+
+    def send_ints(self, key: str, *args):
+        """
+        Send a list message to the Mojo audio engine.
+        
+        Args:
+            key: Key for the message 
+            values: List of float values
+        """
+
+        # key_vals = [key]  # Start with the key
+        # key_vals.extend([v for v in values])
+
+        key_vals = [key]  # Start with the key
+        if isinstance(args[0], list):
+            for arg in args[0]:
+                key_vals.append(int(arg))
+        else:
+            for arg in args:
+                key_vals.append(int(arg))
+
+        self.mmm_audio_bridge.update_ints_msg(key_vals)
+
+    def send_texts(self, key, *args):
         """
         Send a text message to the Mojo audio engine.
         
@@ -283,16 +340,6 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_text_msg(key_vals)
         
-    def send_int(self, key: str, value: int) -> None:
-        """
-        Send an integer message to the Mojo audio engine.
-        
-        Args:
-            key: Key for the message 
-            value: Integer value
-        """
-
-        self.mmm_audio_bridge.update_int_msg([key, value])
 
     async def start_osc_server(self, ip = "127.0.0.1", port=5000):
 
