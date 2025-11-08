@@ -101,14 +101,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_gates_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_bools_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = List[Bool]()
         for i in range(1, len(key_vals)):
             values.append(Bool(key_vals[i]))
 
-        py_self[0].world_ptr[0].messengerManager.update_gates_msg(key, values^)
+        py_self[0].world_ptr[0].messengerManager.update_bools_msg(key, values^)
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
@@ -213,7 +213,7 @@ fn PyInit_MMMAudioBridge() -> PythonObject:
             .def_method[MMMAudioBridge.set_screen_dims]("set_screen_dims")
             .def_method[MMMAudioBridge.update_mouse_pos]("update_mouse_pos")
             .def_method[MMMAudioBridge.update_gate_msg]("update_gate_msg")
-            .def_method[MMMAudioBridge.update_gates_msg]("update_gates_msg")
+            .def_method[MMMAudioBridge.update_bools_msg]("update_bools_msg")
             .def_method[MMMAudioBridge.update_float_msg]("update_float_msg")
             .def_method[MMMAudioBridge.update_trig_msg]("update_trig_msg")
             .def_method[MMMAudioBridge.update_trigs_msg]("update_trigs_msg")

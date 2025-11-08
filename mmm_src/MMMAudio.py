@@ -241,7 +241,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_gate_msg([key, value])
 
-    def send_gates(self, key: str, *args):
+    def send_bools(self, key: str, *args):
         """
         Send a list message to the Mojo audio engine.
         
@@ -258,7 +258,7 @@ class MMMAudio:
             for arg in args:
                 key_vals.append(bool(arg))
 
-        self.mmm_audio_bridge.update_gates_msg(key_vals)
+        self.mmm_audio_bridge.update_bools_msg(key_vals)
 
     def send_trig(self, key: str):
         """

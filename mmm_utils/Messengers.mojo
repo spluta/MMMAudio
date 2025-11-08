@@ -143,16 +143,16 @@ struct Messenger(Copyable, Movable):
     fn update(mut self, mut param: List[Bool], name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:
-                var opt = self.world_ptr[].messengerManager.get_gates(self.get_long_name(name)[])
+                var opt = self.world_ptr[].messengerManager.get_bools(self.get_long_name(name)[])
                 if opt:
                     param = opt.value().copy()
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
-    fn check_gates(mut self, name: String) -> Bool:
+    fn check_bools(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                temp = self.world_ptr[].messengerManager.check_gates(self.get_long_name(name)[])
+                temp = self.world_ptr[].messengerManager.check_bools(self.get_long_name(name)[])
                 return temp
             except error:
                 print("Error occurred while checking gate message. Error: ", error)
@@ -169,6 +169,24 @@ struct Messenger(Copyable, Movable):
         if self.world_ptr[].top_of_block:
             try:
                 temp = self.world_ptr[].messengerManager.check_trig(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking trig message. Error: ", error)
+        return False
+
+    fn update(mut self, mut param: List[Trig], name: String) -> None:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_trigs(self.get_long_name(name)[])
+                if opt:
+                    param = [Trig(v) for ref v in opt.value()]
+            except error:
+                print("Error occurred while updating trig message. Error: ", error)
+
+    fn check_trigs(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_trigs(self.get_long_name(name)[])
                 return temp
             except error:
                 print("Error occurred while checking trig message. Error: ", error)

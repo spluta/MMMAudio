@@ -81,8 +81,8 @@ struct MessengerManager(Movable, Copyable):
     var gate_msg_pool: Dict[String, Bool]
     var gate_msgs: Dict[String, GateMessage]
 
-    var gates_msg_pool: Dict[String, List[Bool]]
-    var gates_msgs: Dict[String, GatesMessage]
+    var bools_msg_pool: Dict[String, List[Bool]]
+    var bools_msgs: Dict[String, GatesMessage]
 
     var ints_msg_pool: Dict[String, List[Int64]]
     var ints_msgs: Dict[String, IntsMessage]
@@ -116,8 +116,8 @@ struct MessengerManager(Movable, Copyable):
         self.gate_msg_pool = Dict[String, Bool]()
         self.gate_msgs = Dict[String, GateMessage]()
 
-        self.gates_msg_pool = Dict[String, List[Bool]]()
-        self.gates_msgs = Dict[String, GatesMessage]()
+        self.bools_msg_pool = Dict[String, List[Bool]]()
+        self.bools_msgs = Dict[String, GatesMessage]()
 
         self.trig_msg_pool = Set[String]()
         self.trig_msgs = Dict[String, Bool]()
@@ -151,8 +151,8 @@ struct MessengerManager(Movable, Copyable):
         self.gate_msg_pool[key] = value
     
     @always_inline
-    fn update_gates_msg(mut self, key: String, var values: List[Bool]):
-        self.gates_msg_pool[key] = values^
+    fn update_bools_msg(mut self, key: String, var values: List[Bool]):
+        self.bools_msg_pool[key] = values^
 
     @always_inline
     fn update_trig_msg(mut self, key: String):
@@ -187,8 +187,8 @@ struct MessengerManager(Movable, Copyable):
         for gate_msg in self.gate_msg_pool.take_items():
             self.gate_msgs[gate_msg.key] = GateMessage(gate_msg.value)
 
-        for gates_msg in self.gates_msg_pool.take_items():
-            self.gates_msgs[gates_msg.key] = GatesMessage(gates_msg.value)
+        for bools_msg in self.bools_msg_pool.take_items():
+            self.bools_msgs[bools_msg.key] = GatesMessage(bools_msg.value)
 
         for text_msg in self.text_msg_pool.take_items():
             self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
@@ -250,20 +250,20 @@ struct MessengerManager(Movable, Copyable):
         return self.floats_msgs.__contains__(key)
 
     @always_inline
-    fn get_gates(mut self: Self, ref key: String) raises-> Optional[List[Bool]]:
-        if key in self.gates_msgs:
-            self.gates_msgs[key].retrieved = True
+    fn get_bools(mut self: Self, ref key: String) raises-> Optional[List[Bool]]:
+        if key in self.bools_msgs:
+            self.bools_msgs[key].retrieved = True
             # Copy is ok here because it will only copy when there is a
             # new list for it to use, which should be rare. If the user
             # is, like, streaming lists of tons of values, they should
             # be using a different method, such as loading the data into
             # a buffer ahead of time and reading from that.
-            return self.gates_msgs[key].value.copy()
+            return self.bools_msgs[key].value.copy()
         return None
         
     @always_inline
-    fn check_gates(mut self, ref key: String) -> Bool:
-        return self.gates_msgs.__contains__(key)
+    fn check_bools(mut self, ref key: String) -> Bool:
+        return self.bools_msgs.__contains__(key)
     
     @always_inline
     fn get_trig(mut self, ref key: String) -> Bool:
@@ -337,9 +337,9 @@ struct MessengerManager(Movable, Copyable):
             if not gate_msg.value.retrieved:
                 print("Gate message was not retrieved this block:", gate_msg.key)
 
-        for gates_msg in self.gates_msgs.take_items():
-            if not gates_msg.value.retrieved:
-                print("Gates message was not retrieved this block:", gates_msg.key)
+        for bools_msg in self.bools_msgs.take_items():
+            if not bools_msg.value.retrieved:
+                print("Gates message was not retrieved this block:", bools_msg.key)
         
         for trig_msg in self.trig_msgs.take_items():
             if not trig_msg.value: # It wasn't retrieved this block

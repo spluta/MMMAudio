@@ -21,7 +21,9 @@ mmm_audio.send_trig("tone_0.test_trig")
 mmm_audio.send_gate("tone_0.test_gate", True)
 mmm_audio.send_gate("tone_0.test_gate", False)
 
-mmm_audio.send_gates("test_gates", [True, False, False, True])
+mmm_audio.send_bools("test_bools", [True, False, False, True])
+
+mmm_audio.send_trigs("tone_1.test_trigs", True, False, True)
 
 
 mmm_audio.send_texts("tone_0.file_name", ["wavy.wav", "gravy.wav"])

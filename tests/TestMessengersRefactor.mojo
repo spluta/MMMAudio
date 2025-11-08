@@ -72,6 +72,13 @@ struct Tone(Movable,Copyable):
         if self.m.check_trig("test_trig"):
             print("Trig is there!")
 
+        if self.m.check_trigs("test_trigs"):
+            trig_list = List[Trig]()
+            self.m.update(trig_list, "test_trigs")
+            print("Received trig list via Messenger:")
+            for i in range(len(trig_list)):
+                print("  ", trig_list[i])
+
         # self.world_ptr[0].print(self.freq)
         return self.osc.next(self.freq)
 
@@ -84,7 +91,7 @@ struct TestMessengersRefactor():
     var test_int: Int64
     var txt: List[String]
     var trig: Trig
-    var gates: List[Bool]
+    var bools: List[Bool]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -104,7 +111,7 @@ struct TestMessengersRefactor():
         for i in range(4):
             self.printers.append(Print(world_ptr))
 
-        self.gates = List[Bool](False,False,False,False)
+        self.bools = List[Bool](False,False,False,False)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
         self.m.update(self.vol,"vol")
@@ -116,9 +123,9 @@ struct TestMessengersRefactor():
             for i in range(min(len(float_list), len(self.tone_list))):
                 self.tone_list[i].freq = float_list[i]
 
-        if self.m.check_gates("test_gates"):
+        if self.m.check_bools("test_bools"):
             gate_list = List[Bool]()
-            self.m.update(gate_list,"test_gates")
+            self.m.update(gate_list,"test_bools")
             for i in range(len(gate_list)):
                 print(gate_list[i], end=" ")
             print("")
