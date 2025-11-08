@@ -174,7 +174,11 @@ struct MessengerManager(Movable, Copyable):
             # a buffer ahead of time and reading from that.
             return self.list_msgs[key].value.copy()
         return None
-
+        
+    @always_inline
+    fn check_floats(mut self, ref key: String) -> Bool:
+        return self.list_msgs.__contains__(key)
+    
     @always_inline
     fn get_trig(mut self, ref key: String) -> Bool:
         if key in self.trig_msgs:

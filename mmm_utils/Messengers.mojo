@@ -92,6 +92,15 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float message. Error: ", error)
         return False
 
+    fn check_floats(mut self, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                temp = self.world_ptr[].messengerManager.check_floats(self.get_long_name(name)[])
+                return temp
+            except error:
+                print("Error occurred while checking float message. Error: ", error)
+        return False
+
     fn update(mut self, mut param: Bool, name: String) -> None:
         if self.world_ptr[].top_of_block:
             try:

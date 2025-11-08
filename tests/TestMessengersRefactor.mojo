@@ -10,10 +10,10 @@ struct Tone(Movable,Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
-    var test_list: List[Float64]
     var m: Messenger
     var file_name: List[String]
     var test_bool: Bool
+    var float_list: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
         self.world_ptr = world_ptr
@@ -21,14 +21,26 @@ struct Tone(Movable,Copyable):
         self.freq = 440.0
         print("freq mem location Tone init: ", UnsafePointer(to=self.freq))
         self.m = Messenger(self.world_ptr,namespace)
-        self.test_list = List[Float64](capacity=4)
         self.file_name = List[String]()
         self.test_bool = False
+        self.float_list = List[Float64]()
 
 
     fn next(mut self) -> Float64:
 
-        received_list = self.m.update(self.test_list,"test_list")
+        # got_it = self.m.update(self.float_list, "test_list")
+        # if got_it:
+        #     print("Received float list via Messenger:")
+        #     for i in range(len(self.float_list)):
+        #         print("  ", self.float_list[i])
+
+        if self.m.check_floats("test_list"):
+            float_list: List[Float64] = List[Float64]()
+            self.m.update(float_list, "test_list")
+            print("Received float list via Messenger:")
+            for i in range(len(float_list)):
+                print("  ", float_list[i])
+
         received_filename = self.m.update(self.file_name, "file_name")
         self.m.update(self.test_bool, "test_bool")
         self.m.update(self.freq, "freq")

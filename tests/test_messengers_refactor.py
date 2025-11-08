@@ -16,6 +16,7 @@ mmm_audio.start_audio()
 # mmm_audio.send_trig("should_warn_re_trig")
 
 mmm_audio.send_list("tone_0.test_list", [9.9,11.12,13.13,14.14])
+mmm_audio.stop_audio()
 mmm_audio.send_trig("trig_test")
 
 # mmm_audio.send_float("vol", -100.0)
