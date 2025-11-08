@@ -111,7 +111,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating bool message. Error: ", error)
 
     fn update(mut self, mut param: Trig, name: String) -> None:
-        if self.world_ptr[].top_of_block:
+        if self.world_ptr[].top_of_block or self.world_ptr[].block_state == 1:
             try:
                 param.state = self.world_ptr[].messengerManager.get_trig(self.get_long_name(name)[])
             except error:
