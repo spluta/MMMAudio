@@ -6,13 +6,13 @@ from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
-struct Tone(Messagable):
+struct Tone(Movable,Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
     var test_list: List[Float64]
     var m: Messenger
-    var file_name: TextMsg
+    var file_name: List[String]
     var test_bool: Bool
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
@@ -22,28 +22,22 @@ struct Tone(Messagable):
         print("freq mem location Tone init: ", UnsafePointer(to=self.freq))
         self.m = Messenger(self.world_ptr,namespace)
         self.test_list = List[Float64](capacity=4)
-        self.file_name = TextMsg(["default.wav"])
+        self.file_name = List[String]()
         self.test_bool = False
 
-    fn register_messages(mut self):
-        # self.m.register(self.freq,"freq")
-        self.m.register(self.test_list,"test_list")
-        self.m.register(self.file_name, "file_name")
 
     fn next(mut self) -> Float64:
-        self.m.update()
-        self.m.update[0](self.test_bool, "test_bool")
+
+        received_list = self.m.update(self.test_list,"test_list")
+        received_filename = self.m.update(self.file_name, "file_name")
+        self.m.update(self.test_bool, "test_bool")
         self.m.update(self.freq, "freq")
 
-        if self.world_ptr[0].top_of_block:
-            pass
-            # print("test_bool in Tone next(): ", self.test_bool)
-            # print("freq in Tone next(): ", self.freq)
-
-        if self.file_name:
+        if received_filename:
             for i in range(len(self.file_name)):
                 print(self.file_name[i])
-        # self.world_ptr[0].print(self.test_list)
+        if self.test_bool:
+            print("Tone received test_bool True!")
 
         # self.world_ptr[0].print(self.freq)
         return self.osc.next(self.freq)
@@ -55,45 +49,36 @@ struct TestMessengersRefactor():
     var tone_list: List[Tone]
     var printers: List[Print]
     var test_int: Int64
-    var txt: TextMsg
-    var trig: TrigMsg
+    var txt: List[String]
+    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.m = Messenger(world_ptr)
         self.test_int = 0
-        self.txt = TextMsg(List[String]("hello","there","general","kenobi"))
-        self.trig = TrigMsg(True)
+        self.txt = List[String]("hello","there","general","kenobi")
+        self.trig = Trig(False)
 
         self.tone_list = List[Tone](capacity=2)
         for i in range(2):
             self.tone_list.append(Tone(self.world_ptr, "tone_"+String(i)))
-            self.tone_list[i].register_messages()
 
         print("tone 0 freq mem location in TestMessengersRefactor init: ", UnsafePointer(to=self.tone_list[0].freq))
         self.vol = -24.0
         self.printers = List[Print](capacity=4)
 
-        self.m.register(self.vol,"vol")
-        self.m.register(self.test_int,"test_int")
-        self.m.register(self.txt,"text_test")
-        self.m.register(self.trig,"trig_test")
-
         for i in range(4):
             self.printers.append(Print(world_ptr))
 
     fn next(mut self) -> SIMD[DType.float64, 2]:    
-        self.m.update()
+        self.m.update(self.vol,"vol")
+        self.m.update(self.test_int,"test_int")
+        got_text = self.m.update(self.txt,"text_test")
+        self.m.update(self.trig, "trig_test")
 
-        # if len(self.txt) > 0:
-        #     print("TextMsg txt 0: ",self.txt[0])
-
-        # if len(self.txt) > 1:
-        #     print("TextMsg txt 1: ",self.txt[1])
-
-        if self.txt:
-            for t in self.txt:
-                print("TextMsg txt: ", t)
+        if got_text:
+            for i in range(len(self.txt)):
+                print("TextMsg txt ",i,": ",self.txt[i])
 
         if self.test_int > 0:
             self.printers[2].next(self.test_int,"TestMessengersRefactor test_int:")
