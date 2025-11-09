@@ -51,10 +51,10 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
             self.MLP = Python.import_module("mmm_dsp.MLP")
             self.torch = Python.import_module("torch")
             self.py_input = self.torch.zeros(1, input_size)  # Create a tensor with shape [1, 2] filled with zeros
-            self.model = self.torch.jit.load(file_name)  # Load your PyTorch model
-            self.model.eval()  # Set the model to evaluation mode
-            for _ in range (5):
-                self.model(self.torch.randn(1, input_size))  # warm it up CHris
+            # self.model = self.torch.jit.load(file_name)  # Load your PyTorch model
+            # self.model.eval()  # Set the model to evaluation mode
+            # for _ in range (5):
+            #     self.model(self.torch.randn(1, input_size))  # warm it up CHris
 
             self.inference_gate = True
             print("Torch model loaded successfully")
@@ -62,12 +62,14 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         except ImportError:
             print("Error importing MLP_py or torch module")
 
+        self.reload_model(file_name)
+
 
     fn reload_model(mut self: MLP, var file_name: String):
         """
         Reload the MLP model from a specified file.
 
-        Parameters:
+        Arguments:
           file_name: The path to the model file.
         """
         try:
