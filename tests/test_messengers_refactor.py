@@ -1,34 +1,45 @@
 from mmm_src.MMMAudio import MMMAudio
-import random
-mmm_audio = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
-mmm_audio.start_audio()
+from mmm_utils.functions import midicps
 
-mmm_audio.send_float("tone_0.freq", 500)
-mmm_audio.send_float("tone_1.freq", 700)
+a = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
 
-mmm_audio.send_floats("test_floats", [random.uniform(200.0, 800.0) for _ in range(2)])
+a.start_audio()
 
-mmm_audio.send_int("test_int", 1)
-mmm_audio.send_int("test_int", -1)
+a.send_bool("bool",True)
+a.send_bool("bool",False)
 
-mmm_audio.send_ints("tone_0.test_ints", 9,11,13,14)
+a.send_bools("bools", [True, False, False, True])
+a.send_bools("bools", [False, True, True, False])
 
-mmm_audio.send_trig("test_trig") #should make the sines 3hz apart
+a.send_float("float", 440.0)
+a.send_float("float", 880.0)
 
-mmm_audio.send_float("vol", -100.0)
+a.send_floats("floats", [440.0, 550.0, 660.0])
+a.send_floats("floats", [880.0, 990.0, 1100.0])
 
-mmm_audio.send_trig("tone_0.test_trig")
-mmm_audio.send_gate("tone_0.test_gate", True)
-mmm_audio.send_gate("tone_0.test_gate", False)
+a.send_int("int", 42)
+a.send_int("int", 84)
 
-mmm_audio.send_bools("test_bools", [True, False, False, True])
+a.send_ints("ints", [1, 22, 3, 4, 5])
+a.send_ints("ints", [5, 4, 3, 2, 1])
+a.send_ints("ints", [100,200])
 
-mmm_audio.send_trigs("tone_1.test_trigs", True, False, True)
+a.send_string("string", "Hello, World!")
+a.send_string("string", "Goodbye, World!")
 
+a.send_strings("strings", ["hello", "there", "general", "kenobi"])
+a.send_strings("strings", ["goodbye", "there", "general", "grievous"])
 
-mmm_audio.send_texts("tone_0.file_name", ["wavy.wav", "gravy.wav"])
-mmm_audio.send_texts("tone_0.file_name", "wavy.wav", "gravy.wav")
-mmm_audio.send_texts("tone_0.file_name", "wavy.wav")
-mmm_audio.send_texts("text_test", ["Line 1", "Line 2"])
+a.send_trig("trig")
 
-mmm_audio.stop_audio()
+a.send_trigs("trigs", [True, False, True, True, False])
+a.send_trigs("trigs", [False, True, False, False, True])
+
+a.send_bool("tone_0.gate",True)
+a.send_bool("tone_1.gate",True)
+a.send_float("tone_0.freq",440 * 1.059)
+a.send_float("tone_1.freq",midicps(74))
+a.send_bool("tone_0.gate",False)
+a.send_bool("tone_1.gate",False)
+
+a.stop_audio()

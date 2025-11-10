@@ -6,6 +6,30 @@ from mmm_utils.Print import Print
 import time
 from collections import Set
 
+struct BoolMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: Bool
+
+    fn __init__(out self, value: Bool):
+        self.retrieved = False
+        self.value = value
+
+struct BoolsMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: List[Bool]
+
+    fn __init__(out self, value: List[Bool]):
+        self.retrieved = False
+        self.value = value.copy()
+
+struct FloatMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: Float64
+
+    fn __init__(out self, value: Float64):
+        self.retrieved = False
+        self.value = value
+
 struct FloatsMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Float64]
@@ -14,45 +38,13 @@ struct FloatsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
-struct Float64Message(Movable, Copyable):
+struct IntMessage(Movable, Copyable):
     var retrieved: Bool
-    var value: Float64
+    var value: Int64
 
-    fn __init__(out self, value: Float64):
+    fn __init__(out self, value: Int64):
         self.retrieved = False
         self.value = value
-
-struct GateMessage(Movable, Copyable):
-    var retrieved: Bool
-    var value: Bool
-
-    fn __init__(out self, value: Bool):
-        self.retrieved = False
-        self.value = value
-
-struct GatesMessage(Movable, Copyable):
-    var retrieved: Bool
-    var value: List[Bool]
-
-    fn __init__(out self, value: List[Bool]):
-        self.retrieved = False
-        self.value = value.copy()
-
-struct TrigsMessage(Movable, Copyable):
-    var retrieved: Bool
-    var value: List[Bool]
-
-    fn __init__(out self, value: List[Bool]):
-        self.retrieved = False
-        self.value = value.copy()
-
-struct TextMessage(Movable, Copyable):
-    var values: List[String]
-    var retrieved: Bool
-
-    fn __init__(out self, values: List[String]):
-        self.values = values.copy()
-        self.retrieved = False
 
 struct IntsMessage(Movable, Copyable):
     var retrieved: Bool
@@ -62,33 +54,57 @@ struct IntsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
-struct Int64Message(Movable, Copyable):
+struct StringMessage(Movable, Copyable):
+    var value: String
     var retrieved: Bool
-    var value: Int64
 
-    fn __init__(out self, value: Int64):
+    fn __init__(out self, value: String):
+        self.value = value.copy()
         self.retrieved = False
-        self.value = value
+
+struct StringsMessage(Movable, Copyable):
+    var value: List[String]
+    var retrieved: Bool
+
+    fn __init__(out self, value: List[String]):
+        self.value = value.copy()
+        self.retrieved = False
+
+# struct TrigMessage isn't necessary. See MessengerManager for explanation.
+
+struct TrigsMessage(Movable, Copyable):
+    var retrieved: Bool
+    var value: List[Bool]
+
+    fn __init__(out self, value: List[Bool]):
+        self.retrieved = False
+        self.value = value.copy()
 
 struct MessengerManager(Movable, Copyable):
 
+    var bool_msg_pool: Dict[String, Bool]
+    var bool_msgs: Dict[String, BoolMessage]
+
+    var bools_msg_pool: Dict[String, List[Bool]]
+    var bools_msgs: Dict[String, BoolsMessage]
+
+    var float_msg_pool: Dict[String, Float64]
+    var float_msgs: Dict[String, FloatMessage]
+    
     var floats_msg_pool: Dict[String, List[Float64]]
     var floats_msgs: Dict[String, FloatsMessage]
     
-    var float_msg_pool: Dict[String, Float64]
-    var float_msgs: Dict[String, Float64Message]
-    
-    var gate_msg_pool: Dict[String, Bool]
-    var gate_msgs: Dict[String, GateMessage]
-
-    var bools_msg_pool: Dict[String, List[Bool]]
-    var bools_msgs: Dict[String, GatesMessage]
+    var int_msg_pool: Dict[String, Int64]
+    var int_msgs: Dict[String, IntMessage]
 
     var ints_msg_pool: Dict[String, List[Int64]]
     var ints_msgs: Dict[String, IntsMessage]
 
-    var int_msg_pool: Dict[String, Int64]
-    var int_msgs: Dict[String, Int64Message]
+    var string_msg_pool: Dict[String, String]
+    var string_msgs: Dict[String, StringMessage]
+
+    var strings_msg_pool: Dict[String, List[String]]
+    var strings_msgs: Dict[String, StringsMessage]
 
     var trig_msg_pool: Set[String]
     # Rather than making a TrigMessage struct, we only need a Dict:
@@ -99,25 +115,31 @@ struct MessengerManager(Movable, Copyable):
     var trigs_msg_pool: Dict[String, List[Bool]]
     var trigs_msgs: Dict[String, TrigsMessage]
     
-    # Text Messages need a List of Strings because one could image sending
-    # multiple pieces of information at once, for example multiple file paths
-    # to load.
-    var text_msg_pool: Dict[String, List[String]]
-    var text_msgs: Dict[String, TextMessage]
-
     fn __init__(out self):
+
+        self.bool_msg_pool = Dict[String, Bool]()
+        self.bool_msgs = Dict[String, BoolMessage]()
+
+        self.bools_msg_pool = Dict[String, List[Bool]]()
+        self.bools_msgs = Dict[String, BoolsMessage]()
+
+        self.float_msg_pool = Dict[String, Float64]()
+        self.float_msgs = Dict[String, FloatMessage]()
 
         self.floats_msg_pool = Dict[String, List[Float64]]()
         self.floats_msgs = Dict[String, FloatsMessage]()
 
-        self.float_msg_pool = Dict[String, Float64]()
-        self.float_msgs = Dict[String, Float64Message]()
+        self.int_msg_pool = Dict[String, Int64]()
+        self.int_msgs = Dict[String, IntMessage]()
+        
+        self.ints_msg_pool = Dict[String, List[Int64]]()
+        self.ints_msgs = Dict[String, IntsMessage]()
 
-        self.gate_msg_pool = Dict[String, Bool]()
-        self.gate_msgs = Dict[String, GateMessage]()
+        self.string_msg_pool = Dict[String, String]()
+        self.string_msgs = Dict[String, StringMessage]()
 
-        self.bools_msg_pool = Dict[String, List[Bool]]()
-        self.bools_msgs = Dict[String, GatesMessage]()
+        self.strings_msg_pool = Dict[String, List[String]]()
+        self.strings_msgs = Dict[String, StringsMessage]()
 
         self.trig_msg_pool = Set[String]()
         self.trig_msgs = Dict[String, Bool]()
@@ -125,129 +147,95 @@ struct MessengerManager(Movable, Copyable):
         self.trigs_msg_pool = Dict[String, List[Bool]]()
         self.trigs_msgs = Dict[String, TrigsMessage]()
 
-        self.ints_msg_pool = Dict[String, List[Int64]]()
-        self.ints_msgs = Dict[String, IntsMessage]()
+    ##### Bool #####
+    @always_inline
+    fn update_bool_msg(mut self, key: String, value: Bool):
+        self.bool_msg_pool[key] = value
 
-        self.int_msg_pool = Dict[String, Int64]()
-        self.int_msgs = Dict[String, Int64Message]()
-        
-        self.text_msg_pool = Dict[String, List[String]]()
-        self.text_msgs = Dict[String, TextMessage]()
+    @always_inline
+    fn update_bools_msg(mut self, key: String, var value: List[Bool]):
+        self.bools_msg_pool[key] = value^
 
-
-    # update_* functions add messages to the pool to be transferred at the
-    # start of the next audio block. These functions are called from MMMAudioBridge
-    # when a message is sent from Python.
+    ##### Float #####
     @always_inline
     fn update_float_msg(mut self, key: String, value: Float64):
         self.float_msg_pool[key] = value
 
     @always_inline
-    fn update_floats_msg(mut self, key: String, var values: List[Float64]):
-        self.floats_msg_pool[key] = values^
+    fn update_floats_msg(mut self, key: String, var value: List[Float64]):
+        self.floats_msg_pool[key] = value^
 
-    @always_inline
-    fn update_gate_msg(mut self, key: String, value: Bool):
-        self.gate_msg_pool[key] = value
-    
-    @always_inline
-    fn update_bools_msg(mut self, key: String, var values: List[Bool]):
-        self.bools_msg_pool[key] = values^
-
-    @always_inline
-    fn update_trig_msg(mut self, key: String):
-        self.trig_msg_pool.add(key)
-
-    @always_inline
-    fn update_trigs_msg(mut self, key: String, var values: List[Bool]):
-        self.trigs_msg_pool[key] = values^
-
-    @always_inline
-    fn update_text_msg(mut self, key: String, var text: List[String]) raises:
-        if not key in self.text_msg_pool:
-            self.text_msg_pool[key] = List[String]()
-        self.text_msg_pool[key].extend(text^)
-
+    ##### Int #####
     @always_inline
     fn update_int_msg(mut self, key: String, value: Int64):
         self.int_msg_pool[key] = value
     
     @always_inline
-    fn update_ints_msg(mut self, key: String, var values: List[Int64]):
-        self.ints_msg_pool[key] = values^
+    fn update_ints_msg(mut self, key: String, var value: List[Int64]):
+        self.ints_msg_pool[key] = value^
+
+    ##### String #####
+    @always_inline
+    fn update_string_msg(mut self, key: String, value: String):
+        self.string_msg_pool[key] = value
+
+    @always_inline
+    fn update_strings_msg(mut self, key: String, var value: List[String]):
+        self.strings_msg_pool[key] = value^
+
+    ##### Trig #####
+    @always_inline
+    fn update_trig_msg(mut self, var key: String):
+        self.trig_msg_pool.add(key^)
+
+    @always_inline
+    fn update_trigs_msg(mut self, key: String, var value: List[Bool]):
+        self.trigs_msg_pool[key] = value^
 
     fn transfer_msgs(mut self) raises:
 
-        for float_msgs in self.floats_msg_pool.take_items():
-            self.floats_msgs[float_msgs.key] = FloatsMessage(float_msgs.value)
+        for bm in self.bool_msg_pool.take_items():
+            self.bool_msgs[bm.key] = BoolMessage(bm.value)
 
-        for float_msg in self.float_msg_pool.take_items():
-            self.float_msgs[float_msg.key] = Float64Message(float_msg.value)
+        for bsm in self.bools_msg_pool.take_items():
+            self.bools_msgs[bsm.key] = BoolsMessage(bsm.value)
 
-        for gate_msg in self.gate_msg_pool.take_items():
-            self.gate_msgs[gate_msg.key] = GateMessage(gate_msg.value)
+        for fm in self.float_msg_pool.take_items():
+            self.float_msgs[fm.key] = FloatMessage(fm.value)
 
-        for bools_msg in self.bools_msg_pool.take_items():
-            self.bools_msgs[bools_msg.key] = GatesMessage(bools_msg.value)
+        for fsm in self.floats_msg_pool.take_items():
+            self.floats_msgs[fsm.key] = FloatsMessage(fsm.value)
 
-        for text_msg in self.text_msg_pool.take_items():
-            self.text_msgs[text_msg.key] = TextMessage(text_msg.value.copy())
+        for im in self.int_msg_pool.take_items():
+            self.int_msgs[im.key] = IntMessage(im.value)
 
-        for int_msg in self.int_msg_pool.take_items():
-            self.int_msgs[int_msg.key] = Int64Message(int_msg.value)
+        for ism in self.ints_msg_pool.take_items():
+            self.ints_msgs[ism.key] = IntsMessage(ism.value)
 
-        for ints_msg in self.ints_msg_pool.take_items():
-            self.ints_msgs[ints_msg.key] = IntsMessage(ints_msg.value)
+        for sm in self.string_msg_pool.take_items():
+            self.string_msgs[sm.key] = StringMessage(sm.value)
 
-        for trig_msg_str in self.trig_msg_pool:
-            self.trig_msgs[trig_msg_str] = False  # Set retrieved Bool to False initially
+        for ssm in self.strings_msg_pool.take_items():
+            self.strings_msgs[ssm.key] = StringsMessage(ssm.value)
+
+        for tm in self.trig_msg_pool:
+            self.trig_msgs[tm] = False  # Set retrieved Bool to False initially
         # The other pools are Dicts so "take_items()" empties them, but since
         # trig_msg_pool is a Set, we have to clear it manually:
         self.trig_msg_pool.clear() 
 
-        for trigs_msg in self.trigs_msg_pool.take_items():
-            self.trigs_msgs[trigs_msg.key] = TrigsMessage(trigs_msg.value)
+        for tsm in self.trigs_msg_pool.take_items():
+            self.trigs_msgs[tsm.key] = TrigsMessage(tsm.value)
 
     # get_* functions retrieve messages from the Dicts *after* they have
     # been transferred from the pools to the Dicts. These functions are called
     # from a graph (likely via a Messenger instance) to get the latest message values.
     @always_inline
-    fn get_float(mut self, ref key: String) raises -> Optional[Float64]:
-        if key in self.float_msgs:
-            self.float_msgs[key].retrieved = True
-            return self.float_msgs[key].value
+    fn get_bool(mut self, ref key: String) raises -> Optional[Bool]:
+        if key in self.bool_msgs:
+            self.bool_msgs[key].retrieved = True
+            return self.bool_msgs[key].value
         return None
-
-    @always_inline
-    fn check_float(mut self, ref key: String) -> Bool:
-        return self.float_msgs.__contains__(key)
-
-    @always_inline
-    fn get_gate(mut self, ref key: String) raises -> Optional[Bool]:
-        if key in self.gate_msgs:
-            self.gate_msgs[key].retrieved = True
-            return self.gate_msgs[key].value
-        return None
-
-    @always_inline
-    fn check_gate(mut self, ref key: String) -> Bool:
-        return self.gate_msgs.__contains__(key)
-
-    @always_inline
-    fn get_floats(mut self: Self, ref key: String) raises-> Optional[List[Float64]]:
-        if key in self.floats_msgs:
-            self.floats_msgs[key].retrieved = True
-            # Copy is ok here because it will only copy when there is a
-            # new list for it to use, which should be rare. If the user
-            # is, like, streaming lists of tons of values, they should
-            # be using a different method, such as loading the data into
-            # a buffer ahead of time and reading from that.
-            return self.floats_msgs[key].value.copy()
-        return None
-        
-    @always_inline
-    fn check_floats(mut self, ref key: String) -> Bool:
-        return self.floats_msgs.__contains__(key)
 
     @always_inline
     fn get_bools(mut self: Self, ref key: String) raises-> Optional[List[Bool]]:
@@ -260,47 +248,25 @@ struct MessengerManager(Movable, Copyable):
             # a buffer ahead of time and reading from that.
             return self.bools_msgs[key].value.copy()
         return None
-        
-    @always_inline
-    fn check_bools(mut self, ref key: String) -> Bool:
-        return self.bools_msgs.__contains__(key)
     
     @always_inline
-    fn get_trig(mut self, ref key: String) -> Bool:
-        if key in self.trig_msgs:
-            self.trig_msgs[key] = True
-            return True
-        return False
-
-    @always_inline
-    fn check_trig(mut self, ref key: String) -> Bool:
-        return self.trig_msgs.__contains__(key)
-
-    @always_inline
-    fn get_trigs(mut self, ref key: String) raises -> Optional[List[Bool]]:
-        if key in self.trigs_msgs:
-            self.trigs_msgs[key].retrieved = True
-            return self.trigs_msgs[key].value.copy()
+    fn get_float(mut self, ref key: String) raises -> Optional[Float64]:
+        if key in self.float_msgs:
+            self.float_msgs[key].retrieved = True
+            return self.float_msgs[key].value
         return None
 
     @always_inline
-    fn check_trigs(mut self, ref key: String) -> Bool:
-        return self.trigs_msgs.__contains__(key)
-
-    # Unlike the other "get_*" functions, this one returns an Optional List of Strings
-    # because it doesn't make sense for there to be a default value for text messages.
-    @always_inline
-    fn get_texts(mut self, ref key: String) raises -> Optional[List[String]]:
-        if key in self.text_msgs:
-            self.text_msgs[key].retrieved = True
-            # Copy here is ok because text messages are expected
-            # to be rare, so this shouldn't happen often.
-            return self.text_msgs[key].values.copy()
+    fn get_floats(mut self: Self, ref key: String) raises-> Optional[List[Float64]]:
+        if key in self.floats_msgs:
+            self.floats_msgs[key].retrieved = True
+            # Copy is ok here because it will only copy when there is a
+            # new list for it to use, which should be rare. If the user
+            # is, like, streaming lists of tons of values, they should
+            # be using a different method, such as loading the data into
+            # a buffer ahead of time and reading from that.
+            return self.floats_msgs[key].value.copy()
         return None
-
-    @always_inline
-    fn check_texts(mut self, ref key: String) -> Bool:
-        return self.text_msgs.__contains__(key)
 
     @always_inline
     fn get_int(mut self, ref key: String) raises -> Optional[Int64]:
@@ -310,10 +276,6 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn check_int(mut self, ref key: String) -> Bool:
-        return self.int_msgs.__contains__(key)
-
-    @always_inline
     fn get_ints(mut self, ref key: String) raises -> Optional[List[Int64]]:
         if key in self.ints_msgs:
             self.ints_msgs[key].retrieved = True
@@ -321,47 +283,74 @@ struct MessengerManager(Movable, Copyable):
         return None
 
     @always_inline
-    fn check_ints(mut self, ref key: String) -> Bool:
-        return self.ints_msgs.__contains__(key)
+    fn get_string(mut self, ref key: String) raises -> Optional[String]:
+        if key in self.string_msgs:
+            self.string_msgs[key].retrieved = True
+            return self.string_msgs[key].value
+        return None
+
+    @always_inline
+    fn get_strings(mut self, ref key: String) raises -> Optional[List[String]]:
+        if key in self.strings_msgs:
+            self.strings_msgs[key].retrieved = True
+            return self.strings_msgs[key].value.copy()
+        return None
+
+    @always_inline
+    fn get_trig(mut self, key: String) -> Bool:
+        if key in self.trig_msgs:
+            self.trig_msgs[key] = True
+            return True
+        return False
+
+    @always_inline
+    fn get_trigs(mut self, key: String) raises -> Optional[List[Bool]]:
+        if key in self.trigs_msgs:
+            self.trigs_msgs[key].retrieved = True
+            return self.trigs_msgs[key].value.copy()
+        return None
 
     fn empty_msg_dicts(mut self):
-        for float_msgs in self.floats_msgs.take_items():
-            if not float_msgs.value.retrieved:
-                print("List message was not retrieved this block:", float_msgs.key)
+        for bool_msg in self.bool_msgs.take_items():
+            if not bool_msg.value.retrieved:
+                print("Bool message was not retrieved this block:", bool_msg.key)
+
+        for bools_msg in self.bools_msgs.take_items():
+            if not bools_msg.value.retrieved:
+                print("Bools message was not retrieved this block:", bools_msg.key)
 
         for float_msg in self.float_msgs.take_items():
             if not float_msg.value.retrieved:
                 print("Float message was not retrieved this block:", float_msg.key)
 
-        for gate_msg in self.gate_msgs.take_items():
-            if not gate_msg.value.retrieved:
-                print("Gate message was not retrieved this block:", gate_msg.key)
-
-        for bools_msg in self.bools_msgs.take_items():
-            if not bools_msg.value.retrieved:
-                print("Gates message was not retrieved this block:", bools_msg.key)
-        
-        for trig_msg in self.trig_msgs.take_items():
-            if not trig_msg.value: # It wasn't retrieved this block
-                print("Trig message", trig_msg.key, "was not retrieved this block.")
-
-        for trigs_msg in self.trigs_msgs.take_items():
-            if not trigs_msg.value.retrieved:
-                print("Trigs message", trigs_msg.key, "was not retrieved this block.")
-
-        for text_msg in self.text_msgs.take_items():
-            if not text_msg.value.retrieved:
-                print("Text message", text_msg.key, "was not retrieved this block.")
-                for val in text_msg.value.values:
-                    print("   Value:", val)
+        for floats_msg in self.floats_msgs.take_items():
+            if not floats_msg.value.retrieved:
+                print("Floats message was not retrieved this block:", floats_msg.key)
 
         for int_msg in self.int_msgs.take_items():
             if not int_msg.value.retrieved:
-                print("Int message", int_msg.key, "was not retrieved this block.")
+                print("Int message was not retrieved this block:", int_msg.key)
 
         for ints_msg in self.ints_msgs.take_items():
             if not ints_msg.value.retrieved:
-                print("Ints message", ints_msg.key, "was not retrieved this block.")
+                print("Ints message was not retrieved this block:", ints_msg.key)
+
+        for string_msg in self.string_msgs.take_items():
+            if not string_msg.value.retrieved:
+                print("String message was not retrieved this block:", string_msg.key)
+        
+        for strings_msg in self.strings_msgs.take_items():
+            if not strings_msg.value.retrieved:
+                print("Strings message was not retrieved this block:", strings_msg.key)
+
+        for tm in self.trig_msgs.take_items():
+            if not tm.value:
+                print("Trig message was not retrieved this block:", tm.key)
+
+        for trigs_msg in self.trigs_msgs.take_items():
+            if not trigs_msg.value.retrieved:
+                print("Trigs message was not retrieved this block:", trigs_msg.key)
+
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
