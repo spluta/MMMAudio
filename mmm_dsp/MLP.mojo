@@ -47,14 +47,9 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.file_name = String()
 
         try:
-            # Python.add_to_path("neural_nets/MLP.py")
             self.MLP = Python.import_module("mmm_dsp.MLP")
             self.torch = Python.import_module("torch")
             self.py_input = self.torch.zeros(1, input_size)  # Create a tensor with shape [1, 2] filled with zeros
-            # self.model = self.torch.jit.load(file_name)  # Load your PyTorch model
-            # self.model.eval()  # Set the model to evaluation mode
-            # for _ in range (5):
-            #     self.model(self.torch.randn(1, input_size))  # warm it up CHris
 
             self.inference_gate = True
             print("Torch model loaded successfully")

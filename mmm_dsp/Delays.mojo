@@ -29,14 +29,18 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """
     A variable delay line with Lagrange interpolation.
     
+    Delay
+
     Parameters:
+
       N: size of the SIMD vector - defaults to 1
+      
       interp: The interpolation method to use (0 = no interpolation, 1 = linear, 2 = cubic, 3 = Lagrange). See `struct DelayInterpOptions` for how you can specify the desired interpolation method with words rather than integers.
-      write_to_buffer: Whether to write the input sample to the delay buffer (True by default). If False, the delay line will not be updated with new samples. (This is useful for implementing feedback delays like comb filters where you want to control when samples are written to the delay line.)
-
-
+      
     Args:
+
       world_ptr: Pointer to the MMMWorld instance.
+      
       max_delay: The maximum delay time in seconds.
     """
 
