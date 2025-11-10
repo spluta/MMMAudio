@@ -26,11 +26,11 @@ struct Tone(Movable,Copyable):
         self.m.update(self.freq, "freq")
         self.m.update(self.gate, "gate")
 
-        # if self.m.has_new(self.freq, "freq"):
-        #     print("Tone freq updated to ", self.freq)
+        if self.m.has_new_float("freq"):
+            print("Tone freq updated to ", self.freq)
         
-        # if self.m.has_new(self.gate, "gate"):
-        #     print("Tone gate updated to ", self.gate)
+        if self.m.has_new_bool("gate"):
+            print("Tone gate updated to ", self.gate)
 
         sig = self.osc.next(self.freq) if self.gate else 0.0
 
@@ -73,37 +73,37 @@ struct TestMessengersRefactor():
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        if self.m.has_new(self.bool, "bool"):
+        if self.m.has_new_bool("bool"):
             self.m.update(self.bool, "bool")
             print("Updated bool to ", self.bool)
 
-        if self.m.has_new(self.bools, "bools"):
+        if self.m.has_new_bools("bools"):
             self.m.update(self.bools, "bools")
             print("Updated bools to ")
             for b in self.bools:
                 print("  ", b)
 
-        if self.m.has_new(self.float, "float"):
+        if self.m.has_new_float("float"):
             self.m.update(self.float, "float")
             print("Updated float to ", self.float)
-        
-        if self.m.has_new(self.floats, "floats"):
+
+        if self.m.has_new_floats("floats"):
             self.m.update(self.floats, "floats")
             print("Updated floats to ")
             for f in self.floats:
                 print("  ", f)
 
-        if self.m.has_new(self.int, "int"):
+        if self.m.has_new_int("int"):
             self.m.update(self.int, "int")
             print("Updated int to ", self.int)
 
-        if self.m.has_new(self.ints, "ints"):
+        if self.m.has_new_ints("ints"):
             self.m.update(self.ints, "ints")
             print("Updated ints to ")
             for i in self.ints:
                 print("  ", i)
 
-        if self.m.has_new(self.trig, "trig"):
+        if self.m.has_new_trig("trig"):
             self.m.update(self.trig, "trig")
             print("Received trig")
 
@@ -112,11 +112,11 @@ struct TestMessengersRefactor():
             if self.trigs[i]:
                 print("Received trig ", i)
 
-        if self.m.has_new(self.string, "string"):
+        if self.m.has_new_string("string"):
             self.m.update(self.string, "string")
             print("Updated string to ", self.string)
 
-        if self.m.has_new(self.strings, "strings"):
+        if self.m.has_new_strings("strings"):
             self.m.update(self.strings, "strings")
             print("Updated strings to ")
             for s in self.strings:

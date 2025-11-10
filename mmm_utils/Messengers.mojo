@@ -56,7 +56,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating bool message. Error: ", error)
     
     # has_new Bool
-    fn has_new(mut self, param: Bool, name: String) -> Bool:
+    fn has_new_bool(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.bool_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -75,7 +75,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating bool message. Error: ", error)
 
     # has_new List[Bool]
-    fn has_new(mut self, param: List[Bool], name: String) -> Bool:
+    fn has_new_bools(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.bools_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -94,7 +94,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float message. Error: ", error)
 
     # has_new Float64
-    fn has_new(mut self, param: Float64, name: String) -> Bool:
+    fn has_new_float(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.float_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -113,7 +113,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float list message. Error: ", error)
 
     # has_new List[Float64]
-    fn has_new(mut self, param: List[Float64], name: String) -> Bool:
+    fn has_new_floats(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.floats_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -132,7 +132,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating int message. Error: ", error)
 
     # has_new Int64
-    fn has_new(mut self, param: Int64, name: String) -> Bool:
+    fn has_new_int(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.int_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -151,7 +151,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating int list message. Error: ", error)
 
     # has_new List[Int64]
-    fn has_new(mut self, param: List[Int64], name: String) -> Bool:
+    fn has_new_ints(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.ints_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -170,7 +170,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating text message. Error: ", error)
 
     # has_new String
-    fn has_new(mut self, param: String, name: String) -> Bool:
+    fn has_new_string(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.string_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -189,7 +189,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating text message. Error: ", error)
 
     # has_new List[String]
-    fn has_new(mut self, param: List[String], name: String) -> Bool:
+    fn has_new_strings(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.strings_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -206,7 +206,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating trig message. Error: ", error)
 
     # has_new Trig
-    fn has_new(mut self, param: Trig, name: String) -> Bool:
+    fn has_new_trig(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.trig_msgs.__contains__(self.get_name_with_namespace(name)[])
@@ -228,7 +228,7 @@ struct Messenger(Copyable, Movable):
                 t.state = False
 
     # has_new List[Trig]
-    fn has_new(mut self, param: List[Trig], name: String) -> Bool:
+    fn has_new_trigs(mut self, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 return self.world_ptr[].messengerManager.trigs_msgs.__contains__(self.get_name_with_namespace(name)[])
