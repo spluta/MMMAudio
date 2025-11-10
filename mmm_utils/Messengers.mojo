@@ -54,14 +54,17 @@ struct Messenger(Copyable, Movable):
                     param = opt.value()
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
-    
-    # has_new Bool
-    fn has_new_bool(mut self, name: String) -> Bool:
+
+    # update_changed Bool
+    fn update_changed(mut self, mut param: Bool, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.bool_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
             except error:
-                print("Error occurred while checking for new bool message. Error: ", error)
+                print("Error occurred while updating bool message. Error: ", error)
         return False
 
     # update List[Bool]
@@ -74,13 +77,16 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
-    # has_new List[Bool]
-    fn has_new_bools(mut self, name: String) -> Bool:
+    # update_changed List[Bool]
+    fn update_changed(mut self, mut param: List[Bool], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.bools_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
             except error:
-                print("Error occurred while checking for new bool list message. Error: ", error)
+                print("Error occurred while updating bool message. Error: ", error)
         return False
 
     # update Float64
@@ -93,13 +99,16 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
-    # has_new Float64
-    fn has_new_float(mut self, name: String) -> Bool:
+    # update_changed Float64
+    fn update_changed(mut self, mut param: Float64, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.float_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
             except error:
-                print("Error occurred while checking for new float message. Error: ", error)
+                print("Error occurred while updating float message. Error: ", error)
         return False
 
     # update List[Float64]
@@ -112,13 +121,16 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float list message. Error: ", error)
 
-    # has_new List[Float64]
-    fn has_new_floats(mut self, name: String) -> Bool:
+    # update_changed List[Float64]
+    fn update_changed(mut self, mut param: List[Float64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.floats_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
             except error:
-                print("Error occurred while checking for new float list message. Error: ", error)
+                print("Error occurred while updating float list message. Error: ", error)
         return False
 
     # update Int64
@@ -131,13 +143,16 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating int message. Error: ", error)
 
-    # has_new Int64
-    fn has_new_int(mut self, name: String) -> Bool:
+    # update_changed Int64
+    fn update_changed(mut self, mut param: Int64, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.int_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
             except error:
-                print("Error occurred while checking for new int message. Error: ", error)
+                print("Error occurred while updating int message. Error: ", error)
         return False
 
     # update List[Int64]
@@ -152,13 +167,16 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating int list message. Error: ", error)
         return False
 
-    # has_new List[Int64]
-    fn has_new_ints(mut self, name: String) -> Bool:
+    # update_changed List[Int64]
+    fn update_changed(mut self, mut param: List[Int64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.ints_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
             except error:
-                print("Error occurred while checking for new int list message. Error: ", error)
+                print("Error occurred while updating int list message. Error: ", error)
         return False
 
     # update String
@@ -171,13 +189,16 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating text message. Error: ", error)
 
-    # has_new String
-    fn has_new_string(mut self, name: String) -> Bool:
+    # update_changed String
+    fn update_changed(mut self, mut param: String, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.string_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_string(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
             except error:
-                print("Error occurred while checking for new string message. Error: ", error)
+                print("Error occurred while updating text message. Error: ", error)
         return False
 
     # update List[String]
@@ -189,14 +210,17 @@ struct Messenger(Copyable, Movable):
                     param = opt.value().copy()
             except error:
                 print("Error occurred while updating text message. Error: ", error)
-
-    # has_new List[String]
-    fn has_new_strings(mut self, name: String) -> Bool:
+    
+    # update_changed List[String]
+    fn update_changed(mut self, mut param: List[String], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.strings_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
             except error:
-                print("Error occurred while checking for new string list message. Error: ", error)
+                print("Error occurred while updating text message. Error: ", error)
         return False
 
     # update Trig
@@ -207,13 +231,14 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
 
-    # has_new Trig
-    fn has_new_trig(mut self, name: String) -> Bool:
+    # update_changed Trig
+    fn update_changed(mut self, mut param: Trig, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.trig_msgs.__contains__(self.get_name_with_namespace(name)[])
+                param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+                return param.state
             except error:
-                print("Error occurred while checking for new trig message. Error: ", error)
+                print("Error occurred while updating trig message. Error: ", error)
         return False
 
     # update List[Trig]
@@ -229,13 +254,19 @@ struct Messenger(Copyable, Movable):
             for ref t in param:
                 t.state = False
 
-    # has_new List[Trig]
-    fn has_new_trigs(mut self, name: String) -> Bool:
+    # update_changed List[Trig]
+    fn update_changed(mut self, mut param: List[Trig], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
-                return self.world_ptr[].messengerManager.trigs_msgs.__contains__(self.get_name_with_namespace(name)[])
+                var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = [Trig(v) for v in opt.value()]
+                    return True
             except error:
-                print("Error occurred while checking for new trig list message. Error: ", error)
+                print("Error occurred while updating trig message. Error: ", error)
+        elif self.world_ptr[].block_state == 1:
+            for ref t in param:
+                t.state = False
         return False
 
 struct Trig(Representable, Writable, Boolable, Copyable, Movable):
