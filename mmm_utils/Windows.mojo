@@ -7,6 +7,7 @@ struct WindowTypes:
     alias hamming: Int = 1
     alias blackman: Int = 2
     alias kaiser: Int = 3
+    alias sine: Int = 4
 
 fn bessel_i0(x: Float64) -> Float64:
     """
@@ -155,5 +156,19 @@ fn blackman_window(n: Int64) -> List[Float64]:
     for i in range(n):
         var value = 0.42 - 0.5 * cos(2.0 * pi * Float64(i) / Float64(n - 1)) + \
                     0.08 * cos(4.0 * pi * Float64(i) / Float64(n - 1))
+        window.append(value)
+    return window.copy()
+
+fn sine_window(n: Int64) -> List[Float64]:
+    """
+    Generate a Sine window of length n.
+    Args:
+        n: Length of the window
+    Returns:
+        List containing the Sine window values
+    """
+    var window = List[Float64]()
+    for i in range(n):
+        var value = sin(pi * Float64(i) / Float64(n - 1))
         window.append(value)
     return window.copy()

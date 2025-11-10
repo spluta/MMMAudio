@@ -106,6 +106,8 @@ struct TestMessengersRefactor():
         #     for i in self.ints:
         #         print("  ", i)
 
+        self.m.update(self.ints, "ints")
+
         if self.m.update(self.ints, "ints"):
             print("Updated ints to:", end="")
             for i in self.ints:
