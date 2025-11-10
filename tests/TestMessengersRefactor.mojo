@@ -73,9 +73,12 @@ struct TestMessengersRefactor():
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
+        # if self.m.has_new_bool("bool"):
+        #     self.m.update(self.bool, "bool")
+        #     print("Updated bool to ", self.bool)
+        self.m.update(self.bool, "bool")
         if self.m.has_new_bool("bool"):
-            self.m.update(self.bool, "bool")
-            print("Updated bool to ", self.bool)
+            print("Bool value is now: " + String(self.bool))
 
         if self.m.has_new_bools("bools"):
             self.m.update(self.bools, "bools")
@@ -83,9 +86,9 @@ struct TestMessengersRefactor():
             for b in self.bools:
                 print("  ", b)
 
+        self.m.update(self.float, "float")
         if self.m.has_new_float("float"):
-            self.m.update(self.float, "float")
-            print("Updated float to ", self.float)
+            print("Float value is now: " + String(self.float))
 
         if self.m.has_new_floats("floats"):
             self.m.update(self.floats, "floats")
@@ -97,11 +100,17 @@ struct TestMessengersRefactor():
             self.m.update(self.int, "int")
             print("Updated int to ", self.int)
 
-        if self.m.has_new_ints("ints"):
-            self.m.update(self.ints, "ints")
-            print("Updated ints to ")
+        # if self.m.has_new_ints("ints"):
+        #     self.m.update(self.ints, "ints")
+        #     print("Updated ints to ")
+        #     for i in self.ints:
+        #         print("  ", i)
+
+        if self.m.update(self.ints, "ints"):
+            print("Updated ints to:", end="")
             for i in self.ints:
-                print("  ", i)
+                print("  ", i, end="")
+            print("")
 
         if self.m.has_new_trig("trig"):
             self.m.update(self.trig, "trig")

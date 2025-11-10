@@ -141,14 +141,16 @@ struct Messenger(Copyable, Movable):
         return False
 
     # update List[Int64]
-    fn update(mut self, mut param: List[Int64], ref name: String):
+    fn update(mut self, mut param: List[Int64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
+                    return True
             except error:
                 print("Error occurred while updating int list message. Error: ", error)
+        return False
 
     # has_new List[Int64]
     fn has_new_ints(mut self, name: String) -> Bool:
