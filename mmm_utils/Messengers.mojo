@@ -55,8 +55,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
-    # update_changed Bool
-    fn update_changed(mut self, mut param: Bool, name: String) -> Bool:
+    # notify_update Bool
+    fn notify_update(mut self, mut param: Bool, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
@@ -77,8 +77,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating bool message. Error: ", error)
 
-    # update_changed List[Bool]
-    fn update_changed(mut self, mut param: List[Bool], name: String) -> Bool:
+    # notify_update List[Bool]
+    fn notify_update(mut self, mut param: List[Bool], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
@@ -99,8 +99,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float message. Error: ", error)
 
-    # update_changed Float64
-    fn update_changed(mut self, mut param: Float64, name: String) -> Bool:
+    # notify_update Float64
+    fn notify_update(mut self, mut param: Float64, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_float(self.get_name_with_namespace(name)[])
@@ -121,8 +121,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float list message. Error: ", error)
 
-    # update_changed List[Float64]
-    fn update_changed(mut self, mut param: List[Float64], ref name: String) -> Bool:
+    # notify_update List[Float64]
+    fn notify_update(mut self, mut param: List[Float64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
@@ -143,8 +143,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating int message. Error: ", error)
 
-    # update_changed Int64
-    fn update_changed(mut self, mut param: Int64, name: String) -> Bool:
+    # notify_update Int64
+    fn notify_update(mut self, mut param: Int64, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_int(self.get_name_with_namespace(name)[])
@@ -167,8 +167,8 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating int list message. Error: ", error)
         return False
 
-    # update_changed List[Int64]
-    fn update_changed(mut self, mut param: List[Int64], ref name: String) -> Bool:
+    # notify_update List[Int64]
+    fn notify_update(mut self, mut param: List[Int64], ref name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
@@ -189,8 +189,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating text message. Error: ", error)
 
-    # update_changed String
-    fn update_changed(mut self, mut param: String, name: String) -> Bool:
+    # notify_update String
+    fn notify_update(mut self, mut param: String, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_string(self.get_name_with_namespace(name)[])
@@ -211,8 +211,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating text message. Error: ", error)
     
-    # update_changed List[String]
-    fn update_changed(mut self, mut param: List[String], name: String) -> Bool:
+    # notify_update List[String]
+    fn notify_update(mut self, mut param: List[String], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
@@ -231,8 +231,8 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
 
-    # update_changed Trig
-    fn update_changed(mut self, mut param: Trig, name: String) -> Bool:
+    # notify_update Trig
+    fn notify_update(mut self, mut param: Trig, name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
@@ -254,8 +254,8 @@ struct Messenger(Copyable, Movable):
             for ref t in param:
                 t.state = False
 
-    # update_changed List[Trig]
-    fn update_changed(mut self, mut param: List[Trig], name: String) -> Bool:
+    # notify_update List[Trig]
+    fn notify_update(mut self, mut param: List[Trig], name: String) -> Bool:
         if self.world_ptr[].top_of_block:
             try:
                 var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
