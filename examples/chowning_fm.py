@@ -61,7 +61,7 @@ mmm_audio.send_floats("amp_curves",[1, 1, 1])
 mmm_audio.send_floats("index_vals",[4, 2])
 mmm_audio.send_floats("index_times",[0.073])
 mmm_audio.send_floats("index_curves",[1])
-mmm_audio.send_floats("trigger",[1.0])
+mmm_audio.send_trig("trigger")
 
 # stop audio
 mmm_audio.stop_audio()

@@ -94,9 +94,7 @@ struct ManyOscillators(Copyable, Movable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        self.messenger.update(self.num_pairs,"num_pairs")
-
-        if self.world_ptr[0].top_of_block:
+        if self.messenger.notify_update(self.num_pairs,"num_pairs"):
             if len(self.synths) != Int(self.num_pairs):
                 if self.num_pairs > len(self.synths):
                     # add more

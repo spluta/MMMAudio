@@ -68,18 +68,16 @@ struct Record_Synth(Representable, Movable, Copyable):
         print("Recording stopped. Now playing.")
 
     fn next(mut self) -> SIMD[DType.float64, 1]:
-        
-        if self.world_ptr[0].top_of_block:
-            var temp_input_chan: Int64 = 0
-            self.messenger.update(temp_input_chan,"set_input_chan")
-            if temp_input_chan >= 0 and temp_input_chan < self.world_ptr[0].num_in_chans:
-                self.input_chan = temp_input_chan
+        if self.messenger.notify_update(self.input_chan,"set_input_chan"):
+            if self.input_chan < 0 and self.input_chan >= self.world_ptr[0].num_in_chans:
+                print("Input channel out of range, resetting to 0")
+                self.input_chan = 0
 
-            notified = self.messenger.notify_update(self.is_recording,"is_recording")
-            if notified and self.is_recording:
-                self.start_recording()
-            elif notified and not self.is_recording:
-                self.stop_recording()
+        notified = self.messenger.notify_update(self.is_recording,"is_recording")
+        if notified and self.is_recording:
+            self.start_recording()
+        elif notified and not self.is_recording:
+            self.stop_recording()
 
         # this code does the actual recording, placing the next sample into the buffer
         # my audio interface has audio in on channel 9, so I use self.world_ptr[0].sound_in[8]

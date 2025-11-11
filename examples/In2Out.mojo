@@ -19,10 +19,9 @@ struct In2Out(Representable, Movable, Copyable):
         return String("In2Out")
 
     fn next(mut self) -> SIMD[DType.float64, 16]:
-        if self.world_ptr[0].top_of_block:
-            if self.messenger.notify_update(self.trig,"print_inputs"):
-                for i in range(self.world_ptr[0].num_in_chans):
-                    print("input[", i, "] =", self.world_ptr[0].sound_in[i])
+        if self.messenger.notify_update(self.trig,"print_inputs"):
+            for i in range(self.world_ptr[0].num_in_chans):
+                print("input[", i, "] =", self.world_ptr[0].sound_in[i])
 
         # the SIMD vector has to be a power of 2
         output = SIMD[DType.float64, 16](0.0)
