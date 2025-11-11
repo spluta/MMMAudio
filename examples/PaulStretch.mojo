@@ -12,7 +12,7 @@ from mmm_dsp.Osc import LFSaw
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 1024
+alias window_size = 8192
 alias hop_size = window_size // 2
 
 struct PaulStretchWindow[window_size: Int](BufferedProcessable):
@@ -60,7 +60,7 @@ struct PaulStretch(Movable, Copyable):
         self.paul_stretch = BufferedProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
         self.paul_stretch2 = BufferedProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
         self.m = Messenger(world_ptr)
-        self.dur_mult = 100.0
+        self.dur_mult = 20.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.dur_mult,"dur_mult")
