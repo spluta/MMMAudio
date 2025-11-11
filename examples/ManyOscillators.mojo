@@ -72,7 +72,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 # This graph is what MMMAudio will call upon to make sound with (because
 # it is the struct that has the same name as this).
 
-struct ManyOscillators(Messagable):
+struct ManyOscillators(Copyable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
     var synths: List[StereoBeatingSines]  # Instances of the StereoBeatingSines synth
     var messenger: Messenger
@@ -90,14 +90,12 @@ struct ManyOscillators(Messagable):
         # add 10 pairs to the list
         for _ in range(self.num_pairs):
             self.synths.append(StereoBeatingSines(self.world_ptr, random_exp_float64(100.0, 1000.0)))
-        self.register_messages()
-
-    fn register_messages(mut self):
-        self.messenger.register(self.num_pairs, "set_num_pairs")
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.messenger.update()
+
+        self.messenger.update(self.num_pairs,"num_pairs")
+
         if self.world_ptr[0].top_of_block:
             if len(self.synths) != Int(self.num_pairs):
                 if self.num_pairs > len(self.synths):

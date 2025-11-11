@@ -68,8 +68,7 @@ struct WavetableOsc(Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.chans_per_channel, "chans_per_channel")
-        new_file = self.messenger.update(self.file_name, "load_file")
-        if new_file:
+        if self.messenger.notify_update(self.file_name, "load_file"):
             # if we get a new file name, load it into the buffer
             self.buffer = Buffer(self.file_name, chans_per_channel=256)
 

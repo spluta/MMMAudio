@@ -86,7 +86,7 @@ async def trig_synth(wait):
     fund = midicps(fund_seq.next())
     while True:
         voice = "voice_" + str(voice_seq.next())
-        mmm_audio.send_list(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
+        mmm_audio.send_floats(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         i = (i + 1) % count_to
         if i == 0:

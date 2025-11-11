@@ -1,24 +1,26 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messengers import *
 
 
 # this is the simplest possible
 struct In2Out(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var messenger: Messenger
+    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.messenger = Messenger(world_ptr)
+        self.trig = Trig()
 
     fn __repr__(self) -> String:
         return String("In2Out")
 
     fn next(mut self) -> SIMD[DType.float64, 16]:
         if self.world_ptr[0].top_of_block:
-            if self.messenger.triggered("print_inputs"):
+            if self.messenger.notify_update(self.trig,"print_inputs"):
                 for i in range(self.world_ptr[0].num_in_chans):
                     print("input[", i, "] =", self.world_ptr[0].sound_in[i])
 

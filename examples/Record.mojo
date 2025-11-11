@@ -16,7 +16,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buf_dur: Float64
     var buffer: Buffer
-    var is_recording: Float64
+    var is_recording: Bool
     var is_playing: Float64
     var playback_speed: Float64
     var trig: Bool
@@ -32,7 +32,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr
         self.buf_dur = 10.0  # seconds
         self.buffer = Buffer(1, Int64(self.world_ptr[0].sample_rate*self.buf_dur), self.world_ptr[0].sample_rate)
-        self.is_recording = 0.0
+        self.is_recording = False
         self.is_playing = 0.0
         self.trig = False
         self.playback_speed = 1.0
@@ -50,7 +50,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     fn start_recording(mut self):
         self.note_time = time.perf_counter()
         self.write_pos = 0
-        self.is_recording = 1.0
+        self.is_recording = True
         self.is_playing = 0.0
         self.trig = False
         print("Recording started")
@@ -59,7 +59,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         self.note_time = min(time.perf_counter() - self.note_time, self.buf_dur)
         self.num_frames = floor(self.note_time*self.world_ptr[0].sample_rate)
         self.note_time = self.num_frames / self.world_ptr[0].sample_rate
-        self.is_recording = 0.0
+        self.is_recording = False
         self.is_playing = 1.0
         self.trig = True
         self.write_pos = 0
@@ -70,16 +70,15 @@ struct Record_Synth(Representable, Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 1]:
         
         if self.world_ptr[0].top_of_block:
-            input_chan = self.messenger.get_val("set_input_chan", 0)
-            if input_chan >= 0 and Int64(input_chan) < self.world_ptr[0].num_in_chans:
-                self.input_chan = Int64(input_chan)
+            var temp_input_chan: Int64 = 0
+            self.messenger.update(temp_input_chan,"set_input_chan")
+            if temp_input_chan >= 0 and temp_input_chan < self.world_ptr[0].num_in_chans:
+                self.input_chan = temp_input_chan
 
-            start = self.messenger.triggered("start_recording")
-            if start > 0:
+            notified = self.messenger.notify_update(self.is_recording,"is_recording")
+            if notified and self.is_recording:
                 self.start_recording()
-
-            stop = self.messenger.triggered("stop_recording")
-            if stop > 0:
+            elif notified and not self.is_recording:
                 self.stop_recording()
 
         # this code does the actual recording, placing the next sample into the buffer
@@ -89,7 +88,7 @@ struct Record_Synth(Representable, Movable, Copyable):
             self.buffer.write(self.world_ptr[0].sound_in[self.input_chan], self.write_pos)
             self.write_pos += 1
             if self.write_pos >= Int(self.buffer.num_frames):
-                self.is_recording = 0.0
+                self.is_recording = False
                 print("Recording stopped: buffer full")
                 self.is_playing = 1.0
                 self.trig = True

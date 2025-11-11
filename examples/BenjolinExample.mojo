@@ -80,20 +80,6 @@ struct Benjolin(Representable, Movable, Copyable):
         self.outSignalL = 1
         self.outSignalR = 3
 
-        self.m.register(self.freq1,"freq1")
-        self.m.register(self.freq2,"freq2")
-        self.m.register(self.scale,"scale")
-        self.m.register(self.rungler1,"rungler1")
-        self.m.register(self.rungler2,"rungler2")
-        self.m.register(self.runglerFiltMul,"runglerFiltMul")
-        self.m.register(self.loop,"loop")
-        self.m.register(self.filterFreq,"filterFreq")
-        self.m.register(self.q,"q")
-        self.m.register(self.gain,"gain")
-        self.m.register(self.filterType,"filterType")
-        self.m.register(self.outSignalL,"outSignalL")
-        self.m.register(self.outSignalR,"outSignalR")
-
         for _ in range(8):
             self.delays.append(Delay[1,3](self.world_ptr, max_delay_time=0.1))
             self.latches.append(Latch(self.world_ptr))
@@ -111,7 +97,19 @@ struct Benjolin(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        self.m.update()
+        self.m.update(self.freq1,"freq1")
+        self.m.update(self.freq2,"freq2")
+        self.m.update(self.scale,"scale")
+        self.m.update(self.rungler1,"rungler1")
+        self.m.update(self.rungler2,"rungler2")
+        self.m.update(self.runglerFiltMul,"runglerFiltMul")
+        self.m.update(self.loop,"loop")
+        self.m.update(self.filterFreq,"filterFreq")
+        self.m.update(self.q,"q")
+        self.m.update(self.gain,"gain")
+        self.m.update(self.filterType,"filterType")
+        self.m.update(self.outSignalL,"outSignalL")
+        self.m.update(self.outSignalR,"outSignalR")
         
         tri1 = self.tri1.next((self.rungler*self.rungler1)+self.freq1,osc_type=3)
         tri2 = self.tri2.next((self.rungler*self.rungler2)+self.freq2,osc_type=3)

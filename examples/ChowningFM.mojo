@@ -4,7 +4,7 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Osc import Osc
 from mmm_dsp.Env import *
 from collections import Dict
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messengers import *
 
 struct ChowningFM(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
@@ -15,6 +15,10 @@ struct ChowningFM(Representable, Movable, Copyable):
     var index_env_params: EnvParams
     var amp_env: Env
     var amp_env_params: EnvParams
+    var cfreq: Float64
+    var mfreq: Float64
+    var vol: Float64
+    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -25,46 +29,37 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.index_env_params = EnvParams()
         self.amp_env = Env(world_ptr)
         self.amp_env_params = EnvParams()
-
+        self.cfreq = 200.0
+        self.mfreq = 100.0
+        self.vol = -12.0
+        self.trig = Trig()
 
     fn __repr__(self) -> String:
         return String("ChowningFM")
 
     @always_inline
     fn update_envs(mut self):
-        index_vals = self.m.get_list("index_vals")
-        if len(index_vals) > 0:
-            self.index_env_params.values = index_vals^
-        index_times = self.m.get_list("index_times")
-        if len(index_times) > 0:
-            self.index_env_params.times = index_times^
-        index_curves = self.m.get_list("index_curves")
-        if len(index_curves) > 0:
-            self.index_env_params.curves = index_curves^
         
-        amp_vals = self.m.get_list("amp_vals")
-        if len(amp_vals) > 0:
-            self.amp_env_params.values = amp_vals^
-        amp_times = self.m.get_list("amp_times")
-        if len(amp_times) > 0:
-            self.amp_env_params.times = amp_times^
-        amp_curves = self.m.get_list("amp_curves")
-        if len(amp_curves) > 0:
-            self.amp_env_params.curves = amp_curves^
+        self.m.update(self.index_env_params.values,"index_vals")
+        self.m.update(self.index_env_params.times,"index_times")
+        self.m.update(self.index_env_params.curves,"index_curves")
+        self.m.update(self.amp_env_params.values,"amp_vals")
+        self.m.update(self.amp_env_params.times,"amp_times")
+        self.m.update(self.amp_env_params.curves,"amp_curves")
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        cfreq = self.m.get_val("c_freq", 100)
-        mfreq = self.m.get_val("m_freq", 20)
-        vol = self.m.get_val("vol", -12)
-        trig = self.m.triggered("trigger")
+        self.m.update(self.cfreq,"c_freq")
+        self.m.update(self.mfreq,"m_freq")
+        self.m.update(self.vol,"vol")
+        self.m.update(self.trig,"trigger")
         self.update_envs()
 
-        index = self.index_env.next(self.index_env_params, trig)
-        msig = self.m_osc.next(mfreq) * mfreq * index        
-        csig = self.c_osc.next(cfreq + msig)
-        csig *= self.amp_env.next(self.amp_env_params, trig)
-        csig *= dbamp(vol)
+        index = self.index_env.next(self.index_env_params, self.trig)
+        msig = self.m_osc.next(self.mfreq) * self.mfreq * index
+        csig = self.c_osc.next(self.cfreq + msig)
+        csig *= self.amp_env.next(self.amp_env_params, self.trig)
+        csig *= dbamp(self.vol)
 
         return csig

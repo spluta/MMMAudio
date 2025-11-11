@@ -269,7 +269,7 @@ struct Messenger(Copyable, Movable):
                 t.state = False
         return False
 
-struct Trig(Representable, Writable, Boolable, Copyable, Movable):
+struct Trig(Representable, Writable, Boolable, Copyable, Movable, ImplicitlyBoolable):
     """A 'Trigger' that can be controlled from Python.
 
     It is either True (triggered) or False (not triggered). 
