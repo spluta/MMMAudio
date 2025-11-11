@@ -39,7 +39,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.torch = PythonObject(None) 
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
-        self.fake_model_output = List[Float64](0.0)    
+        self.fake_model_output = [0.0 for _ in range(output_size)]    
         self.inference_trig = Impulse(self.world_ptr)
         self.inference_gate = True
         self.trig_rate = trig_rate
@@ -87,21 +87,19 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         """
         self.messenger.update(self.inference_gate, "toggle_inference")
         
-        if self.messenger.check_texts("load_mlp_training"):
+        if self.messenger.notify_update(self.file_name, "load_mlp_training"):
             file_name = ""
             self.messenger.update(file_name, "load_mlp_training")
             print("loading model from file: ", file_name)
             self.reload_model(file_name)
 
         if not self.inference_gate:
-            if self.messenger.check_floats("fake_model_output"):
-                fake_model_output = List[Float64]()
-                self.messenger.update(fake_model_output, "fake_model_output")
+            if self.messenger.notify_update(self.fake_model_output,"fake_model_output"):
                 @parameter
                 for i in range(self.output_size):
-                    if i < len(fake_model_output):
-                        self.model_output[Int(i)] = fake_model_output[i]
-
+                    if i < len(self.fake_model_output):
+                        self.model_output[Int(i)] = self.fake_model_output[i]
+                        
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
             if self.torch is None:
