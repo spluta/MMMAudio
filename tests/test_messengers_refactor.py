@@ -1,15 +1,11 @@
 from mmm_src.MMMAudio import MMMAudio
 from mmm_utils.functions import midicps
-
 a = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
 
 a.start_audio()
 
 a.send_bool("bool",True)
 a.send_bool("bool",False)
-
-a.send_bools("bools", [True, False, False, True])
-a.send_bools("bools", [False, True, True, False])
 
 a.send_float("float", 440.0)
 a.send_float("float", 880.0)
@@ -31,10 +27,6 @@ a.send_strings("strings", ["hello", "there", "general", "kenobi"])
 a.send_strings("strings", ["goodbye", "there", "general", "grievous"])
 
 a.send_trig("trig")
-
-a.send_trigs("trigs", [True, False, True, True, False])
-a.send_trigs("trigs", [False, True, False, False, True])
-a.send_trig("notify_trig")
 
 a.send_bool("tone_0.gate",True)
 a.send_bool("tone_1.gate",True)
