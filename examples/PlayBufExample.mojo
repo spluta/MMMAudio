@@ -43,9 +43,8 @@ struct BufSynth(Representable, Movable, Copyable):
         self.messenger = Messenger(self.world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world_ptr[0].top_of_block:
-            self.play_rate = self.messenger.get_val("play_rate", 1.0)
-            self.lpf_freq = self.messenger.get_val("lpf_freq", 20000.0)
+        self.messenger.update(self.lpf_freq, "lpf_freq")
+        self.messenger.update(self.play_rate, "play_rate")
 
         out = self.play_buf.next[N=2](self.buffer, 0, self.play_rate, True)
 

@@ -95,11 +95,12 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
     """
     return 20.0 * log10(amp)
 
+# I changed this to only work with Floats, because I don't see how it would work with Ints
 @always_inline
-fn select[dtype: DType, width: Int](index: SIMD[dtype, width], list: List[SIMD[dtype, width]]) -> SIMD[dtype, width]:
+fn select[width: Int](index: Float64, list: List[SIMD[DType.float64, width]]) -> SIMD[DType.float64, width]:
     index_int = Int(index) % len(list)
-    index_mix = index - index_int
-    val = list[index_int] * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
+    index_mix: Float64 = index - index_int
+    val: SIMD[DType.float64, width] = SIMD[DType.float64](list[index_int]) * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
     return val
 
 @always_inline
@@ -188,33 +189,6 @@ fn linexp[width: Int, //
 
     return below_min.select(out_min,
         above_max.select(out_max, exponential_scaled))
-    # # Create condition masks
-    # below_min: SIMD[DType.bool, width] = input < in_min
-    # above_max: SIMD[DType.bool, width] = input > in_max
-
-    # # Safety checks
-    # zero_range: SIMD[DType.bool, width] = in_max == in_min
-    # zero_out_min: SIMD[DType.bool, width] = out_min == 0.0
-
-    # # Compute normalized values (safe division)
-    # safe_in_range = zero_range.select(1, in_max - in_min)
-    # normalized = (input - in_min) / safe_in_range
-
-    # # Compute exponential scaling with safety for out_min = 0
-    # safe_out_min = zero_out_min.select(0.001, out_min)
-    # ratio = out_max / safe_out_min
-    # exponential_scaled = zero_out_min.select( 
-    #                             out_max * normalized,  # Linear fallback when out_min = 0
-    #                             out_min * pow(ratio, normalized))
-
-    # # Handle zero range case (use out_min when range is zero)
-    # final_scaled = zero_range.select(out_min, exponential_scaled)
-
-    # # Apply all conditions
-    # result = below_min.select(out_min,
-    #             above_max.select(out_max, final_scaled))
-
-    # return result
 
 @always_inline
 fn lincurve[width: Int, //

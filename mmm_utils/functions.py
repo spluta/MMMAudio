@@ -1,5 +1,6 @@
 import numpy as np
 import math
+import random
 
 def linlin(value, in_min, in_max, out_min, out_max):
     """

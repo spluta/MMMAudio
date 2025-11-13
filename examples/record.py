@@ -13,14 +13,11 @@ if True:
     mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
     # the default input channel (in the Record_Synth) is 0, but you can change it
-    mmm_audio.send_msg("set_input_chan", 8) 
+    mmm_audio.send_int("set_input_chan", 8) 
     mmm_audio.start_audio() 
 
-
-mmm_audio.send_msg("print_inputs")
-
-mmm_audio.send_msg("start_recording")
-mmm_audio.send_msg("stop_recording")
+mmm_audio.send_bool("is_recording", True)
+mmm_audio.send_bool("is_recording", False)
 
 # this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 if True:
@@ -46,9 +43,9 @@ if True:
                 print(msg)
 
                 if msg.type == "note_on" and msg.note == 48:
-                    mmm_audio.send_msg("start_recording")
+                    mmm_audio.send_bool("is_recording", True)
                 elif msg.type == "note_off" and msg.note == 48:
-                    mmm_audio.send_msg("stop_recording")
+                    mmm_audio.send_bool("is_recording", False)
             time.sleep(0.01)
 
     # Start the thread

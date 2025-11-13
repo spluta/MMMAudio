@@ -57,6 +57,17 @@ class Pseq:
         if self.index > len(self.list):
             self.index = 0
         return self.list[self.index]
+
+    def go_back(self, n=1):
+        """
+        Move the sequence index back by n steps.
+        
+        Args:
+            n: Number of steps to move back in the sequence
+        """
+        if not self.list:
+            return
+        self.index = (self.index - n) % len(self.list)
     
 class Prand:
     """
@@ -146,3 +157,43 @@ class Pxrand:
         self.last_index = (self.last_index + randint(1, len(self.list) - 1)) % len(self.list)
         return self.list[self.last_index]
 
+class PVoiceAllocator:
+    """
+    Voice allocator for managing polyphonic voice assignments.
+    
+    PVoiceAllocator keeps track of busy and free voices for
+    polyphonic synthesis, allowing for efficient voice allocation
+    and deallocation.
+    
+    Attributes:
+        num_voices: Total number of voices available
+        busy_list: List tracking the status of each voice (-1 for free,
+                   otherwise holds the note number)
+    """
+    def __init__(self, num_voices):
+        self.num_voices = num_voices
+        self.busy_list = [-1] * num_voices
+        self.counter = 0
+        self.voice_seq = Pseq(list(range(num_voices)))
+
+    def get_free_voice(self, note):
+        counter = 0
+        found = False
+        while not found and counter < 8:
+            voice = self.voice_seq.next()
+            if self.busy_list[voice] == -1:
+                self.busy_list[voice] = note
+                found = True
+                return voice
+            counter += 1
+        return -1  # all voices are busy
+
+    def release_voice(self, note):
+        counter = 0
+        found = False
+        while not found and counter < self.num_voices:
+            if self.busy_list[counter] == note:
+                self.busy_list[counter] = -1
+                return (True, counter)
+            counter += 1
+        return (False, -1)    

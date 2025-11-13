@@ -4,12 +4,12 @@
 from mmm_src.MMMAudio import MMMAudio
 
 # instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="DefaultGraph", package_name="examples")
+mmm_audio = MMMAudio(128, graph_name="DefaultGraph", package_name="user_files")
 mmm_audio.start_audio() 
 
 # set the frequency to a random value
 from random import random
-mmm_audio.send_msg("freq", random() * 500 + 100, random() * 500 + 100, random() * 500 + 100) # set the frequency to a random value    
+mmm_audio.send_float("freq", random() * 500 + 100) # set the frequency to a random value    
 
 import mido
 import time
@@ -26,7 +26,7 @@ def start_midi():
     while True:
         for msg in in_port.iter_pending():
             if msg.type == "note_on":
-                mmm_audio.send_msg("freq", midicps(msg.note))  # send the midi message to mmm
+                mmm_audio.send_float("freq", midicps(msg.note))  # send the midi message to mmm
         time.sleep(0.01) # Small delay to prevent busy-waiting
 
 midi_thread = threading.Thread(target=start_midi, daemon=True)

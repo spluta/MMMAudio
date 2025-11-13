@@ -3,13 +3,13 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="TestDelay", package_name="tests")
 mmm_audio.start_audio() 
 
-mmm_audio.send_msg("trig", 1, 0)
-mmm_audio.send_msg("trig", 1, 1)
-mmm_audio.send_msg("trig", 0, 1)
+mmm_audio.send_trig("trig")
+mmm_audio.send_trig("trig")
+mmm_audio.send_trig("trig")
 
 mmm_audio.stop_audio()
 
-mmm_audio.send_msg("freq", 20.0)
-mmm_audio.send_msg("trig", 1, 1)
+mmm_audio.send_float("freq", 20.0)
+mmm_audio.send_trig("trig")
 
 mmm_audio.plot(1024)

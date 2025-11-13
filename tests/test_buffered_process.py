@@ -1,0 +1,7 @@
+from mmm_src.MMMAudio import MMMAudio
+
+mmm_audio = MMMAudio(128, graph_name="TestBufferedProcess", package_name="tests")
+mmm_audio.start_audio() 
+
+mmm_audio.send_float("factor",2478.0)
+mmm_audio.stop_audio()

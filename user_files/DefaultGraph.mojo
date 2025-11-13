@@ -27,9 +27,7 @@ struct Default_Synth(Representable, Movable, Copyable):
 
     fn next(mut self) -> Float64:
         # get the frequency from the messenger, default to 440 Hz if not set
-        # get_val can be called every sample, but is more efficient if called once per block
-        if self.world_ptr[0].top_of_block:
-            self.freq = self.messenger.get_val("freq", 440.0)
+        self.messenger.update(self.freq, "freq")
 
         return self.osc.next(self.freq) * 0.1
 

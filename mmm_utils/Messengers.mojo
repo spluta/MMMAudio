@@ -1,278 +1,346 @@
 from mmm_src.MMMWorld import *
 
+struct Messenger(Copyable, Movable):
+    """Messenger is a struct to enable communication between Python and Mojo."""
 
+    var namespace: Optional[String]
+    var world_ptr: UnsafePointer[MMMWorld]
 
-struct Messenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var msg_dict: Dict[String, UnsafePointer[MiniMessenger]]
-    var default_dict: Dict[String, Float64]
+    var key_dict: Dict[String, String]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+        """Initialize the Messenger.
+
+        If a 'namespace' is provided, any messages sent from Python need to be prepended with this name.
+        For example, if a Float64 is registered with this Messenger as 'freq' and this Messenger has the
+        namespace 'synth1', then to update the freq value from Python, the user must send:
+
+        ```python
+        mmm_audio.send_float('synth1.freq',440.0)
+        ```
+
+        For example usage, see the [TODO] file in 'Examples.'
+
+        Args:
+            world_ptr: An `UnsafePointer[MMMWorld]` to the world to check for new messages.
+            namespace: A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger.
+
+        Returns:
+            None
+        """
+
         self.world_ptr = world_ptr
-        self.msg_dict = Dict[String, UnsafePointer[MiniMessenger]]()
-        self.default_dict = Dict[String, Float64]()
+        self.namespace = namespace
+        self.key_dict = Dict[String, String]()
 
-    fn get_val(mut self, key: String, default: Float64) -> Float64:
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            ptr.value()[0].grabbed = True
-            return ptr.value()[0].lists[0][0]
-        else:
-            return default
+    @doc_private
+    fn get_name_with_namespace(mut self, name: String) raises -> UnsafePointer[String]:
+        if not self.key_dict.__contains__(name):
+            if self.namespace:
+                with_namespace = self.namespace.value()+"."+name
+            else:
+                with_namespace = name
+            print("adding long name: ", with_namespace)
+            self.key_dict[name] = with_namespace
 
-    # fn __float__(mut self, key: String, default: Float64) -> Float64:
-    #     return self.get_val(key, default)
-    
-    # fn __int__(mut self, key: String, default: Float64) -> Int64:
-    #     return Int64(self.get_val(key, default))
+        return UnsafePointer(to=self.key_dict[name])
 
-    fn triggered(mut self, key: String) -> Bool:
-    
-    # Return the trigger state (val if triggered, 0.0 otherwise) of the messenger with the given key.
+    # update Bool
+    fn update(mut self, mut param: Bool, name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating bool message. Error: ", error)
 
-        ptr = self.world_ptr[0].get_messenger(key)
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return True
+    # notify_update Bool
+    fn notify_update(mut self, mut param: Bool, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
+            except error:
+                print("Error occurred while updating bool message. Error: ", error)
         return False
 
-    fn get_list(mut self, key: String) -> List[Float64]:
-        ptr = self.world_ptr[0].get_messenger(key)
+    # update List[Bool]
+    # fn update(mut self, mut param: List[Bool], name: String):
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = opt.value().copy()
+    #         except error:
+    #             print("Error occurred while updating bool message. Error: ", error)
 
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists[0].copy()
-            else:
-                return List[Float64]().copy()
-        else:
-            return List[Float64]().copy()
+    # # notify_update List[Bool]
+    # fn notify_update(mut self, mut param: List[Bool], name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = opt.value().copy()
+    #                 return True
+    #         except error:
+    #             print("Error occurred while updating bool message. Error: ", error)
+    #     return False
 
-    # fn get_list(mut self, key: String) -> (List[Float64], Bool):
-        
-    #     ptr = self.world_ptr[0].get_messenger(key)
+    # update Float64
+    fn update(mut self, mut param: Float64, name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
 
-    #     if ptr:
-    #         if ptr.value()[0].triggered:
-    #             ptr.value()[0].grabbed = True
-    #             return (ptr.value()[0].lists[0].copy(), True)
-    #         else:
-    #             return (List[Float64]().copy(), False)
-    #     else:
-    #         return (List[Float64]().copy(), False)
+    # notify_update Float64
+    fn notify_update(mut self, mut param: Float64, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_float(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
+            except error:
+                print("Error occurred while updating float message. Error: ", error)
+        return False
 
-    fn get_lists(mut self, key: String) -> List[List[Float64]]:
-        """
-        This version of get_lists will return all messages for the given key
-        """
-        
-        ptr = self.world_ptr[0].get_messenger(key)
+    # update List[Float64]
+    fn update(mut self, mut param: List[Float64], ref name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+            except error:
+                print("Error occurred while updating float list message. Error: ", error)
 
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                return ptr.value()[0].lists.copy()
-            else:
-                return List[List[Float64]]().copy()
-        else:
-            return List[List[Float64]]().copy()
+    # notify_update List[Float64]
+    fn notify_update(mut self, mut param: List[Float64], ref name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
+            except error:
+                print("Error occurred while updating float list message. Error: ", error)
+        return False
 
-    fn get_lists(mut self, key: String, *filters: Optional[Int]) -> List[List[Float64]]:
-        """
-        This version of get_lists filters out messages based on the filters provided
-        If a filter is None, that position is ignored
-        If a filter is an Int, only messages with that value in that position are included
-        e.g. get_lists("note_on", None, 48) will return only note_on messages with a value of 48 in the second position (the note number)
-        """
-        ptr = self.world_ptr[0].get_messenger(key)
+    # update Int64
+    fn update(mut self, mut param: Int64, name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating int message. Error: ", error)
 
-        if ptr:
-            if ptr.value()[0].triggered:
-                ptr.value()[0].grabbed = True
-                if len(filters) == 0:
-                    return ptr.value()[0].lists.copy()
-                elif len(filters) > 0:
-                    big_list = List[List[Float64]]().copy()
-                    for item in ptr.value()[0].lists:
-                        include = [False for _ in range(len(filters))]
-                        for i in range(min(len(filters), len(item))):
-                            if filters[i]==None or item[i] == filters[i].value():
-                                include[i] = True
+    # notify_update Int64
+    fn notify_update(mut self, mut param: Int64, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_int(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
+            except error:
+                print("Error occurred while updating int message. Error: ", error)
+        return False
 
-                        if all(include):
-                            big_list.append(item.copy())
-                    return big_list.copy()
-        return List[List[Float64]]().copy()
+    # update List[Int64]
+    fn update(mut self, mut param: List[Int64], ref name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
+            except error:
+                print("Error occurred while updating int list message. Error: ", error)
+        return False
 
-struct TextMessenger(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld] 
-    var triggered: Bool
+    # notify_update List[Int64]
+    fn notify_update(mut self, mut param: List[Int64], ref name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
+            except error:
+                print("Error occurred while updating int list message. Error: ", error)
+        return False
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.triggered = False
+    # update String
+    fn update(mut self, mut param: String, name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_string(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
 
-    @always_inline
-    fn get_text_msg_val(mut self: Self, key: String) -> String:
-        """
-        Retrieves a text message associated with the given key from the world's text message dictionary.
+    # notify_update String
+    fn notify_update(mut self, mut param: String, name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_string(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value()
+                    return True
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+        return False
+
+    # update List[String]
+    fn update(mut self, mut param: List[String], name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+    
+    # notify_update List[String]
+    fn notify_update(mut self, mut param: List[String], name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
+                if opt:
+                    param = opt.value().copy()
+                    return True
+            except error:
+                print("Error occurred while updating text message. Error: ", error)
+        return False
+
+    # # update Trig
+    # fn update(mut self, mut param: Trig, name: String):
+    #     if self.world_ptr[].top_of_block or self.world_ptr[].block_state == 1:
+    #         try:
+    #             param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+
+    # notify_update Trig
+    # fn notify_update(mut self, mut param: Trig, name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+    #             return param.state
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     return False
+
+    fn notify_trig(mut self, name: String) -> Bool:
+        """Get notified if a `send_trig` message was sent under the specified name.
+
+        For examples usage see: "ChowningFM.mojo" and "In2Out.mojo" in the 'Examples' folder.
 
         Args:
-            key: String - The key to look for in the text message dictionary.
+            name: A `String` to identify the trigger sent from Python.
 
         Returns:
-            A tuple containing the message (String) and a boolean indicating if it was triggered (Bool).
-            
-            Returns a tuple (message, triggered)
-            
-            If no message is found, returns ("", False).
-
+            A `Bool` indicating whether a trigger was sent from Python under the specified name
         """
-        opt = self.world_ptr[0].get_text_msgs(key)
-        if opt: 
-            self.triggered = True
-            return opt.value()[0]
-        else:
-            self.triggered = False
-            return ""
 
-    @always_inline
-    fn get_text_msg_list(mut self: Self, key: String) -> List[String]:
-        """
-        Retrieves a text message associated with the given key from the world's text message dictionary.
+        # Old Documentation, to be added back in if Trig is added back in:
+        # ================================================================
+        # Often a trigger is only needed as a boolean flag to indicate that it has
+        # been sent from Python, without needing to store the actual Trig object. `notify_trig`
+        # provides a convenient way to check for this. No Trig or Bool object is needed. This only
+        # works for a single trigger (not `send_trigs`). Because a Bool (what is returned here) is 
+        # a primitive type, it 
+        # can operate in register on the CPU, potentially providing better performance than Trig.
 
-        Args:
-            key: String - The key to look for in the text message dictionary.
+        if self.world_ptr[].top_of_block:
+            try:
+                return self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+            except error:
+                print("Error occurred while updating trig message. Error: ", error)
+        return False
 
-        Returns:
-            A tuple containing the message (String) and a boolean indicating if it was triggered (Bool).
-            
-            Returns a tuple (message, triggered)
-            
-            If no message is found, returns ("", False).
+    # update List[Trig]
+    # fn update(mut self, mut param: List[Trig], name: String):
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = [Trig(v) for v in opt.value()]
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     elif self.world_ptr[].block_state == 1:
+    #         for ref t in param:
+    #             t.state = False
 
-        """
-        opt = self.world_ptr[0].get_text_msgs(key)
-        if opt:
-            self.triggered = True
-            return opt.value().copy()
-        else:
-            self.triggered = False
-            return List[String]()
+    # notify_update List[Trig]
+    # fn notify_update(mut self, mut param: List[Trig], name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = [Trig(v) for v in opt.value()]
+    #                 return True
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     elif self.world_ptr[].block_state == 1:
+    #         for ref t in param:
+    #             t.state = False
+    #     return False
 
-# struct MessengerManager(Movable, Copyable):
-#     var world_ptr: UnsafePointer[MMMWorld]  
-#     var messengers: Dict[String, Messenger]
-#     # var text_messengers: Dict[String, TextMessenger]
+# struct Trig(Representable, Writable, Boolable, Copyable, Movable, ImplicitlyBoolable):
+#     """A 'Trigger' that can be controlled from Python.
 
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-#         self.world_ptr = world_ptr
-#         self.messengers = Dict[String, Messenger]()
-#         # self.text_messengers = Dict[String, TextMessenger]()
-
-#     fn add_messenger[is_trigger: Bool = False](mut self, key: String, default: Float64 = 0.0):
-#         messenger = Messenger(self.world_ptr, key, default)
-#         self.messengers[key] = messenger.copy()
-
-#     # fn add_text_messenger(mut self, key: String, default: String = ""):
-#     #     messenger = TextMessenger(self.world_ptr, default)
-#     #     self.text_messengers[key] = messenger.copy()
-
-#     fn get_messages(mut self):
-#         if self.world_ptr[0].top_of_block:
-#             for ref item in self.messengers.items():
-#                 item.value.get_msg()  # Update each messenger
-#             # for value in self.text_messengers.lists():
-#             #     value.get_text_msg()  # Update each text messenger
-#         if self.world_ptr[0].block_state == 1:
-#             for ref item in self.messengers.items():
-#                 item.value.trig = False
-#             # for value in self.text_messengers.lists():
-#             #     value.trig = False
-
-#     fn lists(self, key: String) -> List[List[Float64]]:
-#         if key not in self.messengers:
-#             return List[List[Float64]]()
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists.copy()
-#             else:
-#                 return List[List[Float64]]()
-
-#     fn list(self, key: String) -> List[Float64]:
-#         if key not in self.messengers:
-#             return List[Float64]()
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists[0].copy()
-#             else:
-#                 return List[Float64]()
-
-#     fn value(self, key: String) -> Float64:
-#         if key not in self.messengers:
-#             return 0.0
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().lists[0][0]
-#             else:
-#                 return 0.0
-
-#     fn trig(self, key: String) -> Int:
-#         if key not in self.messengers:
-#             return 0
-#         else:
-#             opt = self.messengers.get(key)
-#             if opt:
-#                 return opt.value().trig()
-#             else:
-#                 return 0
-
-# struct Messenger(Movable, Copyable):
-#     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-#     var get_lists: List[List[Float64]]
-#     var get_list: List[Float64]
-#     var val: Float64
-#     var trigger: Bool
-
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], *default: Float64):
-#         self.world_ptr = world_ptr
-#         self.get_lists = List[List[Float64]]()
-
-#         if len(default) == 0:
-#             temp = [0.0]  # Default to a single zero if no default is provided
-#         else:
-#             temp = [x for x in default]  # Expand the default values
-#         self.get_lists.append(temp.copy())
-#         self.get_list = self.get_lists[0].copy()
-#         self.val = self.get_lists[0][0]
-#         self.trigger = False
-
-#     @always_inline
-#     fn get_msg(mut self: Self, key: String):
-#         ref opt = self.world_ptr[0].get_msg(key)
-#         if opt: 
-#             self.get_lists.clear()
-#             for val in opt.value():
-#                 self.get_lists.append(val.copy())
-#             self.get_list = self.get_lists[0].copy()
-#             self.val = self.get_lists[0][0]
-#             self.trigger = True
-#         else:
-#             self.trigger = False
+#     It is either True (triggered) or False (not triggered). 
+#     It works like a boolean in all places, but different from a boolean it can be
+#     registered with a Messenger under a user specified name. 
     
-#     fn set_value(mut self, val: List[List[Float64]]):
-#         self.get_lists = val.copy()
-#         self.get_list = val[0].copy()
-#         self.val = val[0][0]
-#         self.trigger = True
+#     It only make sense to use Trig if it is registered with a Messenger. Otherwise 
+#     you can just use a Bool directly.
     
-#     fn set_value(mut self, val: Float64):
-#         self.get_list = [val]
-#         self.val = val
-#         self.get_lists.clear()
-#         self.get_lists.append([val])
-#         self.trigger = True
+#     The Messenger checks for any
+#     'triggers' sent under the specified name at the start of each audio block, and sets
+#     the Trig's state accordingly. If there is a trigger under the name, this Trig
+#     will be True for 1 sample (the first of the audio block), and then automatically reset to
+#     False for the rest of the block.
+
+#     For an usage example, see the [TODO] file in 'Examples.'
+#     """
+#     var state: Bool
+
+#     fn __init__(out self, starting_state: Bool = False):
+#         """Initialize the Trig with an optional starting state. 
+        
+#         If the starting
+#         state is set to True, this Trig will be true for the first sample of the
+#         first audio block and then go down to False on the very next sample. This might be
+#         useful for initializing some process at the beginning of the audio thread, but note
+#         that many processes look for a *change* from low to high, so if this Trig starts 
+#         high it might not trigger as expected.
+#         """
+#         self.state = starting_state
+
+#     @doc_private
+#     fn __as_bool__(self) -> Bool:
+#         return self.state
+    
+#     @doc_private
+#     fn __bool__(self) -> Bool:
+#         return self.state
+
+#     @doc_private
+#     fn __repr__(self) -> String:
+#         return String(self.state)
+
+#     @doc_private
+#     fn write_to(self, mut writer: Some[Writer]):
+#         writer.write(self.state)

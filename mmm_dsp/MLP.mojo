@@ -1,10 +1,11 @@
 from python import PythonObject
 from python import Python
 from mmm_dsp.Osc import Impulse
-from mmm_utils.Messengers import Messenger, TextMessenger
+from mmm_utils.Messengers import *
 from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMTraits import *
 
-struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, Copyable): 
+struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
     """
     A Mojo wrapper for a PyTorch MLP model using Python interop.
 
@@ -20,15 +21,16 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
     var model: PythonObject  
     var MLP: PythonObject  
     var torch: PythonObject  
-    var model_input: InlineArray[Float64, input_size]  # Input list for audio synthesis
-    var model_output: InlineArray[Float64, output_size]  # Output list from the model
+    var model_input: InlineArray[Float64, input_size]  
+    var model_output: InlineArray[Float64, output_size]  
+    var fake_model_output: List[Float64]
     var inference_trig: Impulse
     var inference_gate: Bool
     var trig_rate: Float64
-    var text_messenger: TextMessenger
     var messenger: Messenger
+    var file_name: String
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], file_name: String, trig_rate: Float64 = 25.0):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
         self.world_ptr = world_ptr
         self.py_input = PythonObject(None) 
         self.py_output = PythonObject(None) 
@@ -37,33 +39,32 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
         self.torch = PythonObject(None) 
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
+        self.fake_model_output = [0.0 for _ in range(output_size)]    
         self.inference_trig = Impulse(self.world_ptr)
-        self.inference_gate = False
+        self.inference_gate = True
         self.trig_rate = trig_rate
-        self.text_messenger = TextMessenger(world_ptr)
-        self.messenger = Messenger(world_ptr)
+        self.messenger = Messenger(world_ptr, namespace)
+        self.file_name = String()
 
         try:
-            # Python.add_to_path("neural_nets/MLP.py")
             self.MLP = Python.import_module("mmm_dsp.MLP")
             self.torch = Python.import_module("torch")
             self.py_input = self.torch.zeros(1, input_size)  # Create a tensor with shape [1, 2] filled with zeros
-            self.model = self.torch.jit.load(file_name)  # Load your PyTorch model
-            self.model.eval()  # Set the model to evaluation mode
-            for _ in range (5):
-                self.model(self.torch.randn(1, input_size))  # warm it up CHris
 
             self.inference_gate = True
             print("Torch model loaded successfully")
 
         except ImportError:
             print("Error importing MLP_py or torch module")
-    
-    fn reload_model(mut self: MLP, file_name: String):
+
+        self.reload_model(file_name)
+
+
+    fn reload_model(mut self: MLP, var file_name: String):
         """
         Reload the MLP model from a specified file.
 
-        Parameters:
+        Arguments:
           file_name: The path to the model file.
         """
         try:
@@ -84,31 +85,27 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
         Process the input through the MLP model.
             
         """
-        if self.world_ptr[0].top_of_block:
-            # this will return a tuple (model_path(String), triggered(Bool))
-            load_msg = self.text_messenger.get_text_msg_val("load_mlp_training")
-            if load_msg != "":
-                print("loading new model", end="\n")
-                self.reload_model(load_msg)
+        self.messenger.update(self.inference_gate, "toggle_inference")
+        
+        if self.messenger.notify_update(self.file_name, "load_mlp_training"):
+            file_name = ""
+            self.messenger.update(file_name, "load_mlp_training")
+            print("loading model from file: ", file_name)
+            self.reload_model(file_name)
 
-
-            self.inference_gate = self.messenger.get_val("toggle_inference", 1.0) == 1.0
-
-            if not self.inference_gate:
-                triggered = self.messenger.triggered("model_output")
-                if triggered:
-                    print("receiving model output values", end="\n")
-                    model_output = self.messenger.get_list("model_output")
-                    num = Int(min(self.output_size, len(model_output)))
-                    for i in range(num):
-                        self.model_output[i] = model_output[i]
-
+        if not self.inference_gate:
+            if self.messenger.notify_update(self.fake_model_output,"fake_model_output"):
+                @parameter
+                for i in range(self.output_size):
+                    if i < len(self.fake_model_output):
+                        self.model_output[Int(i)] = self.fake_model_output[i]
+                        
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
             if self.torch is None:
                 return 
-
             try:
+                @parameter
                 for i in range(self.input_size):
                     self.py_input[0][i] = self.model_input[Int(i)]
                 self.py_output = self.model(self.py_input)  # Run the model with the input
@@ -117,6 +114,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Representable, Movable, C
 
             try:
                 py_output = self.model(self.py_input)  # Run the model with the input
+                @parameter
                 for i in range(self.output_size):
                     self.model_output[Int(i)] = Float64(py_output[0][i].item())  # Convert each output to Float64
             except Exception:

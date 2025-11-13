@@ -1,8 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.Osc import Impulse
 
-# TODO: this really needs to be a global object that everything can access
-
 struct Print(Representable, Copyable, Movable):
     """
     A struct for printing values in the MMMWorld environment.
@@ -20,7 +18,7 @@ struct Print(Representable, Copyable, Movable):
     fn __repr__(self: Print) -> String:
         return String("Print")
 
-    fn next[T: Writable](mut self, value: T, label: String = "", freq: Float64 = 10.0) -> None:
+    fn next[T: Writable](mut self, value: T, label: Optional[String] = None, freq: Float64 = 10.0) -> None:
         """
         Print the value at a given frequency.
 
@@ -29,5 +27,22 @@ struct Print(Representable, Copyable, Movable):
             label: An optional label to prepend to the printed value.
             freq: The frequency (in Hz) at which to print the value.
         """
-        if self.impulse.next(freq) > 0.0:
-            print(label,value)    
+        if self.impulse.next_bool(freq):
+            if label:
+                print(label.value() + ": ", value)
+            else:
+                print(value)
+
+    # fn next[T: Writable](mut self, *value: T) -> None:
+    #     """
+    #     Print the value at a given frequency.
+
+    #     Arguments:
+    #         value: The value to print.
+    #         label: An optional label to prepend to the printed value.
+    #         freq: The frequency (in Hz) at which to print the value.
+    #     """
+    #     if self.impulse.next_bool(self.freq):
+    #         for v in value:
+    #             print(v, end=" ")
+    #         print()
