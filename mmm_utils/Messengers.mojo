@@ -241,6 +241,31 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating trig message. Error: ", error)
         return False
 
+    fn notify_trig(mut self, name: String) -> Bool:
+        """Get notified if a `send_trig` message was sent under the specified name.
+
+        Often a trigger is only needed as a boolean flag to indicate that it has
+        been sent from Python, without needing to store the actual Trig object. `notify_trig`
+        provides a convenient way to check for this. No Trig or Bool object is needed. This only
+        works for a single trigger (not `send_trigs`). Because a Bool (what is returned here) is 
+        a primitive type, it 
+        can operate in register on the CPU, potentially providing better performance than Trig.
+
+        For examples usage see: "ChowningFM.mojo" and "In2Out.mojo" in the 'Examples' folder.
+
+        Args:
+            name: A `String` to identify the trigger sent from Python.
+
+        Returns:
+            A `Bool` indicating whether a trigger was sent from Python under the specified name
+        """
+        if self.world_ptr[].top_of_block:
+            try:
+                return self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+            except error:
+                print("Error occurred while updating trig message. Error: ", error)
+        return False
+
     # update List[Trig]
     fn update(mut self, mut param: List[Trig], name: String):
         if self.world_ptr[].top_of_block:

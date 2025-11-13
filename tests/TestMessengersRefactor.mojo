@@ -99,6 +99,9 @@ struct TestMessengersRefactor():
         if self.m.notify_update(self.trig,"trig"):
             print("Received trig")
 
+        if self.m.notify_trig("notify_trig"):
+            print("notify_trig triggered")
+
         self.m.update(self.trigs, "trigs")
         for i in range(len(self.trigs)):
             if self.trigs[i]:

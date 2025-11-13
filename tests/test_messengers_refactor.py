@@ -34,6 +34,7 @@ a.send_trig("trig")
 
 a.send_trigs("trigs", [True, False, True, True, False])
 a.send_trigs("trigs", [False, True, False, False, True])
+a.send_trig("notify_trig")
 
 a.send_bool("tone_0.gate",True)
 a.send_bool("tone_1.gate",True)
