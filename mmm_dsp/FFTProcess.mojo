@@ -1,8 +1,9 @@
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFT import *
+from mmm_dsp.Buffer import Buffer
 
 @doc_private
-struct SpectralProcessor[T: SpectralProcessable, window_size: Int = 1024](BufferedProcessable):
+struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):
     """This is a private struct that the user doesn't *need* to see. This is the
     connective tissue between SpectralProcess (which the user *does* see and uses to
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
@@ -25,16 +26,16 @@ struct SpectralProcessor[T: SpectralProcessable, window_size: Int = 1024](Buffer
     @doc_private
     fn next_window(mut self, mut input: List[Float64]) -> None:
         self.fft.fft(input,self.mags,self.phases)
-        self.process.next_spectral_frame(self.mags,self.phases)
+        self.process.next_frame(self.mags,self.phases)
         self.fft.ifft(self.mags,self.phases,input)
 
     @doc_private
     fn get_messages(mut self) -> None:
-        # print("SpectralProcessor: get_messages()")
+        # print("FFTProcessor: get_messages()")
         self.process.get_messages()
 
-trait SpectralProcessable(Movable,Copyable):
-    """Implement this trait in a custom struct to pass to `SpectralProcessor`
+trait FFTProcessable(Movable,Copyable):
+    """Implement this trait in a custom struct to pass to `FFTProcessor`
     as a Parameter.
 
     See `TestSpectralProcess.mojo` for an example on how to create a spectral process 
@@ -48,13 +49,13 @@ trait SpectralProcessable(Movable,Copyable):
             lists are what the user wants to be used for the IFFT conversion back into 
             amplitude samples. Because the FFT only happens every `hop_size` samples (and
             uses the most recent `window_size` samples), this function only gets called every
-            `hop_size` samples. `hop_size` is set as a parameter in the `SpectralProcessor`
+            `hop_size` samples. `hop_size` is set as a parameter in the `FFTProcessor`
             struct that the user's struct is passed to.
         * `fn get_messages()`: Because `.next_spectral_frame()` only runs every `hop_size`
             samples and a `Messenger` can only check for new messages from Python at the top 
             of every audio block, it's not guaranteed that these will line up, so this struct
             could very well miss incoming messages! To remedy this, put all your message getting
-            code in this get_messages() function. It will get called by SpectralProcessor (whose 
+            code in this get_messages() function. It will get called by FFTProcessor (whose 
             `.next()` function does get called every sample) to make sure that any messages
             intended for this struct get updated.
 
@@ -72,8 +73,8 @@ trait SpectralProcessable(Movable,Copyable):
     3. In the user synth's `.next()` function (running one sample at a time) they pass in
         every sample to the `SpectralProcess`'s `.next()` function which:
         a. has a `BufferedProcess` to store samples and pass them on 
-            to `SpectralProcessor` when appropriate
-        b. when `SpectralProcessor` receives a window of amplitude samples, it performs an
+            to `FFTProcessor` when appropriate
+        b. when `FFTProcessor` receives a window of amplitude samples, it performs an
             `FFT` getting the mags and phases which are then passed on to the user's 
             struct that implements `SpectralProcessable`. The mags and phases are modified in place
             and then this whole pipeline basically hands the data all the way back out to the user's
@@ -81,10 +82,10 @@ trait SpectralProcessable(Movable,Copyable):
             sample (after buffering -> FFT -> processing -> IFFT -> output buffering) to get out 
             to the speakers (or whatever).
     """
-    fn next_spectral_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:...
+    fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:...
     fn get_messages(mut self) -> None:...
 
-struct SpectralProcess[T: SpectralProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
+struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
     """
     SpectralProcess is similar to BufferedProcess, but instead of passing time domain samples to the user defined struct,
     it passes frequency domain magnitudes and phases (obtained from an FFT). The user defined struct must implement
@@ -108,7 +109,7 @@ struct SpectralProcess[T: SpectralProcessable, window_size: Int = 1024, hop_size
             `SpectralProcess` struct, but it's here for consistency with `BufferedProcess`.
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var buffered_process: BufferedProcess[SpectralProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output]
+    var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
         """Initializes a SpectralProcess struct.
@@ -121,7 +122,7 @@ struct SpectralProcess[T: SpectralProcessable, window_size: Int = 1024, hop_size
             An initialized SpectralProcess struct.
         """
         self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[SpectralProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output](self.world_ptr, process=SpectralProcessor[T, window_size](self.world_ptr, process=process^))
+        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
@@ -133,3 +134,11 @@ struct SpectralProcess[T: SpectralProcessable, window_size: Int = 1024, hop_size
             The next output sample.
         """
         return self.buffered_process.next(input)
+
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, channel: Int) -> Float64:
+        """Returns the next output sample from the internal buffer without processing a new input sample.
+        
+        Returns:
+            The next output sample from the internal buffer.
+        """
+        return self.buffered_process.next_from_buffer(buffer, phase, channel)

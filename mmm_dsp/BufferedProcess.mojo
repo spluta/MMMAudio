@@ -167,7 +167,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.read_head = (self.read_head + 1) % window_size
         return outval
 
-    fn next_from_buffer(mut self, buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
