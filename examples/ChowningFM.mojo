@@ -18,7 +18,6 @@ struct ChowningFM(Representable, Movable, Copyable):
     var cfreq: Float64
     var mfreq: Float64
     var vol: Float64
-    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -32,7 +31,6 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.cfreq = 200.0
         self.mfreq = 100.0
         self.vol = -12.0
-        self.trig = Trig()
 
     fn __repr__(self) -> String:
         return String("ChowningFM")
@@ -53,13 +51,13 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.m.update(self.cfreq,"c_freq")
         self.m.update(self.mfreq,"m_freq")
         self.m.update(self.vol,"vol")
-        self.m.update(self.trig,"trigger")
+        trig = self.m.notify_trig("trigger")
         self.update_envs()
 
-        index = self.index_env.next(self.index_env_params, self.trig)
+        index = self.index_env.next(self.index_env_params, trig)
         msig = self.m_osc.next(self.mfreq) * self.mfreq * index
         csig = self.c_osc.next(self.cfreq + msig)
-        csig *= self.amp_env.next(self.amp_env_params, self.trig)
+        csig *= self.amp_env.next(self.amp_env_params, trig)
         csig *= dbamp(self.vol)
 
         return csig

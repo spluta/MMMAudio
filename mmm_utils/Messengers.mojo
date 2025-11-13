@@ -68,26 +68,26 @@ struct Messenger(Copyable, Movable):
         return False
 
     # update List[Bool]
-    fn update(mut self, mut param: List[Bool], name: String):
-        if self.world_ptr[].top_of_block:
-            try:
-                var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
-                if opt:
-                    param = opt.value().copy()
-            except error:
-                print("Error occurred while updating bool message. Error: ", error)
+    # fn update(mut self, mut param: List[Bool], name: String):
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = opt.value().copy()
+    #         except error:
+    #             print("Error occurred while updating bool message. Error: ", error)
 
-    # notify_update List[Bool]
-    fn notify_update(mut self, mut param: List[Bool], name: String) -> Bool:
-        if self.world_ptr[].top_of_block:
-            try:
-                var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
-                if opt:
-                    param = opt.value().copy()
-                    return True
-            except error:
-                print("Error occurred while updating bool message. Error: ", error)
-        return False
+    # # notify_update List[Bool]
+    # fn notify_update(mut self, mut param: List[Bool], name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = opt.value().copy()
+    #                 return True
+    #         except error:
+    #             print("Error occurred while updating bool message. Error: ", error)
+    #     return False
 
     # update Float64
     fn update(mut self, mut param: Float64, name: String):
@@ -223,96 +223,124 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating text message. Error: ", error)
         return False
 
-    # update Trig
-    fn update(mut self, mut param: Trig, name: String):
-        if self.world_ptr[].top_of_block or self.world_ptr[].block_state == 1:
-            try:
-                param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
-            except error:
-                print("Error occurred while updating trig message. Error: ", error)
+    # # update Trig
+    # fn update(mut self, mut param: Trig, name: String):
+    #     if self.world_ptr[].top_of_block or self.world_ptr[].block_state == 1:
+    #         try:
+    #             param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
 
     # notify_update Trig
-    fn notify_update(mut self, mut param: Trig, name: String) -> Bool:
+    # fn notify_update(mut self, mut param: Trig, name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+    #             return param.state
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     return False
+
+    fn notify_trig(mut self, name: String) -> Bool:
+        """Get notified if a `send_trig` message was sent under the specified name.
+
+        For examples usage see: "ChowningFM.mojo" and "In2Out.mojo" in the 'Examples' folder.
+
+        Args:
+            name: A `String` to identify the trigger sent from Python.
+
+        Returns:
+            A `Bool` indicating whether a trigger was sent from Python under the specified name
+        """
+
+        # Old Documentation, to be added back in if Trig is added back in:
+        # ================================================================
+        # Often a trigger is only needed as a boolean flag to indicate that it has
+        # been sent from Python, without needing to store the actual Trig object. `notify_trig`
+        # provides a convenient way to check for this. No Trig or Bool object is needed. This only
+        # works for a single trigger (not `send_trigs`). Because a Bool (what is returned here) is 
+        # a primitive type, it 
+        # can operate in register on the CPU, potentially providing better performance than Trig.
+
         if self.world_ptr[].top_of_block:
             try:
-                param.state = self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
-                return param.state
+                return self.world_ptr[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
         return False
 
     # update List[Trig]
-    fn update(mut self, mut param: List[Trig], name: String):
-        if self.world_ptr[].top_of_block:
-            try:
-                var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
-                if opt:
-                    param = [Trig(v) for v in opt.value()]
-            except error:
-                print("Error occurred while updating trig message. Error: ", error)
-        elif self.world_ptr[].block_state == 1:
-            for ref t in param:
-                t.state = False
+    # fn update(mut self, mut param: List[Trig], name: String):
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = [Trig(v) for v in opt.value()]
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     elif self.world_ptr[].block_state == 1:
+    #         for ref t in param:
+    #             t.state = False
 
     # notify_update List[Trig]
-    fn notify_update(mut self, mut param: List[Trig], name: String) -> Bool:
-        if self.world_ptr[].top_of_block:
-            try:
-                var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
-                if opt:
-                    param = [Trig(v) for v in opt.value()]
-                    return True
-            except error:
-                print("Error occurred while updating trig message. Error: ", error)
-        elif self.world_ptr[].block_state == 1:
-            for ref t in param:
-                t.state = False
-        return False
+    # fn notify_update(mut self, mut param: List[Trig], name: String) -> Bool:
+    #     if self.world_ptr[].top_of_block:
+    #         try:
+    #             var opt = self.world_ptr[].messengerManager.get_trigs(self.get_name_with_namespace(name)[])
+    #             if opt:
+    #                 param = [Trig(v) for v in opt.value()]
+    #                 return True
+    #         except error:
+    #             print("Error occurred while updating trig message. Error: ", error)
+    #     elif self.world_ptr[].block_state == 1:
+    #         for ref t in param:
+    #             t.state = False
+    #     return False
 
-struct Trig(Representable, Writable, Boolable, Copyable, Movable, ImplicitlyBoolable):
-    """A 'Trigger' that can be controlled from Python.
+# struct Trig(Representable, Writable, Boolable, Copyable, Movable, ImplicitlyBoolable):
+#     """A 'Trigger' that can be controlled from Python.
 
-    It is either True (triggered) or False (not triggered). 
-    It works like a boolean in all places, but different from a boolean it can be
-    registered with a Messenger under a user specified name. 
+#     It is either True (triggered) or False (not triggered). 
+#     It works like a boolean in all places, but different from a boolean it can be
+#     registered with a Messenger under a user specified name. 
     
-    It only make sense to use Trig if it is registered with a Messenger. Otherwise 
-    you can just use a Bool directly.
+#     It only make sense to use Trig if it is registered with a Messenger. Otherwise 
+#     you can just use a Bool directly.
     
-    The Messenger checks for any
-    'triggers' sent under the specified name at the start of each audio block, and sets
-    the Trig's state accordingly. If there is a trigger under the name, this Trig
-    will be True for 1 sample (the first of the audio block), and then automatically reset to
-    False for the rest of the block.
+#     The Messenger checks for any
+#     'triggers' sent under the specified name at the start of each audio block, and sets
+#     the Trig's state accordingly. If there is a trigger under the name, this Trig
+#     will be True for 1 sample (the first of the audio block), and then automatically reset to
+#     False for the rest of the block.
 
-    For an usage example, see the [TODO] file in 'Examples.'
-    """
-    var state: Bool
+#     For an usage example, see the [TODO] file in 'Examples.'
+#     """
+#     var state: Bool
 
-    fn __init__(out self, starting_state: Bool = False):
-        """Initialize the Trig with an optional starting state. 
+#     fn __init__(out self, starting_state: Bool = False):
+#         """Initialize the Trig with an optional starting state. 
         
-        If the starting
-        state is set to True, this Trig will be true for the first sample of the
-        first audio block and then go down to False on the very next sample. This might be
-        useful for initializing some process at the beginning of the audio thread, but note
-        that many processes look for a *change* from low to high, so if this Trig starts 
-        high it might not trigger as expected.
-        """
-        self.state = starting_state
+#         If the starting
+#         state is set to True, this Trig will be true for the first sample of the
+#         first audio block and then go down to False on the very next sample. This might be
+#         useful for initializing some process at the beginning of the audio thread, but note
+#         that many processes look for a *change* from low to high, so if this Trig starts 
+#         high it might not trigger as expected.
+#         """
+#         self.state = starting_state
 
-    @doc_private
-    fn __as_bool__(self) -> Bool:
-        return self.state
+#     @doc_private
+#     fn __as_bool__(self) -> Bool:
+#         return self.state
     
-    @doc_private
-    fn __bool__(self) -> Bool:
-        return self.state
+#     @doc_private
+#     fn __bool__(self) -> Bool:
+#         return self.state
 
-    @doc_private
-    fn __repr__(self) -> String:
-        return String(self.state)
+#     @doc_private
+#     fn __repr__(self) -> String:
+#         return String(self.state)
 
-    @doc_private
-    fn write_to(self, mut writer: Some[Writer]):
-        writer.write(self.state)
+#     @doc_private
+#     fn write_to(self, mut writer: Some[Writer]):
+#         writer.write(self.state)

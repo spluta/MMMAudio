@@ -44,8 +44,6 @@ struct TestMessengersRefactor():
     var floats: List[Float64]
     var int: Int64
     var ints: List[Int64]
-    var trig: Trig
-    var trigs: List[Trig]
     var string: String
     var strings: List[String]
 
@@ -63,8 +61,6 @@ struct TestMessengersRefactor():
         self.floats = List[Float64](0.0, 0.0)
         self.int = 0
         self.ints = List[Int64](0, 0)
-        self.trig = Trig()
-        self.trigs = List[Trig](Trig(), Trig())
         self.string = ""
         self.strings = List[String]("", "")
 
@@ -73,11 +69,6 @@ struct TestMessengersRefactor():
         
         if self.m.notify_update(self.bool,"bool"):
             print("Bool value is now: " + String(self.bool))
-
-        if self.m.notify_update(self.bools,"bools"):
-            print("Updated bools to ")
-            for b in self.bools:
-                print("  ", b)
 
         if self.m.notify_update(self.float,"float"):
             print("Float value is now: " + String(self.float))
@@ -96,14 +87,6 @@ struct TestMessengersRefactor():
                 print("  ", i, end="")
             print("")
 
-        if self.m.notify_update(self.trig,"trig"):
-            print("Received trig")
-
-        self.m.update(self.trigs, "trigs")
-        for i in range(len(self.trigs)):
-            if self.trigs[i]:
-                print("Received trig ", i)
-
         if self.m.notify_update(self.string,"string"):
             print("Updated string to ", self.string)
 
@@ -111,6 +94,9 @@ struct TestMessengersRefactor():
             print("Updated strings to ")
             for s in self.strings:
                 print("  ", s)
+
+        if self.m.notify_trig("trig"):
+            print("Received trig")
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         for i in range(2):

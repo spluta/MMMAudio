@@ -8,18 +8,16 @@ from mmm_utils.Messengers import *
 struct In2Out(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var messenger: Messenger
-    var trig: Trig
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.messenger = Messenger(world_ptr)
-        self.trig = Trig()
 
     fn __repr__(self) -> String:
         return String("In2Out")
 
     fn next(mut self) -> SIMD[DType.float64, 16]:
-        if self.messenger.notify_update(self.trig,"print_inputs"):
+        if self.messenger.notify_trig("print_inputs"):
             for i in range(self.world_ptr[0].num_in_chans):
                 print("input[", i, "] =", self.world_ptr[0].sound_in[i])
 
