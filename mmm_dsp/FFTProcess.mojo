@@ -35,7 +35,7 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
         self.process.get_messages()
 
 trait FFTProcessable(Movable,Copyable):
-    """Implement this trait in a custom struct to pass to `FFTProcessor`
+    """Implement this trait in a custom struct to pass to `FFTProcess`
     as a Parameter.
 
     See `TestSpectralProcess.mojo` for an example on how to create a spectral process 

@@ -34,15 +34,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         T: A user defined struct that implements the BufferedProcessable trait.
         window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
-        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct.
-                            Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct.
-                            Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        overlap_output: If True, overlapping output samples (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. 
-                            This would be useful to set to False if the user defined processing is doing something like pitch 
-                            analysis and replacing all the values in the received List with the detected pitch value. In this case,
-                            summing would not make sense (neither would windowing the output) because it would be doing math on the 
-                            pitch values that you want to just stay as they are. The default is True.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        overlap_output: If True, overlapping output samples (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. This would be useful to set to False if the user defined processing is doing something like pitch analysis and replacing all the values in the received List with the detected pitch value. In this case, summing would not make sense (neither would windowing the output) because it would be doing math on the pitch values that you want to just stay as they are. The default is True.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]

@@ -1,0 +1,15 @@
+{% macro _badge(content, color) -%}
+<span style="color: {{ color }}; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ content }}</span>
+{%- endmacro %}
+
+{% macro struct_badge(name) -%}
+{{ _badge(name, '#E04738') }}
+{%- endmacro %}
+
+{% macro trait_badge(name) -%}
+{{ _badge(name, '#9333EA') }}
+{%- endmacro %}
+
+{% macro fn_badge(name) -%}
+{{ _badge(name, '#247fffff') }}
+{%- endmacro %}

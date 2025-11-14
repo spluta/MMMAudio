@@ -1,5 +1,6 @@
 
-# struct <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span>
+{% import '_badges.jinja' as badges %}
+# struct {{ badges.struct_badge(struct.name) }}
 {% if struct.summary %}
 **{{ struct.summary }}**
 {% endif %}
@@ -16,7 +17,7 @@
 
 <!-- PARAMETERS -->
 {% if struct.parameters %}
-<span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> **Parameters**
+{{ badges.struct_badge(struct.name) }} **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -29,13 +30,13 @@
 
 <!-- FUNCTIONS -->
 {% if struct.functions %}
-## <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> **Functions**
+## {{ badges.struct_badge(struct.name) }} **Functions**
 
 {% for function in struct.functions %}
 
 {% for overload in function.overloads %}
 
-### `struct` <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> . `fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span>
+### `struct` {{ badges.struct_badge(struct.name) }} . `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -43,14 +44,14 @@
 
 {% if overload.description %}{{ overload.description }}{% endif %}
 
-`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Signature**  
+`fn` {{ badges.fn_badge(function.name) }} **Signature**  
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Parameters**
+`fn` {{ badges.fn_badge(function.name) }} **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -60,7 +61,7 @@
 {% endif %}
 
 {% if overload.args %}
-`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Arguments**
+`fn` {{ badges.fn_badge(function.name) }} **Arguments**
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
@@ -70,7 +71,7 @@
 {% endif %}
 
 {% if overload.returns %}
-`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Returns**
+`fn` {{ badges.fn_badge(function.name) }} **Returns**
 {% if overload.returns.type %}: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
 

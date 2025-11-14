@@ -1,6 +1,7 @@
+{% import '_badges.jinja' as badges %}
 {% for overload in function.overloads %}
 
-# `fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span>
+# `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 

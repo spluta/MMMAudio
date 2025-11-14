@@ -1,4 +1,5 @@
-### {{ trait.name }}
+{% import '_badges.jinja' as badges %}
+# trait {{ badges.trait_badge(trait.name) }}
 
 {% if trait.summary %}
 {{ trait.summary }}
@@ -9,7 +10,7 @@
 {% endif %}
 
 {% if trait.parameters %}
-## Parameters
+## {{ badges.trait_badge(trait.name) }} Parameters
 
 {% for param in trait.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
@@ -17,22 +18,15 @@
 {% endif %}
 
 {% if trait.functions %}
-{% set displayed_functions = trait.functions
-    | rejectattr('name', 'equalto', '__copy__')
-    | rejectattr('name', 'equalto', '__copyinit__')
-    | rejectattr('name', 'equalto', '__moveinit__')
-%}
-{% if displayed_functions %}
-## Required Methods
+## {{ badges.trait_badge(trait.name) }} Required Methods
 
-{% for function in displayed_functions %}
+{% for function in trait.functions %}
 {% include 'trait_method.md' %}
 {% endfor %}
 {% endif %}
-{% endif %}
 
 {% if trait.constraints %}
-## Constraints
+## {{ badges.trait_badge(trait.name) }} Constraints
 
 {{ trait.constraints }}
 {% endif %}
