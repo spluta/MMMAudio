@@ -351,7 +351,7 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
 struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
     """An oscillator that generates an impulse signal.
-    Arguments:
+    Args:
         world_ptr: Pointer to the MMMWorld instance.
     """
     var phasor: Phasor[N]

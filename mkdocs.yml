@@ -44,11 +44,12 @@ nav:
   - API Reference:
     - Overview: api/index.md
     - Core DSP: 
-      - Utilities: api/mmm_utils/functions.md
       - Buffer: api/mmm_dsp/Buffer.md
+      - BufferedProcess: api/mmm_dsp/BufferedProcess.md
       - Delays: api/mmm_dsp/Delays.md
       - Distortion: api/mmm_dsp/Distortion.md
       - Env: api/mmm_dsp/Env.md
+      - FFTProcess: api/mmm_dsp/FFTProcess.md
       - Filters: api/mmm_dsp/Filters.md
       - MLP: api/mmm_dsp/MLP.md
       - Noise: api/mmm_dsp/Noise.md
@@ -59,6 +60,7 @@ nav:
       - PlayBuf: api/mmm_dsp/PlayBuf.md
       - RecordBuf: api/mmm_dsp/RecordBuf.md
       - Reverb: api/mmm_dsp/Reverb.md
+      - Utilities: api/mmm_utils/functions.md
     - Core Framework:
       - World: api/mmm_src/MMMWorld.md
       - Audio Engine: api/mmm_src/MMMAudio.md

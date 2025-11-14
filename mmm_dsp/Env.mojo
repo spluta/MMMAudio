@@ -12,17 +12,10 @@ from mmm_utils.RisingBoolDetector import RisingBoolDetector
 # EnvParams is the best approach. The impetus is, 
 # an env like this has so many params, I wish there was a way to set them in an organized way.
 struct EnvParams(Representable, Movable, Copyable):
-    """
-    Parameters for the Env class.
-    This struct holds the values, times, curves, loop flag, and time warp factor for the envelope generator.
-    
-    Attributes:
-    
-        values (List[Float64]): List of envelope values at each segment.
-        times (List[Float64]): List of durations for each segment.
-        curves (List[Float64]): List of curve shapes for each segment. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
-        loop (Bool): Flag to indicate if the envelope should loop.
-        time_warp (Float64): Time warp factor to speed up or slow down the envelope.
+    """Parameters for the Env class.
+
+    This struct holds the parameters for the envelope generator. It
+    is not required to use the `Env` struct, but it might be convenient.
     """
 
     var values: List[Float64]
@@ -69,6 +62,7 @@ struct Env(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Env")
 
+    @doc_private
     fn reset_vals(mut self, times: List[Float64]):
         """Reset internal values."""
         if self.times.__len__() != (times.__len__() + 1):

@@ -49,7 +49,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         """
         get the next sample from an audio buffer (Buffer)
 
-        Arguments:
+        Args:
             buffer: The audio buffer to read from (Buffer struct).
             rate: The playback rate. 1 is the normal speed of the buffer.
             loop: Whether to loop the buffer (default: True).
@@ -207,7 +207,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     fn next[N: Int = 1](mut self, mut buffer: Buffer, buf_chan: Int = 0, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         """Generate the next set of grains.
         
-        Arguments:.
+        Args:.
             buffer: Audio buffer containing the source sound.
             trig: Trigger signal (>0 to start a new grain).
             rate: Playback rate of the grains (1.0 = normal speed).
@@ -284,7 +284,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         Parameters:
             out_chans: Number of output channels.
 
-        Arguments:.
+        Args:.
             buffer: Audio buffer containing the source sound.
             trig: Trigger signal (>0 to start a new grain).
             rate: Playback rate of the grains (1.0 = normal speed).

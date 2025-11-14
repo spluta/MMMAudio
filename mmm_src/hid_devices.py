@@ -8,7 +8,7 @@ class Joystick:
     def __init__(self, name: str, vendor_id=0x046d, product_id=0xc215):
         """Initialize connection with a Joystick.
         
-        Arguments:
+        Args:
             name: Joystick name.
             vendor_id: Identification number of the vendor.
             product_id: Identification number of the product.
@@ -86,7 +86,7 @@ class Joystick:
     def read_continuous(self, name: str, function: Callable[..., None], duration: Optional[float] = None):
         """Read joystick data continuously.
         
-        Arguments:
+        Args:
             name: Joystick name
             function: Function to call with joystick data
             duration: Duration to read data (in seconds). If None, read indefinitely.

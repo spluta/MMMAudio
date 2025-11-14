@@ -1,6 +1,6 @@
-from numpy import np
+import numpy as np
 
-def polar_to_complex(mags, phases):
+def polar_to_complex(mags: np.ndarray, phases: np.ndarray):
     """
     Convert polar coordinates (magnitude and phase) to complex numbers.
     
