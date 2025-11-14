@@ -97,7 +97,7 @@ struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
         vectorize[closure, simd_width](N)
 
 struct SVF[N: Int = 1](Representable, Movable, Copyable):
-    """State Variable Filter implementation from Andrew Simper (https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf). Translated from Oleg Nesterov's Faust implementation.
+    """State Variable Filter implementation from [Andrew Simper](https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf). Translated from Oleg Nesterov's Faust implementation.
 
     ``SVF[N](world_ptr)``
 

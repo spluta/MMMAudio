@@ -2,28 +2,32 @@ import numpy as np
 import math
 import random
 
-def linlin(value, in_min, in_max, out_min, out_max):
+def linlin(value: float, in_min: float, in_max: float, out_min: float, out_max: float) -> float:
     """
     Linear-linear transform: map value from input range to output range
     
     Args:
         value: Input value to transform
-        in_min, in_max: Input range
-        out_min, out_max: Output range
+        in_min: Minimum of input range
+        in_max: Maximum of input range
+        out_min: Minimum of output range
+        out_max: Maximum of output range
     
     Returns:
         Transformed value in output range
     """
     return out_min + (value - in_min) * (out_max - out_min) / (in_max - in_min)
 
-def linexp(value, in_min, in_max, out_min, out_max):
+def linexp(value: float, in_min: float, in_max: float, out_min: float, out_max: float) -> float:
     """
     Linear-to-exponential transform
     
     Args:
         value: Input value to transform
-        in_min, in_max: Input range (linear)
-        out_min, out_max: Output range (exponential)
+        in_min: Minimum of input range (linear)
+        in_max: Maximum of input range (linear)
+        out_min: Minimum of output range (exponential)
+        out_max: Maximum of output range (exponential)
     
     Returns:
         Exponentially scaled output value
@@ -40,14 +44,16 @@ def linexp(value, in_min, in_max, out_min, out_max):
     
     return result
 
-def lincurve(value, in_min, in_max, out_min, out_max, curve=0):
+def lincurve(value: float, in_min: float, in_max: float, out_min: float, out_max: float, curve: float = 0) -> float:
     """
     Linear-to-curve transform
     
     Args:
         value: Input value to transform
-        in_min, in_max: Input range (linear)
-        out_min, out_max: Output range
+        in_min: Minimum of input range (linear)
+        in_max: Maximum of input range (linear)
+        out_min: Minimum of output range
+        out_max: Maximum of output range
         curve: Curve parameter
                curve = 0: linear
                curve > 0: exponential-like (steep at end)
@@ -75,11 +81,11 @@ def lincurve(value, in_min, in_max, out_min, out_max, curve=0):
     result = out_min + curved * (out_max - out_min)
     return result
 
-def midicps(midi_note):
+def midicps(midi_note: float) -> float:
     """Convert MIDI note number to frequency in Hz"""
     return 440.0 * (2.0 ** ((midi_note - 69.0) / 12.0))
 
-def cpsmidi(frequency):
+def cpsmidi(frequency: float) -> float:
     """Convert frequency in Hz to MIDI note number"""
     return 69.0 + 12 * math.log2(frequency / 440.0)
 

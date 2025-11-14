@@ -36,9 +36,10 @@ theme:
 nav:
   - Home: 
     - Overview: index.md
+    - Getting Started: getting-started.md
     - API Reference: api/index.md
-    - Examples: examples/index.md
     - Contributing: contributing/index.md
+    - Examples: examples/index.md
   - Getting Started: getting-started.md
   - API Reference:
     - Overview: api/index.md
@@ -61,15 +62,16 @@ nav:
     - Core Framework:
       - World: api/mmm_src/MMMWorld.md
       - Audio Engine: api/mmm_src/MMMAudio.md
-      - Graphs: api/mmm_src/MMMGraph_solo.md
       - Messenger: api/mmm_utils/Messengers.md
       - Traits: api/mmm_src/MMMTraits.md
       - Patterns: api/mmm_src/Patterns.md
       - Scheduler: api/mmm_src/Scheduler.md
+      - HID Devices: api/mmm_utils/hid_devices.md
     - Utilities:
       - Windows: api/mmm_utils/Windows.md
       - Print: api/mmm_utils/Print.md
       - ML Training: api/mmm_utils/mlp_trainer.md
+      - GUIs: api/mmm_utils/GUI.md
   # - Examples nav tree is built dynamically from the examples directory
   - Contributing:
     - Overview: contributing/index.md

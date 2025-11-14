@@ -1,9 +1,6 @@
-
----
-
 {% for overload in function.overloads %}
 
-# `fn` {{ function.name }}
+# `fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span>
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -71,5 +68,9 @@
 {% endif %}
 
 </div>
+
+{% if not loop.last %}
+<div style="border-top: 2px solid #247fffff; margin: 20px 0;"></div>
+{% endif %}
 
 {% endfor %} <!-- endfor overload in function.overloads -->

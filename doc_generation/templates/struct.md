@@ -1,13 +1,7 @@
 
----
-
-# **{{ struct.name }}**
-
-<!-- SUMMARY -->
+# struct <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span>
 {% if struct.summary %}
-
 **{{ struct.summary }}**
-
 {% endif %}
 
 <!-- DESCRIPTION -->
@@ -17,12 +11,12 @@
 
 <!-- PARENT TRAITS -->
 {% if struct.parentTraits %}
-*Parent Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
+*Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
 {% endif %}
 
 <!-- PARAMETERS -->
 {% if struct.parameters %}
-**Parameters**
+<span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -31,15 +25,17 @@
 {% endfor %}
 {% endif %}
 
+<hr style="border: none; border-top: 2px dotted #e04738; margin: 20px 60px;">
+
 <!-- FUNCTIONS -->
 {% if struct.functions %}
-## **Functions**
+## <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> **Functions**
 
 {% for function in struct.functions %}
 
 {% for overload in function.overloads %}
 
-### `fn` **`{{ function.name }}`**
+### `struct` <span style="color: #E04738; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ struct.name }}</span> . `fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span>
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -47,14 +43,14 @@
 
 {% if overload.description %}{{ overload.description }}{% endif %}
 
-**Signature**  
+`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Signature**  
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-**Parameters**
+`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -64,7 +60,7 @@
 {% endif %}
 
 {% if overload.args %}
-**Arguments**
+`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Arguments**
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
@@ -74,7 +70,7 @@
 {% endif %}
 
 {% if overload.returns %}
-**Returns**
+`fn` <span style="color: #247fffff; background-color: #e5e7eb; padding: 2px 6px; border-radius: 3px; font-family: monospace;">{{ function.name }}</span> **Returns**
 {% if overload.returns.type %}: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
 

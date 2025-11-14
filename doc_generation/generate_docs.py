@@ -189,7 +189,7 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     errors = 0
 
     for src_file in mojo_files:
-        if src_file.stem == '__init__':
+        if src_file.stem == '__init__' or src_file.stem == 'MMMGraph_solo':
             continue
         rel_path = src_file.relative_to(input_dir)
         # Mirror directory and replace suffix
