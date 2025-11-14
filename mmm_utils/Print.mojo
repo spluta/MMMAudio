@@ -22,7 +22,7 @@ struct Print(Representable, Copyable, Movable):
         """
         Print the value at a given frequency.
 
-        Arguments:
+        Args:
             value: The value to print.
             label: An optional label to prepend to the printed value.
             freq: The frequency (in Hz) at which to print the value.
@@ -37,7 +37,7 @@ struct Print(Representable, Copyable, Movable):
     #     """
     #     Print the value at a given frequency.
 
-    #     Arguments:
+    #     Args:
     #         value: The value to print.
     #         label: An optional label to prepend to the printed value.
     #         freq: The frequency (in Hz) at which to print the value.

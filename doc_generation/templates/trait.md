@@ -8,12 +8,6 @@
 {{ trait.description }}
 {% endif %}
 
-## Signature
-
-```mojo
-{{ trait.signature }}
-```
-
 {% if trait.parameters %}
 ## Parameters
 
@@ -23,11 +17,18 @@
 {% endif %}
 
 {% if trait.functions %}
+{% set displayed_functions = trait.functions
+    | rejectattr('name', 'equalto', '__copy__')
+    | rejectattr('name', 'equalto', '__copyinit__')
+    | rejectattr('name', 'equalto', '__moveinit__')
+%}
+{% if displayed_functions %}
 ## Required Methods
 
-{% for function in trait.functions %}
+{% for function in displayed_functions %}
 {% include 'trait_method.md' %}
 {% endfor %}
+{% endif %}
 {% endif %}
 
 {% if trait.constraints %}
@@ -40,5 +41,3 @@
 !!! warning "Deprecated"
     {{ trait.deprecated }}
 {% endif %}
-
----

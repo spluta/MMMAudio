@@ -64,7 +64,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         """
         Reload the MLP model from a specified file.
 
-        Arguments:
+        Args:
           file_name: The path to the model file.
         """
         try:

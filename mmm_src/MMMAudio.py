@@ -208,19 +208,19 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_bool_msg([key, value])
 
-    def send_bools(self, key: str, args: list):
-        """
-        Send a list of booleans to the Mojo audio engine.
+    # def send_bools(self, key: str, args: list):
+    #     """
+    #     Send a list of booleans to the Mojo audio engine.
         
-        Args:
-            key: Key for the message 
-            args: List of float values
-        """
+    #     Args:
+    #         key: Key for the message 
+    #         args: List of float values
+    #     """
 
-        key_vals = [key]
-        key_vals.extend(args)
+    #     key_vals = [key]
+    #     key_vals.extend(args)
 
-        self.mmm_audio_bridge.update_bools_msg(key_vals)
+    #     self.mmm_audio_bridge.update_bools_msg(key_vals)
 
     def send_float(self, key: str, value: float):
         """
@@ -233,7 +233,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_float_msg([key, value])
 
-    def send_floats(self, key: str, args: list):
+    def send_floats(self, key: str, args: list[float]):
         """
         Send a list of floats to the Mojo audio engine.
         
@@ -243,7 +243,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend(args)
+        key_vals.extend([str(f) for f in args])
 
         self.mmm_audio_bridge.update_floats_msg(key_vals)
         
@@ -258,7 +258,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_int_msg([key, value])
 
-    def send_ints(self, key: str, args: list):
+    def send_ints(self, key: str, args: list[int]):
         """
         Send a list of integers to the Mojo audio engine.
         
@@ -268,7 +268,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend(args)
+        key_vals.extend([str(s) for s in args])
 
         self.mmm_audio_bridge.update_ints_msg(key_vals)
 
@@ -282,27 +282,27 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_trig_msg([key])
     
-    def send_trigs(self, key: str, args):
-        """
-        Send a list of triggers to the Mojo audio engine.
+    # def send_trigs(self, key: str, args):
+    #     """
+    #     Send a list of triggers to the Mojo audio engine.
         
-        This method is a bit usual since triggers are typically single events,
-        but here we send a list of boolean values representing multiple triggers.
-        This way, on the Mojo side, there may be a List of events, only some of which
-        are to be triggered at one time. Sending a list of booleans allows for this.
-        Note that these will act as `Trig`s on the Mojo side so if one element in the
-        list is False, it will just stay as False, if it is True, it will trigger and then
-        go back to False on the next audio sample.
+    #     This method is a bit usual since triggers are typically single events,
+    #     but here we send a list of boolean values representing multiple triggers.
+    #     This way, on the Mojo side, there may be a List of events, only some of which
+    #     are to be triggered at one time. Sending a list of booleans allows for this.
+    #     Note that these will act as `Trig`s on the Mojo side so if one element in the
+    #     list is False, it will just stay as False, if it is True, it will trigger and then
+    #     go back to False on the next audio sample.
         
-        Args:
-            key: Key for the message 
-            values: List of boolean values
-        """
+    #     Args:
+    #         key: Key for the message 
+    #         values: List of boolean values
+    #     """
 
-        key_vals = [key]
-        key_vals.extend(args)
+    #     key_vals = [key]
+    #     key_vals.extend(args)
 
-        self.mmm_audio_bridge.update_trigs_msg(key_vals)
+    #     self.mmm_audio_bridge.update_trigs_msg(key_vals)
         
     def send_string(self, key: str, value: str):
         """
@@ -315,7 +315,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_string_msg([key, str(value)])
 
-    def send_strings(self, key: str, args):
+    def send_strings(self, key: str, args: list[str]):
         """
         Send a list of string messages to the Mojo audio engine.
 

@@ -60,7 +60,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
-        Arguments:
+        Args:
             world_ptr: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
 
@@ -111,7 +111,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
         and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
 
-        Arguments:
+        Args:
             input: The next input sample to process.
         
         Returns:
@@ -173,15 +173,15 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
         and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
 
-        Arguments:
+        Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer.
+            chan: The channel to read from the buffer.
         
         Returns:
             The next output sample.
         """
         
-
         if self.hop_counter == 0:
            
             @parameter
