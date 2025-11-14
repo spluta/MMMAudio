@@ -12,6 +12,7 @@ Classes:
 """
 
 from random import *
+from typing import Optional
 
 class Pseq:
     """
@@ -33,7 +34,7 @@ class Pseq:
         print(pattern.next())  # 1 (cycles back)
         ```
     """
-    def __init__(self, list):
+    def __init__(self, list: list[float]):
         """
         Initialize a sequential pattern.
         
@@ -43,7 +44,7 @@ class Pseq:
         self.list = list
         self.index = -1
 
-    def next(self):
+    def next(self) -> Optional[float]:
         """
         Get the next value in the sequence.
         
@@ -76,7 +77,7 @@ class Prand:
         print(pattern.next())  # Another random selection
         ```
     """
-    def __init__(self, list):
+    def __init__(self, list: list[float]):
         """
         Initialize a random pattern.
         
@@ -85,7 +86,7 @@ class Prand:
         """
         self.list = list
 
-    def next(self):
+    def next(self) -> Optional[float]:
         """
         Get a random value from the list.
         
@@ -121,7 +122,7 @@ class Pxrand:
         print(pattern.next())  # Different from previous selection
         ```
     """
-    def __init__(self, list):
+    def __init__(self, list: list[float]):
         """
         Initialize an exclusive random pattern.
         
@@ -132,7 +133,7 @@ class Pxrand:
         self.list = list
         self.last_index = -1
 
-    def next(self):
+    def next(self) -> Optional[float]:
         """
         Get a random value that differs from the previous selection.
         
