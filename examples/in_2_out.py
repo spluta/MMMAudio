@@ -20,7 +20,7 @@ mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=12, in_devi
 mmm_audio.start_audio()
 
 # print the current sample of inputs to the REPL
-mmm_audio.send_msg("print_inputs")  
+mmm_audio.send_trig("print_inputs")  
 
 mmm_audio.stop_audio()
 

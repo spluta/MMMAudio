@@ -26,7 +26,7 @@ from mmm_utils.functions import *
 def osc_msg_handler(key, *args):
     print(f"Received OSC message: {key} with arguments: {args}")
     if key == "/fader1":
-        val = lincurve(args[0], 0.0, 1.0, -4.0, 4.0, -1.0)
+        val = lincurve(args[0], 0.0, 1.0, -4.0, 4.0, -1)
         mmm_audio.send_float("play_rate", val)
     elif key == "/fader2":
         val = linexp(args[0], 0.0, 1.0, 100.0, 20000.0)

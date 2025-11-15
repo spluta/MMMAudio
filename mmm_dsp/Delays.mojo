@@ -327,9 +327,9 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
         
         temp = self.allpass_feedback + input
         temp2 = self.delay.next(temp, delay_time)  # Get the delayed sample and write to the delay line
-        self.allpass_feedback = (temp2 * (-feedback_coef))
+        self.allpass_feedback = (temp2 * (feedback_coef))
 
-        out2 = temp * feedback_coef + self.last_delay
+        out2 = temp * -feedback_coef + self.last_delay
         self.last_delay = temp2
 
         return out2

@@ -36,7 +36,10 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
         panned = self.pan_az.next[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers) * 0.1
 
-        return SIMD[DType.float64, 8](panned[0], panned[2], panned[1], 0.0, panned[6], panned[3], panned[5], panned[4])
+        if self.num_speakers == 2:
+            return SIMD[DType.float64, 8](panned[0], panned[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+        else:
+            return SIMD[DType.float64, 8](panned[0], panned[2], panned[1], 0.0, panned[6], panned[3], panned[5], panned[4])
 
 
 # there can only be one graph in an MMMAudio instance

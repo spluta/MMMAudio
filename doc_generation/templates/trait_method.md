@@ -1,4 +1,5 @@
-### {{ function.name }}
+{% import '_badges.jinja' as badges %}
+### `trait` {{ badges.trait_badge(trait.name) }} . `fn` {{ badges.fn_badge(function.name) }}
 
 {% for overload in function.overloads %}
 {% if overload.summary %}

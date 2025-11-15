@@ -142,23 +142,31 @@ def run_mojo_doc(file_path: Path, json_output_dir: Path, timeout: int = 30) -> D
         raise RuntimeError(f"Invalid JSON in output file {json_output_path}: {e}\nFile snippet:\n{snippet}")
 
 def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Remove unwanted functions and scrub overload metadata."""
+
+    skipped_names = {"__repr__", "copy", "__copyinit__", "__moveinit__"}
+
+    def _clean_functions(functions: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        cleaned: List[Dict[str, Any]] = []
+        for func in functions:
+            if func.get('name') in skipped_names:
+                continue
+            for overload in func.get('overloads', []):
+                args = overload.get('args', [])
+                overload['args'] = [a for a in args if a.get('name') != 'self']
+                params = overload.get('parameters')
+                if isinstance(params, list):
+                    overload['parameters'] = [p for p in params if p.get('name') != 'self']
+            cleaned.append(func)
+        return cleaned
+
     decl = data.get('decl', {})
-    structs = decl.get('structs', [])
-    for struct in structs:
-        functions = struct.get('functions', [])
-        # Drop unwanted functions first
-        struct['functions'] = [
-            f for f in functions
-            if f.get('name') != '__repr__'
-        ]
-        
-        for func in struct['functions']:
-            for ol in func.get('overloads', []):
-                args = ol.get('args', [])
-                ol['args'] = [a for a in args if a.get('name') != 'self']
-                if 'parameters' in ol:
-                    params = ol['parameters']
-                    ol['parameters'] = [p for p in params if p.get('name') != 'self']
+    for struct in decl.get('structs', []):
+        struct['functions'] = _clean_functions(struct.get('functions', []))
+
+    for trait in decl.get('traits', []):
+        trait['functions'] = _clean_functions(trait.get('functions', []))
+
     return data
 
 def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
@@ -189,7 +197,7 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     errors = 0
 
     for src_file in mojo_files:
-        if src_file.stem == '__init__':
+        if src_file.stem == '__init__' or src_file.stem == 'MMMGraph_solo':
             continue
         rel_path = src_file.relative_to(input_dir)
         # Mirror directory and replace suffix

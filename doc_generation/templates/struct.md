@@ -1,13 +1,8 @@
 
----
-
-# **{{ struct.name }}**
-
-<!-- SUMMARY -->
+{% import '_badges.jinja' as badges %}
+# struct {{ badges.struct_badge(struct.name) }}
 {% if struct.summary %}
-
 **{{ struct.summary }}**
-
 {% endif %}
 
 <!-- DESCRIPTION -->
@@ -17,12 +12,12 @@
 
 <!-- PARENT TRAITS -->
 {% if struct.parentTraits %}
-*Parent Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
+*Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
 {% endif %}
 
 <!-- PARAMETERS -->
 {% if struct.parameters %}
-**Parameters**
+{{ badges.struct_badge(struct.name) }} **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -31,15 +26,17 @@
 {% endfor %}
 {% endif %}
 
+<hr style="border: none; border-top: 2px dotted #e04738; margin: 20px 60px;">
+
 <!-- FUNCTIONS -->
 {% if struct.functions %}
-## **Functions**
+## {{ badges.struct_badge(struct.name) }} **Functions**
 
 {% for function in struct.functions %}
 
 {% for overload in function.overloads %}
 
-### `fn` **`{{ function.name }}`**
+### `struct` {{ badges.struct_badge(struct.name) }} . `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -47,14 +44,14 @@
 
 {% if overload.description %}{{ overload.description }}{% endif %}
 
-**Signature**  
+`fn` {{ badges.fn_badge(function.name) }} **Signature**  
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-**Parameters**
+`fn` {{ badges.fn_badge(function.name) }} **Parameters**
 
 | Name | Type | Description |
 |------|------|-------------|
@@ -64,7 +61,7 @@
 {% endif %}
 
 {% if overload.args %}
-**Arguments**
+`fn` {{ badges.fn_badge(function.name) }} **Arguments**
 
 | Name | Type | Default | Description |
 |------|------|---------|-------------|
@@ -74,7 +71,7 @@
 {% endif %}
 
 {% if overload.returns %}
-**Returns**
+`fn` {{ badges.fn_badge(function.name) }} **Returns**
 {% if overload.returns.type %}: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
 

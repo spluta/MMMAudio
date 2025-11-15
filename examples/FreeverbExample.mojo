@@ -9,7 +9,7 @@ from mmm_dsp.PlayBuf import *
 from mmm_dsp.Filters import VAMoogLadder
 from mmm_dsp.Reverb import Freeverb
 
-struct FreeverbSynth(Messagable):
+struct FreeverbSynth(Copyable, Movable):
     var world_ptr: UnsafePointer[MMMWorld] 
     var buffer: Buffer
 
@@ -18,7 +18,7 @@ struct FreeverbSynth(Messagable):
     var play_buf: PlayBuf
 
     var freeverb: Freeverb[2]
-    var messenger: Messenger
+    var m: Messenger
 
     var room_size: Float64
     var lpf_comb: Float64
@@ -43,24 +43,19 @@ struct FreeverbSynth(Messagable):
         self.added_space = 0.5
         self.mix = 0.2
 
-        self.messenger = Messenger(self.world_ptr)
-
-    fn register_messages(mut self):
-        self.messenger.register(self.room_size,"room_size")
-        self.messenger.register(self.lpf_comb, "lpf_comb")
-        self.messenger.register(self.added_space, "added_space")
-        self.messenger.register(self.mix, "mix")
+        self.m = Messenger(self.world_ptr)
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.messenger.update()
+
+        self.m.update(self.room_size,"room_size")
+        self.m.update(self.lpf_comb,"lpf_comb")
+        self.m.update(self.added_space,"added_space")
+        self.m.update(self.mix,"mix")
+
         added_space_simd = SIMD[DType.float64, 2](self.added_space, self.added_space * 0.99)
-
-
         out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
-
         out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.2 * self.mix + out * (1.0 - self.mix)
-
         return out
 
 
@@ -71,9 +66,7 @@ struct FreeverbExample(Representable, Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-
         self.freeverb_synth = FreeverbSynth(world_ptr)
-        self.freeverb_synth.register_messages()
 
     fn __repr__(self) -> String:
         return String("Freeverb_Graph")

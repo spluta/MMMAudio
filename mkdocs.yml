@@ -36,18 +36,20 @@ theme:
 nav:
   - Home: 
     - Overview: index.md
+    - Getting Started: getting-started.md
     - API Reference: api/index.md
-    - Examples: examples/index.md
     - Contributing: contributing/index.md
+    - Examples: examples/index.md
   - Getting Started: getting-started.md
   - API Reference:
     - Overview: api/index.md
     - Core DSP: 
-      - Utilities: api/mmm_utils/functions.md
       - Buffer: api/mmm_dsp/Buffer.md
+      - BufferedProcess: api/mmm_dsp/BufferedProcess.md
       - Delays: api/mmm_dsp/Delays.md
       - Distortion: api/mmm_dsp/Distortion.md
       - Env: api/mmm_dsp/Env.md
+      - FFTProcess: api/mmm_dsp/FFTProcess.md
       - Filters: api/mmm_dsp/Filters.md
       - MLP: api/mmm_dsp/MLP.md
       - Noise: api/mmm_dsp/Noise.md
@@ -58,17 +60,20 @@ nav:
       - PlayBuf: api/mmm_dsp/PlayBuf.md
       - RecordBuf: api/mmm_dsp/RecordBuf.md
       - Reverb: api/mmm_dsp/Reverb.md
+      - Utilities: api/mmm_utils/functions.md
     - Core Framework:
       - World: api/mmm_src/MMMWorld.md
       - Audio Engine: api/mmm_src/MMMAudio.md
-      - Graphs: api/mmm_src/MMMGraph_solo.md
+      - Messenger: api/mmm_utils/Messengers.md
       - Traits: api/mmm_src/MMMTraits.md
       - Patterns: api/mmm_src/Patterns.md
       - Scheduler: api/mmm_src/Scheduler.md
+      - HID Devices: api/mmm_utils/hid_devices.md
     - Utilities:
       - Windows: api/mmm_utils/Windows.md
       - Print: api/mmm_utils/Print.md
       - ML Training: api/mmm_utils/mlp_trainer.md
+      - GUIs: api/mmm_utils/GUI.md
   # - Examples nav tree is built dynamically from the examples directory
   - Contributing:
     - Overview: contributing/index.md

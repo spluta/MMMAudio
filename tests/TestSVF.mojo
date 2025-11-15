@@ -14,21 +14,27 @@ struct TestSVF(Movable, Copyable):
     var osc: LFSaw[1,2]
     var filts: List[SVF]
     var messenger: Messenger
+    var freq: Float64
+    var cutoff: Float64
+    var res: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = LFSaw[1,2](world_ptr)
         self.messenger = Messenger(world_ptr)
         self.filts = List[SVF](capacity=2)
+        self.freq = 440
+        self.cutoff = 1000.0
+        self.res = 1.0
         for i in range(2):
             self.filts[i] = SVF(world_ptr)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        freq = self.messenger.get_val("freq", 440.0)
-        sample = self.osc.next(freq) 
+        self.messenger.update(self.freq,"freq")
+        sample = self.osc.next(self.freq) 
         outs = SIMD[DType.float64, 2](0.0,0.0)
-        cutoff = self.messenger.get_val("cutoff", 1000.0)
-        res = self.messenger.get_val("res", 1.0)
-        outs[0] = self.filts[0].lpf(sample, cutoff, res)
-        outs[1] = self.filts[1].hpf(sample, cutoff, res)
+        self.messenger.update(self.cutoff,"cutoff")
+        self.messenger.update(self.res,"res")
+        outs[0] = self.filts[0].lpf(sample, self.cutoff, self.res)
+        outs[1] = self.filts[1].hpf(sample, self.cutoff, self.res)
         return outs * 0.2

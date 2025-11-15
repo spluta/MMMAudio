@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.Windows import *
+from math import floor
 
 # Eventually, I think it would be better for the user defined BufferProcessable
 # struct to be where the `window_size` is set as a parameter and then this value
@@ -33,15 +34,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         T: A user defined struct that implements the BufferedProcessable trait.
         window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
-        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct.
-                            Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct.
-                            Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        overlap_output: If True, overlapping output samples (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. 
-                            This would be useful to set to False if the user defined processing is doing something like pitch 
-                            analysis and replacing all the values in the received List with the detected pitch value. In this case,
-                            summing would not make sense (neither would windowing the output) because it would be doing math on the 
-                            pitch values that you want to just stay as they are. The default is True.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        overlap_output: If True, overlapping output samples (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. This would be useful to set to False if the user defined processing is doing something like pitch analysis and replacing all the values in the received List with the detected pitch value. In this case, summing would not make sense (neither would windowing the output) because it would be doing math on the pitch values that you want to just stay as they are. The default is True.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
@@ -56,10 +51,10 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
-        Arguments:
+        Args:
             world_ptr: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
 
@@ -70,7 +65,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.world_ptr = world_ptr
         self.input_buffer_write_head = 0
         self.output_buffer_write_head = 0
-        self.hop_counter = 0
+        self.hop_counter = hop_start
         self.read_head = 0
         self.process = process^
         self.input_buffer = List[Float64](length=window_size * 2, fill=0.0)
@@ -85,6 +80,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             self.input_attenuation_window = hamming_window(window_size)
         elif input_window_shape == WindowTypes.blackman:
             self.input_attenuation_window = blackman_window(window_size)
+        elif input_window_shape == WindowTypes.sine:
+            self.input_attenuation_window = sine_window(window_size)
         else:
             # never used, just allocate a bunch of zeros
             self.input_attenuation_window = List[Float64](length=window_size, fill=0.0)
@@ -96,6 +93,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             self.output_attenuation_window = hamming_window(window_size)
         elif output_window_shape == WindowTypes.blackman:
             self.output_attenuation_window = blackman_window(window_size)
+        elif output_window_shape == WindowTypes.sine:
+            self.output_attenuation_window = sine_window(window_size)
         else:
             # never used, just allocate a bunch of zeros
             self.output_attenuation_window = List[Float64](length=window_size, fill=0.0)
@@ -106,7 +105,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
         and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
 
-        Arguments:
+        Args:
             input: The next input sample to process.
         
         Returns:
@@ -123,11 +122,11 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
 
             @parameter
             if input_window_shape:
-                @parameter
+                # @parameter # for some reason these slow compilation down a lot
                 for i in range(window_size):
                     self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
             else:
-                @parameter
+                # @parameter
                 for i in range(window_size):
                     self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i]
 
@@ -135,17 +134,78 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
 
             @parameter
             if output_window_shape:
-                @parameter
+                # @parameter
                 for i in range(window_size):
                     self.passing_buffer[i] *= self.output_attenuation_window[i]
 
             @parameter
             if overlap_output:
-                @parameter
+                # @parameter
                 for i in range(window_size):
                     self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
             else:
-                @parameter
+                # @parameter
+                for i in range(window_size):
+                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+
+            self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
+    
+        self.hop_counter = (self.hop_counter + 1) % hop_size
+
+        outval = self.output_buffer[self.read_head]
+
+        @parameter
+        if overlap_output:
+            self.output_buffer[self.read_head] = 0.0
+        
+        self.read_head = (self.read_head + 1) % window_size
+        return outval
+
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
+        """Process the next input sample and return the next output sample.
+        
+        This function is called in the audio processing loop for each input sample. It buffers the input samples,
+        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
+
+        Args:
+            buffer: The input buffer to read samples from.
+            phase: The current phase to read from the buffer.
+            chan: The channel to read from the buffer.
+        
+        Returns:
+            The next output sample.
+        """
+        
+        if self.hop_counter == 0:
+           
+            @parameter
+            if input_window_shape:
+                for i in range(window_size):
+                    index = floor(phase * buffer.get_num_frames()) + i
+                    if index < buffer.get_num_frames():
+                        self.passing_buffer[i] = buffer.read_index(chan, index) * self.input_attenuation_window[i]
+                    else:
+                        self.passing_buffer[i] = 0.0
+            else:
+                for i in range(window_size):
+                    index = floor(phase * buffer.get_num_frames()) + i
+                    if index < buffer.get_num_frames():
+                        self.passing_buffer[i] = buffer.read_index(chan, index) * self.input_attenuation_window[i]
+                    else:
+                        self.passing_buffer[i] = 0.0
+
+            self.process.next_window(self.passing_buffer)
+
+            @parameter
+            if output_window_shape:
+                for i in range(window_size):
+                    self.passing_buffer[i] *= self.output_attenuation_window[i]
+
+            @parameter
+            if overlap_output:
+                for i in range(window_size):
+                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
+            else:
                 for i in range(window_size):
                     self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
 

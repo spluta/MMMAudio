@@ -9,8 +9,11 @@ from mmm_utils.functions import dbamp
 from mmm_dsp.FFT import FFT
 from complex import ComplexFloat64
 
+alias window_size = 4096
+alias hop_size = window_size
+
 # This corresponds to the user defined BufferedProcess.
-struct FFTLowPass[window_size: Int = 1024](BufferedProcessable):
+struct FFTLowPass[window_size: Int](BufferedProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
@@ -44,7 +47,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
-    var fftlowpass: BufferedProcess[FFTLowPass,1024,512,None,WindowTypes.hann]
+    var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -53,7 +56,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
         self.world_ptr = world_ptr
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
-        self.fftlowpass = BufferedProcess[FFTLowPass[1024],1024,512,None,WindowTypes.hann](self.world_ptr,process=FFTLowPass(self.world_ptr))
+        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.world_ptr,process=FFTLowPass[window_size](self.world_ptr))
         self.m = Messenger(world_ptr)
         self.ps = List[Print](length=2,fill=Print(world_ptr))
         self.which = 0

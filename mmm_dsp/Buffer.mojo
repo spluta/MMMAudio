@@ -257,7 +257,7 @@ struct Buffer(Buffable):
             None
         """
         if index < 0 or index >= Int64(self.num_frames):
-            return  # Out of bounds TODO: throw warning
+            return  # Out of bounds [TODO]: throw warning
         for i in range(len(value)):
             # only write into the buffer if the channel exists
             if start_channel + i < self.num_chans:
@@ -273,7 +273,7 @@ struct Buffer(Buffable):
             start_channel: The starting channel index to write to (0-based).
 
         Returns:
-            None
+            None.
         """
 
         self.write[N=N](value, Int64(self.index), start_channel)

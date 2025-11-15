@@ -74,6 +74,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         room_size_clipped = clip(room_size, 0.0, 1.0)
         added_space_clipped = clip(added_space, 0.0, 1.0)
         feedback = 0.28 + (room_size_clipped * 0.7)
+        feedback2 = 0.5
 
         delay_offset = added_space_clipped * 0.0012
 
@@ -86,10 +87,10 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         out += self.lp_comb6.next(input, 0.03530612244897959 + delay_offset, feedback, lp_comb_lpfreq)
         out += self.lp_comb7.next(input, 0.03666666666666667 + delay_offset, feedback, lp_comb_lpfreq)
 
-        out = self.allpass_combs[0].next(out, 0.012607709750566893)
-        out = self.allpass_combs[1].next(out, 0.01)
-        out = self.allpass_combs[2].next(out, 0.007732426303854875)
-        out = self.allpass_combs[3].next(out, 0.00510204081632653)
+        out = self.allpass_combs[0].next(out, 0.012607709750566893, feedback2)
+        out = self.allpass_combs[1].next(out, 0.01, feedback2)
+        out = self.allpass_combs[2].next(out, 0.007732426303854875, feedback2)
+        out = self.allpass_combs[3].next(out, 0.00510204081632653, feedback2)
 
 
         return out  # Return the delayed sample

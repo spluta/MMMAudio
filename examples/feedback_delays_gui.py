@@ -30,33 +30,33 @@ layout = QVBoxLayout()
 
 gatebutton = QCheckBox("play")
 gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_msg("play", 1.0 if state == 2 else 0.0))
+gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("play", True if state == 2 else False))
 layout.addWidget(gatebutton)
 
 gatebutton = QCheckBox("delay-input")
 gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_msg("delay-input", 1.0 if state == 2 else 0.0))
+gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("delay-input", True if state == 2 else False))
 layout.addWidget(gatebutton)
 
 # Create a slider
-delaytimeslider = Handle("delay time",ControlSpec(0, 1.0, 0.5), 0.5, callback=lambda v: mmm_audio.send_msg("delay_time", v))
+delaytimeslider = Handle("delay time",ControlSpec(0, 1.0, 0.5), 0.5, callback=lambda v: mmm_audio.send_float("delay_time", v))
 layout.addWidget(delaytimeslider)
 
-feedbackslider = Handle("feedback",ControlSpec(-130, -0.1, 4), -6, callback=lambda v: mmm_audio.send_msg("feedback", v))
+feedbackslider = Handle("feedback",ControlSpec(-130, -0.1, 4), -6, callback=lambda v: mmm_audio.send_float("feedback", v))
 layout.addWidget(feedbackslider)
 
-freqslider = Handle("ffreq",ControlSpec(20, 20000, 0.5), 8000, callback=lambda v: mmm_audio.send_msg("ffreq", v))
+freqslider = Handle("ffreq",ControlSpec(20, 20000, 0.5), 8000, callback=lambda v: mmm_audio.send_float("ffreq", v))
 layout.addWidget(freqslider)
 
-qslider = Handle("q",ControlSpec(0.1, 10, 0.5), 1.0, callback=lambda v: mmm_audio.send_msg("q", v))
+qslider = Handle("q",ControlSpec(0.1, 10, 0.5), 1.0, callback=lambda v: mmm_audio.send_float("q", v))
 layout.addWidget(qslider)
 
-mixslider = Handle("mix",ControlSpec(0.0, 1.0, 2), 0.2, callback=lambda v: mmm_audio.send_msg("mix", v))
+mixslider = Handle("mix",ControlSpec(0.0, 1.0, 2), 0.2, callback=lambda v: mmm_audio.send_float("mix", v))
 layout.addWidget(mixslider)
 
 gatebutton = QCheckBox("main")
 gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_msg("main", 1.0 if state == 2 else 0.0))
+gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("main", True if state == 2 else False))
 layout.addWidget(gatebutton)
 
 # Set the layout for the main window

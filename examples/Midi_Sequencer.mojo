@@ -44,7 +44,7 @@ struct TrigSynthVoice(Movable, Copyable):
 
     @always_inline
     fn next(mut self) -> Float64:
-        make_note = self.messenger.update(self.note, "note")
+        make_note = self.messenger.notify_update(self.note, "note")
 
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
         if not self.env.is_active and not make_note:

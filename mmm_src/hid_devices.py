@@ -1,13 +1,14 @@
+from typing import Optional, Callable
 import hid
 import time
 
 class Joystick:
     """Connect a Joystick to control parameters.
     """
-    def __init__(self, name, vendor_id=0x046d, product_id=0xc215):
+    def __init__(self, name: str, vendor_id=0x046d, product_id=0xc215):
         """Initialize connection with a Joystick.
         
-        Arguments:
+        Args:
             name: Joystick name.
             vendor_id: Identification number of the vendor.
             product_id: Identification number of the product.
@@ -82,13 +83,13 @@ class Joystick:
                 self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
 
 
-    def read_continuous(self, name, function, duration=None):
+    def read_continuous(self, name: str, function: Callable[..., None], duration: Optional[float] = None):
         """Read joystick data continuously.
         
-        Arguments:
+        Args:
             name: Joystick name
-            destination: 
-            duration: 
+            function: Function to call with joystick data
+            duration: Duration to read data (in seconds). If None, read indefinitely.
         """
         if not self.device:
             print("Device not connected")
@@ -100,7 +101,7 @@ class Joystick:
         try:
             while True:
                 # Check duration limit
-                if duration and (time.time() - self.start_time) > duration:
+                if duration and (time.time() - start_time) > duration:
                     break
                 
                 # Read data with timeout

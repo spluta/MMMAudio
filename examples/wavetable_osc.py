@@ -12,12 +12,13 @@ mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 
 mmm_audio.start_audio() 
 
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 10.wav")
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 11.wav")
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 12.wav")
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 13.wav")
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 14.wav")
-mmm_audio.send_text("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav")
+# load a different wavetable if you like
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 10.wav")
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 11.wav")
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 12.wav")
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 13.wav")
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 14.wav")
+mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav")
 
 def midi_func():
     import threading
@@ -53,13 +54,13 @@ def midi_func():
                             voice_msg = "voice_" + str(voice)
                             print(f"Note On: {msg.note} Velocity: {msg.velocity} Voice: {voice}")
                             mmm_audio.send_float(voice_msg +".freq", midicps(msg.note))  # note freq and velocity scaled 0 to 1
-                            mmm_audio.send_gate(voice_msg +".gate", True)  # note freq and velocity scaled 0 to 1
+                            mmm_audio.send_bool(voice_msg +".gate", True)  # note freq and velocity scaled 0 to 1
                     if msg.type == "note_off":
                         found, voice = voice_allocator.release_voice(msg.note)
                         if found:
                             voice_msg = "voice_" + str(voice)
                             print(f"Note Off: {msg.note} Voice: {voice}")
-                            mmm_audio.send_gate(voice_msg +".gate", False)  # note freq and velocity scaled 0 to 1
+                            mmm_audio.send_bool(voice_msg +".gate", False)  # note freq and velocity scaled 0 to 1
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices

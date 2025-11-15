@@ -1,9 +1,7 @@
-
----
-
+{% import '_badges.jinja' as badges %}
 {% for overload in function.overloads %}
 
-# `fn` {{ function.name }}
+# `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -71,5 +69,9 @@
 {% endif %}
 
 </div>
+
+{% if not loop.last %}
+<div style="border-top: 2px solid #247fffff; margin: 20px 0;"></div>
+{% endif %}
 
 {% endfor %} <!-- endfor overload in function.overloads -->

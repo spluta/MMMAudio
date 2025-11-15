@@ -12,7 +12,7 @@ if True:
 mmm_audio.send_float("filt_freq", 2000.0)  # initial filter frequency
 mmm_audio.send_float("bend_mul", 1.2)  # initial filter frequency
 
-mmm_audio.send_list("voice_0.note", [1000.0, 1.0]) 
+mmm_audio.send_floats("voice_0.note", [1000.0, 1.0]) 
 
 def midi_func():
     import threading
@@ -43,7 +43,7 @@ def midi_func():
                     if msg.type == "note_on":
                         voice = "voice_" + str(voice_seq.next())
                         print(f"Note On: {msg.note} Velocity: {msg.velocity} Voice: {voice}")
-                        mmm_audio.send_list(voice +".note", [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
+                        mmm_audio.send_floats(voice +".note", [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
 
                     elif msg.type == "control_change":
                         if msg.control == 34:  # Mod wheel
@@ -86,7 +86,7 @@ async def trig_synth(wait):
     fund = midicps(fund_seq.next())
     while True:
         voice = "voice_" + str(voice_seq.next())
-        mmm_audio.send_list(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
+        mmm_audio.send_floats(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         i = (i + 1) % count_to
         if i == 0:
