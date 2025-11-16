@@ -11,12 +11,25 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
     return (p, refined_val)
 
 # [TODO] Implement the YINFFT optimized algorithm because this one is O(n^2) while
-# the FFT based version is O(n log n).
+# the FFT based version is O(n log n). The FFT version also requires to know the 
+# raw amplitude samples, so it would also be a BufferedProcess rather than an FFTProcess.
 struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProcessable):
     """Pitch detection using the original time-domain YIN algorithm.
 
     YIN needs access to the raw samples so it is a 
     BufferedProcess rather than an FFTProcess.
+
+    This struct is not necessarily intended to be used directly because it is 
+    implemented in the PitchYIN struct which takes in single amplitude samples
+    and returns a tuple of (pitch, confidence).
+
+    One could use this however if they wanted to put together a suite of audio
+    analyses that are all based on the same BufferedProcess.
+
+    Parameters:
+        window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
+        min_freq: The minimum frequency to consider for pitch detection.
+        max_freq: The maximum frequency to consider for pitch detection.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var pitch: Float64
@@ -31,11 +44,20 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.yin_values = List[Float64](length=window_size, fill=0.0)
         self.sample_rate = self.world_ptr[].sample_rate
     
+    @doc_private
     fn get_messages(mut self):
+        # Implemented here to satisfy the BufferedProcessable trait
         pass
 
     fn next_window(mut self, mut frame: List[Float64]):
+        """Compute the YIN pitch estimate for the given frame of audio samples.
 
+        Args:
+            frame: The input audio frame of size `window_size`. This List gets passed from BufferedProcess.
+
+        Returns:
+            None. The pitch and confidence values are stored in `self.pitch` and `self.confidence`.
+        """
         # compute the raw difference function directly in the time domain
         self.yin_values[0] = 0.0
         for tau in range(1, window_size):
@@ -105,15 +127,40 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.confidence = local_conf
 
 struct PitchYIN[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
+    """Pitch detection using the YIN algorithm.
+    
+    This struct takes in single amplitude samples and returns a tuple of (pitch, confidence).
+    It uses a BufferedProcess internally to manage the audio buffering and windowing.
+
+    Parameters:
+        window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
+        hop_size: Pitch analysis will occur every `hop_size` samples (using the most recent `window_size` samples).
+        min_freq: The minimum frequency to consider for pitch detection.
+        max_freq: The maximum frequency to consider for pitch detection.
+    """
+
     # [TODO] Technically this BufferedProcess doesn't need to return the List[Float64] so there's
     # an extra loop happening after `.next_window()` that can (should) be eliminated.
     var buffered_process: BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size]
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        """Initialize the PitchYIN processor.
+
+        Args:
+            world_ptr: A pointer to the MMMWorld.
+        """
         self.world_ptr = world_ptr
         self.buffered_process = BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
 
     fn next(mut self, input: Float64) -> (Float64, Float64):
+        """Process the next input sample and return the pitch and confidence.
+
+        Args:
+            input: The next audio sample.
+
+        Returns:
+            A tuple containing the estimated pitch (in Hz) and confidence (0.0 to 1.0).
+        """
         _ = self.buffered_process.next(input)
         return (self.buffered_process.process.pitch, self.buffered_process.process.confidence)
