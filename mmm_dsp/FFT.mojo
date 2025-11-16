@@ -197,78 +197,9 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             self.mags[i] = self.result[i].norm()
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)    
 
-    # fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
-    #     self.result.clear()
-    #     self.result.resize(size // 2 + 1, ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
-
-    #     for k in range(size // 2 + 1):
-    #         if k < len(self.mags):
-    #             var mag = self.mags[k]
-    #             var phase = random_float64(0.0, 2.0 * 3.141592653589793) #self.phases[k]
-                
-    #             var real_part = mag * Math.cos(phase)
-    #             var imag_part = mag * Math.sin(phase)
-                
-    #             self.result[k] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
-    #     self.result[0] = ComplexSIMD[DType.float64, num_chans](self.result[0].re, SIMD[DType.float64, num_chans](0.0))
-    #     self.result[size // 2] = ComplexSIMD[DType.float64, num_chans](self.result[size // 2].re, SIMD[DType.float64, num_chans](0.0))
-        
-    #     var X_even_0 = (self.result[0].re + self.result[size // 2].re) * 0.5
-    #     var X_odd_0 = (self.result[0].re - self.result[size // 2].re) * 0.5
-    #     self.packed_freq[0] = ComplexSIMD[DType.float64, num_chans](X_even_0, X_odd_0)
-
-    #     for k in range(1, size // 2):
-    #         var Xk = self.result[k]
-    #         var Xnk = self.result[size - k]
-            
-    #         var X_even_k = (Xk + Xnk.conj()) * 0.5
-    #         var X_odd_k_rotated = (Xk - Xnk.conj()) * 0.5
-            
-    #         var twiddle_inv = self.unpack_twiddles[k].conj()  # Inverse twiddle
-    #         var X_odd_k = X_odd_k_rotated * twiddle_inv
-            
-    #         var Gk_diff = X_odd_k * ComplexSIMD[DType.float64, num_chans](0.0, 2.0)
-            
-    #         var Gk_sum = X_even_k * 2.0
-
-    #         self.packed_freq[k] = (Gk_sum + Gk_diff) * 0.5
-
-    #     for i in range(size // 2):
-    #         self.reversed[self.bit_reverse_lut[i]] = self.packed_freq[i]
-
-    #     for stage in range(1, self.log_n + 1):
-    #         var m = 1 << stage
-    #         var half_m = m >> 1
-
-    #         stage_twiddle = ComplexSIMD[DType.float64, num_chans](
-    #             Math.cos(2.0 * Math.pi / Float64(m)),
-    #             Math.sin(2.0 * Math.pi / Float64(m))
-    #         )
-            
-    #         for k in range(0, size // 2, m):
-    #             var w = ComplexSIMD[DType.float64, num_chans](1.0, 0.0)
-                
-    #             for j in range(half_m):
-    #                 var idx1 = k + j
-    #                 var idx2 = k + j + half_m
-                    
-    #                 var t = w * self.reversed[idx2]
-    #                 var u = self.reversed[idx1]
-                    
-    #                 self.reversed[idx1] = u + t
-    #                 self.reversed[idx2] = u - t
-
-    #                 w = w * stage_twiddle
-
-    #     var scale_factor = 2.0 / Float64(size)
-        
-    #     for i in range(size // 2):
-    #         output[2 * i] = self.reversed[i].re * scale_factor
-    #         output[2 * i + 1] = self.reversed[i].im * scale_factor
-
     fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
-
-        # Reconstruct the positive frequencies (0 to size//2)
+        # full inverse FFT
+        
         for k in range(size // 2 + 1):
             if k < len(self.mags):
                 var mag = self.mags[k]
