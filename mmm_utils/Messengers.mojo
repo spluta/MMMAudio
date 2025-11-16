@@ -133,6 +133,28 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float list message. Error: ", error)
         return False
 
+    fn update(mut self, mut param: SIMD[DType.float64], name: String):
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    for i in range(len(opt.value())):
+                        param[i] = opt.value()[i]
+            except error:
+                print("Error occurred while updating float SIMD message. Error: ", error)
+
+    fn notify_update(mut self, mut param: SIMD[DType.float64], name: String) -> Bool:
+        if self.world_ptr[].top_of_block:
+            try:
+                var opt = self.world_ptr[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    for i in range(len(opt.value())):
+                        param[i] = opt.value()[i]
+                    return True
+            except error:
+                print("Error occurred while updating float SIMD message. Error: ", error)
+        return False
+
     # update Int64
     fn update(mut self, mut param: Int64, name: String):
         if self.world_ptr[].top_of_block:
