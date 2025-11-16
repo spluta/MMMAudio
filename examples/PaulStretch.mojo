@@ -15,7 +15,7 @@ from random import random_float64
 alias window_size = 8192
 alias hop_size = window_size // 2
 
-struct PaulStretchWindow[window_size: Int](FFTProcessable):
+struct PaulStretchWindow[window_size: Int](FFTStereoProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
@@ -28,17 +28,16 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
     fn get_messages(mut self) -> None:
         self.m.update(self.bin,"bin")
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    fn next_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
         for ref p in phases:
-            p = random_float64(0.0, 2.0 * 3.141592653589793)
+            p = SIMD[DType.float64, 2](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
 
 # User's Synth
 struct PaulStretch(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
-    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
-    var paul_stretch2: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var paul_stretch: FFTStereoProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
     var m: Messenger
     var dur_mult: Float64
 
@@ -47,14 +46,7 @@ struct PaulStretch(Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.saw = LFSaw(self.world_ptr)
 
-        self.paul_stretch = FFTProcess[
-                PaulStretchWindow[window_size],
-                window_size,
-                hop_size,WindowTypes.sine,
-                WindowTypes.sine
-            ](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
-
-        self.paul_stretch2 = FFTProcess[
+        self.paul_stretch = FFTStereoProcess[
                 PaulStretchWindow[window_size],
                 window_size,
                 hop_size,
@@ -70,6 +62,5 @@ struct PaulStretch(Movable, Copyable):
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed)*0.5 + 0.5
         o = self.paul_stretch.next_from_buffer(self.buffer, phase, 0)
-        p = self.paul_stretch2.next_from_buffer(self.buffer, phase, 1)
-        return SIMD[DType.float64,2](o,p)
+        return o
 
