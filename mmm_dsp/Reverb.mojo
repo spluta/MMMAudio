@@ -56,10 +56,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.N], room_size: SIMD[DType.float64, self.N] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.N] = 1000.0, added_space: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
-        """
-        Process one sample through the freeverb.
-        
-        next(input, room_size=0.0, lp_comb_lpfreq=1000.0, added_space=0.0) -> Float64
+        """Process one sample through the freeverb.
 
         Args:
           input: The input sample to process.
@@ -92,6 +89,7 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         out = self.allpass_combs[2].next(out, 0.007732426303854875, feedback2)
         out = self.allpass_combs[3].next(out, 0.00510204081632653, feedback2)
 
+        out = sanitize(out)
 
         return out  # Return the delayed sample
 
