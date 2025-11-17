@@ -1,7 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Messengers import Messenger
-from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowTypes
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
@@ -12,8 +11,8 @@ from mmm_dsp.Osc import LFSaw
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 8192
-alias hop_size = window_size // 2
+alias window_size = 2048
+alias hop_size = window_size // 4
 
 struct PaulStretchWindow[window_size: Int](FFTStereoProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
