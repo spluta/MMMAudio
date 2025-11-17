@@ -85,7 +85,7 @@ trait FFTProcessable(Movable,Copyable):
     fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:...
     fn get_messages(mut self) -> None:...
 
-struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, num_chans: Int = 1, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
+struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
     """Create an FFTProcess for audio manipulation in the frequency domain.
     
     SpectralProcess is similar to BufferedProcess, but instead of passing time domain samples to the user defined struct,
@@ -130,7 +130,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         """
         return self.buffered_process.next(input)
 
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0, num_chans: Int = 1) -> Float64:
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
         """Returns the next output sample from the internal buffer without processing a new input sample.
         
         Returns:
