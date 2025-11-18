@@ -2,11 +2,6 @@ from mmm_src.MMMWorld import *
 from mmm_utils.Windows import *
 from math import floor
 
-# Eventually, I think it would be better for the user defined BufferProcessable
-# struct to be where the `window_size` is set as a parameter and then this value
-# can be retrieved
-# by the BufferedProcess struct. Mojo currently doesn't allow this traits to have
-# parameters. I think `hop_size` would still be a parameter of the BufferedProcess struct.
 trait BufferedProcessable(Movable, Copyable):
     """Trait that user structs must implement to be used with a BufferedProcess.
     
@@ -19,6 +14,30 @@ trait BufferedProcessable(Movable, Copyable):
     """
     fn next_window(mut self, mut buffer: List[Float64]) -> None:...
     fn get_messages(mut self) -> None:...
+
+struct BufferedInput[T: BufferedProcessable, num_chans: Int = 1, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
+    """Helper struct to manage buffered input for BufferedProcess.
+
+    This struct is used internally by BufferedProcess to manage the input buffer.
+    It is not intended to be used directly by users.
+
+    Parameters:
+        T: A user defined struct that implements the BufferedProcessable trait.
+        num_chans: The number of audio channels. The default is 1.
+        window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
+        hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+    """
+    var world_ptr: UnsafePointer[MMMWorld]
+    var input_buffer: List[Float64]
+    var write_head: Int
+    var process: T
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
+        self.world_ptr = world_ptr
+        self.input_buffer = List[Float64](length=window_size * 2, fill=0.0)
+        self.write_head = 0
+        self.process = process^
 
 struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None,overlap_output: Bool = True](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows.'
