@@ -10,7 +10,7 @@ from random import random_float64
 
 alias two_pi = 2.0 * pi
 
-struct SpectralFreezeWindow[window_size: Int](FFTStereoProcessable):
+struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
@@ -29,7 +29,7 @@ struct SpectralFreezeWindow[window_size: Int](FFTStereoProcessable):
     fn get_messages(mut self) -> None:
         self.m.update(self.freeze_gate, "freeze_gate")
 
-    fn next_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_stereo_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
         if not self.freeze_gate:
             # self.stored_phases = phases.copy()
             self.stored_mags = mags.copy()
@@ -41,20 +41,20 @@ struct SpectralFreezeWindow[window_size: Int](FFTStereoProcessable):
 
 struct SpectralFreeze[window_size: Int](Movable, Copyable):
     """
-    Stereo Spectral Freeze
+     Spectral Freeze
 
     """
 
     alias hop_size = window_size // 4
     var world_ptr: UnsafePointer[MMMWorld]
-    var freeze: FFTStereoProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowTypes.hann,WindowTypes.hann]
+    var freeze: FFTProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowTypes.hann,WindowTypes.hann]
     var m: Messenger
     var freeze_gate: Bool
     var asr: ASREnv
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world_ptr = world_ptr
-        self.freeze = FFTStereoProcess[
+        self.freeze = FFTProcess[
                 SpectralFreezeWindow[window_size],
                 window_size,
                 self.hop_size,
@@ -68,7 +68,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
     fn next(mut self, sample: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]:
         self.m.update(self.freeze_gate, "freeze_gate")
         env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
-        freeze = self.freeze.next(sample)
+        freeze = self.freeze.next_stereo(sample)
         return select(env, [sample, freeze])
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this

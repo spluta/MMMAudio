@@ -12,22 +12,20 @@ from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
 alias window_size = 2048
-alias hop_size = window_size // 4
+alias hop_size = window_size // 2
 
-struct PaulStretchWindow[window_size: Int](FFTStereoProcessable):
+struct PaulStretchWindow[window_size: Int](FFTProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
-    var bin: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.bin = (window_size // 2) + 1
         self.m = Messenger(world_ptr)
 
     fn get_messages(mut self) -> None:
-        self.m.update(self.bin,"bin")
+        pass
 
-    fn next_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_stereo_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
         for ref p in phases:
             p = SIMD[DType.float64, 2](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
 
@@ -36,7 +34,7 @@ struct PaulStretch(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
-    var paul_stretch: FFTStereoProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
     var m: Messenger
     var dur_mult: Float64
 
@@ -45,7 +43,7 @@ struct PaulStretch(Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.saw = LFSaw(self.world_ptr)
 
-        self.paul_stretch = FFTStereoProcess[
+        self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
                 window_size,
                 hop_size,
@@ -60,6 +58,6 @@ struct PaulStretch(Movable, Copyable):
         self.m.update(self.dur_mult,"dur_mult")
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed)*0.5 + 0.5
-        o = self.paul_stretch.next_from_buffer(self.buffer, phase, 0)
+        o = self.paul_stretch.next_from_stereo_buffer(self.buffer, phase, 0)
         return o
 
