@@ -14,13 +14,13 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
 # the FFT based version is O(n log n). The FFT version also requires to know the 
 # raw amplitude samples, so it would also be a BufferedProcess rather than an FFTProcess.
 struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProcessable):
-    """Pitch detection using the original time-domain YIN algorithm.
+    """Monophonic Frequency ('F0') Detection using the original time-domain YIN algorithm.
 
     YIN needs access to the raw samples so it is a 
     BufferedProcess rather than an FFTProcess.
 
     This struct is not necessarily intended to be used directly because it is 
-    implemented in the PitchYIN struct which takes in single amplitude samples
+    implemented in the MonoFreqAnalysis struct which takes in single amplitude samples
     and returns a tuple of (pitch, confidence).
 
     One could use this however if they wanted to put together a suite of audio
@@ -126,15 +126,15 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct PitchYIN[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
-    """Pitch detection using the YIN algorithm.
+struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
+    """Monophonic Frequency ('F0') detection using the YIN algorithm.
     
     This struct takes in single amplitude samples and returns a tuple of (pitch, confidence).
     It uses a BufferedProcess internally to manage the audio buffering and windowing.
 
     Parameters:
         window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
-        hop_size: Pitch analysis will occur every `hop_size` samples (using the most recent `window_size` samples).
+        hop_size: Analysis will occur every `hop_size` samples (using the most recent `window_size` samples).
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
     """
@@ -145,7 +145,7 @@ struct PitchYIN[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Fl
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """Initialize the PitchYIN processor.
+        """Initialize the MonoFreqAnalysis processor.
 
         Args:
             world_ptr: A pointer to the MMMWorld.
