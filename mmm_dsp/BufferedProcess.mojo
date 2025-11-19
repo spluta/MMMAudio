@@ -17,11 +17,7 @@ trait BufferedProcessable(Movable, Copyable):
     - get_messages() -> None: This function is called at the top of each audio block to allow the user to retrieve any messages
       they may have sent to this process. Put your message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
-    fn next_window(mut self, mut buffer: List[Float64]) -> None:
-        return None
-    fn next_stereo_window(mut self, mut buffer: List[SIMD[DType.float64, 2]]) -> None:
-        return None
-    
+    fn next_window[num_chans: Int](mut self, mut buffer: List[SIMD[DType.float64,num_chans]]) -> None:...
     fn get_messages(mut self) -> None:...
 
 
@@ -114,7 +110,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             # never used, just allocate a bunch of zeros
             self.output_attenuation_window = List[Float64](length=window_size, fill=0.0)
 
-    fn next(mut self, input: Float64) -> Float64:
+    fn next[num_chans: Int = 1](mut self, input: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
@@ -129,114 +125,107 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         if self.world_ptr[].top_of_block:
             self.process.get_messages()
     
-        self.input_buffer[self.input_buffer_write_head] = input
-        self.input_buffer[self.input_buffer_write_head + window_size] = input
-        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % window_size
+        @parameter
+        if num_chans == 1:
+            self.input_buffer[self.input_buffer_write_head] = input[0]
+            self.input_buffer[self.input_buffer_write_head + window_size] = input[0]
+            self.input_buffer_write_head = (self.input_buffer_write_head + 1) % window_size
+            
+            if self.hop_counter == 0:
+
+                @parameter
+                if input_window_shape:
+                    # @parameter # for some reason these slow compilation down a lot
+                    for i in range(window_size):
+                        self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
+                else:
+                    # @parameter
+                    for i in range(window_size):
+                        self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i]
+
+                self.process.next_window(self.passing_buffer)
+
+                @parameter
+                if output_window_shape:
+                    # @parameter
+                    for i in range(window_size):
+                        self.passing_buffer[i] *= self.output_attenuation_window[i]
+
+                @parameter
+                if overlap_output:
+                    # @parameter
+                    for i in range(window_size):
+                        self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
+                else:
+                    # @parameter
+                    for i in range(window_size):
+                        self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+
+                self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
         
-        if self.hop_counter == 0:
+            self.hop_counter = (self.hop_counter + 1) % hop_size
 
-            @parameter
-            if input_window_shape:
-                # @parameter # for some reason these slow compilation down a lot
-                for i in range(window_size):
-                    self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i]
-
-            self.process.next_window(self.passing_buffer)
-
-            @parameter
-            if output_window_shape:
-                # @parameter
-                for i in range(window_size):
-                    self.passing_buffer[i] *= self.output_attenuation_window[i]
+            var outval = self.output_buffer[self.read_head]
 
             @parameter
             if overlap_output:
-                # @parameter
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+                self.output_buffer[self.read_head] = 0.0
+            
+            self.read_head = (self.read_head + 1) % window_size
+            return outval
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
-    
-        self.hop_counter = (self.hop_counter + 1) % hop_size
+        elif num_chans == 2:
+            self.st_input_buffer[self.input_buffer_write_head] = SIMD[DType.float64,2](input[0], input[1])
+            self.st_input_buffer[self.input_buffer_write_head + window_size] = SIMD[DType.float64,2](input[0], input[1])
+            self.input_buffer_write_head = (self.input_buffer_write_head + 1) % window_size
+            
+            if self.hop_counter == 0:
 
-        outval = self.output_buffer[self.read_head]
+                @parameter
+                if input_window_shape:
+                    # @parameter # for some reason these slow compilation down a lot
+                    for i in range(window_size):
+                        self.st_passing_buffer[i] = self.st_input_buffer[self.input_buffer_write_head + i] * SIMD[DType.float64,2](self.input_attenuation_window[i], self.input_attenuation_window[i])
+                else:
+                    # @parameter
+                    for i in range(window_size):
+                        self.st_passing_buffer[i] = self.st_input_buffer[self.input_buffer_write_head + i]
 
-        @parameter
-        if overlap_output:
-            self.output_buffer[self.read_head] = 0.0
+                self.process.next_window[2](self.st_passing_buffer)
+
+                @parameter
+                if output_window_shape:
+                    # @parameter
+                    for i in range(window_size):
+                        self.st_passing_buffer[i] *= SIMD[DType.float64,2](self.output_attenuation_window[i], self.output_attenuation_window[i])
+
+                @parameter
+                if overlap_output:
+                    # @parameter
+                    for i in range(window_size):
+                        self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
+                else:
+                    # @parameter
+                    for i in range(window_size):
+                        self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+
+                self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
         
-        self.read_head = (self.read_head + 1) % window_size
-        return outval
+            self.hop_counter = (self.hop_counter + 1) % hop_size
 
-    fn next_stereo(mut self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2]:
-        """Process the next input sample and return the next output sample.
-        
-        This function is called in the audio processing loop for each input sample. It buffers the input samples,
-        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
-
-        Args:
-            input: The next input sample to process.
-        
-        Returns:
-            The next output sample.
-        """
-        if self.world_ptr[].top_of_block:
-            self.process.get_messages()
-
-        self.st_input_buffer[self.input_buffer_write_head] = input
-        self.st_input_buffer[self.input_buffer_write_head + window_size] = input
-        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % window_size
-        
-        if self.hop_counter == 0:
-
-            @parameter
-            if input_window_shape:
-                # @parameter # for some reason these slow compilation down a lot
-                for i in range(window_size):
-                    self.st_passing_buffer[i] = self.st_input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.st_passing_buffer[i] = self.st_input_buffer[self.input_buffer_write_head + i]
-
-            self.process.next_stereo_window(self.st_passing_buffer)
-
-            @parameter
-            if output_window_shape:
-                # @parameter
-                for i in range(window_size):
-                    self.st_passing_buffer[i] *= self.output_attenuation_window[i]
+            var outval = self.st_output_buffer[self.read_head]
 
             @parameter
             if overlap_output:
-                # @parameter
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
-            self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
-    
-        self.hop_counter = (self.hop_counter + 1) % hop_size
+                self.st_output_buffer[self.read_head] = 0.0
+            
+            self.read_head = (self.read_head + 1) % window_size
+            return SIMD[DType.float64, num_chans](outval[0], outval[1])
 
-        outval = self.st_output_buffer[self.read_head]
+        else:
+            return SIMD[DType.float64, num_chans](0.0)
 
-        @parameter
-        if overlap_output:
-            self.st_output_buffer[self.read_head] = 0.0
-        self.read_head = (self.read_head + 1) % window_size
-        return outval
-
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
+    fn next_from_buffer[num_chans: Int = 1](mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64, num_chans]:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
@@ -251,108 +240,97 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             The next output sample.
         """
         
-        if self.hop_counter == 0:
-           
-            @parameter
-            if input_window_shape:
-                for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
-                        self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.passing_buffer[i] = 0.0
-            else:
-                for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
-                        self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.passing_buffer[i] = 0.0
+        @parameter
+        if num_chans == 1:
+            if self.hop_counter == 0:
+                
+                @parameter
+                if input_window_shape:
+                    for i in range(window_size):
+                        index = floor(phase * buffer.get_num_frames()) + i
+                        if index < buffer.get_num_frames() and index >= 0:
+                            self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
+                        else:
+                            self.passing_buffer[i] = 0.0
+                else:
+                    for i in range(window_size):
+                        index = floor(phase * buffer.get_num_frames()) + i
+                        if index < buffer.get_num_frames() and index >= 0:
+                            self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
+                        else:
+                            self.passing_buffer[i] = 0.0
 
-            self.process.next_window(self.passing_buffer)
+                self.process.next_window(self.passing_buffer)
 
-            @parameter
-            if output_window_shape:
-                for i in range(window_size):
-                    self.passing_buffer[i] *= self.output_attenuation_window[i]
+                @parameter
+                if output_window_shape:
+                    for i in range(window_size):
+                        self.passing_buffer[i] *= self.output_attenuation_window[i]
+
+                @parameter
+                if overlap_output:
+                    for i in range(window_size):
+                        self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
+                else:
+                    for i in range(window_size):
+                        self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+
+                self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
+        
+            self.hop_counter = (self.hop_counter + 1) % hop_size
+
+            outval = self.output_buffer[self.read_head]
 
             @parameter
             if overlap_output:
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
-            else:
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+                self.output_buffer[self.read_head] = 0.0
+            
+            self.read_head = (self.read_head + 1) % window_size
+            return outval
+        elif num_chans == 2:
+            if self.hop_counter == 0:
+                @parameter
+                if input_window_shape:
+                    for i in range(window_size):
+                        index = floor(phase * buffer.get_num_frames()) + i
+                        if index < buffer.get_num_frames() and index >= 0:
+                            self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
+                        else:
+                            self.st_passing_buffer[i] = 0.0
+                else:
+                    for i in range(window_size):
+                        index = floor(phase * buffer.get_num_frames()) + i
+                        if index < buffer.get_num_frames() and index >= 0:
+                            self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
+                        else:
+                            self.st_passing_buffer[i] = 0.0
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
-    
-        self.hop_counter = (self.hop_counter + 1) % hop_size
+                self.process.next_window[2](self.st_passing_buffer)
 
-        outval = self.output_buffer[self.read_head]
+                @parameter
+                if output_window_shape:
+                    for i in range(window_size):
+                        self.st_passing_buffer[i] *= self.output_attenuation_window[i]
+                @parameter
+                if overlap_output:
+                    for i in range(window_size):
+                        self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
+                else:
+                    for i in range(window_size):
+                        self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
 
-        @parameter
-        if overlap_output:
-            self.output_buffer[self.read_head] = 0.0
+                self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
         
-        self.read_head = (self.read_head + 1) % window_size
-        return outval
+            self.hop_counter = (self.hop_counter + 1) % hop_size
 
-    fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2]:
-        """Process the next input sample and return the next output sample.
-        
-        This function is called in the audio processing loop for each input sample. It buffers the input samples,
-        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
-
-        Args:
-            buffer: The input buffer to read samples from.
-            phase: The current phase to read from the buffer.
-            start_chan: The firstchannel to read from the buffer.
-        
-        Returns:
-            The next output sample.
-        """
-        
-        if self.hop_counter == 0:
-           
-            @parameter
-            if input_window_shape:
-                for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
-                        self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.st_passing_buffer[i] = 0.0
-            else:
-                for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
-                        self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.st_passing_buffer[i] = 0.0
-
-            self.process.next_stereo_window(self.st_passing_buffer)
-
-            @parameter
-            if output_window_shape:
-                for i in range(window_size):
-                    self.st_passing_buffer[i] *= self.output_attenuation_window[i]
+            var outval = self.st_output_buffer[self.read_head]
 
             @parameter
             if overlap_output:
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
-            else:
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+                self.st_output_buffer[self.read_head] = 0.0
+            
+            self.read_head = (self.read_head + 1) % window_size
+            return SIMD[DType.float64, num_chans](outval[0], outval[1])
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
-    
-        self.hop_counter = (self.hop_counter + 1) % hop_size
-
-        outval = self.st_output_buffer[self.read_head]
-
-        @parameter
-        if overlap_output:
-            self.st_output_buffer[self.read_head] = 0.0
-        self.read_head = (self.read_head + 1) % window_size
-        return outval
+        else:
+            return SIMD[DType.float64, num_chans](0.0)

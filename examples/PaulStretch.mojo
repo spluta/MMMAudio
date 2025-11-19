@@ -25,9 +25,9 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
     fn get_messages(mut self) -> None:
         pass
 
-    fn next_stereo_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_frame[num_chans: Int = 1](mut self, mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]) -> None:
         for ref p in phases:
-            p = SIMD[DType.float64, 2](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
+            p = SIMD[DType.float64, num_chans](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
 
 # User's Synth
 struct PaulStretch(Movable, Copyable):
@@ -58,6 +58,6 @@ struct PaulStretch(Movable, Copyable):
         self.m.update(self.dur_mult,"dur_mult")
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed)*0.5 + 0.5
-        o = self.paul_stretch.next_from_stereo_buffer(self.buffer, phase, 0)
+        o = self.paul_stretch.next_from_buffer[2](self.buffer, phase, 0)
         return o
 
