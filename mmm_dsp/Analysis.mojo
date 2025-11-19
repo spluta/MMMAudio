@@ -20,7 +20,7 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
     BufferedProcess rather than an FFTProcess.
 
     This struct is not necessarily intended to be used directly because it is 
-    implemented in the MonoFreqAnalysis struct which takes in single amplitude samples
+    implemented in the Pitch struct which takes in single amplitude samples
     and returns a tuple of (pitch, confidence).
 
     One could use this however if they wanted to put together a suite of audio
@@ -43,13 +43,8 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.confidence = 0.0
         self.yin_values = List[Float64](length=window_size, fill=0.0)
         self.sample_rate = self.world_ptr[].sample_rate
-    
-    @doc_private
-    fn get_messages(mut self):
-        # Implemented here to satisfy the BufferedProcessable trait
-        pass
 
-    fn next_window(mut self, mut frame: List[Float64]):
+    fn next_window(mut self, frame: List[Float64]):
         """Compute the YIN pitch estimate for the given frame of audio samples.
 
         Args:
@@ -58,6 +53,7 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         Returns:
             None. The pitch and confidence values are stored in `self.pitch` and `self.confidence`.
         """
+
         # compute the raw difference function directly in the time domain
         self.yin_values[0] = 0.0
         for tau in range(1, window_size):
@@ -126,7 +122,7 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
+struct Pitch[window_size: Int = 1024, hop_size: Int = 512, min_freq: Float64 = 60, max_freq: Float64 = 5000, num_chans: Int = 1](Movable,Copyable):
     """Monophonic Frequency ('F0') detection using the YIN algorithm.
     
     This struct takes in single amplitude samples and returns a tuple of (pitch, confidence).
@@ -137,21 +133,22 @@ struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_
         hop_size: Analysis will occur every `hop_size` samples (using the most recent `window_size` samples).
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
+        num_channels: Number of audio channels.
     """
 
     # [TODO] Technically this BufferedProcess doesn't need to return the List[Float64] so there's
     # an extra loop happening after `.next_window()` that can (should) be eliminated.
-    var buffered_process: BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size]
+    var buffered_input: BufferedInput[YIN[window_size, min_freq, max_freq],num_chans=num_chans,window_size=window_size, hop_size=hop_size, input_window_shape=WindowTypes.hann]
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """Initialize the MonoFreqAnalysis processor.
+        """Initialize the Pitch processor.
 
         Args:
             world_ptr: A pointer to the MMMWorld.
         """
         self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
+        self.buffered_input = BufferedInput[YIN[window_size, min_freq, max_freq],num_chans=num_chans,window_size=window_size, hop_size=hop_size, input_window_shape=WindowTypes.hann](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
 
     fn next(mut self, input: Float64) -> (Float64, Float64):
         """Process the next input sample and return the pitch and confidence.
@@ -162,5 +159,5 @@ struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_
         Returns:
             A tuple containing the estimated pitch (in Hz) and confidence (0.0 to 1.0).
         """
-        _ = self.buffered_process.next(input)
-        return (self.buffered_process.process.pitch, self.buffered_process.process.confidence)
+        _ = self.buffered_input.next(input)
+        return (self.buffered_input.process.pitch, self.buffered_input.process.confidence)

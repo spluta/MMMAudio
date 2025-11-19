@@ -9,6 +9,27 @@ struct WindowTypes:
     alias kaiser: Int = 3
     alias sine: Int = 4
 
+fn get_window_type(window_shape: Optional[Int], window_size: Int) -> List[Float64]:
+    """Returns a window of the specified shape and size.
+
+    Args:
+        window_shape: The shape of the window to return. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows.
+        window_size: The size of the window to return.
+
+    Returns:
+        A List of Float64 containing the window values.
+    """
+    if window_shape == WindowTypes.hann:
+        return hann_window(window_size)
+    elif window_shape == WindowTypes.hamming:
+        return hamming_window(window_size)
+    elif window_shape == WindowTypes.blackman:
+        return blackman_window(window_size)
+    elif window_shape == WindowTypes.sine:
+        return sine_window(window_size)
+    else:
+        return List[Float64](length=window_size, fill=0.0)
+
 fn bessel_i0(x: Float64) -> Float64:
     """
     Calculate the modified Bessel function of the first kind, order 0 (I₀).

@@ -12,35 +12,71 @@ trait BufferedProcessable(Movable, Copyable):
     - get_messages() -> None: This function is called at the top of each audio block to allow the user to retrieve any messages
       they may have sent to this process. Put your message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
-    fn next_window(mut self, mut buffer: List[Float64]) -> None:...
-    fn get_messages(mut self) -> None:...
+    fn next_window(mut self, mut buffer: List[Float64]) -> None:
+        return None
+    fn get_messages(mut self) -> None:
+        return None
 
-struct BufferedInput[T: BufferedProcessable, num_chans: Int = 1, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
-    """Helper struct to manage buffered input for BufferedProcess.
-
-    This struct is used internally by BufferedProcess to manage the input buffer.
-    It is not intended to be used directly by users.
+struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
+    """Buffers input samples and hands them over to be processed in 'windows'.
+    
+    BufferedProcess struct handles buffering of input samples and handing them as "windows" 
+    to a user defined struct for processing (The user defined struct must implement the 
+    BufferedProcessable trait). The user defined struct's `next_window()` function is called every
+    `hop_size` samples. BufferedProcess passes the user defined struct a List of `window_size` samples. 
+    The user can process can do whatever they want with the samples (probably some kind of 
+    windowed analysis). BufferedInput does not return any output samples, it is intended
+    for analysis purposes only.
 
     Parameters:
         T: A user defined struct that implements the BufferedProcessable trait.
-        num_chans: The number of audio channels. The default is 1.
         window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
+    var passing_buffer: List[Float64]
     var write_head: Int
     var process: T
+    var hop_counter: Int
+    var input_attenuation_window: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
         self.world_ptr = world_ptr
         self.input_buffer = List[Float64](length=window_size * 2, fill=0.0)
+        self.passing_buffer = List[Float64](length=window_size, fill=0.0)
         self.write_head = 0
+        self.hop_counter = 0
         self.process = process^
+        self.input_attenuation_window = get_window_type(input_window_shape, window_size)
+    
+    fn write_sample(mut self, input: Float64) -> None:
+        self.input_buffer[self.write_head] = input
+        self.input_buffer[self.write_head + window_size] = input
+        self.write_head = (self.write_head + 1) % window_size
+
+    fn fill_passing_buffer(mut self) -> None:
+        @parameter
+        if input_window_shape:
+            # @parameter
+            for i in range(window_size):
+                self.passing_buffer[i] = self.input_buffer[self.write_head + i] * self.input_attenuation_window[i]
+        else:
+            # @parameter
+            for i in range(window_size):
+                self.passing_buffer[i] = self.input_buffer[self.write_head + i]
+
+    fn next(mut self, input: Float64) -> None:
+        self.write_sample(input)
+        if self.hop_counter == 0:
+            self.fill_passing_buffer()
+            self.process.next_window(self.passing_buffer)
+        
+        self.hop_counter = (self.hop_counter + 1) % hop_size
 
 struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None,overlap_output: Bool = True](Movable, Copyable):
-    """Buffers input samples and hands them over to be processed in 'windows.'
+    """Buffers input samples and hands them over to be processed in 'windows'.
     
     BufferedProcess struct handles buffering of input samples and handing them as "windows" 
     to a user defined struct for processing (The user defined struct must implement the 
@@ -66,7 +102,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var hop_counter: Int
     var process: T
     var output_buffer_write_head: Int
-    var p: Print
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
@@ -90,33 +125,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.input_buffer = List[Float64](length=window_size * 2, fill=0.0)
         self.passing_buffer = List[Float64](length=window_size, fill=0.0)
         self.output_buffer = List[Float64](length=window_size, fill=0.0)
-        self.p = Print(world_ptr=self.world_ptr)
 
-        @parameter
-        if input_window_shape == WindowTypes.hann:
-            self.input_attenuation_window = hann_window(window_size)
-        elif input_window_shape == WindowTypes.hamming:
-            self.input_attenuation_window = hamming_window(window_size)
-        elif input_window_shape == WindowTypes.blackman:
-            self.input_attenuation_window = blackman_window(window_size)
-        elif input_window_shape == WindowTypes.sine:
-            self.input_attenuation_window = sine_window(window_size)
-        else:
-            # never used, just allocate a bunch of zeros
-            self.input_attenuation_window = List[Float64](length=window_size, fill=0.0)
-
-        @parameter
-        if output_window_shape == WindowTypes.hann:
-            self.output_attenuation_window = hann_window(window_size)
-        elif output_window_shape == WindowTypes.hamming:
-            self.output_attenuation_window = hamming_window(window_size)
-        elif output_window_shape == WindowTypes.blackman:
-            self.output_attenuation_window = blackman_window(window_size)
-        elif output_window_shape == WindowTypes.sine:
-            self.output_attenuation_window = sine_window(window_size)
-        else:
-            # never used, just allocate a bunch of zeros
-            self.output_attenuation_window = List[Float64](length=window_size, fill=0.0)
+        self.input_attenuation_window = get_window_type(input_window_shape, window_size)
+        self.output_attenuation_window = get_window_type(output_window_shape, window_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Process the next input sample and return the next output sample.
