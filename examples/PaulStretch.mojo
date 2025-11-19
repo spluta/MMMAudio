@@ -25,7 +25,9 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
     fn get_messages(mut self) -> None:
         pass
 
-    fn next_frame[num_chans: Int = 1](mut self, mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]) -> None:
+    # the stereo fft process has to be formatted this way
+    fn next_frame[num_chans: Int = 2](mut self, mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]) -> None:
+        # you have to explicitly address both channels of mags and phases
         for ref p in phases:
             p = SIMD[DType.float64, num_chans](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
 

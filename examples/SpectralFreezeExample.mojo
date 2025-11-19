@@ -29,14 +29,21 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     fn get_messages(mut self) -> None:
         self.m.update(self.freeze_gate, "freeze_gate")
 
-    fn next_stereo_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
+    # the stereo fft process has to be formatted this way
+    fn next_frame[num_chans: Int = 2](mut self, mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]) -> None:
+
+        # the current implementation requires you to explicitly address both channels of mags and phases
+
         if not self.freeze_gate:
-            # self.stored_phases = phases.copy()
-            self.stored_mags = mags.copy()
+            for i, m in enumerate(mags):
+                self.stored_mags[i][0] = m[0]
+                self.stored_mags[i][1] = m[1]
         else:
-            mags = self.stored_mags.copy()
-        for i in range(window_size):
-            phases[i] += SIMD[DType.float64, 2](random_float64(0, two_pi), random_float64(0, two_pi))
+            for i, m in enumerate(self.stored_mags):
+                mags[i][0] = m[0]
+                mags[i][1] = m[1]
+        for ref p in phases:
+            p = SIMD[DType.float64, num_chans](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
             
 
 struct SpectralFreeze[window_size: Int](Movable, Copyable):
@@ -68,7 +75,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
     fn next(mut self, sample: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]:
         self.m.update(self.freeze_gate, "freeze_gate")
         env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
-        freeze = self.freeze.next_stereo(sample)
+        freeze = self.freeze.next[2](sample)
         return select(env, [sample, freeze])
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
