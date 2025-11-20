@@ -18,7 +18,8 @@ trait BufferedProcessable(Movable, Copyable):
       they may have sent to this process. Put your message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
     fn next_window(mut self, mut buffer: List[Float64]) -> None:...
-    fn get_messages(mut self) -> None:...
+    fn get_messages(mut self) -> None:
+        return None
 
 struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows.'

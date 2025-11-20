@@ -1,5 +1,15 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.BufferedProcess import *
+from mmm_dsp.FFTProcess import *
+from math import ceil, floor, log2
+from mmm_utils.functions import cpsmidi, ampdb
+from math import sqrt
+
+struct Units:
+    alias hz: Int = 0
+    alias midi: Int = 1
+    alias db: Int = 2
+    alias amp: Int = 3
 
 @doc_private
 fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Float64):
@@ -13,7 +23,7 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
 # [TODO] Implement the YINFFT optimized algorithm because this one is O(n^2) while
 # the FFT based version is O(n log n). The FFT version also requires to know the 
 # raw amplitude samples, so it would also be a BufferedProcess rather than an FFTProcess.
-struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProcessable):
+struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessable):
     """Monophonic Frequency ('F0') Detection using the original time-domain YIN algorithm.
 
     YIN needs access to the raw samples so it is a 
@@ -34,59 +44,55 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
     var world_ptr: UnsafePointer[MMMWorld]
     var pitch: Float64
     var confidence: Float64
-    var yin_values: List[Float64]
     var sample_rate: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.pitch = 0.0
         self.confidence = 0.0
-        self.yin_values = List[Float64](length=window_size, fill=0.0)
         self.sample_rate = self.world_ptr[].sample_rate
     
-    @doc_private
-    fn get_messages(mut self):
-        # Implemented here to satisfy the BufferedProcessable trait
-        pass
-
-    fn next_window(mut self, mut frame: List[Float64]):
-        """Compute the YIN pitch estimate for the given frame of audio samples.
+    @staticmethod
+    fn from_window(frame: List[Float64], sample_rate: Float64) -> (Float64, Float64):
+        """Static method to compute the YIN pitch estimate for a given frame of audio samples.
 
         Args:
-            frame: The input audio frame of size `window_size`. This List gets passed from BufferedProcess.
+            frame: The input audio frame of size `window_size`.
 
         Returns:
-            None. The pitch and confidence values are stored in `self.pitch` and `self.confidence`.
+            A tuple containing the estimated pitch (in Hz) and confidence (0.0 to 1.0).
         """
         # compute the raw difference function directly in the time domain
-        self.yin_values[0] = 0.0
+        window_size = len(frame)
+        yin_values = List[Float64](length=window_size, fill=0.0)
         for tau in range(1, window_size):
             var diff_sum = 0.0
             var limit = window_size - tau
             for i in range(limit):
                 var delta = frame[i] - frame[i + tau]
                 diff_sum += delta * delta
-            self.yin_values[tau] = diff_sum
+            yin_values[tau] = diff_sum
 
         # cumulative mean normalized difference function
         var tmp_sum: Float64 = 0.0
         for i in range(1, window_size):
-            raw_val = self.yin_values[i]
+            raw_val = yin_values[i]
             tmp_sum += raw_val
             if tmp_sum != 0.0:
-                self.yin_values[i] = raw_val * (Float64(i) / tmp_sum)
+                yin_values[i] = raw_val * (Float64(i) / tmp_sum)
 
         var local_pitch = 0.0
         var local_conf = 0.0
         if tmp_sum > 0.0:
             var high_freq = max_freq if max_freq > 0.0 else 1.0
             var low_freq = min_freq if min_freq > 0.0 else 1.0
-            var min_bin = Int((self.sample_rate / high_freq) + 0.5)
-            var max_bin = Int((self.sample_rate / low_freq) + 0.5)
+            # [TOD0] should this just be ceil/floor?
+            var min_bin = Int((sample_rate / high_freq) + 0.5)
+            var max_bin = Int((sample_rate / low_freq) + 0.5)
 
             if min_bin > window_size - 1:
                 min_bin = window_size - 1
-            var yin_len = len(self.yin_values)
+            var yin_len = len(yin_values)
             if max_bin > yin_len - min_bin - 1:
                 max_bin = yin_len - min_bin - 1
 
@@ -96,11 +102,11 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
                 var threshold: Float64 = 0.1
                 var tau = min_bin
                 while tau < max_bin:
-                    var val = self.yin_values[tau]
+                    var val = yin_values[tau]
                     if val < threshold:
-                        while tau + 1 < max_bin and self.yin_values[tau + 1] < val:
+                        while tau + 1 < max_bin and yin_values[tau + 1] < val:
                             tau += 1
-                            val = self.yin_values[tau]
+                            val = yin_values[tau]
                         best_tau = tau
                         best_val = val
                         break
@@ -112,19 +118,29 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
                 if best_tau > 0:
                     var refined_idx = Float64(best_tau)
                     if best_tau > 0 and best_tau < window_size - 1:
-                        var prev = self.yin_values[best_tau - 1]
-                        var cur = self.yin_values[best_tau]
-                        var nxt = self.yin_values[best_tau + 1]
+                        var prev = yin_values[best_tau - 1]
+                        var cur = yin_values[best_tau]
+                        var nxt = yin_values[best_tau + 1]
                         var (offset, refined_val) = parabolic_refine(prev, cur, nxt)
                         refined_idx += offset
                         best_val = refined_val
 
                     if refined_idx > 0.0:
-                        local_pitch = self.sample_rate / refined_idx
+                        local_pitch = sample_rate / refined_idx
                         local_conf = max(1.0 - best_val, 0.0)
 
-        self.pitch = local_pitch
-        self.confidence = local_conf
+        return (local_pitch, local_conf)
+
+    fn next_window(mut self, mut frame: List[Float64]):
+        """Compute the YIN pitch estimate for the given frame of audio samples.
+
+        Args:
+            frame: The input audio frame of size `window_size`. This List gets passed from BufferedProcess.
+
+        Returns:
+            None. The pitch and confidence values are stored in `self.pitch` and `self.confidence`.
+        """
+        self.pitch, self.confidence = self.from_window(frame, self.sample_rate)
 
 struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
     """Monophonic Frequency ('F0') detection using the YIN algorithm.
@@ -141,7 +157,7 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
 
     # [TODO] Technically this BufferedProcess doesn't need to return the List[Float64] so there's
     # an extra loop happening after `.next_window()` that can (should) be eliminated.
-    var buffered_input: BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size]
+    var buffered_input: BufferedInput[YIN[min_freq, max_freq], window_size, hop_size]
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -151,7 +167,7 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
             world_ptr: A pointer to the MMMWorld.
         """
         self.world_ptr = world_ptr
-        self.buffered_input = BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
+        self.buffered_input = BufferedInput[YIN[min_freq, max_freq], window_size, hop_size](world_ptr,YIN[min_freq, max_freq](world_ptr))
 
     fn next(mut self, input: Float64) -> (Float64, Float64):
         """Process the next input sample and return the pitch and confidence.
@@ -164,3 +180,114 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
         """
         self.buffered_input.next(input)
         return (self.buffered_input.process.pitch, self.buffered_input.process.confidence)
+
+struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = 0](Movable,Copyable):
+    """Spectral Centroid analysis.
+
+    Parameters:
+        fft_size: The size of the FFT frame that is going to pass in the magnitudes.
+        min_freq: The minimum frequency (in Hz) to consider when computing the centroid.
+        max_freq: The maximum frequency (in Hz) to consider when computing the centroid.
+        power_mag: If True, use power magnitudes (squared) for the centroid calculation.
+        unit: The unit for the output centroid value. Use `Units.hz` for Hertz or `Units.midi` for MIDI note number.
+    """
+
+    var world_ptr: UnsafePointer[MMMWorld]
+    var centroid: Float64
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.world_ptr = world_ptr
+        self.centroid = 0.0
+
+        if unit in [Units.hz, Units.midi]:
+            pass
+        else:
+            print("SpectralCentroid: Invalid unit parameter. Must be Units.hz or Units.midi. Defaulting to Hz.")
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral centroid for the given FFT frame.
+
+        Args:
+            mags: The input magnitudes as a List of Float64.
+
+        Returns:
+            None. The centroid value is stored in `self.centroid`.
+        """
+        self.centroid = self.from_mags(mags, self.world_ptr[].sample_rate)
+
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64) -> Float64:
+        """Compute the spectral centroid for the given FFT frame.
+
+        Args:
+            mags: The input magnitudes as a List of Float64.
+
+        Returns:
+            Float64. The spectral centroid value.
+        """
+        
+        fft_size = (len(mags) - 1) * 2
+        binHz = sample_rate / fft_size
+
+        min_bin = Int(ceil(min_freq / binHz))
+        max_bin = Int(floor(max_freq / binHz))
+        
+        min_bin = max(min_bin, 0)
+        max_bin = min(max_bin, fft_size // 2)
+        max_bin = max(max_bin, min_bin)
+
+        centroid: Float64 = 0.0
+        ampsum: Float64 = 0.0
+        for i in range(min_bin, max_bin):
+            f: Float64 = i * binHz
+
+            @parameter
+            if unit == Units.midi:
+                f = cpsmidi(f)
+
+            m: Float64 = mags[i]
+
+            @parameter
+            if power_mag:
+                m = m * m
+
+            ampsum += m
+            centroid += m * f
+
+        if ampsum > 0.0:
+            centroid /= ampsum
+        else:
+            centroid = 0.0
+
+        return centroid
+
+struct RMS[unit: Int = Units.db](BufferedProcessable):
+    var rms: Float64
+
+    fn __init__(out self):
+        if unit not in [Units.db, Units.amp]:
+            print("RMS: Invalid unit parameter. Must be Units.db or Units.amp. Defaulting to db.")
+        
+        if unit == Units.amp:
+            self.rms = 0.0
+        else:
+            self.rms = -130.0
+
+    fn next_window(mut self, mut input: List[Float64]) -> None:
+        self.rms = self.from_window(input)
+
+    @staticmethod
+    fn from_window(mut frame: List[Float64]) -> Float64:
+        sum_sq: Float64 = 0.0
+        for v in frame:
+            sum_sq += v * v
+        rms: Float64 = sqrt(sum_sq / Float64(len(frame)))
+
+        @parameter
+        if unit == Units.db:
+            return ampdb(rms)
+        elif unit == Units.amp:
+            return rms
+        else:
+            print("RMS: Invalid unit parameter. Must be Units.db or Units.amp. Defaulting to db.")
+            return ampdb(rms)
