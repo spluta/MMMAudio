@@ -218,4 +218,4 @@ __marimo__/
 # MkDocs
 doc_generation/docs_md
 site
-teds_code
+.vscode
