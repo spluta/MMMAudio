@@ -20,7 +20,7 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
     BufferedProcess rather than an FFTProcess.
 
     This struct is not necessarily intended to be used directly because it is 
-    implemented in the MonoFreqAnalysis struct which takes in single amplitude samples
+    implemented in the Pitch struct which takes in single amplitude samples
     and returns a tuple of (pitch, confidence).
 
     One could use this however if they wanted to put together a suite of audio
@@ -126,7 +126,7 @@ struct YIN[window_size: Int, min_freq: Float64, max_freq: Float64](BufferedProce
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
+struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
     """Monophonic Frequency ('F0') detection using the YIN algorithm.
     
     This struct takes in single amplitude samples and returns a tuple of (pitch, confidence).
@@ -145,7 +145,7 @@ struct MonoFreqAnalysis[window_size: Int, hop_size: Int, min_freq: Float64, max_
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """Initialize the MonoFreqAnalysis processor.
+        """Initialize the Pitch processor.
 
         Args:
             world_ptr: A pointer to the MMMWorld.
