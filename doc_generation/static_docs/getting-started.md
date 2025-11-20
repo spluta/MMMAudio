@@ -12,10 +12,10 @@ git clone https://github.com/spluta/MMMAudio.git
 
 ## 2. Setup the Environment
 
-`cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and 3.13
+`cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. This should work with python 3.12 and 3.13. If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
 
 ```shell
-python3.13 -m venv venv
+python -m venv venv
 source venv/bin/activate
 
 pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib PySide6
