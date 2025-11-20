@@ -26,18 +26,17 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
 struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessable):
     """Monophonic Frequency ('F0') Detection using the original time-domain YIN algorithm.
 
-    YIN needs access to the raw samples so it is a 
-    BufferedProcess rather than an FFTProcess.
+    > The YIN algorithm seems to work best with no windowing applied to the audio frame.
 
-    This struct is not necessarily intended to be used directly because it is 
-    implemented in the Pitch struct which takes in single amplitude samples
-    and returns a tuple of (pitch, confidence).
+    YIN needs access to the raw samples so it is 
+    BufferedProcessable rather than an FFTProcessable.
 
-    One could use this however if they wanted to put together a suite of audio
-    analyses that are all based on the same BufferedProcess.
+    This struct can be used with a BufferedInput to manage buffering or
+    the `from_window` static method can be used directly on audio frames 
+    inside a custom BufferedProcessable struct (or anywhere else a List 
+    of samples is available).
 
     Parameters:
-        window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
     """
@@ -145,8 +144,15 @@ struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessabl
 struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
     """Monophonic Frequency ('F0') detection using the YIN algorithm.
     
-    This struct takes in single amplitude samples and returns a tuple of (pitch, confidence).
-    It uses a BufferedProcess internally to manage the audio buffering and windowing.
+    This Pitch struct is a higher-level interface to the YIN algorithm. This struct 
+    takes in single amplitude samples and returns a tuple of (pitch, confidence).
+    It uses a BufferedInput internally to manage the audio buffering. 
+    
+    > The actual YIN algorithm seems to work best when there is no windowing applied to the audio frame.
+
+    If multiple buffered analyses or processes are being conducted on the same source signal,
+    consider using the YIN struct directly within a custom BufferedProcess to avoid redundant buffering.
+    See the AnalysisExample file.
 
     Parameters:
         window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
@@ -185,7 +191,6 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
     """Spectral Centroid analysis.
 
     Parameters:
-        fft_size: The size of the FFT frame that is going to pass in the magnitudes.
         min_freq: The minimum frequency (in Hz) to consider when computing the centroid.
         max_freq: The maximum frequency (in Hz) to consider when computing the centroid.
         power_mag: If True, use power magnitudes (squared) for the centroid calculation.
@@ -221,13 +226,14 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
 
         Args:
             mags: The input magnitudes as a List of Float64.
+            sample_rate: The sample rate of the audio signal.
 
         Returns:
             Float64. The spectral centroid value.
         """
         
-        fft_size = (len(mags) - 1) * 2
-        binHz = sample_rate / fft_size
+        fft_size: Int = (len(mags) - 1) * 2
+        binHz: Float64 = sample_rate / fft_size
 
         min_bin = Int(ceil(min_freq / binHz))
         max_bin = Int(floor(max_freq / binHz))
@@ -238,6 +244,7 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
 
         centroid: Float64 = 0.0
         ampsum: Float64 = 0.0
+
         for i in range(min_bin, max_bin):
             f: Float64 = i * binHz
 
