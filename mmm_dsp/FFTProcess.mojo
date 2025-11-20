@@ -146,7 +146,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         return self.buffered_process.next(input)
 
     fn next_stereo(mut self, input: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]:
-        """Processes the next input sample and returns the next output sample.
+        """Processes the next stereo input sample and returns the next output sample.
         
         Args:
             input: The next input sample to process.
@@ -157,7 +157,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         return self.buffered_process.next_stereo(input)
 
     fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
-        """Returns the next output sample from the internal buffer without processing a new input sample.
+        """Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
         
         Returns:
             The next output sample from the internal buffer.
@@ -165,8 +165,8 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         return self.buffered_process.next_from_buffer(buffer, phase, start_chan)
 
     fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64, 2]:
-        """Returns the next output sample from the internal buffer without processing a new input sample.
-        
+            """Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
+            
         Returns:
             The next output sample from the internal buffer.
         """

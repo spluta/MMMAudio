@@ -4,11 +4,11 @@ from mmm_src.MMMTraits import *
 from python import PythonObject
 
 from mmm_utils.functions import *
-from examples.SpectralFreezeExample import SpectralFreezeExample
+from examples.PaulStretch import PaulStretch
 
 struct MMMGraph(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var graph_ptr: UnsafePointer[SpectralFreezeExample]
+    var graph_ptr: UnsafePointer[PaulStretch]
     var num_out_chans: Int64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
@@ -16,8 +16,8 @@ struct MMMGraph(Representable, Movable):
 
         self.num_out_chans = self.world_ptr[0].num_out_chans
 
-        self.graph_ptr = UnsafePointer[SpectralFreezeExample].alloc(1)
-        __get_address_as_uninit_lvalue(self.graph_ptr.address) = SpectralFreezeExample(self.world_ptr)
+        self.graph_ptr = UnsafePointer[PaulStretch].alloc(1)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = PaulStretch(self.world_ptr)
         
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans

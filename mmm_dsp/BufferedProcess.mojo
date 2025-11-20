@@ -67,6 +67,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             world_ptr: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
+            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, instead of overlapping within a single BufferedProcess.
 
         Returns:
             An initialized BufferedProcess struct.
@@ -237,14 +238,11 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         return outval
 
     fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
-        """Process the next input sample and return the next output sample.
-        
-        This function is called in the audio processing loop for each input sample. It buffers the input samples,
-        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
+        """Used for non-real-time, buffer-based, processing. At the onset of the next window, reads a block of window_size samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase tries to read samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
             buffer: The input buffer to read samples from.
-            phase: The current phase to read from the buffer.
+            phase: The current phase to start reading from the buffer.
             start_chan: The firstchannel to read from the buffer.
         
         Returns:
@@ -256,15 +254,16 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
+                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
+                    if index < buffer.get_num_frames() - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
                     else:
                         self.passing_buffer[i] = 0.0
             else:
                 for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
+                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    if index < buffer.get_num_frames() - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
                     else:
                         self.passing_buffer[i] = 0.0
@@ -298,10 +297,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         return outval
 
     fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2]:
-        """Process the next input sample and return the next output sample.
-        
-        This function is called in the audio processing loop for each input sample. It buffers the input samples,
-        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
+        """Used for non-real-time, buffer-based, processing of stereo files. At the onset of the next window, reads a window_size block of samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase results in reading samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
             buffer: The input buffer to read samples from.
