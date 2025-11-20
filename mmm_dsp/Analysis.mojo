@@ -141,7 +141,7 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
 
     # [TODO] Technically this BufferedProcess doesn't need to return the List[Float64] so there's
     # an extra loop happening after `.next_window()` that can (should) be eliminated.
-    var buffered_process: BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size]
+    var buffered_input: BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size]
     var world_ptr: UnsafePointer[MMMWorld]
     
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -151,7 +151,7 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
             world_ptr: A pointer to the MMMWorld.
         """
         self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
+        self.buffered_input = BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
 
     fn next(mut self, input: Float64) -> (Float64, Float64):
         """Process the next input sample and return the pitch and confidence.
@@ -162,5 +162,5 @@ struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float
         Returns:
             A tuple containing the estimated pitch (in Hz) and confidence (0.0 to 1.0).
         """
-        _ = self.buffered_process.next(input)
-        return (self.buffered_process.process.pitch, self.buffered_process.process.confidence)
+        self.buffered_input.next(input)
+        return (self.buffered_input.process.pitch, self.buffered_input.process.confidence)

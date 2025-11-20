@@ -20,6 +20,96 @@ trait BufferedProcessable(Movable, Copyable):
     fn next_window(mut self, mut buffer: List[Float64]) -> None:...
     fn get_messages(mut self) -> None:...
 
+struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
+    """Buffers input samples and hands them over to be processed in 'windows.'
+    
+    BufferedInput struct handles buffering of input samples and handing them as "windows" 
+    to a user defined struct for processing (The user defined struct must implement the 
+    BufferedProcessable trait). The user defined struct's `next_window()` function is called every
+    `hop_size` samples. BufferedInput passes the user defined struct a List of `window_size` samples. 
+    The user can process can do whatever they want with the samples in the List and then must replace the 
+    values in the List with the values.
+
+    Parameters:
+        T: A user defined struct that implements the BufferedProcessable trait.
+        window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
+        hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+    """
+    var world_ptr: UnsafePointer[MMMWorld]
+    var input_buffer: List[Float64]
+    var passing_buffer: List[Float64]
+    var input_buffer_write_head: Int
+    var hop_counter: Int
+    var process: T
+    var input_attenuation_window: List[Float64]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+        """Initializes a BufferedInput struct.
+
+        Args:
+            world_ptr: A pointer to the MMMWorld.
+            process: A user defined struct that implements the BufferedProcessable trait.
+
+        Returns:
+            An initialized BufferedInput struct.
+        """
+        
+        self.world_ptr = world_ptr
+        self.input_buffer_write_head = 0
+        self.hop_counter = hop_start
+        self.process = process^
+        self.input_buffer = List[Float64](length=window_size * 2, fill=0.0)
+        self.passing_buffer = List[Float64](length=window_size, fill=0.0)
+
+        @parameter
+        if input_window_shape == WindowTypes.hann:
+            self.input_attenuation_window = hann_window(window_size)
+        elif input_window_shape == WindowTypes.hamming:
+            self.input_attenuation_window = hamming_window(window_size)
+        elif input_window_shape == WindowTypes.blackman:
+            self.input_attenuation_window = blackman_window(window_size)
+        elif input_window_shape == WindowTypes.sine:
+            self.input_attenuation_window = sine_window(window_size)
+        else:
+            # never used, just allocate a bunch of zeros
+            self.input_attenuation_window = List[Float64](length=window_size, fill=0.0)
+
+    fn next(mut self, input: Float64) -> None:
+        """Process the next input sample and return the next output sample.
+        
+        This function is called in the audio processing loop for each input sample. It buffers the input samples,
+        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
+
+        Args:
+            input: The next input sample to process.
+        
+        Returns:
+            The next output sample.
+        """
+        if self.world_ptr[].top_of_block:
+            self.process.get_messages()
+    
+        self.input_buffer[self.input_buffer_write_head] = input
+        self.input_buffer[self.input_buffer_write_head + window_size] = input
+        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % window_size
+        
+        if self.hop_counter == 0:
+
+            @parameter
+            if input_window_shape:
+                # @parameter # for some reason these slow compilation down a lot
+                for i in range(window_size):
+                    self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
+            else:
+                # @parameter
+                for i in range(window_size):
+                    self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i]
+
+            self.process.next_window(self.passing_buffer)
+    
+        self.hop_counter = (self.hop_counter + 1) % hop_size
+
 struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None,overlap_output: Bool = True](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows.'
     
