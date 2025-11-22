@@ -11,13 +11,11 @@ from mmm_dsp.PlayBuf import *
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var centroid: Float64
-    var fft: FFT[window_size]
-    var mags: List[Float64]
-    var phases: List[Float64]
     var rms: Float64
     var pitch: Float64
     var pitch_conf: Float64
     var sr: Float64
+    var yin: YIN[window_size, 50, 5000, units=Units.hz]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -25,21 +23,22 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.centroid = 0.0
         self.pitch = 0.0
         self.pitch_conf = 0.0
-        self.fft = FFT[window_size]()
-        self.mags = List[Float64](length=window_size // 2 + 1, fill=0.0)
-        self.phases = List[Float64](length=window_size // 2 + 1, fill=0.0)
         self.rms = 0.0
+        self.yin = YIN[window_size, 50, 5000, units=Units.hz](world_ptr)
 
     fn next_window(mut self, mut frame: List[Float64]):
-        (self.pitch, self.pitch_conf) = YIN[50,5000,units=Units.midi].from_window(frame, self.sr)
+        self.yin.next_window(frame)
+        self.pitch = self.yin.pitch
+        self.pitch_conf = self.yin.confidence
         self.rms = RMS.from_window(frame)
-        self.fft.fft(frame,self.mags,self.phases)
-        self.centroid = SpectralCentroid[unit=Units.midi,power_mag=True].from_mags(self.mags, self.sr)
+        # yin has to do a special FFT internally no matter what, 
+        # so we'll just use the "raw" mags it computes
+        # for spectral centroid
+        self.centroid = SpectralCentroid[unit=Units.hz].from_mags(self.yin.fft_mags, self.sr)
 
 struct AnalysisExample(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var sineosc: Osc
-    var sawosc: Osc
+    var osc: Osc[2]
     var buffer: Buffer
     var playBuf: PlayBuf
     var freq: Float64
@@ -49,8 +48,7 @@ struct AnalysisExample(Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.sineosc = Osc(world_ptr)
-        self.sawosc = Osc(world_ptr)
+        self.osc = Osc[2](world_ptr)
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr)
         self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](world_ptr, CustomAnalysis[1024](world_ptr))
@@ -63,11 +61,10 @@ struct AnalysisExample(Movable, Copyable):
         self.m.update(self.freq,"freq")
         self.m.update(self.which,"which")
 
-        sine = self.sineosc.next(self.freq)
-        saw = self.sawosc.next(self.freq,osc_type=OscType.saw)
+        oscs = self.osc.next(self.freq,0,False,[OscType.sine, OscType.saw])
         flute = self.playBuf.next(self.buffer,0,1.0,True)
 
-        sig = select(self.which,[sine, saw, flute])
+        sig = select(self.which,[oscs[0], oscs[1], flute])
         
         # do the analysis
         self.analyzer.next(sig)

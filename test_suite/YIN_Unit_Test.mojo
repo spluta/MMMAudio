@@ -13,27 +13,27 @@ from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
 from mmm_src.MMMWorld import MMMWorld
 
-alias minfreq: Float64 = 50.0
+alias minfreq: Float64 = 100.0
 alias maxfreq: Float64 = 5000.0
 alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
-    var yin: YIN[minfreq,maxfreq]
+    var yin: YIN[windowsize, minfreq, maxfreq]
     var freqs: List[Float64]
     var confs: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.yin = YIN[minfreq,maxfreq](world_ptr)
+        self.yin = YIN[windowsize, minfreq, maxfreq](world_ptr)
         self.freqs = List[Float64]()
         self.confs = List[Float64]()
 
     fn next_window(mut self, mut buffer: List[Float64]):
-        pitch, confidence = self.yin.from_window(buffer, self.world_ptr[].sample_rate)
-        self.freqs.append(pitch)
-        self.confs.append(confidence)
+        self.yin.next_window(buffer)
+        self.freqs.append(self.yin.pitch)
+        self.confs.append(self.yin.confidence)
         return
 
 fn main():
