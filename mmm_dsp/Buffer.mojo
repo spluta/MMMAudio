@@ -157,8 +157,8 @@ struct Buffer(Buffable):
                         self.data.append(channel_data^)
 
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging
-            except:
-                print("Error loading file:")
+            except err:
+                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
                 self.num_frames = 0.0
                 self.num_chans = 0
         else:
