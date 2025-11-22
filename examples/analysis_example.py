@@ -1,17 +1,17 @@
-from mmm_src.MMMAudio import MMMAudio
-
-# [ ] safety checks on fft sizes
-# [ ] test with units
-# [ ] test power mags
-# [ ] test against librosa
+# [x] safety checks on fft sizes
+# [x] test with units
+# [x] test power mags
+# [x] test against librosa
 # [ ] make sure documentation is in order
 # [ ] explain static methods
 # [ ] make the example more comprehensive
 
-mmm_audio = MMMAudio(128, graph_name="AnalysisExample", package_name="examples")
-mmm_audio.start_audio()
 
-mmm_audio.send_float("freq", 210.5)
-mmm_audio.send_float("which", 2.0)
+from mmm_src.MMMAudio import MMMAudio
 
-mmm_audio.stop_audio()
+ma = MMMAudio(128, graph_name="AnalysisExample", package_name="examples")
+ma.start_audio()
+
+ma.send_float("freq", 210.5)
+ma.send_float("which", 2.0)
+ma.stop_audio()

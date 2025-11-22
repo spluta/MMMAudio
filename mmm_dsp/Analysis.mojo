@@ -23,7 +23,7 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
 # [TODO] Implement the YINFFT optimized algorithm because this one is O(n^2) while
 # the FFT based version is O(n log n). The FFT version also requires to know the 
 # raw amplitude samples, so it would also be a BufferedProcess rather than an FFTProcess.
-struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessable):
+struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000, units: Int = Units.hz](BufferedProcessable):
     """Monophonic Frequency ('F0') Detection using the original time-domain YIN algorithm.
 
     > The YIN algorithm seems to work best with no windowing applied to the audio frame.
@@ -39,6 +39,7 @@ struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessabl
     Parameters:
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
+        units: The units for the pitch output. Use the Units struct (e.g., Units.hz or Units.midi).
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var pitch: Float64
@@ -127,6 +128,10 @@ struct YIN[min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessabl
                     if refined_idx > 0.0:
                         local_pitch = sample_rate / refined_idx
                         local_conf = max(1.0 - best_val, 0.0)
+                        local_conf = min(local_conf, 1.0)
+
+                    if units == Units.midi:
+                        local_pitch = cpsmidi(local_pitch)
 
         return (local_pitch, local_conf)
 

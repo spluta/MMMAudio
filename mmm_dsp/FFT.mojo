@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import *
 from complex import ComplexFloat64
+from testing import assert_true
 
 struct FFT[window_size: Int = 1024](Movable,Copyable):
     var py_input: PythonObject
@@ -21,6 +22,8 @@ struct FFT[window_size: Int = 1024](Movable,Copyable):
     
     fn fft(mut self, input: List[Float64], mut complex: List[ComplexFloat64]) -> None:
         try:
+            assert_true(len(input) == window_size, "Input list must be of length window_size")
+            assert_true(len(complex) == (window_size // 2) + 1, "Complex list must be of length window_size / 2 + 1")
             for i in range(len(input)):
                 self.py_input[i] = input[i]
             self.py_complex = self.np.fft.rfft(self.py_input)
@@ -31,7 +34,10 @@ struct FFT[window_size: Int = 1024](Movable,Copyable):
             print(err)
     
     fn fft(mut self, input: List[Float64], mut mags: List[Float64], mut phases: List[Float64]) -> None:
+
         try:
+            assert_true(len(input) == window_size, "Input list must be of length window_size")
+            assert_true(len(mags) == len(phases) == (window_size // 2) + 1, "Mags and phases lists must be of length window_size / 2 + 1")
             for i in range(len(input)):
                 self.py_input[i] = input[i]
             self.py_complex = self.np.fft.rfft(self.py_input)
@@ -43,6 +49,8 @@ struct FFT[window_size: Int = 1024](Movable,Copyable):
     
     fn ifft(mut self, complex: List[ComplexFloat64], mut output: List[Float64]) -> None:
         try:
+            assert_true(len(output) == window_size, "Output list must be of length window_size")
+            assert_true(len(complex) == (window_size // 2) + 1, "Complex list must be of length window_size / 2 + 1")
             for i in range(len(complex)):
                 self.py_complex[i] = self.np.complex64(complex[i].re, complex[i].im)
             self.py_input = self.np.fft.irfft(self.py_complex)
@@ -53,6 +61,8 @@ struct FFT[window_size: Int = 1024](Movable,Copyable):
     
     fn ifft(mut self, mags: List[Float64], phases: List[Float64], mut output: List[Float64]) -> None:
         try:
+            assert_true(len(output) == window_size, "Output list must be of length window_size")
+            assert_true(len(mags) == len(phases) == (window_size // 2) + 1, "Mags and phases lists must be of length window_size / 2 + 1")
             for i in range(len(mags)):
                 self.py_complex[i] = self.np.complex64(mags[i] * self.np.cos(phases[i]), mags[i] * self.np.sin(phases[i]))
             self.py_input = self.np.fft.irfft(self.py_complex)

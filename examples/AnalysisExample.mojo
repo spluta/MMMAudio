@@ -31,10 +31,10 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.rms = 0.0
 
     fn next_window(mut self, mut frame: List[Float64]):
-        (self.pitch, self.pitch_conf) = YIN[50,5000].from_window(frame, self.sr)
+        (self.pitch, self.pitch_conf) = YIN[50,5000,units=Units.midi].from_window(frame, self.sr)
         self.rms = RMS.from_window(frame)
         self.fft.fft(frame,self.mags,self.phases)
-        self.centroid = SpectralCentroid.from_mags(self.mags, self.sr)
+        self.centroid = SpectralCentroid[unit=Units.midi,power_mag=True].from_mags(self.mags, self.sr)
 
 struct AnalysisExample(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
@@ -78,7 +78,7 @@ struct AnalysisExample(Movable, Copyable):
         centroid = self.analyzer.process.centroid
         
         # print the results
-        self.world_ptr[].print("Frequency: ", frequency, " Hz, Confidence: ", confidence, ", RMS: ", rms, ", Centroid: ", centroid, " Hz\n")
+        self.world_ptr[].print("Pitch: ", frequency, " \tHz, Confidence: ", confidence, ", \tRMS: ", rms, ", \tCentroid: ", centroid)
         
         out = SIMD[DType.float64, 2](sig,sig)
         return out
