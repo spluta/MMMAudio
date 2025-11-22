@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFTProcess import *
-from mmm_dsp.FFT import FFT
+from mmm_dsp.FFT import RealFFT
 from math import ceil, floor, log2
 from mmm_utils.functions import cpsmidi, ampdb
 from math import sqrt
@@ -34,10 +34,8 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
     var pitch: Float64
     var confidence: Float64
     var sample_rate: Float64
-    var fft: FFT[window_size * 2]
+    var fft: RealFFT[window_size * 2]
     var fft_input: List[Float64]
-    var fft_mags: List[Float64]
-    var fft_phases: List[Float64]
     var fft_power_mags: List[Float64]
     var fft_zero_phases: List[Float64]
     var acf_real: List[Float64]
@@ -57,10 +55,8 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
         self.pitch = 0.0
         self.confidence = 0.0
         self.sample_rate = self.world_ptr[].sample_rate
-        self.fft = FFT[window_size * 2]()
+        self.fft = RealFFT[window_size * 2]()
         self.fft_input = List[Float64](length=window_size * 2, fill=0.0)
-        self.fft_mags = List[Float64](length=window_size + 1, fill=0.0)
-        self.fft_phases = List[Float64](length=window_size + 1, fill=0.0)
         self.fft_power_mags = List[Float64](length=window_size + 1, fill=0.0)
         self.fft_zero_phases = List[Float64](length=window_size + 1, fill=0.0)
         self.acf_real = List[Float64](length=window_size * 2, fill=0.0)
@@ -81,12 +77,12 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
             self.fft_input[i] = 0.0
         
         # 2. FFT
-        self.fft.fft(self.fft_input, self.fft_mags, self.fft_phases)
+        self.fft.fft(self.fft_input)
         
         # 3. Power Spectrum (Mags^2)
         # We use a separate buffer for power mags so we preserve fft_mags for external use
-        for i in range(len(self.fft_mags)):
-            self.fft_power_mags[i] = self.fft_mags[i] * self.fft_mags[i]
+        for i in range(len(self.fft.mags)):
+            self.fft_power_mags[i] = self.fft.mags[i] * self.fft.mags[i]
             
         # 4. IFFT -> Autocorrelation
         # Use zero phases for autocorrelation
@@ -179,7 +175,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = 0](FFTProcessable):
+struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = Units.hz](FFTProcessable):
     """Spectral Centroid analysis.
 
     Parameters:
@@ -225,7 +221,6 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         Returns:
             Float64. The spectral centroid value.
         """
-        
         fft_size: Int = (len(mags) - 1) * 2
         binHz: Float64 = sample_rate / fft_size
 

@@ -35,7 +35,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         # so we'll just use the "raw" mags it computes
         # for spectral centroid. It is an FFT with double the frequency resolution
         # (i.e., it's higher resolution, just "interpolated" FFT mags). But it will work just fine here.
-        self.centroid = SpectralCentroid[unit=Units.hz].from_mags(self.yin.fft_mags, self.sr)
+        self.centroid = SpectralCentroid[unit=Units.hz].from_mags(self.yin.fft.mags, self.world_ptr[].sample_rate)
 
 struct AnalysisExample(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

@@ -39,9 +39,9 @@ struct Analyzer(BufferedProcessable):
 fn main():
     world = MMMWorld()
     world_ptr = UnsafePointer(to=world)
-    world.sample_rate = 44100.0
 
     buffer = Buffer("resources/Shiverer.wav")
+    world.sample_rate = buffer.buf_sample_rate
     playBuf = PlayBuf(world_ptr)
 
     analyzer = BufferedInput[Analyzer,windowsize,hopsize](world_ptr, Analyzer(world_ptr))
@@ -52,7 +52,7 @@ fn main():
     
 
 
-    pth = "test_suite/outputs/yin_results.csv"
+    pth = "validation/outputs/yin_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

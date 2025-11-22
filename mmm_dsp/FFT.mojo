@@ -198,7 +198,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)    
 
     fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
-        # full inverse FFT
+        # full inverse FFT using internal mags and phases
         
         for k in range(size // 2 + 1):
             if k < len(self.mags):
@@ -210,6 +210,25 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
                 
                 self.result[k] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
         
+        self._compute_inverse_fft(output)
+
+    fn ifft(mut self, mags: List[SIMD[DType.float64, num_chans]], phases: List[SIMD[DType.float64, num_chans]], mut output: List[SIMD[DType.float64, num_chans]]):
+        # full inverse FFT using provided mags and phases
+        
+        for k in range(size // 2 + 1):
+            if k < len(mags):
+                var mag = mags[k]
+                var phase = phases[k]
+                
+                var real_part = mag * Math.cos(phase)
+                var imag_part = mag * Math.sin(phase)
+                
+                self.result[k] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
+        
+        self._compute_inverse_fft(output)
+
+    @doc_private
+    fn _compute_inverse_fft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
         for k in range(1, size // 2):  # k=1 to size//2-1
             self.result[size - k] = self.result[k].conj()
 
