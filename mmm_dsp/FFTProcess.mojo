@@ -98,7 +98,8 @@ trait FFTProcessable(Movable,Copyable):
         return None
     fn next_stereo_frame(mut self, mut magnitudes: List[SIMD[DType.float64,2]], mut phases: List[SIMD[DType.float64,2]]) -> None:
         return None
-    fn get_messages(mut self) -> None:...
+    fn get_messages(mut self) -> None:
+        return None
 
 struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
     """Create an FFTProcess for audio manipulation in the frequency domain.

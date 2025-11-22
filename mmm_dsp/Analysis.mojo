@@ -22,9 +22,7 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
     return (p, refined_val)
 
 struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, units: Int = Units.hz](BufferedProcessable):
-    """Monophonic Frequency ('F0') Detection using the YIN algorithm.
-
-    This implementation uses FFT-based autocorrelation for performance (O(N log N)).
+    """Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version).
 
     Parameters:
         window_size: The size of the analysis window in samples.
@@ -47,6 +45,14 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
     var yin_values: List[Float64]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        """Initialize the YIN pitch detector.
+
+        Args:
+            world_ptr: A pointer to the MMMWorld.
+
+        Returns:
+            An initialized YIN struct.
+        """
         self.world_ptr = world_ptr
         self.pitch = 0.0
         self.confidence = 0.0
@@ -67,6 +73,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
         Args:
             frame: The input audio frame of size `window_size`. This List gets passed from BufferedProcess.
         """
+
         # 1. Prepare input for FFT (Zero padding)
         for i in range(len(frame)):
             self.fft_input[i] = frame[i]
@@ -126,7 +133,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
             # Clamp min_bin
             if min_bin < 1:
                 min_bin = 1
-                
+
             # Clamp max_bin
             var safe_limit = len(frame) // 2
             if max_bin > safe_limit:
@@ -172,53 +179,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct Pitch[window_size: Int, hop_size: Int, min_freq: Float64, max_freq: Float64](Movable,Copyable):
-    """Monophonic Frequency ('F0') detection using the YIN algorithm.
-    
-    This Pitch struct is a higher-level interface to the YIN algorithm. This struct 
-    takes in single amplitude samples and returns a tuple of (pitch, confidence).
-    It uses a BufferedInput internally to manage the audio buffering. 
-    
-    > The actual YIN algorithm seems to work best when there is no windowing applied to the audio frame.
-
-    If multiple buffered analyses or processes are being conducted on the same source signal,
-    consider using the YIN struct directly within a custom BufferedProcess to avoid redundant buffering.
-    See the AnalysisExample file.
-
-    Parameters:
-        window_size: The size of the analysis window in samples. This should be large enough to capture the lowest frequency of interest.
-        hop_size: Analysis will occur every `hop_size` samples (using the most recent `window_size` samples).
-        min_freq: The minimum frequency to consider for pitch detection.
-        max_freq: The maximum frequency to consider for pitch detection.
-    """
-
-    # [TODO] Technically this BufferedProcess doesn't need to return the List[Float64] so there's
-    # an extra loop happening after `.next_window()` that can (should) be eliminated.
-    var buffered_input: BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size]
-    var world_ptr: UnsafePointer[MMMWorld]
-    
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """Initialize the Pitch processor.
-
-        Args:
-            world_ptr: A pointer to the MMMWorld.
-        """
-        self.world_ptr = world_ptr
-        self.buffered_input = BufferedInput[YIN[window_size, min_freq, max_freq], window_size, hop_size](world_ptr,YIN[window_size, min_freq, max_freq](world_ptr))
-
-    fn next(mut self, input: Float64) -> (Float64, Float64):
-        """Process the next input sample and return the pitch and confidence.
-
-        Args:
-            input: The next audio sample.
-
-        Returns:
-            A tuple containing the estimated pitch (in Hz) and confidence (0.0 to 1.0).
-        """
-        self.buffered_input.next(input)
-        return (self.buffered_input.process.pitch, self.buffered_input.process.confidence)
-
-struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = 0](Movable,Copyable):
+struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = 0](FFTProcessable):
     """Spectral Centroid analysis.
 
     Parameters:
@@ -241,7 +202,9 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
             print("SpectralCentroid: Invalid unit parameter. Must be Units.hz or Units.midi. Defaulting to Hz.")
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
-        """Compute the spectral centroid for the given FFT frame.
+        """Compute the spectral centroid for a given FFT analysis.
+
+        This function is to be used with an FFTProcess.
 
         Args:
             mags: The input magnitudes as a List of Float64.
@@ -252,6 +215,8 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64) -> Float64:
         """Compute the spectral centroid for the given magnitudes of an FFT frame.
+
+        This static method is useful when there is an FFT already computed.
 
         Args:
             mags: The input magnitudes as a List of Float64.
@@ -298,9 +263,16 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         return centroid
 
 struct RMS[unit: Int = Units.db](BufferedProcessable):
+    """Root Mean Square (RMS) amplitude analysis.
+
+    Parameters:
+        unit: The unit for the RMS output. Use the Units struct (e.g., Units.db or Units.amp).
+    """
     var rms: Float64
 
     fn __init__(out self):
+        """Initialize the RMS analyzer.
+        """
         if unit not in [Units.db, Units.amp]:
             print("RMS: Invalid unit parameter. Must be Units.db or Units.amp. Defaulting to db.")
         
@@ -310,10 +282,31 @@ struct RMS[unit: Int = Units.db](BufferedProcessable):
             self.rms = -130.0
 
     fn next_window(mut self, mut input: List[Float64]) -> None:
+        """Compute the RMS for the given window of audio samples.
+
+        This function is to be used with a BufferedProcess.
+
+        Args:
+            input: The input audio frame of samples. This List gets passed from BufferedProcess.
+        
+        Returns:
+            None. The computed RMS value is stored in self.rms.
+        """
         self.rms = self.from_window(input)
 
     @staticmethod
     fn from_window(mut frame: List[Float64]) -> Float64:
+        """Compute the RMS for the given window of audio samples.
+
+        This static method is useful when there is an audio frame already available, perhaps
+        as part of a custom struct that implements the BufferedProcessable trait.
+
+        Args:
+            frame: The input audio frame of samples.
+        
+        Returns:
+            Float64. The computed RMS value.
+        """
         sum_sq: Float64 = 0.0
         for v in frame:
             sum_sq += v * v
