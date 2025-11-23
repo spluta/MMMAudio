@@ -8,7 +8,7 @@ if True:
     from mmm_src.MMMAudio import MMMAudio
     from random import random
 
-    mmm_audio = MMMAudio(128, graph_name="Torch_Mlp", package_name="examples")
+    mmm_audio = MMMAudio(128, graph_name="TorchMlp", package_name="examples")
 
     # this one is a bit intense, so maybe start with a low volume
     mmm_audio.start_audio()

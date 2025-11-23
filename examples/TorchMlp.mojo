@@ -124,12 +124,12 @@ struct TorchSynth(Movable, Copyable):
         osc2 = self.dc2.next(osc2)
         self.fb = osc2
 
-        return SIMD[DType.float64, 2](osc1, osc2) * 0.2
+        return SIMD[DType.float64, 2](osc1, osc2) * 0.1
 
 
 # THE GRAPH
 
-struct Torch_Mlp(Representable, Movable, Copyable):
+struct TorchMlp():
     var world_ptr: UnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 
@@ -137,9 +137,6 @@ struct Torch_Mlp(Representable, Movable, Copyable):
         self.world_ptr = world_ptr
 
         self.torch_synth = TorchSynth(world_ptr)  # Initialize the TorchSynth with the world instance
-
-    fn __repr__(self) -> String:
-        return String("Torch_Mlp")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         return self.torch_synth.next()

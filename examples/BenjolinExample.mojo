@@ -160,7 +160,7 @@ struct Benjolin(Representable, Movable, Copyable):
             output[i] = self.dctraps[i].next(output[i])
             output[i] = tanh(output[i])
 
-        return output
+        return output * 0.4
 
 struct BenjolinExample(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

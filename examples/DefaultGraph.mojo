@@ -6,7 +6,7 @@ from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import *
-from mmm_dsp.Filters import SVF
+from mmm_dsp.Filters import SVF, SVFModes
 
 struct Default_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
@@ -29,9 +29,9 @@ struct Default_Synth(Representable, Movable, Copyable):
         self.messenger.update(self.freq,"freq")
 
         osc = self.osc.next(self.freq, osc_type=OscType.bandlimited_saw) 
-        # osc = self.filt.lpf(osc, 1000, 1.0)
+        osc = self.filt.next[filter_type=SVFModes.lowpass](osc, 2000.0, 1.0)
 
-        return osc
+        return osc * 0.3
 
 
 # there can only be one graph in an MMMAudio instance
@@ -47,6 +47,6 @@ struct DefaultGraph(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default_Graph")
 
-    fn next(mut self) -> SIMD[DType.float64, 1]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
 
         return self.synth.next()  # Get the next sample from the synth
