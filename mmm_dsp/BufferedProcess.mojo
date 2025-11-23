@@ -149,7 +149,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var hop_counter: Int
     var process: T
     var output_buffer_write_head: Int
-    var p: Print
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
@@ -159,7 +158,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             world_ptr: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
-            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, instead of overlapping within a single BufferedProcess.
+            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
         Returns:
             An initialized BufferedProcess struct.
@@ -178,8 +177,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.st_input_buffer = List[SIMD[DType.float64,2]](length=window_size * 2, fill=0.0)
         self.st_passing_buffer = List[SIMD[DType.float64,2]](length=window_size, fill=0.0)
         self.st_output_buffer = List[SIMD[DType.float64,2]](length=window_size, fill=0.0)
-
-        self.p = Print(world_ptr=self.world_ptr)
 
         @parameter
         if input_window_shape == WindowTypes.hann:
@@ -335,7 +332,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to start reading from the buffer.
-            start_chan: The firstchannel to read from the buffer.
+            start_chan: The first channel to read from the buffer.
         
         Returns:
             The next output sample.
