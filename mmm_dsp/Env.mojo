@@ -229,7 +229,7 @@ struct ASREnv(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("ASREnv")
     
-    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: SIMD[DType.float64, 2]) -> Float64:
+    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: SIMD[DType.float64, 2] = 1) -> Float64:
         """Simple ASR envelope generator.
         
         Args:

@@ -11,27 +11,39 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var process: T
-    var fft: FFT[window_size]
+
+    # this is a bit gross. In order to get this to work the FFT has to have the data structure of both single channel FFT and a two channel FFT.
+    # once Mojo allows parameters and traits. We should get rid of this as soon as possible.
+    var fft: RealFFT[window_size, 1]
+    var fft2: RealFFT[window_size, 2]
     var mags: List[Float64]
     var phases: List[Float64]
+    var st_mags: List[SIMD[DType.float64,2]]
+    var st_phases: List[SIMD[DType.float64,2]]
 
     @doc_private
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
         self.world_ptr = world_ptr
         self.process = process^
-        self.fft = FFT[window_size]()
+        self.fft = RealFFT[window_size, 1]()
+        self.fft2 = RealFFT[window_size, 2]()
         self.mags = List[Float64](length=(window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(window_size // 2) + 1, fill=0.0)
+        self.st_mags = List[SIMD[DType.float64,2]](length=(window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
+        self.st_phases = List[SIMD[DType.float64,2]](length=(window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
 
-    @doc_private
     fn next_window(mut self, mut input: List[Float64]) -> None:
-        self.fft.fft(input,self.mags,self.phases)
-        self.process.next_frame(self.mags,self.phases)
-        self.fft.ifft(self.mags,self.phases,input)
+        self.fft.fft(input)
+        self.process.next_frame(self.fft.mags,self.fft.phases)
+        self.fft.ifft(input)
+    
+    fn next_stereo_window(mut self, mut input: List[SIMD[DType.float64,2]]) -> None:
+        self.fft2.fft(input)
+        self.process.next_stereo_frame(self.fft2.mags,self.fft2.phases)
+        self.fft2.ifft(input)
 
     @doc_private
     fn get_messages(mut self) -> None:
-        # print("FFTProcessor: get_messages()")
         self.process.get_messages()
 
 trait FFTProcessable(Movable,Copyable):
@@ -82,7 +94,10 @@ trait FFTProcessable(Movable,Copyable):
         sample (after buffering -> FFT -> processing -> IFFT -> output buffering) to get out 
         to the speakers (or whatever).
     """
-    fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:...
+    fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+        return None
+    fn next_stereo_frame(mut self, mut magnitudes: List[SIMD[DType.float64,2]], mut phases: List[SIMD[DType.float64,2]]) -> None:
+        return None
     fn get_messages(mut self) -> None:...
 
 struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
@@ -117,7 +132,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
             An initialized SpectralProcess struct.
         """
         self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
+        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape, overlap_output](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
@@ -130,10 +145,39 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         """
         return self.buffered_process.next(input)
 
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, channel: Int) -> Float64:
-        """Returns the next output sample from the internal buffer without processing a new input sample.
+    fn next_stereo(mut self, input: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]:
+        """Processes the next stereo input sample and returns the next output sample.
+        
+        Args:
+            input: The next input sample to process.
+        
+        Returns:
+            The next output sample.
+        """
+        return self.buffered_process.next_stereo(input)
+
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
+        """Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
+
+        Args:
+            buffer: The input buffer to read samples from.
+            phase: The current phase to read from the buffer.
+            start_chan: The firstchannel to read from the buffer.
         
         Returns:
             The next output sample from the internal buffer.
         """
-        return self.buffered_process.next_from_buffer(buffer, phase, channel)
+        return self.buffered_process.next_from_buffer(buffer, phase, start_chan)
+
+    fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64, 2]:
+        """Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
+
+        Args:
+            buffer: The input buffer to read samples from.
+            phase: The current phase to read from the buffer.
+            start_chan: The firstchannel to read from the buffer.
+
+        Returns:
+            The next stereo output sample from the internal buffer.
+        """
+        return self.buffered_process.next_from_stereo_buffer(buffer, phase, start_chan)

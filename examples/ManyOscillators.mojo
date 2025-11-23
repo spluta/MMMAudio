@@ -6,7 +6,6 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Osc import Osc
 from random import random_float64
 from mmm_dsp.Pan import Pan2
-from mmm_dsp.OscBuffers import OscBuffers
 
 # THE SYNTH
 
