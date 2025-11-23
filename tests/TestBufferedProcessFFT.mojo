@@ -6,7 +6,7 @@ from mmm_utils.Windows import WindowTypes
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
-from mmm_dsp.FFT import FFT
+from mmm_dsp.FFT import RealFFT
 from complex import ComplexFloat64
 
 alias window_size = 4096
@@ -17,7 +17,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     var world_ptr: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
-    var fft: FFT[window_size]
+    var fft: RealFFT[window_size]
     # var complex: List[ComplexFloat64]
     var mags: List[Float64]
     var phases: List[Float64]
@@ -26,7 +26,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
         self.world_ptr = world_ptr
         self.bin = (window_size // 2) + 1
         self.m = Messenger(world_ptr)
-        self.fft = FFT[window_size]()
+        self.fft = RealFFT[window_size]()
         # self.complex = List[ComplexFloat64](length=(window_size // 2) + 1, fill=ComplexFloat64(0.0,0.0))
         self.mags = List[Float64](length=(window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(window_size // 2) + 1, fill=0.0)
