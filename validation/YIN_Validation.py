@@ -172,6 +172,11 @@ if 'sclang_freqs' in locals():
     data_list.append(diffs_flucoma)
     label_list.append('MMMAudio vs FluCoMa')
 
+    diffs_flucoma_librosa = get_semitone_diffs(pitch, sclang_freqs)
+    max_val = max(max_val, np.max(diffs_flucoma_librosa))
+    data_list.append(diffs_flucoma_librosa)
+    label_list.append('Librosa vs FluCoMa')
+
 bins = np.arange(0, np.ceil(max_val) + 1, 1)
 plt.hist(data_list, bins=bins, label=label_list, alpha=0.7)
 plt.xlabel('Absolute Deviation (Semitones)')
