@@ -109,6 +109,17 @@ struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
                         out_list[i + j] = temp[j]
         vectorize[closure, simd_width](N)
 
+struct SVFModes:
+    alias lowpass: Int64 = 0
+    alias bandpass: Int64 = 1
+    alias highpass: Int64 = 2
+    alias notch: Int64 = 3
+    alias peak: Int64 = 4
+    alias allpass: Int64 = 5
+    alias bell: Int64 = 6
+    alias lowshelf: Int64 = 7
+    alias highshelf: Int64 = 8
+
 struct SVF[N: Int = 1](Representable, Movable, Copyable):
     """State Variable Filter
     
@@ -216,26 +227,26 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         @parameter
         for i in range(self.N):
             @parameter
-            if filter_type == 0:      # lowpass
+            if filter_type == SVFModes.lowpass:    
                 mc0[i], mc1[i], mc2[i] = 0.0, 0.0, 1.0
-            elif filter_type == 1:    # bandpass
+            elif filter_type == SVFModes.bandpass:  
                 mc0[i], mc1[i], mc2[i] = 0.0, 1.0, 0.0
-            elif filter_type == 2:    # highpass
+            elif filter_type == SVFModes.highpass:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -1.0
-            elif filter_type == 3:    # notch
+            elif filter_type == SVFModes.notch:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], 0.0
-            elif filter_type == 4:    # peak
+            elif filter_type == SVFModes.peak:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -2.0
-            elif filter_type == 5:    # allpass
+            elif filter_type == SVFModes.allpass:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -2.0*k[i], 0.0
-            elif filter_type == 6:    # bell
+            elif filter_type == SVFModes.bell:  
                 mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i]*A[i] - 1.0), 0.0
-            elif filter_type == 7:    # lowshelf
+            elif filter_type == SVFModes.lowshelf:   
                 mc0[i], mc1[i], mc2[i] = 1.0, k[i]*(A[i] - 1.0), A[i]*A[i] - 1.0
-            elif filter_type == 8:    # highshelf
+            elif filter_type == SVFModes.highshelf:    
                 mc0[i], mc1[i], mc2[i] = A[i]*A[i], k[i]*(1.0 - A[i])*A[i], 1.0 - A[i]*A[i]
             else:
-                mc0[i], mc1[i], mc2[i] = 1.0, 0.0, 0.0  # default
+                mc0[i], mc1[i], mc2[i] = 1.0, 0.0, 0.0  
 
         return (mc0, mc1, mc2)
 
@@ -279,7 +290,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[0](input, frequency, q)
+        return self.next[SVFModes.lowpass](input, frequency, q)
 
     @always_inline
     fn bpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -293,7 +304,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[1](input, frequency, q)
+        return self.next[SVFModes.bandpass](input, frequency, q)
 
     @always_inline
     fn hpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -307,7 +318,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[2](input, frequency, q)
+        return self.next[SVFModes.highpass](input, frequency, q)
 
     @always_inline
     fn notch(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -321,7 +332,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[3](input, frequency, q)
+        return self.next[SVFModes.notch](input, frequency, q)
 
     @always_inline
     fn peak(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -335,7 +346,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[4](input, frequency, q)
+        return self.next[SVFModes.peak](input, frequency, q)
 
     @always_inline
     fn allpass(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -349,7 +360,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[5](input, frequency, q)
+        return self.next[SVFModes.allpass](input, frequency, q)
 
     @always_inline
     fn bell(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -364,7 +375,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[6](input, frequency, q, gain_db)
+        return self.next[SVFModes.bell](input, frequency, q, gain_db)
 
     @always_inline
     fn lowshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -379,7 +390,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[7](input, frequency, q, gain_db)
+        return self.next[SVFModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
     fn highshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
@@ -394,7 +405,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        return self.next[8](input, frequency, q, gain_db)
+        return self.next[SVFModes.highshelf](input, frequency, q, gain_db)
 
 struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
     """A 4th-order [Linkwitz-Riley](https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter) lowpass filter.
