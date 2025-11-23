@@ -6,6 +6,8 @@ from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import Osc
 from mmm_dsp.Filters import Lag
+from mmm_utils.Messengers import Messenger
+from mmm_dsp.Env import ASREnv
 
 struct VariableOsc(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
@@ -15,27 +17,42 @@ struct VariableOsc(Representable, Movable, Copyable):
     # var lag: Lag[1]
     var osc: Osc[2,2,1]
     var lag: Lag[2]
+    var m: Messenger
+    var x: Float64
+    var y: Float64
+    var is_down: Bool
+    var asr: ASREnv
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         # for efficiency we set the interpolation and oversampling in the constructor
         self.osc = Osc[2,2,1](self.world_ptr)
         self.lag = Lag[2](self.world_ptr, 0.1)
+        self.m = Messenger(self.world_ptr)
+        self.x = 0.0
+        self.y = 0.0
+        self.is_down = False
+        self.asr = ASREnv(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
+        self.m.update(self.x, "x")
+        self.m.update(self.y, "y")
+        self.m.update(self.is_down, "mouse_down")
+
+        env = self.asr.next(0.05, 1, 0.05, self.is_down)
 
         # freq = self.world_ptr[0].mouse_y
-        freq = SIMD[DType.float64, 2](1-self.world_ptr[0].mouse_y, self.world_ptr[0].mouse_y)
+        freq = SIMD[DType.float64, 2](1-self.y, self.y)
         freq = self.lag.next(freq)
         freq = linexp(freq, 0.0, 1.0, 100, 10000)
 
         # by defualt, next_interp will interpolate between the four default waveforms - sin, tri, square, saw
 
         # osc_frac = self.world_ptr[0].mouse_x
-        osc_frac = SIMD[DType.float64, 2](1-self.world_ptr[0].mouse_x, self.world_ptr[0].mouse_x)
+        osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
         sample = self.osc.next_interp(freq, osc_frac = osc_frac)
 
-        return sample * 0.1
+        return sample * 0.1 * env
