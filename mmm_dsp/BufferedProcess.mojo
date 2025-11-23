@@ -149,7 +149,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var hop_counter: Int
     var process: T
     var output_buffer_write_head: Int
-    var p: Print
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
@@ -178,8 +177,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.st_input_buffer = List[SIMD[DType.float64,2]](length=window_size * 2, fill=0.0)
         self.st_passing_buffer = List[SIMD[DType.float64,2]](length=window_size, fill=0.0)
         self.st_output_buffer = List[SIMD[DType.float64,2]](length=window_size, fill=0.0)
-
-        self.p = Print(world_ptr=self.world_ptr)
 
         @parameter
         if input_window_shape == WindowTypes.hann:
@@ -335,7 +332,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to start reading from the buffer.
-            start_chan: The firstchannel to read from the buffer.
+            start_chan: The first channel to read from the buffer.
         
         Returns:
             The next output sample.
