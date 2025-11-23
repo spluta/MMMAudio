@@ -243,7 +243,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend([str(f) for f in args])
+        key_vals.extend(args)
 
         self.mmm_audio_bridge.update_floats_msg(key_vals)
         
@@ -268,7 +268,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend([str(s) for s in args])
+        key_vals.extend([int(i) for i in args])
 
         self.mmm_audio_bridge.update_ints_msg(key_vals)
 

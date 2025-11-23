@@ -116,7 +116,7 @@ struct TrigSynth(Movable, Copyable):
         return out
         
 
-struct Midi_Sequencer(Representable, Movable, Copyable):
+struct MidiSequencer(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
 
     var output: List[Float64]  # Output buffer for audio samples
@@ -132,6 +132,6 @@ struct Midi_Sequencer(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")
 
-    fn next(mut self: Midi_Sequencer) -> SIMD[DType.float64, 2]: 
+    fn next(mut self: MidiSequencer) -> SIMD[DType.float64, 2]: 
         return self.trig_synth.next()  # Return the combined output sample
 

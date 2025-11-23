@@ -95,13 +95,18 @@ fn ampdb[width: Int = 1](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
     """
     return 20.0 * log10(amp)
 
-# I changed this to only work with Floats, because I don't see how it would work with Ints
 @always_inline
 fn select[width: Int](index: Float64, list: List[SIMD[DType.float64, width]]) -> SIMD[DType.float64, width]:
     index_int = Int(index) % len(list)
     index_mix: Float64 = index - index_int
     val: SIMD[DType.float64, width] = SIMD[DType.float64](list[index_int]) * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
     return val
+
+@always_inline
+fn select(index: Float64, vals: SIMD[DType.float64]) -> SIMD[DType.float64,1]:
+    index_int = Int(index) % len(vals)
+    index_mix: Float64 = index - index_int
+    return (vals[index_int] * (1.0 - index_mix)) + (vals[(index_int + 1) % len(vals)] * index_mix)
 
 @always_inline
 fn linlin[

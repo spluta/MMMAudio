@@ -2,7 +2,7 @@ if True:
     from mmm_src.MMMAudio import MMMAudio
 
     # instantiate and load the graph
-    mmm_audio = MMMAudio(128, graph_name="Midi_Sequencer", package_name="examples")
+    mmm_audio = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
     mmm_audio.start_audio()
 
 # this next chunk of code is all about using a midi keyboard to control the synth---------------
@@ -63,7 +63,6 @@ midi_func()
 # To stop the midi thread defined above:
 stop_event.set()
 
-
 # this chunk of code shows how to use the sequencer to trigger notes in the mmm_audio engine
 
 # the scheduler can also sequence notes
@@ -76,6 +75,7 @@ global scheduler
 scheduler = mmm_audio.scheduler
 
 voice_seq = Pseq(list(range(8)))
+voice_seq.next()
 
 async def trig_synth(wait):
     """A counter coroutine"""
@@ -86,6 +86,7 @@ async def trig_synth(wait):
     fund = midicps(fund_seq.next())
     while True:
         voice = "voice_" + str(voice_seq.next())
+        # print(f"Sequencer Note: {cpsmidi(fund * mult_seq.current())} Voice: {voice}")
         mmm_audio.send_floats(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         i = (i + 1) % count_to
