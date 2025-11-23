@@ -220,7 +220,7 @@ def process_example_file(python_example_file_path: Path):
         print(f"Error: Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
         return
 
-    mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
+    mojo_example_file = python_example_file_path.stem + '.mojo'#snake_to_camel(python_example_file_path.stem) + '.mojo'
 
     example_name_words = python_example_file_path.stem.split('_')
     example_name = ' '.join(word.capitalize() for word in example_name_words if word != 'example')
