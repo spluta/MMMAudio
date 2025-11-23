@@ -5,7 +5,7 @@ mmm_audio.start_audio()
 
 # change how slow the audio gets stretched
 mmm_audio.send_float("dur_mult", 10.0)
-mmm_audio.send_float("dur_mult", 20.0)
+mmm_audio.send_float("dur_mult", 100.0)
 mmm_audio.send_float("dur_mult", 40.0)
 mmm_audio.send_float("dur_mult", 10000.0)
 

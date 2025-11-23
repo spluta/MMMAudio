@@ -52,7 +52,7 @@ struct PaulStretch(Movable, Copyable):
             ](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
 
         self.m = Messenger(world_ptr)
-        self.dur_mult = 20.0
+        self.dur_mult = 40.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.dur_mult,"dur_mult")
