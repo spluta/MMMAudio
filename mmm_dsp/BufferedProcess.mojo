@@ -27,7 +27,7 @@ trait BufferedProcessable(Movable, Copyable):
         return None
 
 struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
-    """Buffers input samples and hands them over to be processed in 'windows.'
+    """Buffers input samples and hands them over to be processed in 'windows'.
     
     BufferedInput struct handles buffering of input samples and handing them as "windows" 
     to a user defined struct for processing (The user defined struct must implement the 
@@ -56,6 +56,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         Args:
             world_ptr: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
+            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
         Returns:
             An initialized BufferedInput struct.
@@ -89,9 +90,6 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
 
         Args:
             input: The next input sample to process.
-        
-        Returns:
-            The next output sample.
         """
         if self.world_ptr[].top_of_block:
             self.process.get_messages()
@@ -118,7 +116,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
 
 
 struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None,overlap_output: Bool = True](Movable, Copyable):
-    """Buffers input samples and hands them over to be processed in 'windows.'
+    """Buffers input samples and hands them over to be processed in 'windows'.
     
     BufferedProcess struct handles buffering of input samples and handing them as "windows" 
     to a user defined struct for processing (The user defined struct must implement the 
@@ -343,6 +341,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
+                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
                     # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
                     if index < buffer.get_num_frames() - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]

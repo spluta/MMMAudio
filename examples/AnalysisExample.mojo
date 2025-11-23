@@ -78,5 +78,4 @@ struct AnalysisExample(Movable, Copyable):
         # print the results
         self.world_ptr[].print("Pitch: ", frequency, " \tHz, Confidence: ", confidence, ", \tRMS: ", rms, ", \tCentroid: ", centroid)
         
-        out = SIMD[DType.float64, 2](sig,sig)
-        return out
+        return sig * 0.1

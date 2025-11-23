@@ -4,7 +4,6 @@ from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Windows import WindowTypes
-from mmm_dsp.FFT import FFT
 from mmm_dsp.Env import ASREnv
 from random import random_float64
 
@@ -69,7 +68,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         self.m.update(self.freeze_gate, "freeze_gate")
         env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
         freeze = self.freeze.next_stereo(sample)
-        return select(env, [sample, freeze])
+        return select(env, [sample, freeze]) * 0.3
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
 alias window_size = 2048

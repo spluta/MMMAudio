@@ -12,7 +12,7 @@ mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 
 mmm_audio.start_audio() 
 
-# load a different wavetable if you like
+# load a different wavetable if you like - these are just example paths - change to your own files
 mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 10.wav")
 mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 11.wav")
 mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 12.wav")

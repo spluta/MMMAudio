@@ -2,9 +2,9 @@
 
 There are many examples in the examples folder. Each example uses 2 different files. 
 
-The `.py` file is the interface between Python and Mojo. Open a `.py` example from the examples folder. If you're using VSCode or another editor that allows REPL mode, select a line or lines of code, press shift-enter to run that code.
+The `.py` file is the interface between Python and Mojo. Open a `.py` example from the examples folder. If you're using VSCode or another editor that allows REPL mode, select a line or lines of code, press shift-enter to run that code. 
 
-> Unless otherwise specified, the examples are intended to be run in REPL mode by executing one line at a time. A few of the examples are intended to be run by pressing the green "play" button in VS Code (or a similar button in your editor of choice) to execute the whole file at once. If this is the case the example file will explicitly state to do it this way instead of REPL mode.
+> Unless otherwise specified, the examples are intended to be run in REPL mode by executing one line at a time. A few of the examples are intended to be run by pressing the green "play" button in VS Code (or a similar button in your editor of choice) to execute the whole file at once. If this is the case the example file will explicitly state to do it this way instead of REPL mode. (Before you execute your first line of python code, which opens a REPL in the terminal, make sure all terminals in VSCode are closed. If one is open, VSCode may try to run the code in the current terminal, which can fail. If all terminals are closed, it will always make a fresh REPL in a fresh Terminal.)
 
 Each `.py` file has a corresponding `.mojo` file with a similar name (Python files are snake case, Mojo files are Camel case). The Mojo file outlines the audio graph structure and the connections between different synths.
 

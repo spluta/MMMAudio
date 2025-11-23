@@ -220,10 +220,7 @@ def process_example_file(python_example_file_path: Path):
         print(f"Error: Example file '{python_example_file_path}' does not exist or is not a file, skipping.")
         return
 
-    mojo_example_file = snake_to_camel(python_example_file_path.stem) + '.mojo'
-
-    example_name_words = python_example_file_path.stem.split('_')
-    example_name = ' '.join(word.capitalize() for word in example_name_words if word != 'example')
+    mojo_example_file = python_example_file_path.stem + '.mojo'
 
     python_file_stem = python_example_file_path.stem  # filename without suffix
     output_md_path = REPO_ROOT / 'doc_generation' / 'docs_md' / 'examples' / f"{python_file_stem}.md"
@@ -236,7 +233,7 @@ def process_example_file(python_example_file_path: Path):
         print(f"Error reading example file '{python_example_file_path}': {e}")
         return
     
-    # Find the code snippet, which is after the docstring, if there is a docstring
+    # Find the code, which is after the docstring, if there is a docstring
     code_start = 0
     code_end = len(lines)
     in_docstring = False
@@ -269,7 +266,7 @@ def process_example_file(python_example_file_path: Path):
     context = {
         'python_file_stem': python_file_stem,
         'mojo_file_name': mojo_example_file,
-        'example_name': example_name,
+        'example_name': python_file_stem,
         'code': code,
     }
     
@@ -279,10 +276,6 @@ def process_example_file(python_example_file_path: Path):
 
     rendered = render_template('example_python_and_mojo_jinja.md', context)
     output_md_path.write_text(rendered, encoding='utf-8')
-    
-def snake_to_camel(snake_case: Path) -> Path:
-    camel_case = ''.join(word.capitalize() for word in snake_case.split('_'))
-    return camel_case
 
 def process_examples_dir():
     example_files_src_dir = REPO_ROOT / 'examples'
@@ -313,11 +306,8 @@ def build_examples_nav_entries() -> list[dict[str, str]]:
     py_files = sorted(p for p in example_dir.glob('*.py') if p.name not in {'__init__.py'})
     for py in py_files:
         stem = py.stem  # e.g. many_oscillators
-        # Convert to display name (similar to logic in process_example_file)
-        display = ' '.join(w.capitalize() for w in stem.split('_') if w != 'example')
-        # The generated markdown file uses CamelCase for some examples? Actually process_example_file writes docs_md/examples/{python_stem}.md preserving the python stem
         md_name = stem + '.md'
-        entries.append({display: f'examples/{md_name}'})
+        entries.append({stem: f'examples/{md_name}'})
     return entries
 
 def update_examples_nav(config: MkDocsConfig):  # type: ignore

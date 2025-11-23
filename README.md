@@ -10,11 +10,15 @@ What was encouraging is that writing dsp code in Mojo is incredibly straight-for
 
 [See the Getting Started guide](doc_generation/static_docs/getting-started.md).
 
+A link to the online documentation is found here: [https://spluta.github.io/MMMAudio/](https://spluta.github.io/MMMAudio/)
+
+See "Documentation Generation" on how to build this locally.
+
 ## Program structure
 
 MMMAudio is a python Class that is the interface from Python to the Mojo audio graph. The User should only have to interact with this module and should never have to edit this file. To get started, from mmm_src.MMMAudio import MMMAudio, like in the examples, and then interact with it.
 
-MMMAudiocurrently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
+MMMAudio currently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
 
 The only distinction between a Graph and a Synth is that a Graph contains a next function with no arguments other than self:
 ```
@@ -45,14 +49,15 @@ There is a user_files directory/Mojo package where users can make their own grap
 
 ## Running Examples
 
-For more information on running examples see `doc_generation/static_docs/examples/index.md`.
+For more information on running examples see [Examples Index](doc_generation/static_docs/examples/index.md).
+``.
 
 ## Documentation Generation
 
-For information on the documentation generation see `doc_generation/static_docs/contributing/documentation.md`.
+For information on the documentation generation see [Documentation Generation](doc_generation/static_docs/contributing/documentation.md).
 
 ## Credits
 
-Created by Sam Pluta.
+Created by Sam Pluta and Ted Moore.
 
 This repository includes a recording of "Shiverer" by Eric Wubbels as the default sample. This was performed by Eric Wubbels and Erin Lesser and recorded by Jeff Snyder.

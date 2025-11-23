@@ -219,4 +219,5 @@ __marimo__/
 # MkDocs
 doc_generation/docs_md
 site
+.vscode
 validation/outputs

@@ -4,6 +4,8 @@
 
 <!-- Use mkdocs ":::" syntax to get docstring from Python file -->
 :::examples.{{python_file_stem}}
+    options:
+      members: []
 
 {% if tosc is defined %}
 This example has a corresponding [TouchOSC file](https://github.com/spluta/MMMAudio/blob/main/examples/{{ tosc }}).

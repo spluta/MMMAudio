@@ -17,7 +17,8 @@ from mmm_dsp.Pan import Pan2
 
 struct StereoBeatingSines(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
-    var oscs: Osc[2]  # An Osc instance with two internal Oscs
+    var osc1: Osc
+    var osc2: Osc
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
     var pan2: Pan2 # panning processor
     var pan2_osc: Osc # LFO for panning
@@ -36,7 +37,8 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # create some nice beating patterns. The output is stereo because later
         # the Pan2 processor positions the summed oscillators in the stereo field
 
-        self.oscs = Osc[2](world_ptr)
+        self.osc1 = Osc(world_ptr)
+        self.osc2 = Osc(world_ptr)
         
         self.pan2 = Pan2(world_ptr)
         self.pan2_osc = Osc(world_ptr)
@@ -55,17 +57,15 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         # calling .next on both oscillators gets both of their next samples
-        # at the same giving us a SIMD vector with two values in it
-        temp = self.oscs.next(self.osc_freqs) 
+        temp = self.osc1.next(self.osc_freqs[0]) + self.osc2.next(self.osc_freqs[1])
 
         # modulate the volume with a slow LFO
-        # [TODO] is this applying the LFO in a multi-channel-expansion way? That feels "non-SIMD"-esque? In any case, it should be explained.
-        temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.01 + 0.01)
-        temp2 = temp[0] + temp[1]
+        
+        temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.5 + 0.5)
 
         pan2_loc = self.pan2_osc.next(self.pan2_freq)  # Get pan position
 
-        return self.pan2.next(temp2, pan2_loc)  # Pan the temp signal
+        return self.pan2.next(temp, pan2_loc)  # Pan the temp signal
 
 # THE GRAPH
 # This graph is what MMMAudio will call upon to make sound with (because
@@ -109,4 +109,4 @@ struct ManyOscillators(Copyable, Movable):
         for i in range(len(self.synths)):
             sum += self.synths[i].next()
 
-        return sum
+        return sum * (0.5 / Float64(self.num_pairs))  # scale the output down
