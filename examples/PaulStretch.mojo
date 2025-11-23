@@ -5,7 +5,6 @@ from mmm_utils.Windows import WindowTypes
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
-from mmm_dsp.FFT import FFT
 from complex import ComplexFloat64
 from mmm_dsp.Osc import LFSaw
 from random import random_float64

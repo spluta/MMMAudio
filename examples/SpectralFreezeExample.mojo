@@ -4,7 +4,6 @@ from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Windows import WindowTypes
-from mmm_dsp.FFT import FFT
 from mmm_dsp.Env import ASREnv
 from random import random_float64
 

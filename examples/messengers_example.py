@@ -1,6 +1,6 @@
 from mmm_src.MMMAudio import MMMAudio
 from mmm_utils.functions import midicps
-a = MMMAudio(128, graph_name="TestMessengersRefactor", package_name="tests")
+a = MMMAudio(128, graph_name="MessengersExample", package_name="examples")
 
 a.start_audio()
 
