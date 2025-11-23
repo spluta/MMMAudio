@@ -77,6 +77,21 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         return result
 
     fn fft(mut self, input: List[SIMD[DType.float64, num_chans]]):
+        self._compute_fft(input)
+        # Compute magnitudes and phases
+        for i in range(size // 2 + 1):
+            self.mags[i] = self.result[i].norm()
+            self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
+
+    fn fft(mut self, input: List[SIMD[DType.float64, num_chans]], mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]):
+        self._compute_fft(input)
+        # Compute magnitudes and phases
+        for i in range(size // 2 + 1):
+            mags[i] = self.result[i].norm()
+            phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
+
+    @doc_private
+    fn _compute_fft(mut self, input: List[SIMD[DType.float64, num_chans]]):
         for i in range(size // 2):
             var real_part = input[2 * i]
             var imag_part = input[2 * i + 1]
@@ -131,11 +146,6 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         self.result.resize(size, ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
         for i in range(size):
             self.result[i] = self.unpacked[i]
-
-        # Compute magnitudes and phases
-        for i in range(size // 2 + 1):
-            self.mags[i] = self.result[i].norm()
-            self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)    
 
     fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
         # full inverse FFT using internal mags and phases
