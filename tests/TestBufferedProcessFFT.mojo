@@ -10,7 +10,7 @@ from mmm_dsp.FFT import FFT
 from complex import ComplexFloat64
 
 alias window_size = 4096
-alias hop_size = window_size
+alias hop_size = window_size // 2
 
 # This corresponds to the user defined BufferedProcess.
 struct FFTLowPass[window_size: Int](BufferedProcessable):

@@ -41,7 +41,7 @@ struct TestBufferedProcessAudio(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
-    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024]
+    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024,0]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -51,7 +51,7 @@ struct TestBufferedProcessAudio(Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         var multiply_process = BufferedMultiply(self.world_ptr)
-        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024](self.world_ptr,process=multiply_process^)
+        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024,0](self.world_ptr,process=multiply_process^)
         self.m = Messenger(world_ptr)
         self.ps = List[Print](length=2,fill=Print(world_ptr))
         self.which = 0
