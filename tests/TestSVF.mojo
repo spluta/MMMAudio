@@ -7,8 +7,6 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 
-# there can only be one graph in an MMMAudio instance
-# a graph can have as many synths as you want
 struct TestSVF(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var osc: LFSaw[1,2]
