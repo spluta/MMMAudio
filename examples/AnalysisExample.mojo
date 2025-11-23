@@ -1,7 +1,7 @@
 """use this as a template for your own graphs"""
 
 from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Analysis import Pitch, SpectralCentroid, Units, YIN, RMS
+from mmm_dsp.Analysis import SpectralCentroid, YIN, RMS
 from mmm_dsp.Osc import *
 from mmm_utils.Messengers import *
 from mmm_dsp.BufferedProcess import *
@@ -15,7 +15,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var pitch: Float64
     var pitch_conf: Float64
     var sr: Float64
-    var yin: YIN[window_size, 50, 5000, units=Units.hz]
+    var yin: YIN[window_size, 50, 5000]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
@@ -24,7 +24,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.pitch = 0.0
         self.pitch_conf = 0.0
         self.rms = 0.0
-        self.yin = YIN[window_size, 50, 5000, units=Units.hz](world_ptr)
+        self.yin = YIN[window_size, 50, 5000](world_ptr)
 
     fn next_window(mut self, mut frame: List[Float64]):
         self.yin.next_window(frame)
@@ -35,7 +35,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         # so we'll just use the "raw" mags it computes
         # for spectral centroid. It is an FFT with double the frequency resolution
         # (i.e., it's higher resolution, just "interpolated" FFT mags). But it will work just fine here.
-        self.centroid = SpectralCentroid[unit=Units.hz].from_mags(self.yin.fft.mags, self.world_ptr[].sample_rate)
+        self.centroid = SpectralCentroid.from_mags(self.yin.fft.mags, self.world_ptr[].sample_rate)
 
 struct AnalysisExample(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]

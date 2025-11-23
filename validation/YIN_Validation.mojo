@@ -50,8 +50,6 @@ fn main():
         sample = playBuf.next(buffer, 0, 1)
         analyzer.next(sample)
     
-
-
     pth = "validation/outputs/yin_mojo_results.csv"
     try:
         with open(pth, "w") as f:

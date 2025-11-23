@@ -6,12 +6,6 @@ from math import ceil, floor, log2
 from mmm_utils.functions import cpsmidi, ampdb
 from math import sqrt
 
-struct Units:
-    alias hz: Int = 0
-    alias midi: Int = 1
-    alias db: Int = 2
-    alias amp: Int = 3
-
 @doc_private
 fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Float64):
     denom = prev - 2.0 * cur + next
@@ -21,14 +15,13 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
     refined_val = cur - 0.25 * (prev - next) * p
     return (p, refined_val)
 
-struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, units: Int = Units.hz](BufferedProcessable):
+struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessable):
     """Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version).
 
     Parameters:
         window_size: The size of the analysis window in samples.
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
-        units: The units for the pitch output. Use the Units struct (e.g., Units.hz or Units.midi).
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var pitch: Float64
@@ -169,20 +162,16 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000, 
                         local_conf = max(1.0 - best_val, 0.0)
                         local_conf = min(local_conf, 1.0)
 
-                    if units == Units.midi:
-                        local_pitch = cpsmidi(local_pitch)
-
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, unit: Int = Units.hz](FFTProcessable):
+struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False](FFTProcessable):
     """Spectral Centroid analysis.
 
     Parameters:
         min_freq: The minimum frequency (in Hz) to consider when computing the centroid.
         max_freq: The maximum frequency (in Hz) to consider when computing the centroid.
         power_mag: If True, use power magnitudes (squared) for the centroid calculation.
-        unit: The unit for the output centroid value. Use `Units.hz` for Hertz or `Units.midi` for MIDI note number.
     """
 
     var world_ptr: UnsafePointer[MMMWorld]
@@ -192,15 +181,10 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         self.world_ptr = world_ptr
         self.centroid = 0.0
 
-        if unit in [Units.hz, Units.midi]:
-            pass
-        else:
-            print("SpectralCentroid: Invalid unit parameter. Must be Units.hz or Units.midi. Defaulting to Hz.")
-
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral centroid for a given FFT analysis.
 
-        This function is to be used with an FFTProcess.
+        This function is to be used by FFTProcess if SpectralCentroid is passed as the "process".
 
         Args:
             mags: The input magnitudes as a List of Float64.
@@ -212,7 +196,8 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
     fn from_mags(mags: List[Float64], sample_rate: Float64) -> Float64:
         """Compute the spectral centroid for the given magnitudes of an FFT frame.
 
-        This static method is useful when there is an FFT already computed.
+        This static method is useful when there is an FFT already computed, perhaps as 
+        part of a custom struct that implements the FFTProcessable trait.
 
         Args:
             mags: The input magnitudes as a List of Float64.
@@ -237,10 +222,6 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         for i in range(min_bin, max_bin):
             f: Float64 = i * binHz
 
-            @parameter
-            if unit == Units.midi:
-                f = cpsmidi(f)
-
             m: Float64 = mags[i]
 
             @parameter
@@ -257,24 +238,13 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
 
         return centroid
 
-struct RMS[unit: Int = Units.db](BufferedProcessable):
-    """Root Mean Square (RMS) amplitude analysis.
-
-    Parameters:
-        unit: The unit for the RMS output. Use the Units struct (e.g., Units.db or Units.amp).
-    """
+struct RMS(BufferedProcessable):
+    """Root Mean Square (RMS) amplitude analysis."""
     var rms: Float64
 
     fn __init__(out self):
-        """Initialize the RMS analyzer.
-        """
-        if unit not in [Units.db, Units.amp]:
-            print("RMS: Invalid unit parameter. Must be Units.db or Units.amp. Defaulting to db.")
-        
-        if unit == Units.amp:
-            self.rms = 0.0
-        else:
-            self.rms = -130.0
+        """Initialize the RMS analyzer."""
+        self.rms = 0.0
 
     fn next_window(mut self, mut input: List[Float64]) -> None:
         """Compute the RMS for the given window of audio samples.
@@ -305,13 +275,4 @@ struct RMS[unit: Int = Units.db](BufferedProcessable):
         sum_sq: Float64 = 0.0
         for v in frame:
             sum_sq += v * v
-        rms: Float64 = sqrt(sum_sq / Float64(len(frame)))
-
-        @parameter
-        if unit == Units.db:
-            return ampdb(rms)
-        elif unit == Units.amp:
-            return rms
-        else:
-            print("RMS: Invalid unit parameter. Must be Units.db or Units.amp. Defaulting to db.")
-            return ampdb(rms)
+        return sqrt(sum_sq / Float64(len(frame)))

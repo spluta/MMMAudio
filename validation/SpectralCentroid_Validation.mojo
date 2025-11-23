@@ -23,10 +23,9 @@ struct Analyzer(BufferedProcessable):
 
     fn next_window(mut self, mut buffer: List[Float64]):
         self.fft.fft(buffer)
-        # Librosa uses magnitude spectrogram by default
-        print("mags[0]: ", self.fft.mags[0], " mags[1]: ", self.fft.mags[1], " mags[2]: ", self.fft.mags[2])
-        val = SpectralCentroid[power_mag=False, unit=Units.hz].from_mags(self.fft.mags, self.sample_rate)
-        print("Computed Spectral Centroid: ", val)
+        # Passing in the "self.sample_rate" here instead of using the world_ptr sample rate
+        # because the world_ptr was causing issues. Somehow the pointer was getting losses or something.
+        val = SpectralCentroid.from_mags(self.fft.mags, self.sample_rate)
         self.centroids.append(val)
         return
 

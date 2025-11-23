@@ -17,8 +17,7 @@ struct Analyzer(BufferedProcessable):
         self.rms_values = List[Float64]()
 
     fn next_window(mut self, mut buffer: List[Float64]):
-        # Use Units.amp to match librosa.feature.rms output
-        val = RMS[unit=Units.amp].from_window(buffer)
+        val = RMS.from_window(buffer)
         self.rms_values.append(val)
         return
 
