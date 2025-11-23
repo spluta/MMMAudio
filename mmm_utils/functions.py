@@ -100,3 +100,9 @@ def scale(val: float = 0, in_min: float = 0, in_max: float = 1, out_min: float =
 def clip(val: float, min_val: float, max_val: float) -> float:
     """Clip a value to be within a specified range."""
     return max(min_val, min(max_val, val))
+
+def ampdb(amp: float) -> float:
+    """Convert amplitude to decibels."""
+    if amp <= 0:
+        return -float('inf')  # Return negative infinity for zero or negative amplitude
+    return 20.0 * np.log10(amp)
