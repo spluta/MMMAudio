@@ -1,10 +1,10 @@
 ### MMMAudio(MMMAudioMeans Mojo) Audio 
 
-MMMAudio is a python environment for sound synthesis which uses Mojo for real-time audio processing.
+MMMAudio is a Mojo/Python environment for sound synthesis which uses Mojo for real-time audio processing and Python as a scripting control language.
 
-This is relatively efficient. I was able to get over 1000 sin oscilators going in one instance, with no hickups or distortion. For comparison, SuperCollider can get 5000. Part of this might be my implementation, where I am processing each Synth one sample at a time, rather than in blocks like SC does.
+MMMAudio is a highly efficient synthesis system that uses parallelized SIMD operations for maximum efficiency on CPUs. I was able to get over 6000 sine oscilators going in one instance on my M2 Mac, with no hickups or distortion. 
 
-What was encouraging is that writing dsp code in Mojo is incredibly straight-forward and the feedback loop of being able to quickly compile the entire project in a few seconds to test is lightyears better than making externals is SC/max/pd. I think this has a lot of potential.
+Writing dsp code in Mojo is straight-forward and the feedback loop of being able to quickly compile the entire project in a few seconds to test is lightyears better than making externals is SC/max/pd. 
 
 ## Getting Started
 
@@ -16,15 +16,11 @@ See "Documentation Generation" on how to build this locally.
 
 ## Program structure
 
-MMMAudio is a python Class that is the interface from Python to the Mojo audio graph. The User should only have to interact with this module and should never have to edit this file. To get started, from mmm_src.MMMAudio import MMMAudio, like in the examples, and then interact with it.
+MMMAudio takes advantage of Mojo/Python interoperation compiled directly within a Python project. MMMAudio uses Mojo for all audio processing and Python as the scripting language that controls the audio engine. We take advantage of being part of the Python ecosystem, using Python libraries like numpy, scipy, pyaudio, mido, hid, and pythonosc to facilitate interaction with the audio engine.
 
 MMMAudio currently runs one audio graph at a time. The audio graph is composed of Synths and the Synths are composed of UGens.
 
-The only distinction between a Graph and a Synth is that a Graph contains a next function with no arguments other than self:
-```
-fn next(mut self: FeedbackDelays) -> List[Float64]:
-```
-This defines it as a struct that can act as a Graph. Currently there can only be one Graph, but that will change in future versions.
+A basic program structure may look like this:
 ```
 Graph
 |
@@ -39,7 +35,7 @@ Graph
    -- UGen
 ```
 
-At the current time, the struct that represents the Graph has to have the same name as the file that it is in, so the struct/Graph FeedbackDelays has to be in the file FeedbackDelays.mojo. This file only needs to be in Mojo package, but otherwise can be anywhere. You tell the compiler where this file is when you declare the MMMAudio python class, as such:
+At the current time, the struct that represents the Graph has to have the same name as the file that it is in, so the struct/Graph FeedbackDelays has to be in the file FeedbackDelays.mojo. This file needs to be in a Mojo package, but otherwise can be anywhere. You tell the compiler where this file is when you declare the MMMAudio python class, as such:
 
 mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
@@ -58,6 +54,6 @@ For information on the documentation generation see [Documentation Generation](d
 
 ## Credits
 
-Created by Sam Pluta and Ted Moore.
+Created by Sam Pluta and authored by Sam Pluta and Ted Moore.
 
 This repository includes a recording of "Shiverer" by Eric Wubbels as the default sample. This was performed by Eric Wubbels and Erin Lesser and recorded by Jeff Snyder.

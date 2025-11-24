@@ -5,31 +5,33 @@ from mmm_utils.Messengers import *
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
 
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Filters import Lag
+from mmm_dsp.Osc import *
+from mmm_dsp.Filters import SVF, SVFModes
 
 struct Default_Synth(Representable, Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]  
-    var osc: Osc
+    var osc: Osc[1,2,1]
+    var filt: SVF
     var messenger: Messenger
     var freq: Float64
-    var lag: Lag
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.osc = Osc(self.world_ptr)
+        self.osc = Osc[1,2,1](self.world_ptr)
+        self.filt = SVF(self.world_ptr)
         self.messenger = Messenger(self.world_ptr)
         self.freq = 440.0
-        self.lag = Lag(self.world_ptr)
 
     fn __repr__(self) -> String:
         return String("Default")
 
     fn next(mut self) -> Float64:
-        # get the frequency from the messenger, default to 440 Hz if not set
-        self.messenger.update(self.freq, "freq")
+        self.messenger.update(self.freq,"freq")
 
-        return self.osc.next(self.freq) * 0.1
+        osc = self.osc.next(self.freq, osc_type=OscType.bandlimited_saw) 
+        osc = self.filt.next[filter_type=SVFModes.lowpass](osc, 2000.0, 1.0)
+
+        return osc * 0.3
 
 
 # there can only be one graph in an MMMAudio instance
@@ -45,6 +47,6 @@ struct DefaultGraph(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default_Graph")
 
-    fn next(mut self) -> SIMD[DType.float64, 1]:
+    fn next(mut self) -> SIMD[DType.float64, 2]:
 
         return self.synth.next()  # Get the next sample from the synth
