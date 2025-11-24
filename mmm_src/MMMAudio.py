@@ -233,7 +233,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_float_msg([key, value])
 
-    def send_floats(self, key: str, args: list[float]):
+    def send_floats(self, key: str, values: list[float]):
         """
         Send a list of floats to the Mojo audio engine.
         
@@ -243,7 +243,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend(args)
+        key_vals.extend(values)
 
         self.mmm_audio_bridge.update_floats_msg(key_vals)
         
@@ -258,7 +258,7 @@ class MMMAudio:
 
         self.mmm_audio_bridge.update_int_msg([key, value])
 
-    def send_ints(self, key: str, args: list[int]):
+    def send_ints(self, key: str, values: list[int]):
         """
         Send a list of integers to the Mojo audio engine.
         
@@ -268,7 +268,7 @@ class MMMAudio:
         """
 
         key_vals = [key]
-        key_vals.extend([int(i) for i in args])
+        key_vals.extend([int(i) for i in values])
 
         self.mmm_audio_bridge.update_ints_msg(key_vals)
 

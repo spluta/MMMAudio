@@ -220,3 +220,4 @@ __marimo__/
 doc_generation/docs_md
 site
 .vscode
+validation/outputs
