@@ -119,13 +119,13 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_config: "doc_generation.generate_docs:configure_and_generate"
-  # - with-pdf:
-  #     output_path: ./MMMAudio.pdf
-  #     cover_title: MMMAudio Documentation
-  #     cover_subtitle: DSP library for Python and Mojo
-  #     author: Sam Pluta
-  #     toc_title: Table of Contents
-  #     copyright: "© 2025 Sam Pluta"
+  - with-pdf:
+      output_path: ./MMMAudio.pdf
+      cover_title: MMMAudio Documentation
+      cover_subtitle: DSP library for Python and Mojo
+      author: Sam Pluta
+      toc_title: Table of Contents
+      copyright: "© 2025 Sam Pluta"
 
 extra:
   social:
