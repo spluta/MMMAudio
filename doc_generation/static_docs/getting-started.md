@@ -24,9 +24,10 @@ pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi ma
 ```
 
 install modular's max/mojo library
+the main branch is tied to Mojo 0.25.6.1
 
 ```shell
-pip install mojo
+pip install mojo==0.25.6.1
 ```
 
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
