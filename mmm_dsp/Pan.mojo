@@ -74,46 +74,16 @@ struct PanAz (Representable, Movable, Copyable):
         return sample * chan_amp
 
 @always_inline
-fn splay[
-    width: Int, //
-](samples: SIMD[DType.float64, width]) -> SIMD[DType.float64, 2]:
+fn splay(samples: List[Float64]) -> SIMD[DType.float64, 2]:
     var gains = SIMD[DType.float64, 2](0.0, 0.0)
     var out = SIMD[DType.float64, 2](0.0, 0.0)
+    var n_input_channels = len(samples)
 
-    @parameter
-    fn get_pan(i: Int) -> Float64:
-        if width == 1:
-            return 0.0
-        else:
-            return Float64(i) * 2.0 / Float64(width-1) - 1.0  # pan from -1.0 to 1.0
-    
-    @parameter
-    for i in range(width):
-        alias pan = get_pan(i)
-        gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
-        gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
+    for i in range(n_input_channels):
+        pan = 0.0
+        if n_input_channels > 1:
+            pan = Float64(i) * 2.0 / Float64(n_input_channels-1) - 1.0  # pan from -1.0 to 1.0
 
-        out = out + samples[i] * gains 
-
-    return out
-
-@always_inline
-fn splay[
-    num_samples: Int, //
-](samples: List[Float64]) -> SIMD[DType.float64, 2]:
-    var gains = SIMD[DType.float64, 2](0.0, 0.0)
-    var out = SIMD[DType.float64, 2](0.0, 0.0)
-
-    @parameter
-    fn get_pan(i: Int) -> Float64:
-        if num_samples == 1:
-            return 0.0
-        else:
-            return Float64(i) * 2.0 / Float64(num_samples-1) - 1.0  # pan from -1.0 to 1.0
-
-    @parameter
-    for i in range(num_samples):
-        alias pan = get_pan(i)
         gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
         gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
 
