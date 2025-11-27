@@ -28,7 +28,7 @@ jobs:
 
       - name: Install mkdocs and theme
         run: |
-          pip install mkdocs mkdocs-material "mkdocstrings[python]" mkdocs-simple-hooks pymdown-extensions
+          pip install mkdocs mkdocs-material "mkdocstrings[python]" mkdocs-simple-hooks pymdown-extensions "mkdocs-with-pdf>=0.9.3"
 
       - name: Install Mojo for mojo docs
         run: |
