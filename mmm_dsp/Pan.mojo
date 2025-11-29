@@ -8,24 +8,18 @@ from mmm_utils.functions import *
 
 @always_inline
 fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
-    var gains = SIMD[DType.float64, 2](0.0, 0.0)
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
+    var gains = SIMD[DType.float64, 2](-pan2, pan2)
 
-    gains[0] = (1.0 - pan2)  # left gain
-    gains[1] = (1.0 + pan2)  # right gain
-
-    samples_out = samples * sqrt(gains * 0.5)
+    samples_out = samples * sqrt((1 + gains) * 0.5)
     return samples_out  # Return stereo output as List
 
 @always_inline
 fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
-    var gains = SIMD[DType.float64, 2](0.0, 0.0)
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
+    var gains = SIMD[DType.float64, 2](-pan2, pan2)
 
-    gains[0] = (1.0 - pan2)  # left gain
-    gains[1] = (1.0 + pan2)  # right gain
-
-    samples_out = samples * sqrt(gains * 0.5)
+    samples_out = samples * sqrt((1 + gains) * 0.5)
     return samples_out  # Return stereo output as List
 
 
