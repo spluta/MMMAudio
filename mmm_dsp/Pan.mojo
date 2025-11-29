@@ -1,6 +1,6 @@
-from mmm_utils.functions import clip
+from mmm_utils.functions import clip, linlin
 from mmm_src.MMMWorld import MMMWorld
-from math import sqrt, floor
+from math import sqrt, floor, cos, pi
 from bit import next_power_of_two
 from sys import simd_width_of
 from mmm_utils.functions import *
@@ -98,25 +98,16 @@ fn splay[
     return out
 
 @always_inline
-fn splay[
-    num_samples: Int, //
-](samples: List[Float64]) -> SIMD[DType.float64, 2]:
-    var gains = SIMD[DType.float64, 2](0.0, 0.0)
-    var out = SIMD[DType.float64, 2](0.0, 0.0)
+fn splay[num_output_channels: Int](input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+    num_input_channels = len(input)
+    out = SIMD[DType.float64, num_output_channels](0.0)
 
-    @parameter
-    fn get_pan(i: Int) -> Float64:
-        if num_samples == 1:
-            return 0.0
-        else:
-            return Float64(i) * 2.0 / Float64(num_samples-1) - 1.0  # pan from -1.0 to 1.0
-
-    @parameter
-    for i in range(num_samples):
-        alias pan = get_pan(i)
-        gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
-        gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
-
-        out = out + samples[i] * gains 
-
+    for i in range(num_input_channels):
+        pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+        for j in range(num_output_channels):
+            gain = 0.0
+            d = abs(pan - Float64(j))
+            if d < 1.0:
+                gain = cos(d * (pi / 2.0))
+            out[j] += input[i] * gain
     return out
