@@ -1,34 +1,85 @@
 from mmm_utils.functions import clip, linlin
 from mmm_src.MMMWorld import MMMWorld
-from math import sqrt, floor, cos, pi
+from math import sqrt, floor, cos, pi, sin
 from bit import next_power_of_two
 from sys import simd_width_of
 from mmm_utils.functions import *
 
-struct Pan2 (Representable, Movable, Copyable):
-    var output: List[Float64]  # Output list for stereo output
-    var world_ptr: UnsafePointer[MMMWorld]
-    var gains: SIMD[DType.float64, 2]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.world_ptr = world_ptr
-        self.gains = SIMD[DType.float64, 2](0.0, 0.0)
+@always_inline
+fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
+    var gains = SIMD[DType.float64, 2](0.0, 0.0)
+    var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
 
-    fn __repr__(self) -> String:
-        return String("Pan2")
+    gains[0] = (1.0 - pan2) * 0.5  # left gain
+    gains[1] = (1.0 + pan2) * 0.5   # right gain
 
-    @always_inline
-    fn next(mut self, samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
-        # Calculate left and right channel samples based on pan value
-        pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
-        
-        self.gains[0] = sqrt((1.0 - pan2) * 0.5)  # left gain
-        self.gains[1] = sqrt((1.0 + pan2) * 0.5)   # right gain
+    samples_out = samples * sqrt(gains)
+    return samples_out  # Return stereo output as List
 
-        samples_out = samples * self.gains
-        return samples_out  # Return stereo output as List
+@always_inline
+fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
+    var gains = SIMD[DType.float64, 2](0.0, 0.0)
+    var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
 
+    gains[0] = (1.0 - pan2) * 0.5  # left gain
+    gains[1] = (1.0 + pan2) * 0.5   # right gain
+
+    samples_out = samples * sqrt(gains)
+    return samples_out  # Return stereo output as List
+
+
+@always_inline
+fn splay[num_output_channels: Int](input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+    num_input_channels = len(input)
+    out = SIMD[DType.float64, num_output_channels](0.0)
+    pi_over_2 = pi / 2.0
+    js = SIMD[DType.float64, num_output_channels](0.0)
+    for j in range(num_output_channels):
+        js[j] = Float64(j)
+
+    for i in range(num_input_channels):
+        gains = SIMD[DType.float64, num_output_channels](0.0)
+        pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+
+        d = abs(pan - js) * pi_over_2
+        for j in range(num_output_channels):
+            if d[j] < 1.0:
+                gains[j] = cos(d[j])
+        out += input[i] * gains
+    return out
+
+@always_inline
+fn pan_az[simd_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_size]:
+    # translated from SuperCollider
+
+    var rwidth = 1.0 / width
+    var frange = Float64(num_speakers) * rwidth
+    var rrange = 1.0 / frange
+
+    var aligned_pos_fac = 0.5 * Float64(num_speakers)
+    var aligned_pos_const = width * 0.5 + orientation
+
+    var constant = pan * 2.0 * aligned_pos_fac + aligned_pos_const
+    chan_pos = SIMD[DType.float64, simd_size](0.0)
+    chan_amp = SIMD[DType.float64, simd_size](0.0)
+    
+    for i in range(num_speakers):
+        chan_pos[Int(i)] = (constant - Float64(i)) * rwidth
+
+    chan_pos = (chan_pos - frange * floor(rrange * chan_pos)) * pi
+
+    for i in range(num_speakers):
+        if chan_pos[Int(i)] >= pi:
+            chan_amp[Int(i)] = 0.0
+        else:
+            chan_amp[Int(i)] = sin(chan_pos[Int(i)])
+
+    # with more than 4 channels, this SIMD multiplication is inefficient
+
+    return sample * chan_amp
+
+# keeping these around for now
 
 # I am sure there is a better way to do this
 # was trying to do it with SIMD
@@ -67,47 +118,63 @@ struct PanAz (Representable, Movable, Copyable):
             if chan_pos[Int(i)] >= 0.5:
                 chan_amp[Int(i)] = 0.0
             else:
-                chan_amp[Int(i)] = self.world_ptr[0].osc_buffers.read_lin(chan_pos[Int(i)], 0)
+                chan_amp[Int(i)] = self.world_ptr[0].osc_buffers.read_none(chan_pos[Int(i)], 0)
 
         # with more than 4 channels, this SIMD multiplication is inefficient
 
         return sample * chan_amp
 
-@always_inline
-fn splay[
-    width: Int, //
-](samples: SIMD[DType.float64, width]) -> SIMD[DType.float64, 2]:
-    var gains = SIMD[DType.float64, 2](0.0, 0.0)
-    var out = SIMD[DType.float64, 2](0.0, 0.0)
+struct Pan2 (Representable, Movable, Copyable):
+    var output: List[Float64]  # Output list for stereo output
+    var world_ptr: UnsafePointer[MMMWorld]
+    var gains: SIMD[DType.float64, 2]
 
-    @parameter
-    fn get_pan(i: Int) -> Float64:
-        if width == 1:
-            return 0.0
-        else:
-            return Float64(i) * 2.0 / Float64(width-1) - 1.0  # pan from -1.0 to 1.0
-    
-    @parameter
-    for i in range(width):
-        alias pan = get_pan(i)
-        gains[0] = sqrt((1.0 - pan) * 0.5)  # left gain
-        gains[1] = sqrt((1.0 + pan) * 0.5)   # right gain
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
+        self.world_ptr = world_ptr
+        self.gains = SIMD[DType.float64, 2](0.0, 0.0)
 
-        out = out + samples[i] * gains 
+    fn __repr__(self) -> String:
+        return String("Pan2")
 
-    return out
+    @always_inline
+    fn next(mut self, samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
+        # Calculate left and right channel samples based on pan value
+        pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
+        
+        self.gains[0] = self.world_ptr[0].osc_buffers.read_none((1.0 - pan2) * 0.5, 0)
+        self.gains[1] = self.world_ptr[0].osc_buffers.read_none((1.0 + pan2) * 0.5, 0)
+        # self.gains[0] = sqrt((1.0 - pan2) * 0.5)  # left gain
+        # self.gains[1] = sqrt((1.0 + pan2) * 0.5)   # right gain
 
-@always_inline
-fn splay[num_output_channels: Int](input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
-    num_input_channels = len(input)
-    out = SIMD[DType.float64, num_output_channels](0.0)
+        samples_out = samples * self.gains
+        return samples_out  # Return stereo output as List
 
-    for i in range(num_input_channels):
-        pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+struct Splay[num_output_channels: Int = 2](Movable, Copyable):
+    var output: List[Float64]  # Output list for stereo output
+    var world_ptr: UnsafePointer[MMMWorld]
+    var js: SIMD[DType.float64, num_output_channels]
+
+    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+        self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
+        self.world_ptr = world_ptr
+        self.js = SIMD[DType.float64, num_output_channels](0.0)
         for j in range(num_output_channels):
-            gain = 0.0
-            d = abs(pan - Float64(j))
-            if d < 1.0:
-                gain = cos(d * (pi / 2.0))
-            out[j] += input[i] * gain
-    return out
+            self.js[j] = Float64(j)
+
+    @always_inline
+    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+        num_input_channels = len(input)
+        out = SIMD[DType.float64, num_output_channels](0.0)
+
+        for i in range(num_input_channels):
+            gains = SIMD[DType.float64, num_output_channels](0.0)
+            pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+
+            # we only want to look up values between 0.25 and 0.5
+            ds = abs(pan - self.js) * 0.25 + 0.25
+            for j in range(num_output_channels):
+                if ds[j] < 0.5:
+                    gains[j] = self.world_ptr[0].osc_buffers.read_none(ds[j], 0)
+            out += input[i] * gains
+        return out

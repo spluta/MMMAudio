@@ -17,9 +17,9 @@ struct TestCombAllpass(Movable, Copyable):
     var messenger: Messenger
     var which: Float64
     var comb: Comb[1, DelayInterpOptions.lagrange]
-    var allpass: Allpass[1, DelayInterpOptions.lagrange]
+    var allpass: Allpass_Comb[1, DelayInterpOptions.lagrange]
     var comb2: Comb[1, DelayInterpOptions.lagrange]
-    var allpass2: Allpass[1, DelayInterpOptions.lagrange]
+    var allpass2: Allpass_Comb[1, DelayInterpOptions.lagrange]
     var delay_time: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
@@ -28,9 +28,9 @@ struct TestCombAllpass(Movable, Copyable):
         self.messenger = Messenger(world_ptr)
         self.which = 0
         self.comb = Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
-        self.allpass = Allpass[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
+        self.allpass = Allpass_Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
         self.comb2 = Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
-        self.allpass2 = Allpass[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
+        self.allpass2 = Allpass_Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
         self.delay_time = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -44,6 +44,6 @@ struct TestCombAllpass(Movable, Copyable):
         comb1 = self.comb2.next_decaytime(allpass0, self.delay_time, 1)
         allpass1 = self.allpass2.next_decaytime(comb1, self.delay_time, 1)
 
-        sample = select[DType.float64](self.which, [comb0, allpass0, comb1, allpass1])
+        sample = select(self.which, [comb0, allpass0, comb1, allpass1])
 
         return sample * 0.2  # Get the next sample from the synth

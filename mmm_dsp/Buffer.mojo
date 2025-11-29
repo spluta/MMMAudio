@@ -511,6 +511,12 @@ struct OscBuffers(Buffable):
         
         ref buffer = self.buffers[buf_num]
         return buffer[index] + frac * (buffer[index_next] - buffer[index])
+    
+    @always_inline
+    fn read_none(self, phase: Float64, buf_num: Int64) -> Float64:
+        index = Int64(phase * Float64(self.size)) & self.mask
+        
+        return self.buffers[buf_num][index]
 
 
     # Get the next sample from the buffer using linear interpolation

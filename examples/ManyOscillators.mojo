@@ -5,7 +5,7 @@ from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import Osc
 from random import random_float64
-from mmm_dsp.Pan import Pan2
+from mmm_dsp.Pan import pan2
 
 # THE SYNTH
 
@@ -20,7 +20,6 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     var osc1: Osc
     var osc2: Osc
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
-    var pan2: Pan2 # panning processor
     var pan2_osc: Osc # LFO for panning
     var pan2_freq: Float64 # frequency for the panning LFO
     var vol_osc: Osc # LFO for volume
@@ -40,7 +39,6 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         self.osc1 = Osc(world_ptr)
         self.osc2 = Osc(world_ptr)
         
-        self.pan2 = Pan2(world_ptr)
         self.pan2_osc = Osc(world_ptr)
         self.pan2_freq = random_float64(0.03, 0.1)
 
@@ -65,7 +63,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 
         pan2_loc = self.pan2_osc.next(self.pan2_freq)  # Get pan position
 
-        return self.pan2.next(temp, pan2_loc)  # Pan the temp signal
+        return pan2(temp, pan2_loc)  # Pan the temp signal
 
 # THE GRAPH
 # This graph is what MMMAudio will call upon to make sound with (because
