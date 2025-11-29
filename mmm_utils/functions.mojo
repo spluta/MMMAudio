@@ -453,7 +453,7 @@ fn midicps[
 fn cpsmidi[
     width: Int, //
 ](freq: SIMD[DType.float64, width], reference_midi_note: Float64 = 69.0, reference_frequency: Float64 = 440.0) -> SIMD[DType.float64, width]:
-    n = 12.0 * log2(freq / reference_frequency) + reference_midi_note
+    n = 12.0 * log2(abs(freq) / reference_frequency) + reference_midi_note
     return n
 
 @always_inline
