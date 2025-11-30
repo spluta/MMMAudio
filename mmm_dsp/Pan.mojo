@@ -5,7 +5,6 @@ from bit import next_power_of_two
 from sys import simd_width_of
 from mmm_utils.functions import *
 
-
 @always_inline
 fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
@@ -15,37 +14,46 @@ fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
+fn pan2_st(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
     var gains = SIMD[DType.float64, 2](-pan2, pan2)
 
     samples_out = samples * sqrt((1 + gains) * 0.5)
     return samples_out  # Return stereo output as List
 
+alias pi_over_2 = pi / 2.0
 
 @always_inline
 fn splay[num_output_channels: Int](input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+
     num_input_channels = len(input)
     out = SIMD[DType.float64, num_output_channels](0.0)
-    pi_over_2 = pi / 2.0
-    js = SIMD[DType.float64, num_output_channels](0.0)
-    for j in range(num_output_channels):
-        js[j] = Float64(j)
+    js = SIMD[DType.float64, num_output_channels](0.0, 1.0)
+
+    @parameter
+    if num_output_channels > 2:
+        for j in range(num_output_channels):
+            js[j] = Float64(j)
 
     for i in range(num_input_channels):
-        gains = SIMD[DType.float64, num_output_channels](0.0)
-        pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+        if num_input_channels == 1:
+            pan = (num_output_channels - 1) / 2.0
+        else:
+            pan = Float64(i) * Float64(num_output_channels - 1) / Float64(num_input_channels - 1)
 
-        d = abs(pan - js) * pi_over_2
-        for j in range(num_output_channels):
-            if d[j] < 1.0:
-                gains[j] = cos(d[j])
-        out += input[i] * gains
+        d = abs(pan - js)
+        @parameter
+        if num_output_channels > 2:
+            for j in range(num_output_channels):
+                if d[j] < 1.0:
+                    d[j] = d[j]
+                else:
+                    d[j] = 1.0
+        out += input[i] * cos(d * pi_over_2)
     return out
 
 @always_inline
 fn pan_az[simd_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_size]:
-    # translated from SuperCollider
 
     var rwidth = 1.0 / width
     var frange = Float64(num_speakers) * rwidth
@@ -147,28 +155,37 @@ struct Pan2 (Representable, Movable, Copyable):
 struct Splay[num_output_channels: Int = 2](Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
     var world_ptr: UnsafePointer[MMMWorld]
-    var js: SIMD[DType.float64, num_output_channels]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
         self.world_ptr = world_ptr
-        self.js = SIMD[DType.float64, num_output_channels](0.0)
-        for j in range(num_output_channels):
-            self.js[j] = Float64(j)
 
     @always_inline
-    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, self.num_output_channels]:
         num_input_channels = len(input)
-        out = SIMD[DType.float64, num_output_channels](0.0)
+        out = SIMD[DType.float64, self.num_output_channels](0.0)
+
+        js = SIMD[DType.float64, num_output_channels](0.0, 1.0)
+
+        @parameter
+        if num_output_channels > 2:
+            for j in range(num_output_channels):
+                js[j] = Float64(j)
 
         for i in range(num_input_channels):
-            gains = SIMD[DType.float64, num_output_channels](0.0)
-            pan = linlin(Float64(i), 0.0, Float64(num_input_channels), 0.0, Float64(num_output_channels))
+            if num_input_channels == 1:
+                pan = (self.num_output_channels - 1) / 2.0
+            else:
+                pan = Float64(i) * Float64(self.num_output_channels - 1) / Float64(num_input_channels - 1)
 
-            # we only want to look up values between 0.25 and 0.5
-            ds = abs(pan - self.js) * 0.25 + 0.25
-            for j in range(num_output_channels):
-                if ds[j] < 0.5:
-                    gains[j] = self.world_ptr[0].osc_buffers.read_none(ds[j], 0)
-            out += input[i] * gains
+            d = abs(pan - js)
+            @parameter
+            if self.num_output_channels > 2:
+                for j in range(self.num_output_channels):
+                    if d[j] < 1.0:
+                        d[j] = d[j]
+                    else:
+                        d[j] = 1.0
+            for j in range(self.num_output_channels):
+                out[j] += input[i] * self.world_ptr[0].quarter_cos_window.read_phase_none(d[j], 0)
         return out

@@ -198,6 +198,17 @@ struct Buffer(Buffable):
         return y0 + frac * (y1 - y0)
 
     @always_inline
+    fn read_phase_none(self, phase: Float64, chan: Int64) -> Float64:
+        """read one sample with no interpolation."""
+        # Ensure indices are within bounds
+        var idx = Int(phase * self.num_frames)
+        var mod_idx = idx % (Int64(self.num_frames))
+
+        # Get the 2 sample values
+        var y0 = self.data[chan][mod_idx]
+        return y0
+
+    @always_inline
     fn read_sinc(self,phase: Float64, last_phase: Float64, channel: Int64) -> Float64:
         return self.sinc_interpolator.read_sinc(self, phase, last_phase, channel)
 

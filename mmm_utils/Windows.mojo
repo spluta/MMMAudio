@@ -172,3 +172,12 @@ fn sine_window(n: Int64) -> List[Float64]:
         var value = sin(pi * Float64(i) / Float64(n - 1))
         window.append(value)
     return window.copy()
+
+# Create a compile-time function to generate values
+fn quarter_cos_window(size: Int64) -> List[Float64]:
+    var table = List[Float64]()
+
+    for i in range(size):
+        var angle = (pi / 2.0) * Float64(i) / Float64(size)
+        table.append(cos(angle))
+    return table^
