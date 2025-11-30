@@ -463,7 +463,8 @@ fn sanitize[
     var absx = abs(x)
     too_large: SIMD[DType.bool, width] = absx.gt(SIMD[DType.float64, width](1e15))
     too_small: SIMD[DType.bool, width] = absx.lt(SIMD[DType.float64, width](1e-15))
-    should_zero: SIMD[DType.bool, width] = too_large | too_small
+    is_nan: SIMD[DType.bool, width] = x.ne(x)
+    should_zero: SIMD[DType.bool, width] = too_large | too_small | is_nan
 
     return should_zero.select(0.0, x)
 
