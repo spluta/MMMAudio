@@ -57,5 +57,6 @@ struct MMMGraph(Representable, Movable):
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
         """
     
-    with open("mmm_src/MMMGraph_solo.mojo", "w") as file:
+    with open("MMMGraph_solo.mojo", "w") as file:
         file.write(string)
+

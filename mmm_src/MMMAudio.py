@@ -1,4 +1,4 @@
-import sys
+import sys, os
 import numpy as np
 import pyaudio
 import asyncio
@@ -52,10 +52,16 @@ class MMMAudio:
     def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
         self.device_index = None
         # this makes the graph file that should work
-        from mmm_src.make_solo_graph import make_solo_graph
-        make_solo_graph(graph_name, package_name)
+        from mmm_src.make_solo_graph2 import make_solo_graph2
+        
+        import importlib
+        # generate the Mojo graph bridge file
+        make_solo_graph2(graph_name, package_name)
 
-        import MMMAudioBridge
+        # this will import the generated Mojo module
+        MMMAudioBridge = importlib.import_module(f"{graph_name}Bridge")
+        if os.path.exists(graph_name + "Bridge" + ".mojo"):
+            os.remove(graph_name + "Bridge" + ".mojo")
 
         self.blocksize = blocksize
         self.num_input_channels = num_input_channels

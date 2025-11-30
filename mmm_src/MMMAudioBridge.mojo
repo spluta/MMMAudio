@@ -8,16 +8,16 @@ from os import abort
 from memory import *
 
 from mmm_src.MMMWorld import MMMWorld
-from mmm_src.MMMGraph_solo import MMMGraph
 
 from mmm_utils.functions import *
 from mmm_src.MMMTraits import *
-# from utils import Variant
+
+from examples.FeedbackDelays import FeedbackDelays
 
 struct MMMAudioBridge(Representable, Movable):
     var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    var graph_ptr: UnsafePointer[MMMGraph]
+    var graph: FeedbackDelays  # The audio graph instance
 
     var loc_in_buffer: UnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
     var loc_out_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
@@ -46,9 +46,7 @@ struct MMMAudioBridge(Representable, Movable):
         self.world_ptr = UnsafePointer[MMMWorld].alloc(1)
         __get_address_as_uninit_lvalue(self.world_ptr.address) = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
 
-        # Allocate MMMGraph on heap
-        self.graph_ptr = UnsafePointer[MMMGraph].alloc(1)
-        __get_address_as_uninit_lvalue(self.graph_ptr.address) = MMMGraph(self.world_ptr)
+        self.graph = FeedbackDelays(self.world_ptr)
 
     @staticmethod
     fn set_channel_count(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
@@ -56,7 +54,6 @@ struct MMMAudioBridge(Representable, Movable):
         var num_out_chans = Int64(args[1])
         print("set_channel_count:", num_in_chans, num_out_chans)
         py_self[0].world_ptr[0].set_channel_count(num_in_chans, num_out_chans)
-        py_self[0].graph_ptr[0].set_channel_count(num_in_chans, num_out_chans)
     
         return None # PythonObject(None)
 
@@ -173,6 +170,31 @@ struct MMMAudioBridge(Representable, Movable):
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
+    fn get_audio_samples(mut self, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
+
+        self.world_ptr[0].top_of_block = True
+        self.world_ptr[0].messengerManager.transfer_msgs()
+                
+        for i in range(self.world_ptr[0].block_size):
+            self.world_ptr[0].block_state = i  # Update the block state
+
+            if i == 1:
+                self.world_ptr[0].top_of_block = False
+                self.world_ptr[0].messengerManager.empty_msg_dicts()
+
+            if self.world_ptr[0].top_of_block:
+                self.world_ptr[0].print_counter += 1
+
+            # fill the sound_in list with the current sample from all inputs
+            for j in range(self.world_ptr[0].num_in_chans):
+                self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
+
+            samples = self.graph.next()  # Get the next audio samples from the graph
+
+            # Fill the wire buffer with the sample data
+            for j in range(min(self.world_ptr[0].num_out_chans, samples.__len__())):
+                loc_out_buffer[i * self.world_ptr[0].num_out_chans + j] = samples[Int(j)]
+
     @staticmethod
     fn next(py_self: UnsafePointer[Self], in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 
@@ -184,7 +206,7 @@ struct MMMAudioBridge(Representable, Movable):
             for i in range(py_self[0].world_ptr[0].block_size):
                 py_self[0].loc_out_buffer[i * py_self[0].world_ptr[0].num_out_chans + j] = 0.0 
 
-        py_self[0].graph_ptr[].next(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer)  
+        py_self[0].get_audio_samples(py_self[0].loc_in_buffer, py_self[0].loc_out_buffer)  
 
         return PythonObject(None)  # Return a PythonObject wrapping the float value
 
