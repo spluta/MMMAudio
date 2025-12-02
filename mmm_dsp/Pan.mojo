@@ -24,32 +24,18 @@ fn pan2_st(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64,
 alias pi_over_2 = pi / 2.0
 
 @always_inline
-fn splay[num_output_channels: Int](input: List[Float64]) -> SIMD[DType.float64, num_output_channels]:
+fn splay(input: List[Float64], w: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
 
     num_input_channels = len(input)
-    out = SIMD[DType.float64, num_output_channels](0.0)
-    js = SIMD[DType.float64, num_output_channels](0.0, 1.0)
-
-    @parameter
-    if num_output_channels > 2:
-        for j in range(num_output_channels):
-            js[j] = Float64(j)
+    out = SIMD[DType.float64, 2](0.0)
 
     for i in range(num_input_channels):
         if num_input_channels == 1:
-            pan = (num_output_channels - 1) / 2.0
+            out = input[0] * SIMD[DType.float64, 2](0.7071, 0.7071)
         else:
-            pan = Float64(i) * Float64(num_output_channels - 1) / Float64(num_input_channels - 1)
+            pan = Float64(i) / Float64(num_input_channels - 1)
 
-        d = abs(pan - js)
-        @parameter
-        if num_output_channels > 2:
-            for j in range(num_output_channels):
-                if d[j] < 1.0:
-                    d[j] = d[j]
-                else:
-                    d[j] = 1.0
-        out += input[i] * cos(d * pi_over_2)
+            out += input[i] * w[].pan_window[Int(pan * Float64(len(w[].pan_window) - 1))]
     return out
 
 @always_inline

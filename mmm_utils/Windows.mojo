@@ -174,7 +174,7 @@ fn sine_window(n: Int64) -> List[Float64]:
     return window.copy()
 
 # Create a compile-time function to generate values
-fn pan_window(size: Int64) -> List[Float64]:
+fn pan_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
     """
     Generate a SIMD[DType.float64, 2] quarter cosine window for panning. value 0 is for the left channel, value 1 is for the right channel.
     0 = cos(0) = 1.0 (full left)
@@ -185,9 +185,9 @@ fn pan_window(size: Int64) -> List[Float64]:
     Returns:
         List containing the quarter cosine window values
     """
-    var table = List[Float64]()
+    var table = List[SIMD[DType.float64, 2]]()
 
     for i in range(size):
         var angle = (pi / 2.0) * Float64(i) / Float64(size)
-        table.append(cos(angle))
+        table.append(cos(SIMD[DType.float64, 2](angle, (pi / 2.0) - angle)))
     return table^
