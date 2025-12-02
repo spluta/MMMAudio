@@ -152,31 +152,26 @@ struct Pan2 (Representable, Movable, Copyable):
         samples_out = samples * self.gains
         return samples_out  # Return stereo output as List
 
-struct Splay[num_output_channels: Int = 2](Movable, Copyable):
+struct Splay[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
     var world_ptr: UnsafePointer[MMMWorld]
+    var mul_list: List[SIMD[DType.float64, num_output_channels]]
+    var zero: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
         self.world_ptr = world_ptr
+        self.zero = 0.0
 
-    @always_inline
-    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, self.num_output_channels]:
-        num_input_channels = len(input)
-        out = SIMD[DType.float64, self.num_output_channels](0.0)
-
-        js = SIMD[DType.float64, num_output_channels](0.0, 1.0)
-
+        js = SIMD[DType.float64, self.num_output_channels](0.0, 1.0)
         @parameter
-        if num_output_channels > 2:
-            for j in range(num_output_channels):
+        if self.num_output_channels > 2:
+            for j in range(self.num_output_channels):
                 js[j] = Float64(j)
 
-        for i in range(num_input_channels):
-            if num_input_channels == 1:
-                pan = (self.num_output_channels - 1) / 2.0
-            else:
-                pan = Float64(i) * Float64(self.num_output_channels - 1) / Float64(num_input_channels - 1)
+        self.mul_list = [SIMD[DType.float64, self.num_output_channels](0.0) for _ in range(self.pan_points)]
+        for i in range(self.pan_points):
+            pan = Float64(i) * Float64(self.num_output_channels - 1) / Float64(self.pan_points - 1)
 
             d = abs(pan - js)
             @parameter
@@ -186,6 +181,22 @@ struct Splay[num_output_channels: Int = 2](Movable, Copyable):
                         d[j] = d[j]
                     else:
                         d[j] = 1.0
+            
             for j in range(self.num_output_channels):
-                out[j] += input[i] * self.world_ptr[0].quarter_cos_window.read_phase_none(d[j], 0)
+                self.mul_list[i][j] = cos(d[j] * pi_over_2)
+            print("pan point ", i, ": ", self.mul_list[i])
+
+    @always_inline
+    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, self.num_output_channels]:
+        out = SIMD[DType.float64, self.num_output_channels](0.0)
+
+        in_len = len(input)
+        if in_len == 0:
+            return out
+        elif in_len == 1:
+            out = input[0] * self.mul_list[0]
+            return out
+        for i in range(in_len):
+            out += input[i] * self.mul_list[Int(Float64(i) / Float64(in_len - 1) * Float64(self.pan_points - 1))]
+            
         return out
