@@ -53,10 +53,6 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
-    ```
-        Osc[N=1, interp=OscType.sine, os_index=0](world_ptr)
-    ```
-
     Params:
 
         N: Number of channels (default is 1).
@@ -219,18 +215,12 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         Variable Wavetable Oscillator: Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal and the same list of waveform types to interpolate between.
         
         Args:
+            buffer: Reference to a Buffer containing the waveforms to interpolate between.
             freq: Frequency of the oscillator in Hz (default is 100.0).
-
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-
             trig: Trigger signal to reset the phase (default is 0.0).
-
-            osc_types: List of waveform types to interpolate between (default is [0,4,5,6] - sine, triangle, saw, square).
-
             trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
-
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
-
         """
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
