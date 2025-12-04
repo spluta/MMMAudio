@@ -20,7 +20,7 @@ struct Latch[N: Int = 1](Copyable, Movable, Representable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.samp = SIMD[DType.float64, N](0)
-        self.last_trig = SIMD[DType.bool, N](0)
+        self.last_trig = SIMD[DType.bool, N](False)
 
     fn __repr__(self) -> String:
         return String("Latch")
