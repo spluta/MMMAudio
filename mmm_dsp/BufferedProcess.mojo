@@ -241,13 +241,14 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                     self.passing_buffer[i] *= self.output_attenuation_window[i]
 
             for i in range(window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+                self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.output_buffer[self.read_head]
+        self.output_buffer[self.read_head] = 0.0
 
         self.read_head = (self.read_head + 1) % window_size
         return outval
@@ -292,13 +293,14 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                     self.st_passing_buffer[i] *= self.output_attenuation_window[i]
 
             for i in range(window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.st_output_buffer[self.read_head]
+        self.st_output_buffer[self.read_head] = 0.0
 
         self.read_head = (self.read_head + 1) % window_size
         return outval
@@ -342,13 +344,14 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                     self.passing_buffer[i] *= self.output_attenuation_window[i]
 
             for i in range(window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+                self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.output_buffer[self.read_head]
+        self.output_buffer[self.read_head] = 0.0
         
         self.read_head = (self.read_head + 1) % window_size
         return outval
@@ -391,13 +394,14 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                     self.st_passing_buffer[i] *= self.output_attenuation_window[i]
 
             for i in range(window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.st_output_buffer[self.read_head]
+        self.st_output_buffer[self.read_head] = 0.0
 
         self.read_head = (self.read_head + 1) % window_size
         return outval

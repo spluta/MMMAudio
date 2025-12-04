@@ -19,3 +19,5 @@ mmm_audio.send_float("vol",0.0)
 mmm_audio.send_float("which",0.5)
 
 mmm_audio.stop_audio()
+
+mmm_audio.plot(44100)
