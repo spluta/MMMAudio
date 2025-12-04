@@ -373,7 +373,7 @@ struct MMMWorld(Representable, Movable, Copyable):
     
     # windows
     var hann_window: Buffer
-    var pan_window: Buffer
+    var pan_window: List[SIMD[DType.float64, 2]] #should this be a buffer?
 
     var buffers: List[Buffer]
 
@@ -399,7 +399,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.osc_buffers = OscBuffers()
         self.screen_dims = List[Float64](0.0, 0.0)  # Initialize screen dimensions with zeros
         self.hann_window = Buffer(List[List[Float64]](hann_window(2048)), self.sample_rate)  # Initialize Hann window
-        self.pan_window = Buffer(List[List[Float64]](pan_window(2048)), self.sample_rate)  # Initialize half-cosine window
+        self.pan_window = pan_window(2048)
 
         self.os_multiplier = List[Float64]()  # Initialize the list of multipliers
         for i in range(5):  # Initialize multipliers for oversampling ratios

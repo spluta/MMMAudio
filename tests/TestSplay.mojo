@@ -32,5 +32,6 @@ struct TestSplay[num: Int = 1000](Movable, Copyable):
         for i in range(self.num):
              self.samples[i] = self.osc[i].next(self.freqs[i]) 
 
-        sample2 = self.splay.next(self.samples)
+        # sample2 = self.splay.next(self.samples)
+        sample2 = splay(self.samples, self.world_ptr)
         return sample2 * self.mult
