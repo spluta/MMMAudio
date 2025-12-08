@@ -83,14 +83,11 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
     fn next(mut self: Osc, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_type: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](0)) -> SIMD[DType.float64, self.N]:
         """
         Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
-        
+
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
-
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-
             trig: Trigger signal to reset the phase (default is 0.0).
-
             osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square; 
             default is 0).
         """
@@ -145,15 +142,10 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
-
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-
             trig: Trigger signal to reset the phase (default is 0.0).
-
             osc_types: List of waveform types to interpolate between (default is [0,4,5,6] - sine, triangle, saw, square).
-
             trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
-
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
 
         """
@@ -527,4 +519,159 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
         return self.phase
 
+struct OscBuffers(Buffable):
+    var buffers: InlineArray[InlineArray[Float64, 16384], 7]  # List of all waveform buffers
+    var last_phase: Float64  # Last phase value for interpolation
+    var size: Int64
+    var mask: Int64
 
+    fn get_num_frames(self) -> Float64:
+        return Float64(self.size)
+
+    fn get_item(self, chan_index: Int64, frame_index: Int64) -> Float64:
+        return self.buffers[chan_index][frame_index]
+
+    fn __init__(out self):
+        self.size = 16384
+        self.mask = self.size - 1
+        self.buffers = InlineArray[InlineArray[Float64, 16384], 7](uninitialized=True)
+        self.last_phase = 0.0  # Initialize last phase value
+        
+        self.init_sine()  # Initialize sine wave buffer
+        self.init_lf_triangle()  # Initialize triangle wave buffer
+        self.init_lf_sawtooth()  # Initialize sawtooth wave buffer
+        self.init_lf_square()  # Initialize square wave buffer
+        self.init_triangle()  # Initialize triangle wave buffer using harmonics
+        self.init_sawtooth()  # Initialize sawtooth wave buffer using harmonics
+        self.init_square()  # Initialize square wave buffer using harmonics
+
+    # Build Wavetables:
+    # =================
+    @doc_private
+    fn init_sine(mut self: OscBuffers):
+        for i in range(self.size):
+            self.buffers[0][i] = (sin(2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)))  # Precompute sine values
+
+    @doc_private
+    fn init_triangle(mut self: OscBuffers):
+        # Construct triangle wave from sine harmonics
+        # Triangle formula: 8/pi^2 * sum((-1)^(n+1) * sin(n*x) / n^2) for n=1 to 512
+        for i in range(self.size):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+            var sample: Float64 = 0.0
+            
+            for n in range(1, 513):  # Using 512 harmonics
+                var harmonic = sin(Float64(n) * x) / (Float64(n) * Float64(n))
+                if n % 2 == 0:  # (-1)^(n+1) is -1 when n is even
+                    harmonic = -harmonic
+                sample += harmonic
+            
+            # Scale by 8/π² for correct amplitude
+            self.buffers[4][i] = 8.0 / (3.141592653589793 * 3.141592653589793) * sample
+
+    @doc_private
+    fn init_sawtooth(mut self: OscBuffers):
+        # Construct sawtooth wave from sine harmonics
+        # Sawtooth formula: 2/pi * sum((-1)^(n+1) * sin(n*x) / n) for n=1 to 512
+        for i in range(self.size):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+            var sample: Float64 = 0.0
+            
+            for n in range(1, 513):  # Using 512 harmonics
+                var harmonic = sin(Float64(n) * x) / Float64(n)
+                if n % 2 == 0:  # (-1)^(n+1) is -1 when n is even
+                    harmonic = -harmonic
+                sample += harmonic
+            
+            # Scale by 2/π for correct amplitude
+            self.buffers[5][i] = 2.0 / 3.141592653589793 * sample
+
+    @doc_private
+    fn init_square(mut self: OscBuffers):
+        # Construct square wave from sine harmonics
+        # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
+        for i in range(self.size):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+            var sample: Float64 = 0.0
+            
+            for n in range(1, 513):  # Using 512 harmonics
+                var harmonic = sin(Float64(2 * n - 1) * x) / Float64(2 * n - 1)
+                sample += harmonic
+            
+            # Scale by 4/π for correct amplitude
+            self.buffers[6][i] = 4.0 / 3.141592653589793 * sample
+
+    @doc_private
+    fn init_lf_triangle(mut self: OscBuffers):
+        for i in range(self.size):
+            if i < self.size // 2:
+                self.buffers[1][i] = 2.0 * (Float64(i) / Float64(self.size)) - 1.0  # Ascending part
+            else:
+                self.buffers[1][i] = 1.0 - 2.0 * (Float64(i) / Float64(self.size))  # Descending part
+
+    @doc_private
+    fn init_lf_sawtooth(mut self: OscBuffers):
+        for i in range(self.size):
+            self.buffers[2][i] = 2.0 * (Float64(i) / Float64(self.size)) - 1.0  # Linear ramp from -1 to 1
+
+    @doc_private
+    fn init_lf_square(mut self: OscBuffers):
+        for i in range(self.size):
+            if i < self.size // 2:
+                self.buffers[3][i] = 1.0  # First half is 1
+            else:
+                self.buffers[3][i] = -1.0  # Second half is -1
+
+    @always_inline
+    fn quadratic_interp_loc(self, x: Float64, buf_num: Int64) -> Float64:
+        base_idx = Int64(x) & self.mask
+        idx1 = (base_idx + 1) & self.mask
+        idx2 = (base_idx + 2) & self.mask
+        
+        frac = x - Float64(Int64(x))
+        
+        ref buffer = self.buffers[buf_num]
+        return quadratic_interp(buffer[base_idx], buffer[idx1], buffer[idx2], frac)
+
+    @always_inline
+    fn lerp(self, x: Float64, buf_num: Int64) -> Float64:
+        index = Int64(x) & self.mask
+        index_next = (index + 1) & self.mask
+        frac = x - Float64(Int64(x))
+        
+        ref buffer = self.buffers[buf_num]
+        return buffer[index] + frac * (buffer[index_next] - buffer[index])
+    
+    @always_inline
+    fn read_none(self, phase: Float64, buf_num: Int64) -> Float64:
+        index = Int64(phase * Float64(self.size)) & self.mask
+        
+        return self.buffers[buf_num][index]
+
+    @always_inline
+    fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
+        var f_index = (phase * Float64(self.size))
+        var value = self.lerp(f_index, buf_num)
+        return value
+
+    @always_inline
+    fn read_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
+        var f_index = (phase * Float64(self.size))
+        var value = self.quadratic_interp_loc(f_index, buf_num)
+        return value
+
+    fn read[interp: Int = 0](self, phase: Float64, osc_type: Int64 = 0) -> Float64:
+        @parameter
+        if interp == 0:
+            return self.read_lin(phase, osc_type)  # Linear interpolation
+        elif interp == 1:
+            return self.read_quadratic(phase, osc_type)  # Quadratic interpolation
+        else:
+            return self.read_lin(phase, osc_type)  # Default to linear interpolation
+
+    @always_inline
+    fn read_sinc(self,phase: Float64, last_phase: Float64, channel: Int64) -> Float64:
+        return self.sinc_interpolator.read_sinc(self, phase, last_phase, channel)
+
+    fn __repr__(self) -> String:
+        return String("OscBuffers(size=" + String(self.size) + ")")

@@ -5,7 +5,9 @@ from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time
 from collections import Set
+from mmm_dsp.SincInterpolator import SincInterpolator
 
+@doc_private
 struct BoolMessage(Movable, Copyable):
     var retrieved: Bool
     var value: Bool
@@ -14,6 +16,7 @@ struct BoolMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value
 
+@doc_private
 struct BoolsMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Bool]
@@ -22,6 +25,7 @@ struct BoolsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
+@doc_private
 struct FloatMessage(Movable, Copyable):
     var retrieved: Bool
     var value: Float64
@@ -30,6 +34,7 @@ struct FloatMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value
 
+@doc_private
 struct FloatsMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Float64]
@@ -38,6 +43,7 @@ struct FloatsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
+@doc_private
 struct IntMessage(Movable, Copyable):
     var retrieved: Bool
     var value: Int64
@@ -46,6 +52,7 @@ struct IntMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value
 
+@doc_private
 struct IntsMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Int64]
@@ -54,6 +61,7 @@ struct IntsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
+@doc_private
 struct StringMessage(Movable, Copyable):
     var value: String
     var retrieved: Bool
@@ -62,6 +70,7 @@ struct StringMessage(Movable, Copyable):
         self.value = value.copy()
         self.retrieved = False
 
+@doc_private
 struct StringsMessage(Movable, Copyable):
     var value: List[String]
     var retrieved: Bool
@@ -72,6 +81,7 @@ struct StringsMessage(Movable, Copyable):
 
 # struct TrigMessage isn't necessary. See MessengerManager for explanation.
 
+@doc_private
 struct TrigsMessage(Movable, Copyable):
     var retrieved: Bool
     var value: List[Bool]
@@ -80,6 +90,7 @@ struct TrigsMessage(Movable, Copyable):
         self.retrieved = False
         self.value = value.copy()
 
+@doc_private
 struct MessengerManager(Movable, Copyable):
 
     var bool_msg_pool: Dict[String, Bool]
@@ -375,7 +386,7 @@ struct MMMWorld(Representable, Movable, Copyable):
     var hann_window: Buffer
     var pan_window: List[SIMD[DType.float64, 2]] #should this be a buffer?
 
-    var buffers: List[Buffer]
+    var sinc_interpolator: SincInterpolator[4, 14]
 
     var messengerManager: MessengerManager
 
@@ -411,7 +422,6 @@ struct MMMWorld(Representable, Movable, Copyable):
 
         self.block_state = 0
 
-        self.buffers = List[Buffer]()  # Initialize the list of buffers
         self.last_print_time = 0.0
         self.print_flag = 0
         self.last_print_flag = 0
@@ -419,6 +429,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.messengerManager = MessengerManager()
 
         self.print_counter = 0
+
+        self.sinc_interpolator = SincInterpolator[4,14]
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
