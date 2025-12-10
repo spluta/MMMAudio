@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 
 from mmm_dsp.Osc import *
 from math import tanh

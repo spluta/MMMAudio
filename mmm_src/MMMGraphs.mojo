@@ -1,5 +1,5 @@
 # from mmm_src.MMMWorld import MMMWorld
-# from mmm_src.MMMTraits import *
+# 
 
 # from mmm_graphs.MMMGraph0 import MMMGraph0
 # from mmm_graphs.MMMGraph1 import MMMGraph1

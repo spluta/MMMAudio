@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Messengers import Messenger
-from mmm_utils.Windows import WindowTypes
+from mmm_utils.Windows import WindowType
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
@@ -33,21 +33,21 @@ struct PaulStretch(Movable, Copyable):
     var world_ptr: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
-    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world_ptr)
 
         self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
                 window_size,
                 hop_size,
-                WindowTypes.sine,
-                WindowTypes.sine
+                WindowType.sine,
+                WindowType.sine
             ](self.world_ptr,process=PaulStretchWindow[window_size](self.world_ptr))
 
         self.m = Messenger(world_ptr)

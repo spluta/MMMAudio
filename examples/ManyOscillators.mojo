@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import Osc
 from random import random_float64

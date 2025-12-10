@@ -3,7 +3,7 @@ from mmm_utils.Messengers import Messenger
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_dsp.FFTProcess import *
-from mmm_utils.Windows import WindowTypes
+from mmm_utils.Windows import WindowType
 from mmm_dsp.Env import ASREnv
 from random import random_float64
 
@@ -46,7 +46,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
 
     alias hop_size = window_size // 4
     var world_ptr: UnsafePointer[MMMWorld]
-    var freeze: FFTProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowTypes.hann,WindowTypes.hann]
+    var freeze: FFTProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowType.hann,WindowType.hann]
     var m: Messenger
     var freeze_gate: Bool
     var asr: ASREnv
@@ -57,8 +57,8 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
                 SpectralFreezeWindow[window_size],
                 window_size,
                 self.hop_size,
-                WindowTypes.hann,
-                WindowTypes.hann
+                WindowType.hann,
+                WindowType.hann
             ](self.world_ptr,process=SpectralFreezeWindow[window_size](self.world_ptr, namespace))
         self.m = Messenger(world_ptr, namespace)
         self.freeze_gate = False
@@ -83,7 +83,7 @@ struct SpectralFreezeExample(Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world_ptr = world_ptr
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.play_buf = PlayBuf(world_ptr) 
         self.spectral_freeze = SpectralFreeze[window_size](world_ptr)
         self.m = Messenger(world_ptr)

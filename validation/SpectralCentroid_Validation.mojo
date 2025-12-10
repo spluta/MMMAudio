@@ -34,9 +34,9 @@ fn main():
     world.sample_rate = 44100.0
     world_ptr = UnsafePointer(to=world)
 
-    buffer = Buffer("resources/Shiverer.wav")
+    buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = PlayBuf(world_ptr)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowTypes.hann](world_ptr, Analyzer(world_ptr,world.sample_rate))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](world_ptr, Analyzer(world_ptr,world.sample_rate))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

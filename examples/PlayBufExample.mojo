@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.Messengers import Messenger
-from mmm_src.MMMTraits import *
+
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
 
@@ -26,7 +26,7 @@ struct BufSynth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr 
 
         # load the audio buffer 
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason

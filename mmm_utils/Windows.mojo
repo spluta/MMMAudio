@@ -1,13 +1,43 @@
+from mmm_src.MMMWorld import MMMWorld
 from math import pi, exp, sin, sqrt, cos
 from memory import memset_zero
 from python import Python
+from mmm_dsp.Buffer import *
 
-struct WindowTypes:
-    alias hann: Int = 0
-    alias hamming: Int = 1
-    alias blackman: Int = 2
-    alias kaiser: Int = 3
-    alias sine: Int = 4
+struct WindowType:
+    alias rect: Int = 0
+    alias hann: Int = 1
+    alias hamming: Int = 2
+    alias blackman: Int = 3
+    alias kaiser: Int = 4
+    alias sine: Int = 5
+
+struct Windows(Movable, Copyable):
+    var hann: Buffer
+    var hamming: Buffer
+    var blackman: Buffer
+    var sine: Buffer
+    var w: UnsafePointer[MMMWorld]
+
+    fn __init__(out self, w: UnsafePointer[MMMWorld], size: Int64 = 2048):
+        self.w = w
+        self.hann = Buffer(hann_window(size), w[].sample_rate)
+        self.hamming = Buffer(hamming_window(size), w[].sample_rate)
+        self.blackman = Buffer(blackman_window(size), w[].sample_rate)
+        self.sine = Buffer(sine_window(size), w[].sample_rate)
+    
+    fn phase_lookup[window_type: Int = WindowType.rect, interp: Int = Interp.none](mut self, phase: Float64) -> Float64:
+        @parameter
+        if window_type == WindowType.hann:
+            return self.hann.read[num_chans=1,interp=interp,wrap=True](phase * self.hann.num_frames_f64)
+        elif window_type == WindowType.hamming:
+            return self.hamming.read[num_chans=1,interp=interp,wrap=True](phase * self.hamming.num_frames_f64)
+        elif window_type == WindowType.blackman:
+            return self.blackman.read[num_chans=1,interp=interp,wrap=True](phase * self.blackman.num_frames_f64)
+        elif window_type == WindowType.sine:
+            return self.sine.read[num_chans=1,interp=interp,wrap=True](phase * self.sine.num_frames_f64)
+        else:
+            return 1.0  # Rectangular window
 
 fn bessel_i0(x: Float64) -> Float64:
     """
@@ -50,9 +80,9 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
               - beta = 8.6: similar to Blackman window
     
     Returns:
-        DynamicVector[Float64] containing the Kaiser window coefficients
+        List[Float64] containing the Kaiser window coefficients
     """
-    var window = List[Float64]()  # Initialize window with zeros
+    var window = List[Float64]()
 
     if size == 1:
         window.append(1.0)
@@ -72,49 +102,6 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
         window.append(coeff)
 
     return window.copy()
-
-fn build_sinc_table(size: Int64, ripples: Int64 = 4) -> List[Float64]:
-    """
-    Build a sinc function lookup table.
-    
-    Args:
-        size: Number of points in the table
-        ripples: Number of ripples/lobes on each side of the main lobe
-
-    Returns:
-        List containing the sinc function values
-    """
-    
-    # Create evenly spaced points - the width is determined by ripples
-    var width = Float64(ripples)
-    # Create evenly spaced x values from -width*π to width*π
-    var x_values = List[Float64]()
-
-    var x_min = -width * 3.141592653589793
-    var x_max = width * 3.141592653589793
-    var step = (x_max - x_min) / Float64(size - 1)
-    
-    for i in range(size):
-        x_values.append(x_min + step * Float64(i))
-
-    # Calculate sinc values (handling the special case at x=0)
-    var sinc_table = List[Float64]()
-
-    for i in range(len(x_values)):
-        if x_values[i] == 0:
-            sinc_table.append(1.0)
-        else:
-            sinc_table.append(sin(x_values[i]) / x_values[i])
-
-    # Apply Kaiser window to the sinc table
-    # The beta parameter controls the trade-off between main lobe width and side lobe height
-    beta = 5.0  # Typical values range from 5 to 8 for audio processing
-
-    window = kaiser_window(size, beta)
-    for i in range(len(sinc_table)):
-        sinc_table[i] *= window[i]  # Apply the window to the sinc values
-    
-    return sinc_table.copy()
 
 fn hann_window(n: Int64) -> List[Float64]:
     """

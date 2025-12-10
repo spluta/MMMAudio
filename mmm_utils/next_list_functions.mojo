@@ -1,5 +1,5 @@
 from sys import simd_width_of
-from mmm_src.MMMTraits import *
+
 
 alias simd_width = simd_width_of[DType.float64]()
 

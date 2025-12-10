@@ -7,9 +7,9 @@ Ported to MMMAudio by Ted Moore, October 2025
 """
 
 from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Delays import Delay
 from math import tanh
 from mmm_dsp.Distortion import Latch

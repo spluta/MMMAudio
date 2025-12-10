@@ -1,6 +1,7 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.Windows import *
 from math import floor
+from mmm_dsp.Buffer import *
 
 # Eventually, I think it would be better for the user defined BufferProcessable
 # struct to be where the `window_size` is set as a parameter and then this value
@@ -40,7 +41,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         T: A user defined struct that implements the BufferedProcessable trait.
         window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
-        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
@@ -70,13 +71,13 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         self.passing_buffer = List[Float64](length=window_size, fill=0.0)
 
         @parameter
-        if input_window_shape == WindowTypes.hann:
+        if input_window_shape == WindowType.hann:
             self.input_attenuation_window = hann_window(window_size)
-        elif input_window_shape == WindowTypes.hamming:
+        elif input_window_shape == WindowType.hamming:
             self.input_attenuation_window = hamming_window(window_size)
-        elif input_window_shape == WindowTypes.blackman:
+        elif input_window_shape == WindowType.blackman:
             self.input_attenuation_window = blackman_window(window_size)
-        elif input_window_shape == WindowTypes.sine:
+        elif input_window_shape == WindowType.sine:
             self.input_attenuation_window = sine_window(window_size)
         else:
             # never used, just allocate a bunch of zeros
@@ -129,8 +130,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         T: A user defined struct that implements the BufferedProcessable trait.
         window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
-        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
+        output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
     var world_ptr: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
@@ -176,26 +177,26 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.st_output_buffer = List[SIMD[DType.float64,2]](length=window_size, fill=0.0)
 
         @parameter
-        if input_window_shape == WindowTypes.hann:
+        if input_window_shape == WindowType.hann:
             self.input_attenuation_window = hann_window(window_size)
-        elif input_window_shape == WindowTypes.hamming:
+        elif input_window_shape == WindowType.hamming:
             self.input_attenuation_window = hamming_window(window_size)
-        elif input_window_shape == WindowTypes.blackman:
+        elif input_window_shape == WindowType.blackman:
             self.input_attenuation_window = blackman_window(window_size)
-        elif input_window_shape == WindowTypes.sine:
+        elif input_window_shape == WindowType.sine:
             self.input_attenuation_window = sine_window(window_size)
         else:
             # never used, just allocate a bunch of zeros
             self.input_attenuation_window = List[Float64](length=window_size, fill=0.0)
 
         @parameter
-        if output_window_shape == WindowTypes.hann:
+        if output_window_shape == WindowType.hann:
             self.output_attenuation_window = hann_window(window_size)
-        elif output_window_shape == WindowTypes.hamming:
+        elif output_window_shape == WindowType.hamming:
             self.output_attenuation_window = hamming_window(window_size)
-        elif output_window_shape == WindowTypes.blackman:
+        elif output_window_shape == WindowType.blackman:
             self.output_attenuation_window = blackman_window(window_size)
-        elif output_window_shape == WindowTypes.sine:
+        elif output_window_shape == WindowType.sine:
             self.output_attenuation_window = sine_window(window_size)
         else:
             # never used, just allocate a bunch of zeros
@@ -319,19 +320,21 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         
         if self.hop_counter == 0:
            
+           var num_frames_f: Float64 = Float64(buffer.num_frames)
+
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    index = phase * num_frames_f + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
                     # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
-                    if index < buffer.get_num_frames() - 2 and index >= 0:
-                        self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
+                    if index < num_frames_f - 2.0 and index >= 0:
+                        self.passing_buffer[i] = read_none(buffer.data[0], index) * self.input_attenuation_window[i]
                     else:
                         self.passing_buffer[i] = 0.0
             else:
                 for i in range(window_size):
-                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
-                    if index < buffer.get_num_frames() - 2 and index >= 0:
+                    index = phase * buffer.num_frames + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    if index < buffer.num_frames - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
                     else:
                         self.passing_buffer[i] = 0.0
@@ -373,15 +376,15 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
+                    index = floor(phase * buffer.num_frames) + i
+                    if index < buffer.num_frames and index >= 0:
                         self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
                     else:
                         self.st_passing_buffer[i] = 0.0
             else:
                 for i in range(window_size):
-                    index = floor(phase * buffer.get_num_frames()) + i
-                    if index < buffer.get_num_frames() and index >= 0:
+                    index = floor(phase * buffer.num_frames) + i
+                    if index < buffer.num_frames and index >= 0:
                         self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
                     else:
                         self.st_passing_buffer[i] = 0.0

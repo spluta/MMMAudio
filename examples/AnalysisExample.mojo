@@ -3,7 +3,7 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_dsp.Analysis import SpectralCentroid, YIN, RMS
 from mmm_dsp.Osc import *
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFT import *
 from mmm_dsp.PlayBuf import *
@@ -50,7 +50,7 @@ struct AnalysisExample(Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.osc = Osc[2](world_ptr)
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr)
         self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](world_ptr, CustomAnalysis[1024](world_ptr))
         self.freq = 440.0

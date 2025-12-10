@@ -1,12 +1,11 @@
 from python import PythonObject
 from python import Python
 from memory import UnsafePointer
-from .Buffer import *
+from mmm_dsp.Buffer import *
 from mmm_src.MMMWorld import MMMWorld
 from .Osc import Dust, Impulse
 from mmm_utils.functions import *
 from .Pan import Pan2
-from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 from time import time
@@ -171,11 +170,10 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if win_num == 0:
-            win = self.world_ptr[0].hann_window.read_phase(0, self.win_phase)
+            win = read_buffer[](self.world_ptr[0].windows.hann, self.win_phase)
         # Future window types can be added here with elif statements
         else:
             win = 1-2*abs(self.win_phase - 0.5) # hackey triangular window
-
 
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
         sample = sample * win * self.gain  # Apply the window to the sample
@@ -269,7 +267,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-        self.buffer = Buffer(1, Int(buf_dur * world_ptr[0].sample_rate), world_ptr[0].sample_rate)  # Empty buffer to be set later
+        self.buffer = Buffer.zeros(self.world_ptr,Int(buf_dur * world_ptr[0].sample_rate), 1, world_ptr[0].sample_rate)  # Empty buffer to be set later
         self.impulse = Dust(world_ptr)
         self.pitch_ratio = 1.0
     

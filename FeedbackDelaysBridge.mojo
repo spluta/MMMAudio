@@ -212,7 +212,7 @@ struct MMMAudioBridge(Representable, Movable):
 
 # this is needed to make the module importable in Python - so simple!
 @export
-fn PyInit_MMMAudioBridge() -> PythonObject:
+fn PyInit_FeedbackDelaysBridge() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MMMAudioBridge")
 

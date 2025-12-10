@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Buffer import *
 from mmm_dsp.RecordBuf import RecordBuf
 from mmm_dsp.PlayBuf import PlayBuf
@@ -31,7 +31,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
         self.buf_dur = 10.0  # seconds
-        self.buffer = Buffer(1, Int64(self.world_ptr[0].sample_rate*self.buf_dur), self.world_ptr[0].sample_rate)
+        self.buffer = Buffer.zeros(self.world_ptr,Int64(self.world_ptr[0].sample_rate*self.buf_dur), 1, self.world_ptr[0].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
         self.trig = False

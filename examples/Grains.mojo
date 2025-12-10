@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
@@ -25,7 +25,7 @@ struct GrainSynth(Representable, Movable, Copyable):
         self.world_ptr = world_ptr  
 
         # buffer uses numpy to load a buffer into an N channel array
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         self.tgrains = TGrains[10](self.world_ptr)  

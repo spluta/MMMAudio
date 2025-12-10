@@ -24,15 +24,18 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
     fn increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.N]):
         self.phase += (freq * self.freq_mul)
-
         self.phase = self.phase - floor(self.phase)  
 
     @always_inline
-    fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
+    fn next(
+            mut self: Phasor, 
+            freq: SIMD[DType.float64, self.N] = 100.0, 
+            phase_offset: SIMD[DType.float64, self.N] = 0.0, 
+            trig: SIMD[DType.bool, self.N] = False
+        ) -> SIMD[DType.float64, self.N]:
+
         self.increment_phase(freq)
-        
         var resets = self.rising_bool_detector.next(trig)
-        
         # SIMD conditional reset - no loop needed!
         self.phase = resets.select(0.0, self.phase)
         
@@ -50,19 +53,16 @@ struct OscType:
 struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling. 
-    
+
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
     Params:
-
         N: Number of channels (default is 1).
         interp: Interpolation method (0 = linear, 1 = cubic, 2 = sinc; default is 0).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
 
     Args:
-    
         world_ptr: Pointer to the MMMWorld instance.
-
     """
 
     var phasor: Phasor[N, os_index]  # Instance of the Phasor
@@ -80,7 +80,13 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         )
 
     @always_inline
-    fn next(mut self: Osc, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_type: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](0)) -> SIMD[DType.float64, self.N]:
+    fn next(
+            mut self: Osc, 
+            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
+            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            trig: Bool = False, 
+            osc_type: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](0)
+        ) -> SIMD[DType.float64, self.N]:
         """
         Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
 
@@ -98,21 +104,20 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
             @parameter
-            if interp == 2:# sinc interpolation
-                sample = SIMD[DType.float64, self.N](0.0)
+            if interp == Interp.sinc:
+                out = SIMD[DType.float64, self.N](0.0)
                 @parameter
                 for j in range(self.N):
-                    sample[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type[j])
-                return sample
+                    out[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type[j])
+                return out
             else: # linear or cubic interpolation
-                sample = SIMD[DType.float64, self.N](0.0)
+                out = SIMD[DType.float64, self.N](0.0)
                 @parameter
                 for j in range(self.N):
-                    sample[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type[j])
-                return sample
+                    out[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type[j])
+                return out
         else:
             alias times_os_int = 2**os_index
-
             @parameter
             for i in range(times_os_int):
                 var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
@@ -136,9 +141,21 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             return self.oversampling.get_sample()
 
     @always_inline
-    fn next_interp(mut self: Osc, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_types: List[Int64] = [0,4,5,6], osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
-        """
-        Variable Wavetable Oscillator: Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal and the same list of waveform types to interpolate between.
+    fn next_vwt(
+            mut self: Osc, 
+            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
+            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            trig: Bool = False, 
+            osc_types: List[Int64] = [0,4,5,6], 
+            osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+        ) -> SIMD[DType.float64, self.N]:
+        """Variable Wavetable Oscillator using built-in waveforms.
+        
+        Generate the next oscillator sample on a variable waveform where the output is interpolated between 
+        different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This 
+        means that an oscillator can have N different instances, each with its own frequency, phase offset, 
+        and waveform type, but they will all share the same trigger signal and the same list of waveform types 
+        to interpolate between.
         
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
@@ -182,7 +199,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                 else:
                     sample0[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type0[j])
                     sample1[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type1[j])
-            return lerp(sample0, sample1, osc_frac2)
+            return linear_interp(sample0, sample1, osc_frac2)
         else:
             alias times_os_int = 2**os_index
             @parameter
@@ -198,19 +215,30 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                     else:
                         sample0[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type0[j])
                         sample1[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type1[j])
-                self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))
+                self.oversampling.add_sample(linear_interp(sample0, sample1, osc_frac2))
             return self.oversampling.get_sample()
     
     @always_inline
-    fn next_interp(mut self: Osc, ref buffer: Buffer, freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), trig: Bool = False, osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)) -> SIMD[DType.float64, self.N]:
-        """
-        Variable Wavetable Oscillator: Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal and the same list of waveform types to interpolate between.
+    fn next_vwt(
+            mut self: Osc, 
+            ref buffer: Buffer, 
+            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
+            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            trig: Bool = False, 
+            osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+        ) -> SIMD[DType.float64, self.N]:
+        """Variable Wavetable Oscillator with loaded Buffer.
+        
+        Generate the next oscillator sample on a variable waveform where the output is interpolated between 
+        different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This 
+        means that an oscillator can have N different instances, each with its own frequency, phase offset, 
+        and waveform type, but they will all share the same trigger signal and the same list of waveform types 
+        to interpolate between.
         
         Args:
             buffer: Reference to a Buffer containing the waveforms to interpolate between.
             freq: Frequency of the oscillator in Hz (default is 100.0).
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-            trig: Trigger signal to reset the phase (default is 0.0).
             trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
         """
@@ -242,7 +270,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                 else:
                     sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
                     sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
-            return lerp(sample0, sample1, osc_frac2)
+            return linear_interpsample0, sample1, osc_frac2)
         else:
             alias times_os_int = 2**os_index
             @parameter
@@ -258,7 +286,7 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                     else:
                         sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
                         sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
-                self.oversampling.add_sample(lerp(sample0, sample1, osc_frac2))
+                self.oversampling.add_sample(linear_interpsample0, sample1, osc_frac2))
             return self.oversampling.get_sample()
 
 
@@ -275,8 +303,6 @@ struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     fn __repr__(self) -> String:
         return String("SinOsc")
-
-    # with SIMD, sin operation is more efficient for 
 
     @always_inline
     fn next(mut self: SinOsc, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
@@ -474,7 +500,7 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
             for i in range(self.N):
                 p0[i] = self.history[self.history_index[i]][i]
                 p1[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
-            return lerp(p0, p1, self.impulse.phasor.phase)
+            return linear_interpp0, p1, self.impulse.phasor.phase)
         else:
             p0 = SIMD[DType.float64, self.N](0.0)
             p1 = SIMD[DType.float64, self.N](0.0)
@@ -519,17 +545,11 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
         return self.phase
 
-struct OscBuffers(Buffable):
+struct OscBuffers(Movable, Copyable):
     var buffers: InlineArray[InlineArray[Float64, 16384], 7]  # List of all waveform buffers
     var last_phase: Float64  # Last phase value for interpolation
     var size: Int64
     var mask: Int64
-
-    fn get_num_frames(self) -> Float64:
-        return Float64(self.size)
-
-    fn get_item(self, chan_index: Int64, frame_index: Int64) -> Float64:
-        return self.buffers[chan_index][frame_index]
 
     fn __init__(out self):
         self.size = 16384
@@ -538,12 +558,14 @@ struct OscBuffers(Buffable):
         self.last_phase = 0.0  # Initialize last phase value
         
         self.init_sine()  # Initialize sine wave buffer
-        self.init_lf_triangle()  # Initialize triangle wave buffer
-        self.init_lf_sawtooth()  # Initialize sawtooth wave buffer
-        self.init_lf_square()  # Initialize square wave buffer
+
         self.init_triangle()  # Initialize triangle wave buffer using harmonics
         self.init_sawtooth()  # Initialize sawtooth wave buffer using harmonics
         self.init_square()  # Initialize square wave buffer using harmonics
+
+        self.init_lf_triangle()  # Initialize triangle wave buffer
+        self.init_lf_sawtooth()  # Initialize sawtooth wave buffer
+        self.init_lf_square()  # Initialize square wave buffer
 
     # Build Wavetables:
     # =================
@@ -634,7 +656,7 @@ struct OscBuffers(Buffable):
         return quadratic_interp(buffer[base_idx], buffer[idx1], buffer[idx2], frac)
 
     @always_inline
-    fn lerp(self, x: Float64, buf_num: Int64) -> Float64:
+    fn linear_interpself, x: Float64, buf_num: Int64) -> Float64:
         index = Int64(x) & self.mask
         index_next = (index + 1) & self.mask
         frac = x - Float64(Int64(x))
@@ -651,7 +673,7 @@ struct OscBuffers(Buffable):
     @always_inline
     fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
         var f_index = (phase * Float64(self.size))
-        var value = self.lerp(f_index, buf_num)
+        var value = self.linear_interpf_index, buf_num)
         return value
 
     @always_inline

@@ -1,12 +1,12 @@
 from mmm_src.MMMWorld import *
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 
 from mmm_utils.functions import *
 from mmm_dsp.Osc import *
 from mmm_dsp.Filters import *
 from mmm_dsp.Env import *
 
-from mmm_src.MMMTraits import *
+
 
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 

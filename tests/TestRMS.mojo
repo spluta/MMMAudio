@@ -2,7 +2,7 @@ from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messengers import Messenger
 from mmm_utils.Print import Print
-from mmm_utils.Windows import WindowTypes
+from mmm_utils.Windows import WindowType
 from mmm_dsp.PlayBuf import PlayBuf
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
@@ -21,7 +21,7 @@ struct TestRMS(Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         rms = RMS(self.world_ptr)
         self.rms = BufferedProcess[RMS,2400,2400](self.world_ptr,process=rms^)

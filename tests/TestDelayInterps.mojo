@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Delays import *
 from mmm_dsp.Osc import *
 from mmm_utils.Messengers import Messenger
@@ -21,7 +21,7 @@ struct TestDelayInterps(Movable, Copyable):
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         self.delay_none = Delay[interp=DelayInterpOptions.none](self.world_ptr,1.0)
         self.delay_linear = Delay[interp=DelayInterpOptions.linear](self.world_ptr,1.0)

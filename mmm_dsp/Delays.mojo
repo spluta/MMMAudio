@@ -134,7 +134,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
         samps[i] = self.delay_line[i][read_idx[i]]
         next_samps[i] = self.delay_line[i][next_idx[i]]
 
-      return lerp(samps, next_samps, frac)
+      return linear_interpsamps, next_samps, frac)
 
     @doc_private
     fn cubic_loc(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:

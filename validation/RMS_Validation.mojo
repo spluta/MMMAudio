@@ -26,7 +26,7 @@ fn main():
     world_ptr = UnsafePointer(to=world)
     world.sample_rate = 44100.0
 
-    buffer = Buffer("resources/Shiverer.wav")
+    buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = PlayBuf(world_ptr)
 
     analyzer = BufferedInput[Analyzer,windowsize,hopsize](world_ptr, Analyzer(world_ptr))

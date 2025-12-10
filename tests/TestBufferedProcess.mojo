@@ -2,7 +2,7 @@ from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messengers import Messenger
 from mmm_utils.Print import Print
-from mmm_utils.Windows import WindowTypes
+from mmm_utils.Windows import WindowType
 
 ###########################################################
 #                   Test BufferedProcess                  #

@@ -40,7 +40,7 @@ fn main():
     world = MMMWorld()
     world_ptr = UnsafePointer(to=world)
 
-    buffer = Buffer("resources/Shiverer.wav")
+    buffer = Buffer.load("resources/Shiverer.wav")
     world.sample_rate = buffer.buf_sample_rate
     playBuf = PlayBuf(world_ptr)
 

@@ -422,7 +422,7 @@ fn lagrange4[
     return out
     
 @always_inline
-fn lerp[
+fn linear_interp[
     dtype: DType, width: Int, //
 ](p0: SIMD[dtype, width], p1: SIMD[dtype, width], t: SIMD[dtype, width]) -> SIMD[dtype, width]:
     """

@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
@@ -33,7 +33,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
         self.world_ptr = world_ptr  
         self.main_lag = Lag(self.world_ptr, 0.03)
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.world_ptr) 
         self.delays = FB_Delay[N=2, interp=3](self.world_ptr, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.world_ptr, 0.2)  # Initialize Lag with a default time constant
