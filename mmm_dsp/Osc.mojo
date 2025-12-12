@@ -11,12 +11,12 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.phase = SIMD[DType.float64, N](0.0)
-        self.freq_mul = self.world_ptr[0].os_multiplier[os_index] / self.world_ptr[0].sample_rate
+        self.freq_mul = self.w[].os_multiplier[os_index] / self.w[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
@@ -50,7 +50,7 @@ struct OscType:
     alias bandlimited_saw: Int64 = 5
     alias bandlimited_square: Int64 = 6
 
-struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
+struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling. 
 
@@ -62,31 +62,29 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
 
     Args:
-        world_ptr: Pointer to the MMMWorld instance.
+        w: Pointer to the MMMWorld instance.
     """
 
-    var phasor: Phasor[N, os_index]  # Instance of the Phasor
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var oversampling: Oversampling[N, 2**os_index]
+    var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var oversampling: Oversampling[num_chans, 2**os_index]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.phasor = Phasor[self.N, os_index](world_ptr)
-        self.oversampling = Oversampling[self.N, 2**os_index](world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.phasor = Phasor[self.num_chans, os_index](w)
+        self.oversampling = Oversampling[self.num_chans, 2**os_index](w)
 
     fn __repr__(self) -> String:
-        return String(
-            "Osc"
-        )
+        return String("Osc")
 
     @always_inline
     fn next(
             mut self: Osc, 
-            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
-            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
             trig: Bool = False, 
-            osc_type: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](0)
-        ) -> SIMD[DType.float64, self.N]:
+            osc_type: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](0)
+        ) -> SIMD[DType.float64, self.num_chans]:
         """
         Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
 
@@ -94,61 +92,66 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             freq: Frequency of the oscillator in Hz (default is 100.0).
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
             trig: Trigger signal to reset the phase (default is 0.0).
-            osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square; 
-            default is 0).
+            osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square; default is 0).
         """
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
+            
+        out = SIMD[DType.float64, self.num_chans](0.0)
 
         @parameter
         if os_index == 0:
-            var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
-            var phase = self.phasor.next(freq, phase_offset, trig_mask)
-            @parameter
-            if interp == Interp.sinc:
-                out = SIMD[DType.float64, self.N](0.0)
-                @parameter
-                for j in range(self.N):
-                    out[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type[j])
-                return out
-            else: # linear or cubic interpolation
-                out = SIMD[DType.float64, self.N](0.0)
-                @parameter
-                for j in range(self.N):
-                    out[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type[j])
-                return out
-        else:
-            alias times_os_int = 2**os_index
-            @parameter
-            for i in range(times_os_int):
-                var last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
-                var phase = self.phasor.next(freq, phase_offset, trig_mask)
-
-                @parameter
-                if interp == 2:# sinc interpolation
-                    # if oversampling, add each sample to the buffer
-                    sample = SIMD[DType.float64, self.N](0.0)
-                    @parameter
-                    for j in range(self.N):
-                        sample[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type[j])
-                    self.oversampling.add_sample(sample)  # Get the next sample from the Oscillator buffer using sinc interpolation
-                else: # linear or cubic interpolation
-                    sample = SIMD[DType.float64, self.N](0.0)
-                    @parameter
-                    for j in range(self.N):
-                        sample[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type[j])
-                    self.oversampling.add_sample(sample)  # Get the nextsample from the Oscillator buffer
             
+            last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
+            phase = self.phasor.next(freq, phase_offset, trig_mask)
+
+            @parameter
+            for chan in range(self.num_chans):
+                out[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+            return out
+        else:
+            @parameter
+            for i in range(2**os_index):
+                
+                last_phase = self.phasor.phase  # Store the last phase for sinc interpolation
+                phase = self.phasor.next(freq, phase_offset, trig_mask)
+
+                sample = SIMD[DType.float64, self.num_chans](0.0)
+                @parameter
+                for chan in range(self.num_chans):
+                    sample[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+                self.oversampling.add_sample(sample)  # Get the next sample from the Oscillator buffer using sinc interpolation
+
             return self.oversampling.get_sample()
+
+    fn vwt_get_one_sample()
 
     @always_inline
     fn next_vwt(
-            mut self: Osc, 
-            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
-            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            mut self, 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
             trig: Bool = False, 
             osc_types: List[Int64] = [0,4,5,6], 
-            osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        ) -> SIMD[DType.float64, self.N]:
+            osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
+        ) -> SIMD[DType.float64, self.num_chans]:
         """Variable Wavetable Oscillator using built-in waveforms.
         
         Generate the next oscillator sample on a variable waveform where the output is interpolated between 
@@ -162,71 +165,94 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
             trig: Trigger signal to reset the phase (default is 0.0).
             osc_types: List of waveform types to interpolate between (default is [0,4,5,6] - sine, triangle, saw, square).
-            trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
-            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
-
+            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list.
         """
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
 
-        var len_m1 = len(osc_types)-1
+        var max_osc_frac = len(osc_types)-1
 
-        var osc_frac2 = Float64(len_m1) * osc_frac
+        var scaled_osc_frac = Float64(max_osc_frac) * (osc_frac % 1.0)
 
-        var osc_type0: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](osc_frac2)
-        var osc_type1 = SIMD[DType.int64, self.N](osc_type0 + 1)
-        osc_type0 = clip(osc_type0, 0,  len_m1)
-        osc_type1 = clip(osc_type1, 0, len_m1)
+        var osc_type0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](scaled_osc_frac)
+        var osc_type1 = SIMD[DType.int64, self.num_chans](osc_type0 + 1)
+        osc_type0 = clip(osc_type0, 0,  max_osc_frac)
+        osc_type1 = clip(osc_type1, 0, max_osc_frac)
         @parameter
-        for i in range(self.N):
+        for i in range(self.num_chans):
             osc_type0[i] = osc_types[osc_type0[i]]
             osc_type1[i] = osc_types[osc_type1[i]]
 
-        osc_frac2 = osc_frac2 - floor(osc_frac2)
+        osc_frac_interp = scaled_osc_frac - floor(scaled_osc_frac)
 
-        var sample0 = SIMD[DType.float64, self.N](0.0)
-        var sample1 = SIMD[DType.float64, self.N](0.0)
+        var sample0 = SIMD[DType.float64, self.num_chans](0.0)
+        var sample1 = SIMD[DType.float64, self.num_chans](0.0)
 
         @parameter
         if os_index == 0:
             var last_phase = self.phasor.phase
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
             @parameter
-            for j in range(self.N):
-                @parameter
-                if interp == 2:
-                    sample0[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type0[j])
-                    sample1[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type1[j])
-                else:
-                    sample0[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type0[j])
-                    sample1[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type1[j])
-            return linear_interp(sample0, sample1, osc_frac2)
+            for chan in range(self.num_chans):
+                sample0[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type0[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+                sample1[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type1[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+            return linear_interp(sample0, sample1, osc_frac_interp)
         else:
-            alias times_os_int = 2**os_index
             @parameter
-            for i in range(times_os_int):
+            for i in range(2**os_index):
                 var last_phase = self.phasor.phase
                 var phase = self.phasor.next(freq, phase_offset, trig_mask)
                 @parameter
-                for j in range(self.N):
-                    @parameter
-                    if interp == 2:
-                        sample0[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type0[j])
-                        sample1[j] = self.world_ptr[0].osc_buffers.read_sinc(phase[j], last_phase[j], osc_type1[j])
-                    else:
-                        sample0[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type0[j])
-                        sample1[j] = self.world_ptr[0].osc_buffers.read[interp](phase[j], osc_type1[j])
-                self.oversampling.add_sample(linear_interp(sample0, sample1, osc_frac2))
+                for chan in range(self.num_chans):
+                    sample0[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type0[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+                    sample1[chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=OscBuffersMask
+                    ](
+                        w = self.w,
+                        data=self.w[].osc_buffers.buffers[osc_type1[chan]],
+                        f_idx=phase[chan] * OscBuffersSize,
+                        prev_f_idx=last_phase[chan] * OscBuffersSize
+                    )
+                self.oversampling.add_sample(linear_interp(sample0, sample1, osc_frac_interp))
             return self.oversampling.get_sample()
     
     @always_inline
     fn next_vwt(
             mut self: Osc, 
             ref buffer: Buffer, 
-            freq: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](100.0), 
-            phase_offset: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0), 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
             trig: Bool = False, 
-            osc_frac: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        ) -> SIMD[DType.float64, self.N]:
+            osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
+        ) -> SIMD[DType.float64, self.num_chans]:
         """Variable Wavetable Oscillator with loaded Buffer.
         
         Generate the next oscillator sample on a variable waveform where the output is interpolated between 
@@ -242,35 +268,47 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
         """
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
 
-        var len_m1 = buffer.num_chans-1
+        var max_osc_frac = buffer.num_chans - 1
 
-        var chan0_fl = Float64(len_m1) * (osc_frac % 1.0)
+        var chan0_fl = Float64(max_osc_frac) * (osc_frac % 1.0)
 
-        var chan0: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](chan0_fl)
-        var chan1 = SIMD[DType.int64, self.N](chan0 + 1)
+        var buf_chan0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](chan0_fl)
+        var buf_chan1 = SIMD[DType.int64, self.num_chans](buf_chan0 + 1)
 
-        osc_frac2 = chan0_fl - floor(chan0_fl)
+        scaled_osc_frac = chan0_fl - floor(chan0_fl)
 
-        var sample0 = SIMD[DType.float64, self.N](0.0)
-        var sample1 = SIMD[DType.float64, self.N](0.0)
+        var sample0 = SIMD[DType.float64, self.num_chans](0.0)
+        var sample1 = SIMD[DType.float64, self.num_chans](0.0)
 
         @parameter
         if os_index == 0:
             var last_phase = self.phasor.phase
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
             @parameter
-            for j in range(self.N):
-                @parameter
-                if interp == 2:
-                    sample0[j] = buffer.read_sinc(phase[j], last_phase[j], chan0[j])
-                    sample1[j] = buffer.read_sinc(phase[j], last_phase[j], chan1[j])
-
-                else:
-                    sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
-                    sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
-            return linear_interpsample0, sample1, osc_frac2)
+            for out_chan in range(self.num_chans):
+                sample0[out_chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=0
+                    ](
+                        w = self.w,
+                        data=buffer.data[buf_chan0[out_chan]],
+                        f_idx=phase[out_chan] * buffer.num_frames_f64,
+                        prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
+                    )
+                sample1[out_chan] = ListFloat64Reader.read[
+                        interp=self.interp,
+                        bWrap=True,
+                        mask=0
+                    ](
+                        w = self.w,
+                        data=buffer.data[buf_chan1[out_chan]],
+                        f_idx=phase[out_chan] * buffer.num_frames_f64,
+                        prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
+                    )
+            return linear_interp(sample0, sample1, scaled_osc_frac)
         else:
             alias times_os_int = 2**os_index
             @parameter
@@ -278,15 +316,28 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
                 var last_phase = self.phasor.phase
                 var phase = self.phasor.next(freq, phase_offset, trig_mask)
                 @parameter
-                for j in range(self.N):
-                    @parameter
-                    if interp == 2:
-                        sample0[j] = buffer.read_sinc(phase[j], last_phase[j], chan0[j])
-                        sample1[j] = buffer.read_sinc(phase[j], last_phase[j], chan1[j])
-                    else:
-                        sample0[j] = buffer.read_phase[1, interp](chan0[j], phase[j])
-                        sample1[j] = buffer.read_phase[1, interp](chan1[j], phase[j])
-                self.oversampling.add_sample(linear_interpsample0, sample1, osc_frac2))
+                for out_chan in range(self.num_chans):
+                    sample0[out_chan] = ListFloat64Reader.read[
+                            interp=self.interp,
+                            bWrap=True,
+                            mask=0
+                        ](
+                            w = self.w,
+                            data=buffer.data[buf_chan0[out_chan]],
+                            f_idx=phase[out_chan] * buffer.num_frames_f64,
+                            prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
+                        )
+                    sample1[out_chan] = ListFloat64Reader.read[
+                            interp=self.interp,
+                            bWrap=True,
+                            mask=0
+                        ](
+                            w = self.w,
+                            data=buffer.data[buf_chan1[out_chan]],
+                            f_idx=phase[out_chan] * buffer.num_frames_f64,
+                            prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
+                        )
+                self.oversampling.add_sample(linear_interp(sample0, sample1, scaled_osc_frac))
             return self.oversampling.get_sample()
 
 
@@ -298,8 +349,8 @@ struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var osc: Osc[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.osc = Osc[self.N, os_index](world_ptr)  # Initialize the Oscillator with the world instance
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.osc = Osc[self.N, os_index](w)  # Initialize the Oscillator with the world instance
 
     fn __repr__(self) -> String:
         return String("SinOsc")
@@ -313,8 +364,8 @@ struct LFSaw[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world_ptr)  # Initialize the Phasor with the world instance
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSaw")
@@ -330,8 +381,8 @@ struct LFSquare[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world_ptr)  # Initialize the Phasor with the world instance
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSquare")
@@ -346,8 +397,8 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world_ptr)  # Initialize the Phasor with the world instance
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFTri")
@@ -360,15 +411,15 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
     """An oscillator that generates an impulse signal.
     Args:
-        world_ptr: Pointer to the MMMWorld instance.
+        w: Pointer to the MMMWorld instance.
     """
     var phasor: Phasor[N]
     var last_phase: SIMD[DType.float64, N]
     var last_trig: SIMD[DType.bool, N]
     var rising_bool_detector: RisingBoolDetector[N]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N](world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N](w)
         self.last_phase = SIMD[DType.float64, self.N](0.0)
         self.last_trig = SIMD[DType.bool, self.N](fill=False)
         self.rising_bool_detector = RisingBoolDetector[self.N]()
@@ -411,8 +462,8 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     var freq: SIMD[DType.float64, N]
     var rising_bool_detector: RisingBoolDetector[N]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.impulse = Impulse[N](world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.impulse = Impulse[N](w)
         self.freq = SIMD[DType.float64, N](1.0)
         self.rising_bool_detector = RisingBoolDetector[N]()
 
@@ -443,7 +494,7 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
 
 struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var impulse: Impulse[N]
 
     # Cubic inerpolation only needs 4 points, but it needs to know the true previous point so the history
@@ -454,10 +505,10 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     # phase is moving *towards* history_index + 1
     var history_index: List[Int8]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.history_index = [0 for _ in range(self.N)]
-        self.impulse = Impulse[N](world_ptr)
+        self.impulse = Impulse[N](w)
         self.history = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
         for i in range(self.N):
             for j in range(len(self.history)):
@@ -500,7 +551,7 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
             for i in range(self.N):
                 p0[i] = self.history[self.history_index[i]][i]
                 p1[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
-            return linear_interpp0, p1, self.impulse.phasor.phase)
+            return linear_interp(p0, p1, self.impulse.phasor.phase)
         else:
             p0 = SIMD[DType.float64, self.N](0.0)
             p1 = SIMD[DType.float64, self.N](0.0)
@@ -519,16 +570,16 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.phase = SIMD[DType.float64, N](0.0)
-        self.freq_mul = self.world_ptr[0].os_multiplier[os_index] / self.world_ptr[0].sample_rate
+        self.freq_mul = self.w[].os_multiplier[os_index] / self.w[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
-        return String("Phasor")
+        return String("Sweep")
         
     @always_inline
     fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
@@ -545,41 +596,71 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
         return self.phase
 
-struct OscBuffers(Movable, Copyable):
-    var buffers: InlineArray[InlineArray[Float64, 16384], 7]  # List of all waveform buffers
-    var last_phase: Float64  # Last phase value for interpolation
-    var size: Int64
-    var mask: Int64
+alias OscBuffersSize: Int = 16384  # 2^14
+alias OscBuffersMask: Int = 16383  # 2^14 - 1
 
+@doc_private
+struct OscBuffers(Movable, Copyable):
+    var buffers: InlineArray[List[Float64],7]
+
+    @doc_private
     fn __init__(out self):
-        self.size = 16384
-        self.mask = self.size - 1
-        self.buffers = InlineArray[InlineArray[Float64, 16384], 7](uninitialized=True)
-        self.last_phase = 0.0  # Initialize last phase value
+        self.buffers = InlineArray[List[Float64],7]()
         
         self.init_sine()  # Initialize sine wave buffer
-
-        self.init_triangle()  # Initialize triangle wave buffer using harmonics
-        self.init_sawtooth()  # Initialize sawtooth wave buffer using harmonics
-        self.init_square()  # Initialize square wave buffer using harmonics
 
         self.init_lf_triangle()  # Initialize triangle wave buffer
         self.init_lf_sawtooth()  # Initialize sawtooth wave buffer
         self.init_lf_square()  # Initialize square wave buffer
 
+        self.init_triangle()  # Initialize triangle wave buffer using harmonics
+        self.init_sawtooth()  # Initialize sawtooth wave buffer using harmonics
+        self.init_square()  # Initialize square wave buffer using harmonics
+
     # Build Wavetables:
     # =================
     @doc_private
-    fn init_sine(mut self: OscBuffers):
-        for i in range(self.size):
-            self.buffers[0][i] = (sin(2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)))  # Precompute sine values
+    fn init_sine(mut self):
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            v = (sin(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)))
+            data.append(v)
+        self.buffers[0] = data.copy()
 
     @doc_private
-    fn init_triangle(mut self: OscBuffers):
+    fn init_lf_triangle(mut self):
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            if i < OscBuffersSize // 2:
+                data.append(2.0 * (Float64(i) / Float64(OscBuffersSize)) - 1.0)  # Ascending part
+            else:
+                data.append(1.0 - 2.0 * (Float64(i) / Float64(OscBuffersSize)))  # Descending part
+        self.buffers[1] = data.copy()
+
+    @doc_private
+    fn init_lf_sawtooth(mut self):
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            data.append(2.0 * (Float64(i) / Float64(OscBuffersSize)) - 1.0)  # Linear ramp from -1 to 1
+        self.buffers[2] = data.copy()
+
+    @doc_private
+    fn init_lf_square(mut self):
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            if i < OscBuffersSize // 2:
+                data.append(1.0)  # First half is 1
+            else:
+                data.append(-1.0)  # Second half is -1
+        self.buffers[3] = data.copy()
+
+    @doc_private
+    fn init_triangle(mut self):
         # Construct triangle wave from sine harmonics
         # Triangle formula: 8/pi^2 * sum((-1)^(n+1) * sin(n*x) / n^2) for n=1 to 512
-        for i in range(self.size):
-            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
             
             for n in range(1, 513):  # Using 512 harmonics
@@ -589,14 +670,16 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 8/π² for correct amplitude
-            self.buffers[4][i] = 8.0 / (3.141592653589793 * 3.141592653589793) * sample
+            data.append(8.0 / (3.141592653589793 * 3.141592653589793) * sample)
+        self.buffers[4] = data.copy()
 
     @doc_private
-    fn init_sawtooth(mut self: OscBuffers):
+    fn init_sawtooth(mut self):
         # Construct sawtooth wave from sine harmonics
         # Sawtooth formula: 2/pi * sum((-1)^(n+1) * sin(n*x) / n) for n=1 to 512
-        for i in range(self.size):
-            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
             
             for n in range(1, 513):  # Using 512 harmonics
@@ -606,14 +689,16 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 2/π for correct amplitude
-            self.buffers[5][i] = 2.0 / 3.141592653589793 * sample
+            data.append(2.0 / 3.141592653589793 * sample)
+        self.buffers[5] = data.copy()
 
     @doc_private
-    fn init_square(mut self: OscBuffers):
+    fn init_square(mut self):
         # Construct square wave from sine harmonics
         # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
-        for i in range(self.size):
-            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(self.size)
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
             
             for n in range(1, 513):  # Using 512 harmonics
@@ -621,79 +706,8 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 4/π for correct amplitude
-            self.buffers[6][i] = 4.0 / 3.141592653589793 * sample
-
-    @doc_private
-    fn init_lf_triangle(mut self: OscBuffers):
-        for i in range(self.size):
-            if i < self.size // 2:
-                self.buffers[1][i] = 2.0 * (Float64(i) / Float64(self.size)) - 1.0  # Ascending part
-            else:
-                self.buffers[1][i] = 1.0 - 2.0 * (Float64(i) / Float64(self.size))  # Descending part
-
-    @doc_private
-    fn init_lf_sawtooth(mut self: OscBuffers):
-        for i in range(self.size):
-            self.buffers[2][i] = 2.0 * (Float64(i) / Float64(self.size)) - 1.0  # Linear ramp from -1 to 1
-
-    @doc_private
-    fn init_lf_square(mut self: OscBuffers):
-        for i in range(self.size):
-            if i < self.size // 2:
-                self.buffers[3][i] = 1.0  # First half is 1
-            else:
-                self.buffers[3][i] = -1.0  # Second half is -1
-
-    @always_inline
-    fn quadratic_interp_loc(self, x: Float64, buf_num: Int64) -> Float64:
-        base_idx = Int64(x) & self.mask
-        idx1 = (base_idx + 1) & self.mask
-        idx2 = (base_idx + 2) & self.mask
-        
-        frac = x - Float64(Int64(x))
-        
-        ref buffer = self.buffers[buf_num]
-        return quadratic_interp(buffer[base_idx], buffer[idx1], buffer[idx2], frac)
-
-    @always_inline
-    fn linear_interpself, x: Float64, buf_num: Int64) -> Float64:
-        index = Int64(x) & self.mask
-        index_next = (index + 1) & self.mask
-        frac = x - Float64(Int64(x))
-        
-        ref buffer = self.buffers[buf_num]
-        return buffer[index] + frac * (buffer[index_next] - buffer[index])
-    
-    @always_inline
-    fn read_none(self, phase: Float64, buf_num: Int64) -> Float64:
-        index = Int64(phase * Float64(self.size)) & self.mask
-        
-        return self.buffers[buf_num][index]
-
-    @always_inline
-    fn read_lin(self, phase: Float64, buf_num: Int64) -> Float64:
-        var f_index = (phase * Float64(self.size))
-        var value = self.linear_interpf_index, buf_num)
-        return value
-
-    @always_inline
-    fn read_quadratic(self, phase: Float64, buf_num: Int64) -> Float64:
-        var f_index = (phase * Float64(self.size))
-        var value = self.quadratic_interp_loc(f_index, buf_num)
-        return value
-
-    fn read[interp: Int = 0](self, phase: Float64, osc_type: Int64 = 0) -> Float64:
-        @parameter
-        if interp == 0:
-            return self.read_lin(phase, osc_type)  # Linear interpolation
-        elif interp == 1:
-            return self.read_quadratic(phase, osc_type)  # Quadratic interpolation
-        else:
-            return self.read_lin(phase, osc_type)  # Default to linear interpolation
-
-    @always_inline
-    fn read_sinc(self,phase: Float64, last_phase: Float64, channel: Int64) -> Float64:
-        return self.sinc_interpolator.read_sinc(self, phase, last_phase, channel)
+            data.append(4.0 / 3.141592653589793 * sample)
+        self.buffers[6] = data.copy()
 
     fn __repr__(self) -> String:
-        return String("OscBuffers(size=" + String(self.size) + ")")
+        return String("OscBuffers(size=" + String(OscBuffersSize) + ")")

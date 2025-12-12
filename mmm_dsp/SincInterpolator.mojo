@@ -50,7 +50,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @doc_private
     @always_inline  
-    fn spaced_sinc[bWrap: Bool = False](self, data: List[Float64], index: Int64, frac: Float64, spacing: Int64) -> Float64:
+    fn spaced_sinc[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], index: Int64, frac: Float64, spacing: Int64) -> Float64:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
         sinc_mult = self.max_sinc_offset / spacing
         ripples = self.ripples
@@ -59,7 +59,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         # Try to process in SIMD chunks if the loop is large enough
         alias simd_width = simd_width_of[DType.float64]()
         var out: Float64 = 0.0
-        var data_len = len(data)
+        data_len: Int64 = len(data)
         
         # Process SIMD chunks
         for base_sp in range(0, loop_count, simd_width):
@@ -69,11 +69,21 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
             for i in range(simd_width):
                 if Int64(i) < remaining:
                     sp = base_sp + i
-                    offset = sp - ripples + 1
+                    offset: Int64 = Int64(sp - ripples + 1)
                     
                     @parameter
                     if bWrap:
-                        loc_point = (index + offset * spacing) % data_len
+                        loc_point_unwrapped = index + offset * spacing
+                        loc_point = loc_point_unwrapped
+                        
+                        @parameter
+                        if mask != 0:
+                            loc_point = loc_point_unwrapped & mask
+                        else:
+                            loc_point = loc_point_unwrapped % data_len
+                            if loc_point < 0:
+                                loc_point += data_len
+
                         spaced_point = (loc_point / spacing) * spacing
                         sinc_offset = loc_point - spaced_point
                         
@@ -94,7 +104,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         return out
 
     @always_inline
-    fn sinc_interp[bWrap: Bool = False](self, data: List[Float64], current_index: Float64, prev_index: Float64) -> Float64:
+    fn sinc_interp[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], current_index: Float64, prev_index: Float64) -> Float64:
         size_f64: Float64 = Float64(len(data))
         index_diff = current_index - prev_index
         half_window = size_f64 * 0.5
@@ -118,18 +128,18 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         sinc_crossfade = selector.select(0.0, sinc_crossfade)
         layer = layer_clamped
         
-        spacing1 = 1 << layer
-        spacing2 = spacing1 << 1
+        spacing1: Int64 = Int64(1) << layer
+        spacing2: Int64 = spacing1 << 1
         
         f_index = current_index
         index_floor = Int64(f_index)
         frac = f_index - Float64(index_floor)
         
-        sinc1 = self.spaced_sinc[bWrap](data, index_floor, frac, spacing1)
+        sinc1 = self.spaced_sinc[bWrap,mask](data, index_floor, frac, spacing1)
         
         sel0: SIMD[DType.bool, 1] = (sinc_crossfade == 0.0)
         sel1: SIMD[DType.bool, 1] = (layer < 12)
-        sinc2 = sel0.select(0.0, sel1.select(self.spaced_sinc[bWrap](data, index_floor, frac, spacing2),0.0))
+        sinc2 = sel0.select(0.0, sel1.select(self.spaced_sinc[bWrap,mask](data, index_floor, frac, spacing2),0.0))
         
         return sinc1 + sinc_crossfade * (sinc2 - sinc1)
 

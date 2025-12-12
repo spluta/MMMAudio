@@ -17,25 +17,29 @@ struct Windows(Movable, Copyable):
     var hamming: Buffer
     var blackman: Buffer
     var sine: Buffer
+    var kaiser: Buffer
     var w: UnsafePointer[MMMWorld]
+    alias size: Int64 = 2048
+    alias mask: Int64 = 2047 # yep, gotta make sure this is size - 1
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], size: Int64 = 2048):
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.hann = Buffer(hann_window(size), w[].sample_rate)
-        self.hamming = Buffer(hamming_window(size), w[].sample_rate)
-        self.blackman = Buffer(blackman_window(size), w[].sample_rate)
-        self.sine = Buffer(sine_window(size), w[].sample_rate)
+        self.hann = Buffer(w,hann_window(self.size), w[].sample_rate)
+        self.hamming = Buffer(w,hamming_window(self.size), w[].sample_rate)
+        self.blackman = Buffer(w,blackman_window(self.size), w[].sample_rate)
+        self.sine = Buffer(w,sine_window(self.size), w[].sample_rate)
+        self.kaiser = Buffer(w,kaiser_window(self.size, 5.0), w[].sample_rate)
     
     fn phase_lookup[window_type: Int = WindowType.rect, interp: Int = Interp.none](mut self, phase: Float64) -> Float64:
         @parameter
         if window_type == WindowType.hann:
-            return self.hann.read[num_chans=1,interp=interp,wrap=True](phase * self.hann.num_frames_f64)
+            return self.hann.read[num_chans=1,interp=interp,wrap=True,mask=self.mask](phase * self.hann.num_frames_f64)
         elif window_type == WindowType.hamming:
-            return self.hamming.read[num_chans=1,interp=interp,wrap=True](phase * self.hamming.num_frames_f64)
+            return self.hamming.read[num_chans=1,interp=interp,wrap=True,mask=self.mask](phase * self.hamming.num_frames_f64)
         elif window_type == WindowType.blackman:
-            return self.blackman.read[num_chans=1,interp=interp,wrap=True](phase * self.blackman.num_frames_f64)
+            return self.blackman.read[num_chans=1,interp=interp,wrap=True,mask=self.mask](phase * self.blackman.num_frames_f64)
         elif window_type == WindowType.sine:
-            return self.sine.read[num_chans=1,interp=interp,wrap=True](phase * self.sine.num_frames_f64)
+            return self.sine.read[num_chans=1,interp=interp,wrap=True,mask=self.mask](phase * self.sine.num_frames_f64)
         else:
             return 1.0  # Rectangular window
 

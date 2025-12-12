@@ -5,6 +5,7 @@ from mmm_utils.functions import *
 from mmm_src.MMMWorld import MMMWorld
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
+from mmm_utils.functions import linear_interp, quadratic_interp
 
 alias dtype = DType.float64
 
@@ -18,39 +19,34 @@ struct Interp:
 
 struct Buffer(Movable, Copyable):
 
+    var w: UnsafePointer[MMMWorld]
     var sample_rate: Float64  
     var data: List[List[Float64]]
     var num_chans: Int64
     var num_frames: Int64
-    var num_frames_f: Float64
+    var num_frames_f64: Float64
     
-    fn __init__(out self, lists: List[List[Float64]], sample_rate: Float64 = 48000.0):
+    fn __init__(out self, w: UnsafePointer[MMMWorld], lists: List[List[Float64]], sample_rate: Float64 = 48000.0):
 
+        self.w = w
         self.data = lists.copy()
         self.num_chans = len(self.data)
         self.num_frames = len(self.data[0])
-        self.num_frames_f = Float64(self.num_frames)
+        self.num_frames_f64 = Float64(self.num_frames)
         self.sample_rate = sample_rate
 
-    fn __init__(out self, list: List[Float64], sample_rate: Float64 = 48000.0):
+    fn __init__(out self, w: UnsafePointer[MMMWorld], list: List[Float64], sample_rate: Float64 = 48000.0):
 
+        self.w = w
         self.data = List[List[Float64]]()
         self.data.append(list.copy())
         self.num_chans = 1
         self.num_frames = len(self.data[0])
-        self.num_frames_f = Float64(self.num_frames)
+        self.num_frames_f64 = Float64(self.num_frames)
         self.sample_rate = sample_rate
 
     fn __repr__(self) -> String:
         return String("Buffer")
-
-    fn at_index(self, index: Int64, chan: Int64 = 0) -> Float64:
-        """Get a sample from the SoundFile at the specified index and channel."""
-
-        if chan < 0 or chan >= self.num_chans or index < 0 or index >= self.num_frames:
-            return 0.0
-        else:
-            return self.data[chan][index]
 
     @staticmethod
     def load(w: UnsafePointer[MMMWorld], filename: String, wavetables_per_channel: Int64 = 1) -> Buffer:
@@ -112,89 +108,100 @@ struct Buffer(Movable, Copyable):
                     channel_data.append(data_ptr[(f * num_chans) + c])
                 samples.append(channel_data^)
 
-        return Buffer(samples, buf_sample_rate)
+        return Buffer(w,samples, buf_sample_rate)
 
-struct Player(Movable, Copyable):
-    """Buffer Player with interpolation support."""
-
-    var w: UnsafePointer[MMMWorld]
-    var prev_f_idx: Float64
-    var f_idx: Float64
-
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.prev_f_idx = 0.0
-        self.f_idx = 0.0
-
-    fn next[num_chans: Int = 1, interp: Int = Interp.quad, wrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, start_chan: Int64 = 0, trig: Bool = False) -> SIMD[DType.float64, num_chans]:
-
-        if trig:
-            self.f_idx = 0.0
-        else:
-            self.f_idx += rate * (buf.sample_rate / self.w[].sample_rate)
-
-        if not wrap and (self.f_idx < 0.0 or self.f_idx >= buf.num_frames_f):
-            return SIMD[DType.float64, num_chans](0.0)
-        else:
-            self.f_idx = self.f_idx % buf.num_frames_f
-
-        # It is guaranteed that f_idx is now in range [0, num_frames_f)
-
-        @parameter
-        if interp == Interp.sinc:
-            return self.sinc_interp[num_chans,wrap](buf,self.f_idx)
-        else:
-            out = SIMD[DType.float64, num_chans](0.0)
-        
-            @parameter
-            for chan in range(num_chans):
-                if (start_chan + chan) >= buf.num_chans:
-                    # Out of bounds channel
-                    out[chan] = 0.0
-                else:
-                    @parameter
-                    if interp == Interp.none:
-                        out[chan] = Player.read_none[wrap](buf.data[start_chan + chan], self.f_idx)
-                    elif interp == Interp.linear:
-                        out[chan] = Player.read_linear[wrap](buf.data[start_chan + chan], self.f_idx)
-                    elif interp == Interp.quad:
-                        out[chan] = Player.read_quad[wrap](buf.data[start_chan + chan], self.f_idx)
-                    else:
-                        # Unsupported interpolation method
-                        print("fn read:: Unsupported interpolation method")
-            return out
-
-    @doc_private
     @always_inline
-    fn sinc_interp[num_chans: Int = 1,wrap: Bool = False](mut self, buf: Buffer, f_idx: Float64) -> SIMD[DType.float64, num_chans]:
-        """Read using provided index with sinc interpolation."""
-        
-        output = SIMD[DType.float64, num_chans](0.0)
-        
+    fn read[num_chans: Int = 1, interp: Int = Interp.quad, bWrap: Bool = False, mask: Int = 0](mut self, f_idx: Float64, start_chan: Int64 = 0, prev_f_idx: Float64 = 0.0) -> SIMD[DType.float64, num_chans]:
+
+        out = SIMD[DType.float64, num_chans](0.0)
+    
         @parameter
         for chan in range(num_chans):
-            if chan >= Int(buf.num_chans):
-                output[chan] = 0.0
+            if (start_chan + chan) >= self.num_chans:
+                out[chan] = 0.0
             else:
-                output[chan] = self.w[].sinc_interpolator.sinc_interp[wrap](buf.data[chan], f_idx, self.prev_f_idx)
-        
-        # store previous index for next call
-        self.prev_f_idx = f_idx
+                out[chan] = ListFloat64Reader.read[bWrap,mask](self.w, self.data[start_chan + chan], f_idx, prev_f_idx)
 
-        return output
+        return out
 
-    # Reading Out Samples from a List[Float64] (a single channel)
-    # =================================================================================
 
-    @doc_private
+struct ListFloat64Reader(Movable, Copyable):
+
     @always_inline
     @staticmethod
-    fn read_quad[wrap: Bool = True](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a List[Float64] using provided index with quadratic interpolation."""
+    fn idx_in_range(data: List[Float64], idx: Int64) -> Bool:
+        return idx >= 0 and idx < len(data)
 
-        # f_idx is guaranteed to be in range [0, len(data))
-        # therefore wrap here is only useful to know if the indices being
-        # used for interpolation should wrap or not
+    @always_inline
+    @staticmethod
+    fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](w: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
+        """Read a value from a List[Float64] using provided index and interpolation method."""
+        
+        @parameter
+        if interp == Interp.none:
+            return ListFloat64Reader.read_none[bWrap,mask](data, f_idx)
+        elif interp == Interp.linear:
+            return ListFloat64Reader.read_linear[bWrap,mask](data, f_idx)
+        elif interp == Interp.quad:
+            return ListFloat64Reader.read_quad[bWrap,mask](data, f_idx)
+        elif interp == Interp.sinc:
+            return ListFloat64Reader.read_sinc[bWrap,mask](data, f_idx, prev_f_idx, w)
+        else:
+            print("ListFloat64Reader fn read:: Unsupported interpolation method")
+            return 0.0
+
+    @always_inline
+    @staticmethod
+    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
+        """Read a value from a List[Float64] using provided index with no interpolation."""
+
+        idx = Int64(f_idx)
+            
+        @parameter
+        if bWrap:
+            @parameter
+            if mask != 0:
+                idx = idx & mask
+            else:
+                idx = idx % len(data)
+            return data[idx]
+        else:
+            return data[idx] if ListFloat64Reader.idx_in_range(data,idx) else 0.0
+        
+    @always_inline
+    @staticmethod
+    fn read_linear[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
+        """Read a value from a List[Float64] using provided index with linear interpolation."""
+        
+        idx0: Int64 = Int64(f_idx)
+        idx1: Int64 = idx0 + 1
+        frac: Float64 = f_idx - Float64(idx0)
+
+        @parameter
+        if bWrap:
+            @parameter
+            if mask != 0:
+                idx0 = idx0 & mask
+                idx1 = idx1 & mask
+            else:
+                length = len(data)
+                idx0 = idx0 % length
+                idx1 = idx1 % length
+            
+            y0 = data[idx0]
+            y1 = data[idx1]
+
+        else:
+            # not wrapping
+            y0 = data[idx0] if ListFloat64Reader.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if ListFloat64Reader.idx_in_range(data, idx1) else 0.0
+
+        return linear_interp(y0,y1,frac)
+
+    @always_inline
+    @staticmethod
+    fn read_quad[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
+        """Read a value from a List[Float64] using provided index with quadratic interpolation."""
 
         idx0 = Int64(f_idx)
         idx1 = idx0 + 1
@@ -202,49 +209,31 @@ struct Player(Movable, Copyable):
         frac: Float64 = f_idx - Float64(idx0)
 
         @parameter
-        if wrap:
+        if bWrap:
+            @parameter
+            if mask != 0:
+                idx0 = idx0 & mask
+                idx1 = idx1 & mask
+                idx2 = idx2 & mask
+            else:
+                length = len(data)
+                idx0 = idx0 % length
+                idx1 = idx1 % length
+                idx2 = idx2 % length
+
             y0 = data[idx0]
-            y1 = data[idx1 % len(data)]
-            y2 = data[idx2 % len(data)]
+            y1 = data[idx1]
+            y2 = data[idx2]
+
+            return quadratic_interp(y0, y1, y2, frac)
         else:
-            y0 = data[idx0]
-            y1 = data[idx1] if idx1 < len(data) else 0.0
-            y2 = data[idx2] if idx2 < len(data) else 0.0
+            y0 = data[idx0] if ListFloat64Reader.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if ListFloat64Reader.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if ListFloat64Reader.idx_in_range(data, idx2) else 0.0
 
         return quadratic_interp(y0, y1, y2, frac)
 
-    @doc_private
     @always_inline
     @staticmethod
-    fn read_linear[wrap: Bool = True](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a List[Float64] using provided index with linear interpolation."""
-        
-        var wrapped_f_idx: Float64 = f_idx
-
-        if f_idx < 0.0 or f_idx >= len(data):
-            @parameter
-            if wrap:
-                wrapped_f_idx = f_idx % Float64(len(data))
-            else:
-                return 0.0  # Out of bounds
-        
-        idx0 = Int64(wrapped_f_idx)
-        idx1 = idx0 + 1
-        frac = wrapped_f_idx - Float64(idx0)
-
-        @parameter
-        if wrap:
-            y0 = data[idx0]
-            y1 = data[idx1 % len(data)]
-        else:
-            y0 = data[idx0]
-            y1 = data[idx1] if idx1 < len(data) else 0.0
-
-        return linear_interp(y0,y1,frac)
-
-    @doc_private
-    @always_inline
-    @staticmethod
-    fn read_none[wrap: Bool = True](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a List[Float64] using provided index with no interpolation."""
-        return data[Int64(f_idx)]
+    fn read_sinc[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64, prev_f_idx: Float64, w: UnsafePointer[MMMWorld]) -> Float64:
+        return w[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)
