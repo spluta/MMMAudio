@@ -17,7 +17,7 @@ alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate nu
 
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
 struct TorchSynth(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var osc1: Osc[1, 2, 1]
     var osc2: Osc[1, 2, 1]
 
@@ -38,35 +38,35 @@ struct TorchSynth(Movable, Copyable):
     var dc1: DCTrap
     var dc2: DCTrap
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.osc1 = Osc[1, 2, 1](world_ptr)
-        self.osc2 = Osc[1, 2, 1](world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.osc1 = Osc[1, 2, 1](w)
+        self.osc2 = Osc[1, 2, 1](w)
 
         # load the trained model
-        self.model = MLP(world_ptr,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
+        self.model = MLP(w,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
         self.lag_vals = [random_float64() for _ in range(model_out_size)]
-        self.lags = [Lag[simd_width](self.world_ptr, 1/25.0) for _ in range(num_simd)]
+        self.lags = [Lag[simd_width](self.w, 1/25.0) for _ in range(num_simd)]
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
 
-        self.latch1 = Latch(self.world_ptr)
-        self.latch2 = Latch(self.world_ptr)
-        self.impulse1 = Impulse(self.world_ptr)
-        self.impulse2 = Impulse(self.world_ptr)
-        self.filt1 = SVF(self.world_ptr)
-        self.filt2 = SVF(self.world_ptr)
-        self.dc1 = DCTrap(self.world_ptr)
-        self.dc2 = DCTrap(self.world_ptr)
+        self.latch1 = Latch(self.w)
+        self.latch2 = Latch(self.w)
+        self.impulse1 = Impulse(self.w)
+        self.impulse2 = Impulse(self.w)
+        self.filt1 = SVF(self.w)
+        self.filt2 = SVF(self.w)
+        self.dc1 = DCTrap(self.w)
+        self.dc2 = DCTrap(self.w)
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.model.model_input[0] = self.world_ptr[0].mouse_x
-        self.model.model_input[1] = self.world_ptr[0].mouse_y
+        self.model.model_input[0] = self.w[].mouse_x
+        self.model.model_input[1] = self.w[].mouse_y
 
         self.model.next()  # Run the model inference
 
@@ -85,7 +85,7 @@ struct TorchSynth(Movable, Copyable):
                     self.lag_vals[idx] = lagged_output[j]
 
         # uncomment to see the output of the model
-        # self.world_ptr[0].print(self.lag_vals[0], self.lag_vals[1], self.lag_vals[2], self.lag_vals[3], self.lag_vals[4], self.lag_vals[5], self.lag_vals[6], self.lag_vals[7], self.lag_vals[8], self.lag_vals[9], self.lag_vals[10], self.lag_vals[11], self.lag_vals[12], self.lag_vals[13], self.lag_vals[14], self.lag_vals[15])
+        # self.w[].print(self.lag_vals[0], self.lag_vals[1], self.lag_vals[2], self.lag_vals[3], self.lag_vals[4], self.lag_vals[5], self.lag_vals[6], self.lag_vals[7], self.lag_vals[8], self.lag_vals[9], self.lag_vals[10], self.lag_vals[11], self.lag_vals[12], self.lag_vals[13], self.lag_vals[14], self.lag_vals[15])
 
         # oscillator 1 -----------------------
 
@@ -98,7 +98,7 @@ struct TorchSynth(Movable, Copyable):
         osc1 = self.osc1.next_interp(freq1, 0.0, False, [0,4,5,6], osc_frac1)
 
         # samplerate reduction
-        osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.w[].sample_rate*0.5)))
         osc1 = self.filt1.lpf(osc1, linexp(self.lag_vals[5], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[6], 0.0, 1.0, 0.707, 4.0))
 
         tanh_gain = linlin(self.lag_vals[7], 0.0, 1.0, 0.5, 10.0)
@@ -115,7 +115,7 @@ struct TorchSynth(Movable, Copyable):
         osc_frac2 = linlin(self.lag_vals[11], 0.0, 1.0, 0.0, 1.0)
         var osc2 = self.osc2.next_interp(freq2, 0.0, False, [0,4,5,6], osc_frac2)
 
-        osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.world_ptr[0].sample_rate*0.5)))
+        osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.w[].sample_rate*0.5)))
 
         osc2 = self.filt2.lpf(osc2, linexp(self.lag_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(self.lag_vals[14], 0.0, 1.0, 0.707, 4.0))
 
@@ -130,13 +130,13 @@ struct TorchSynth(Movable, Copyable):
 # THE GRAPH
 
 struct TorchMlp():
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
 
-        self.torch_synth = TorchSynth(world_ptr)  # Initialize the TorchSynth with the world instance
+        self.torch_synth = TorchSynth(w)  # Initialize the TorchSynth with the world instance
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         return self.torch_synth.next()

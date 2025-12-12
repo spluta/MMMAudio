@@ -8,17 +8,17 @@ from mmm_utils.Print import Print
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 struct Tone(Movable,Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
     var m: Messenger
     var gate: Bool
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], namespace: String):
-        self.world_ptr = world_ptr
-        self.osc = Osc(self.world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld], namespace: String):
+        self.w = w
+        self.osc = Osc(self.w)
         self.freq = 440.0
-        self.m = Messenger(self.world_ptr,namespace)
+        self.m = Messenger(self.w,namespace)
         self.gate = False
 
     fn next(mut self) -> Float64:
@@ -34,7 +34,7 @@ struct Tone(Movable,Copyable):
         return sig
 
 struct MessengersExample():
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var m: Messenger
     var tones: List[Tone]
     
@@ -47,13 +47,13 @@ struct MessengersExample():
     var string: String
     var strings: List[String]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.m = Messenger(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.m = Messenger(w)
 
         self.tones = List[Tone]()
         for i in range(2):
-            self.tones.append(Tone(world_ptr, "tone_" + String(i)))
+            self.tones.append(Tone(w, "tone_" + String(i)))
 
         self.bool = False
         self.bools = List[Bool](False, False)

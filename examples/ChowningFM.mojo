@@ -7,7 +7,7 @@ from collections import Dict
 from mmm_utils.Messenger import *
 
 struct ChowningFM(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld] # pointer to the MMMWorld
+    var w: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var m: Messenger
     var c_osc: Osc[1,0,1]  # Carrier oscillator
     var m_osc: Osc  # Modulator oscillator
@@ -19,14 +19,14 @@ struct ChowningFM(Representable, Movable, Copyable):
     var mfreq: Float64
     var vol: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.m = Messenger(world_ptr)
-        self.c_osc = Osc[1,0,1](world_ptr)
-        self.m_osc = Osc(world_ptr)
-        self.index_env = Env(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.m = Messenger(w)
+        self.c_osc = Osc[1,0,1](w)
+        self.m_osc = Osc(w)
+        self.index_env = Env(w)
         self.index_env_params = EnvParams()
-        self.amp_env = Env(world_ptr)
+        self.amp_env = Env(w)
         self.amp_env_params = EnvParams()
         self.cfreq = 200.0
         self.mfreq = 100.0

@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFTProcess import *
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
 from mmm_dsp.PlayBuf import PlayBuf
@@ -47,15 +47,15 @@ struct BinScramble(Copyable,Movable):
 
 # User defined struct that implements FFTProcessable
 struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var bin_scramble: BinScramble
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(world_ptr)
+        self.m = Messenger(w)
         self.bin_scramble = BinScramble(nbins=(window_size // 2) + 1, nscrambles=20)
 
     fn get_messages(mut self) -> None:
@@ -72,7 +72,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 
 # User's Main Synth
 struct TestFFTProcess(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowType.hann]
@@ -80,13 +80,13 @@ struct TestFFTProcess(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.world_ptr,process=ScrambleAndLowPass(self.world_ptr))
-        self.m = Messenger(world_ptr)
-        self.ps = List[Print](length=2,fill=Print(world_ptr))
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.playBuf = PlayBuf(self.w) 
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.w,process=ScrambleAndLowPass(self.w))
+        self.m = Messenger(w)
+        self.ps = List[Print](length=2,fill=Print(w))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

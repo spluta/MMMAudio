@@ -1,5 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
 
 from mmm_dsp.Distortion import *
@@ -7,21 +7,21 @@ from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
 struct TestSelect(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var messenger: Messenger
     var vs: List[Float64]
     var printers: List[Print]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.messenger = Messenger(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.messenger = Messenger(w)
         self.vs = List[Float64](capacity=8)
         self.printers = List[Print](capacity=2)
         for i in range(8):
             self.vs.append(i * 100)
 
-        self.printers[0] = Print(world_ptr)
-        self.printers[1] = Print(world_ptr)
+        self.printers[0] = Print(w)
+        self.printers[1] = Print(w)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.vs[0] = self.messenger.get_val("v0", 0.0)

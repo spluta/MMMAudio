@@ -1,7 +1,7 @@
 """use this as a template for your own graphs"""
 
 from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
 
@@ -12,7 +12,7 @@ from mmm_dsp.Osc import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestCombAllpass(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var synth: Impulse[1]
     var messenger: Messenger
     var which: Float64
@@ -22,15 +22,15 @@ struct TestCombAllpass(Movable, Copyable):
     var allpass2: Allpass_Comb[1, DelayInterpOptions.lagrange]
     var delay_time: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.synth = Impulse[1](self.world_ptr)
-        self.messenger = Messenger(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.synth = Impulse[1](self.w)
+        self.messenger = Messenger(w)
         self.which = 0
-        self.comb = Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
-        self.allpass = Allpass_Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
-        self.comb2 = Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
-        self.allpass2 = Allpass_Comb[1, DelayInterpOptions.lagrange](self.world_ptr, max_delay=2.0)
+        self.comb = Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
+        self.allpass = Allpass_Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
+        self.comb2 = Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
+        self.allpass2 = Allpass_Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
         self.delay_time = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

@@ -1,23 +1,14 @@
 from python import PythonObject
 from python import Python
-from memory import UnsafePointer
 from mmm_utils.functions import *
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
 from mmm_utils.functions import linear_interp, quadratic_interp
 
 alias dtype = DType.float64
 
-struct Interp:
-    alias none: Int = 0
-    alias linear: Int = 1
-    alias quad: Int = 2
-    alias cubic: Int = 3
-    alias lagrange: Int = 4
-    alias sinc: Int = 5
-
-struct Buffer(Movable, Copyable):
+struct SoundFile(Movable, Copyable):
 
     var w: UnsafePointer[MMMWorld]
     var sample_rate: Float64  
@@ -49,9 +40,9 @@ struct Buffer(Movable, Copyable):
         return String("Buffer")
 
     @staticmethod
-    def load(w: UnsafePointer[MMMWorld], filename: String, wavetables_per_channel: Int64 = 1) -> Buffer:
+    def load(w: UnsafePointer[MMMWorld], filename: String, wavetables_per_channel: Int64 = 1) -> SoundFile:
         """
-        Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
+        Initialize a SoundFile by loading data from a WAV file using SciPy and NumPy.
 
         Args:
             w: UnsafePointer to MMMWorld.
@@ -124,7 +115,6 @@ struct Buffer(Movable, Copyable):
 
         return out
 
-
 struct ListFloat64Reader(Movable, Copyable):
 
     @always_inline
@@ -145,7 +135,7 @@ struct ListFloat64Reader(Movable, Copyable):
         elif interp == Interp.quad:
             return ListFloat64Reader.read_quad[bWrap,mask](data, f_idx)
         elif interp == Interp.sinc:
-            return ListFloat64Reader.read_sinc[bWrap,mask](data, f_idx, prev_f_idx, w)
+            return ListFloat64Reader.read_sinc[bWrap,mask](w,data, f_idx, prev_f_idx)
         else:
             print("ListFloat64Reader fn read:: Unsupported interpolation method")
             return 0.0
@@ -235,5 +225,5 @@ struct ListFloat64Reader(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    fn read_sinc[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64, prev_f_idx: Float64, w: UnsafePointer[MMMWorld]) -> Float64:
+    fn read_sinc[bWrap: Bool = True, mask: Int = 0](w: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
         return w[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)

@@ -74,7 +74,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
                     @parameter
                     if bWrap:
                         loc_point_unwrapped = index + offset * spacing
-                        loc_point = loc_point_unwrapped
+                        # loc_point = loc_point_unwrapped
                         
                         @parameter
                         if mask != 0:

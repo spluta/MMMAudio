@@ -1,7 +1,7 @@
 from math import sin, floor
 from random import random_float64
 from mmm_utils.functions import *
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from .Buffer import *
 from .Filters import *
 from .Oversampling import Oversampling
@@ -40,15 +40,6 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         self.phase = resets.select(0.0, self.phase)
         
         return (self.phase + phase_offset) % 1.0
-
-struct OscType:
-    alias sine: Int64 = 0
-    alias saw: Int64 = 1
-    alias square: Int64 = 2
-    alias triangle: Int64 = 3
-    alias bandlimited_triangle: Int64 = 4
-    alias bandlimited_saw: Int64 = 5
-    alias bandlimited_square: Int64 = 6
 
 struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
     """
@@ -603,9 +594,21 @@ alias OscBuffersMask: Int = 16383  # 2^14 - 1
 struct OscBuffers(Movable, Copyable):
     var buffers: InlineArray[List[Float64],7]
 
+    fn at_phase[osc_type: Int, interp: Int = Interp.none](self, w: UnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0) -> Float64:
+        return ListFloat64Reader.read[
+            interp=interp,
+            bWrap=True,
+            mask=OscBuffersMask
+        ](
+            w=w,
+            data=self.buffers[osc_type],
+            f_idx=phase * OscBuffersSize,
+            prev_f_idx=prev_phase * OscBuffersSize
+        )
+
     @doc_private
     fn __init__(out self):
-        self.buffers = InlineArray[List[Float64],7]()
+        self.buffers = InlineArray[List[Float64],7](uninitialized=True)
         
         self.init_sine()  # Initialize sine wave buffer
 

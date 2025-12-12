@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
 from mmm_dsp.PlayBuf import PlayBuf
@@ -10,7 +10,7 @@ from mmm_dsp.RMS import RMS
 
 # User's Synth
 struct TestRMS(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     # samplerate of 48000 50 ms for the RMS = 2400 samples
@@ -19,14 +19,14 @@ struct TestRMS(Movable, Copyable):
     var printer: Print
     var vol: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr) 
-        rms = RMS(self.world_ptr)
-        self.rms = BufferedProcess[RMS,2400,2400](self.world_ptr,process=rms^)
-        self.m = Messenger(world_ptr)
-        self.printer = Print(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.playBuf = PlayBuf(self.w) 
+        rms = RMS(self.w)
+        self.rms = BufferedProcess[RMS,2400,2400](self.w,process=rms^)
+        self.m = Messenger(w)
+        self.printer = Print(w)
         self.vol = 0.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

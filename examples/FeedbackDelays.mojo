@@ -19,7 +19,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w  
-        self.buffer = Buffer.load(w,"resources/Shiverer.wav")
+        self.buffer = SoundFile.load(w,"resources/Shiverer.wav")
         self.playBuf = PlayBuf(self.w) 
         # FB_Delay is initialized as 2 channel
         self.delays = FB_Delay[2, DelayInterpOptions.lagrange](self.w, 1.0) 
@@ -31,9 +31,9 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         # grab the mouse position at the start of the block
-        if self.w[0].top_of_block:
-            self.mouse_x = self.w[0].mouse_x
-            self.mouse_y = self.w[0].mouse_y
+        if self.w[].top_of_block:
+            self.mouse_x = self.w[].mouse_x
+            self.mouse_y = self.w[].mouse_y
 
         var sample = self.playBuf.next[N=2](self.buffer, 0, 1.0, True)  # Read samples from the buffer
 

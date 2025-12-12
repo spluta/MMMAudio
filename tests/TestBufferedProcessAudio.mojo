@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
 from mmm_dsp.PlayBuf import PlayBuf
@@ -18,14 +18,14 @@ from mmm_utils.functions import dbamp
 
 # This corresponds to the user defined BufferedProcess.
 struct BufferedMultiply(BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var m: Messenger
     var vol: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.vol = 0.0
-        self.m = Messenger(world_ptr)
+        self.m = Messenger(w)
 
     fn get_messages(mut self) -> None:
         self.m.update(self.vol,"vol")
@@ -38,7 +38,7 @@ struct BufferedMultiply(BufferedProcessable):
 
 # User's Synth
 struct TestBufferedProcessAudio(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,512,0]
@@ -46,14 +46,14 @@ struct TestBufferedProcessAudio(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr) 
-        var multiply_process = BufferedMultiply(self.world_ptr)
-        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,512,0](self.world_ptr,process=multiply_process^)
-        self.m = Messenger(world_ptr)
-        self.ps = List[Print](length=2,fill=Print(world_ptr))
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.playBuf = PlayBuf(self.w) 
+        var multiply_process = BufferedMultiply(self.w)
+        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,512,0](self.w,process=multiply_process^)
+        self.m = Messenger(w)
+        self.ps = List[Print](length=2,fill=Print(w))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

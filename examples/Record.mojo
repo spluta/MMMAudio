@@ -13,7 +13,7 @@ from math import floor
 from mmm_dsp.Osc import Osc
 
 struct Record_Synth(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buf_dur: Float64
     var buffer: Buffer
     var is_recording: Bool
@@ -28,21 +28,21 @@ struct Record_Synth(Representable, Movable, Copyable):
     var input_chan: Int64
     var messenger: Messenger
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.buf_dur = 10.0  # seconds
-        self.buffer = Buffer.zeros(self.world_ptr,Int64(self.world_ptr[0].sample_rate*self.buf_dur), 1, self.world_ptr[0].sample_rate)
+        self.buffer = Buffer.zeros(self.w,Int64(self.w[].sample_rate*self.buf_dur), 1, self.w[].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
         self.trig = False
         self.playback_speed = 1.0
-        self.record_buf = RecordBuf(world_ptr)
-        self.play_buf = PlayBuf(world_ptr)
+        self.record_buf = RecordBuf(w)
+        self.play_buf = PlayBuf(w)
         self.write_pos = 0
         self.note_time = 0.0
         self.num_frames = 0
         self.input_chan = 0
-        self.messenger = Messenger(world_ptr)
+        self.messenger = Messenger(w)
 
     fn __repr__(self) -> String:
         return String("Record_Synth")
@@ -57,19 +57,19 @@ struct Record_Synth(Representable, Movable, Copyable):
     
     fn stop_recording(mut self):
         self.note_time = min(time.perf_counter() - self.note_time, self.buf_dur)
-        self.num_frames = floor(self.note_time*self.world_ptr[0].sample_rate)
-        self.note_time = self.num_frames / self.world_ptr[0].sample_rate
+        self.num_frames = floor(self.note_time*self.w[].sample_rate)
+        self.note_time = self.num_frames / self.w[].sample_rate
         self.is_recording = False
         self.is_playing = 1.0
         self.trig = True
         self.write_pos = 0
-        print(self.note_time, self.num_frames/self.world_ptr[0].sample_rate)
+        print(self.note_time, self.num_frames/self.w[].sample_rate)
         print("Recorded duration:", self.note_time, "seconds")
         print("Recording stopped. Now playing.")
 
     fn next(mut self) -> SIMD[DType.float64, 1]:
         if self.messenger.notify_update(self.input_chan,"set_input_chan"):
-            if self.input_chan < 0 and self.input_chan >= self.world_ptr[0].num_in_chans:
+            if self.input_chan < 0 and self.input_chan >= self.w[].num_in_chans:
                 print("Input channel out of range, resetting to 0")
                 self.input_chan = 0
 
@@ -80,10 +80,10 @@ struct Record_Synth(Representable, Movable, Copyable):
             self.stop_recording()
 
         # this code does the actual recording, placing the next sample into the buffer
-        # my audio interface has audio in on channel 9, so I use self.world_ptr[0].sound_in[8]
+        # my audio interface has audio in on channel 9, so I use self.w[].sound_in[8]
         if self.is_recording:
-            # the sound_in List in the world_ptr holds the audio in data for the current sample, so grab it from there.
-            self.buffer.write(self.world_ptr[0].sound_in[self.input_chan], self.write_pos)
+            # the sound_in List in the w holds the audio in data for the current sample, so grab it from there.
+            self.buffer.write(self.w[].sound_in[self.input_chan], self.write_pos)
             self.write_pos += 1
             if self.write_pos >= Int(self.buffer.num_frames):
                 self.is_recording = False
@@ -101,13 +101,13 @@ struct Record_Synth(Representable, Movable, Copyable):
         return out
 
 struct Record(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
 
     var synth: Record_Synth
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.synth = Record_Synth(self.world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.synth = Record_Synth(self.w)
 
     fn __repr__(self) -> String:
         return String("Record")

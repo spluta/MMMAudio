@@ -43,7 +43,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var input_buffer_write_head: Int
@@ -51,11 +51,11 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
     var process: T
     var input_attenuation_window: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, w: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedInput struct.
 
         Args:
-            world_ptr: A pointer to the MMMWorld.
+            w: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
@@ -63,7 +63,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
             An initialized BufferedInput struct.
         """
         
-        self.world_ptr = world_ptr
+        self.w = w
         self.input_buffer_write_head = 0
         self.hop_counter = hop_start
         self.process = process^
@@ -92,7 +92,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         Args:
             input: The next input sample to process.
         """
-        if self.world_ptr[].top_of_block:
+        if self.w[].top_of_block:
             self.process.get_messages()
     
         self.input_buffer[self.input_buffer_write_head] = input
@@ -133,7 +133,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
         output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var output_buffer: List[Float64]
@@ -150,11 +150,11 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, w: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
         Args:
-            world_ptr: A pointer to the MMMWorld.
+            w: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
@@ -162,7 +162,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             An initialized BufferedProcess struct.
         """
         
-        self.world_ptr = world_ptr
+        self.w = w
         self.input_buffer_write_head = 0
         self.output_buffer_write_head = 0
         self.hop_counter = hop_start
@@ -214,7 +214,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Returns:
             The next output sample.
         """
-        if self.world_ptr[].top_of_block:
+        if self.w[].top_of_block:
             self.process.get_messages()
     
         self.input_buffer[self.input_buffer_write_head] = input
@@ -266,7 +266,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Returns:
             The next output sample.
         """
-        if self.world_ptr[].top_of_block:
+        if self.w[].top_of_block:
             self.process.get_messages()
 
         self.st_input_buffer[self.input_buffer_write_head] = input
@@ -325,7 +325,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = phase * num_frames_f + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    index = phase * num_frames_f + i * buffer.sample_rate / self.w[].sample_rate
                     # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
                     if index < num_frames_f - 2.0 and index >= 0:
                         self.passing_buffer[i] = read_none(buffer.data[0], index) * self.input_attenuation_window[i]
@@ -333,7 +333,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                         self.passing_buffer[i] = 0.0
             else:
                 for i in range(window_size):
-                    index = phase * buffer.num_frames + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    index = phase * buffer.num_frames + i * buffer.sample_rate / self.w[].sample_rate
                     if index < buffer.num_frames - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
                     else:
