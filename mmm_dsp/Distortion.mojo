@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from math import tanh, floor
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 

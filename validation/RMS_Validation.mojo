@@ -3,7 +3,7 @@
 from mmm_dsp.Analysis import *
 from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512

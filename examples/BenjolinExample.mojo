@@ -6,7 +6,7 @@ https://scsynth.org/t/benjolin-inspired-instrument/1074/1
 Ported to MMMAudio by Ted Moore, October 2025
 """
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import *
 from mmm_utils.functions import *
 

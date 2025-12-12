@@ -1,6 +1,6 @@
 from memory import UnsafePointer
 from .Buffer import *
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from .Osc import Impulse
 from mmm_utils.functions import *
 from .Env import Env

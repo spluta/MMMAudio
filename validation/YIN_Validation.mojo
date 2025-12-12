@@ -11,7 +11,7 @@ such as librosa in Python.
 from mmm_dsp.Analysis import *
 from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 
 alias minfreq: Float64 = 100.0
 alias maxfreq: Float64 = 5000.0

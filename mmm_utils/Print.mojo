@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_dsp.Osc import Impulse
 
 struct Print(Representable, Copyable, Movable):

@@ -5,7 +5,7 @@
 
 # from .Osc import Sweep
 # from .Filters import Lag
-# from mmm_src.MMMWorld import MMMWorld
+# from mmm_src.MMMWorld import *
 # from mmm_utils.functions import *
 # # from .Buffer import Buffer
 

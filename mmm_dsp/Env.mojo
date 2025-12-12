@@ -4,7 +4,7 @@ This module provides an envelope generator class that can create complex envelop
 """
 
 from .Osc import Sweep
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 

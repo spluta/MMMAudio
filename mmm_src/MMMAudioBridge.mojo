@@ -7,7 +7,7 @@ from python.bindings import PythonModuleBuilder
 from os import abort
 from memory import *
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 
 from mmm_utils.functions import *
 

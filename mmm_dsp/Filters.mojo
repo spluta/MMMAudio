@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from math import exp, sqrt, tan, pi, tanh, ceil, floor
 from bit import next_power_of_two
 from mmm_utils.functions import *

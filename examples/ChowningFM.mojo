@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
 
 from mmm_dsp.Osc import Osc
