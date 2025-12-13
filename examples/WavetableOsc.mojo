@@ -6,7 +6,7 @@ from mmm_utils.functions import *
 
 from mmm_dsp.Osc import *
 from mmm_dsp.Env import ASREnv
-from mmm_dsp.Buffer import Buffer
+from mmm_dsp.SoundFile import *
 from mmm_utils.Messenger import Messenger
 
 struct OscVoice(Movable, Copyable):

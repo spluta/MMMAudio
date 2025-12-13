@@ -36,8 +36,8 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # create some nice beating patterns. The output is stereo because later
         # the Pan2 processor positions the summed oscillators in the stereo field
 
-        self.osc1 = Osc(w)
-        self.osc2 = Osc(w)
+        self.osc1 = Osc[interp=Interp.linear](w)
+        self.osc2 = Osc[interp=Interp.linear](w)
         
         self.pan2_osc = Osc(w)
         self.pan2_freq = random_float64(0.03, 0.1)

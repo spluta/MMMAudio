@@ -1,7 +1,7 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.Windows import *
 from math import floor
-from mmm_dsp.Buffer import *
+from mmm_dsp.SoundFile import *
 
 # Eventually, I think it would be better for the user defined BufferProcessable
 # struct to be where the `window_size` is set as a parameter and then this value

@@ -36,84 +36,106 @@ struct SoundFile(Movable, Copyable):
         self.num_frames_f64 = Float64(self.num_frames)
         self.sample_rate = sample_rate
 
+        self.w[].print("Sample rate: ", self.sample_rate)
+        self.w[].print("chan[0], samples 1000-1005: ", self.data[0][1000], ",", self.data[0][1001], ",", self.data[0][1002], ",", self.data[0][1003], ",", self.data[0][1004], ",", self.data[0][1005])
+
     fn __repr__(self) -> String:
         return String("Buffer")
 
     @staticmethod
     def load(w: UnsafePointer[MMMWorld], filename: String, wavetables_per_channel: Int64 = 1) -> SoundFile:
-        """
-        Initialize a SoundFile by loading data from a WAV file using SciPy and NumPy.
 
-        Args:
-            w: UnsafePointer to MMMWorld.
-            filename: Path to the WAV file to load.
-            wavetables_per_channel: Number of wavetables per channel. Default is 1, meaning normal audio file loading. This is used only when the file is a multi-wavetable file, meaning it (probably) contains 1 channel of audio but is comprised of concatenated wavetables (back to back). See the [TODO] file for an applicable example.
-        """
         # load the necessary Python modules
+        try:
+            scipy = Python.import_module("scipy")
+        except:
+            print("Warning: Failed to import SciPy module")
+            scipy = PythonObject(None)
+        try:
+            np = Python.import_module("numpy")
+        except:
+            print("Warning: Failed to import NumPy module")
+            np = PythonObject(None)
 
-        scipy = Python.import_module("scipy")
-        np = Python.import_module("numpy")
-        py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
+        self_data = List[List[Float64]]()
+        self_index = 0.0
 
-        buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
+        if filename != "":
+            # Load the file if a filename is provided
+            try:
+                py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
 
-        if wavetables_per_channel > 1:
-            # If wavetables_per_channel is specified, calculate num_chans accordingly
-            total_samples = py_data[1].shape[0]
-            num_chans = wavetables_per_channel
-            num_frames = total_samples / wavetables_per_channel
+                print(py_data)  # Print the loaded data for debugging
+
+                self_buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
+
+                if wavetables_per_channel > 1:
+                    # If wavetables_per_channel is specified, calculate num_chans accordingly
+                    total_samples = py_data[1].shape[0]
+                    self_num_chans = wavetables_per_channel
+                    self_num_frames = Float64(total_samples) / Float64(wavetables_per_channel)
+                    self_duration = self_num_frames / self_buf_sample_rate  # Calculate duration in seconds
+                else:
+                    self_num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
+                    self_duration = self_num_frames / self_buf_sample_rate  # Calculate duration in seconds
+                    if len(py_data[1].shape) == 1:
+                        # Mono file
+                        self_num_chans = 1
+                    else:
+                        # Multi-channel file
+                        self_num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+
+                print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
+
+                var data = py_data[1]  # Extract the actual sound data from the tuple
+                # Convert to float64 if it's not already
+                if data.dtype != np.float64:
+                    # If integer type, normalize to [-1.0, 1.0] range
+                    if np.issubdtype(data.dtype, np.integer):
+                        data = data.astype(np.float64) / np.iinfo(data.dtype).max
+                    else:
+                        data = data.astype(np.float64)
+                
+                # this returns a pointer to an interleaved array of floats
+                data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
+
+                # wavetables are stored in ordered channels, not interleaved
+                if wavetables_per_channel > 1:
+                    for c in range(self_num_chans):
+                        channel_data = List[Float64]()
+                        for f in range(Int64(self_num_frames)):
+                            channel_data.append(data_ptr[(c * Int64(self_num_frames)) + f])
+                        self_data.append(channel_data^)
+                else:
+                    # normal multi-channel interleaved data
+                    for c in range(self_num_chans):
+                        channel_data = List[Float64]()
+                        for f in range(Int64(self_num_frames)):
+                            channel_data.append(data_ptr[(f * self_num_chans) + c])
+                        self_data.append(channel_data^)
+
+                print("Buffer initialized with file:", filename)  # Print the filename for debugging
+                return SoundFile(w, self_data, self_buf_sample_rate)
+            except err:
+                raise Error("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
         else:
-            num_frames = len(py_data[1])  # num_frames is the length of the data array
-            if len(py_data[1].shape) == 1:
-                # Mono file
-                num_chans = 1
-            else:
-                # Multi-channel file
-                num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+            raise Error("Buffer::__init__ No filename provided to load buffer.")
 
-        data = py_data[1]  # Extract the actual sound data from the tuple
-        # Convert to float64 if it's not already
-        if data.dtype != np.float64:
-            # If integer type, normalize to [-1.0, 1.0] range
-            if np.issubdtype(data.dtype, np.integer):
-                data = data.astype(np.float64) / np.iinfo(data.dtype).max
-            else:
-                data = data.astype(np.float64)
-        
-        # this returns a pointer to an interleaved array of floats
-        data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
+    # I'm pretty sure this is completely unnecessary now
+    # ==================================================
+    # @always_inline
+    # fn read[num_chans: Int = 1, interp: Int = Interp.quad, bWrap: Bool = False, mask: Int = 0](mut self, f_idx: Float64, start_chan: Int64 = 0, prev_f_idx: Float64 = 0.0) -> SIMD[DType.float64, num_chans]:
 
-        samples = List[List[Float64]]()
-        # wavetables are stored in ordered channels, not interleaved
-        if wavetables_per_channel > 1:
-            for c in range(num_chans):
-                channel_data = List[Float64]()
-                for f in range(Int64(num_frames)):
-                    channel_data.append(data_ptr[(c * Int64(num_frames)) + f])
-                samples.append(channel_data^)
-        else:
-            # normal multi-channel interleaved data
-            for c in range(num_chans):
-                channel_data = List[Float64]()
-                for f in range(Int64(num_frames)):
-                    channel_data.append(data_ptr[(f * num_chans) + c])
-                samples.append(channel_data^)
-
-        return Buffer(w,samples, buf_sample_rate)
-
-    @always_inline
-    fn read[num_chans: Int = 1, interp: Int = Interp.quad, bWrap: Bool = False, mask: Int = 0](mut self, f_idx: Float64, start_chan: Int64 = 0, prev_f_idx: Float64 = 0.0) -> SIMD[DType.float64, num_chans]:
-
-        out = SIMD[DType.float64, num_chans](0.0)
+    #     out = SIMD[DType.float64, num_chans](0.0)
     
-        @parameter
-        for chan in range(num_chans):
-            if (start_chan + chan) >= self.num_chans:
-                out[chan] = 0.0
-            else:
-                out[chan] = ListFloat64Reader.read[bWrap,mask](self.w, self.data[start_chan + chan], f_idx, prev_f_idx)
+    #     @parameter
+    #     for chan in range(num_chans):
+    #         if (start_chan + chan) >= self.num_chans:
+    #             out[chan] = 0.0
+    #         else:
+    #             out[chan] = ListFloat64Reader.read[interp=interp,bWrap=bWrap,mask=mask](self.w, self.data[start_chan + chan], f_idx, prev_f_idx)
 
-        return out
+    #     return out
 
 struct ListFloat64Reader(Movable, Copyable):
 

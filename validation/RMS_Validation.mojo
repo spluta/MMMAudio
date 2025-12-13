@@ -1,8 +1,8 @@
 """RMS Unit Test"""
 
 from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.SoundFile import *
+from mmm_dsp.Play import *
 from mmm_src.MMMWorld import *
 
 alias windowsize: Int = 1024
@@ -27,7 +27,7 @@ fn main():
     world.sample_rate = 44100.0
 
     buffer = SoundFile.load("resources/Shiverer.wav")
-    playBuf = PlayBuf(w)
+    playBuf = Play(w)
 
     analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(w))
 

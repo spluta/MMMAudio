@@ -3,7 +3,7 @@ from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from mmm_dsp.RMS import RMS
@@ -12,7 +12,7 @@ from mmm_dsp.RMS import RMS
 struct TestRMS(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
+    var playBuf: Play
     # samplerate of 48000 50 ms for the RMS = 2400 samples
     var rms: BufferedProcess[RMS,2400,2400]
     var m: Messenger
@@ -22,7 +22,7 @@ struct TestRMS(Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
+        self.playBuf = Play(self.w) 
         rms = RMS(self.w)
         self.rms = BufferedProcess[RMS,2400,2400](self.w,process=rms^)
         self.m = Messenger(w)

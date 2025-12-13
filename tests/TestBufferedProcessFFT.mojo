@@ -3,7 +3,7 @@ from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from mmm_dsp.FFT import RealFFT
@@ -46,7 +46,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
 struct TestBufferedProcessFFT(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
+    var playBuf: Play
     var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var ps: List[Print]
@@ -55,7 +55,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
+        self.playBuf = Play(self.w) 
         self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine](self.w,process=FFTLowPass[window_size](self.w))
         self.m = Messenger(w)
         self.ps = List[Print](length=2,fill=Print(w))

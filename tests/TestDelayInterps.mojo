@@ -4,12 +4,12 @@ from mmm_utils.functions import *
 from mmm_dsp.Delays import *
 from mmm_dsp.Osc import *
 from mmm_utils.Messenger import Messenger
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.Play import *
 
 struct TestDelayInterps(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
+    var playBuf: Play
     var delay_none: Delay[interp=DelayInterpOptions.none]
     var delay_linear: Delay[interp=DelayInterpOptions.linear]
     var delay_cubic: Delay[interp=DelayInterpOptions.cubic]
@@ -22,7 +22,7 @@ struct TestDelayInterps(Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
+        self.playBuf = Play(self.w) 
         self.delay_none = Delay[interp=DelayInterpOptions.none](self.w,1.0)
         self.delay_linear = Delay[interp=DelayInterpOptions.linear](self.w,1.0)
         self.delay_cubic = Delay[interp=DelayInterpOptions.cubic](self.w,1.0)

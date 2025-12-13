@@ -1,5 +1,5 @@
 from mmm_src.MMMWorld import *
-from mmm_dsp.Buffer import *
+from mmm_dsp.SoundFile import *
 from math import exp, sin, sqrt, cos, pi
 
 struct Windows(Movable, Copyable):

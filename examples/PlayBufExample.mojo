@@ -4,8 +4,8 @@ from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
 
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.SoundFile import *
+from mmm_dsp.Play import *
 from mmm_dsp.Filters import VAMoogLadder
 
 struct BufSynth(Representable, Movable, Copyable):
@@ -14,7 +14,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
     var num_chans: Int64
 
-    var play_buf: PlayBuf
+    var play_buf: Play
     var play_rate: Float64
     
     var moog: VAMoogLadder[2, 1] # 2 channels, os_index == 1 (2x oversampling)
@@ -34,7 +34,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.play_rate = 1.0
 
-        self.play_buf = PlayBuf(self.w)
+        self.play_buf = Play(self.w)
 
         self.moog = VAMoogLadder[2, 1](self.w)
         self.lpf_freq = 20000.0
@@ -56,7 +56,7 @@ struct BufSynth(Representable, Movable, Copyable):
         return String("BufSynth")
 
 
-struct PlayBufExample(Representable, Movable, Copyable):
+struct PlayExample(Representable, Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
 
     var buf_synth: BufSynth  # Instance of the GrainSynth
@@ -67,7 +67,7 @@ struct PlayBufExample(Representable, Movable, Copyable):
         self.buf_synth = BufSynth(w)  
 
     fn __repr__(self) -> String:
-        return String("PlayBufExample")
+        return String("PlayExample")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         #return SIMD[DType.float64, 2](0.0)

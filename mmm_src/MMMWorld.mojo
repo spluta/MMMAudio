@@ -1,6 +1,6 @@
 from python import PythonObject
 from mmm_dsp.Osc import OscBuffers
-from mmm_dsp.Buffer import Buffer
+from mmm_dsp.SoundFile import *
 from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time
@@ -117,10 +117,10 @@ struct WindowType:
     alias sine: Int = 5
 
 struct OscType:
-    alias sine: Int64 = 0
-    alias saw: Int64 = 1
-    alias square: Int64 = 2
-    alias triangle: Int64 = 3
-    alias bandlimited_triangle: Int64 = 4
-    alias bandlimited_saw: Int64 = 5
-    alias bandlimited_square: Int64 = 6
+    alias sine: Int = 0
+    alias saw: Int = 1
+    alias square: Int = 2
+    alias triangle: Int = 3
+    alias bandlimited_triangle: Int = 4
+    alias bandlimited_saw: Int = 5
+    alias bandlimited_square: Int = 6

@@ -4,7 +4,7 @@ from mmm_dsp.FFTProcess import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowType
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from random import random
@@ -74,7 +74,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 struct TestFFTProcess(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
+    var playBuf: Play
     var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
@@ -83,7 +83,7 @@ struct TestFFTProcess(Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
+        self.playBuf = Play(self.w) 
         self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.w,process=ScrambleAndLowPass(self.w))
         self.m = Messenger(w)
         self.ps = List[Print](length=2,fill=Print(w))

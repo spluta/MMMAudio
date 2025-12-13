@@ -1,6 +1,6 @@
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFT import *
-from mmm_dsp.Buffer import Buffer
+from mmm_dsp.SoundFile import *
 
 @doc_private
 struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):

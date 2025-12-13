@@ -2,7 +2,7 @@ from math import sin, floor
 from random import random_float64
 from mmm_utils.functions import *
 from mmm_src.MMMWorld import *
-from .Buffer import *
+from mmm_dsp.SoundFile import *
 from .Filters import *
 from .Oversampling import Oversampling
 from mmm_utils.RisingBoolDetector import RisingBoolDetector

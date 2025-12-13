@@ -4,8 +4,8 @@ from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
 from mmm_dsp.Delays import LP_Comb
 
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.SoundFile import *
+from mmm_dsp.Play import *
 from mmm_dsp.Filters import VAMoogLadder
 from mmm_dsp.Reverb import Freeverb
 
@@ -15,7 +15,7 @@ struct FreeverbSynth(Copyable, Movable):
 
     var num_chans: Int64
 
-    var play_buf: PlayBuf
+    var play_buf: Play
 
     var freeverb: Freeverb[2]
     var m: Messenger
@@ -35,7 +35,7 @@ struct FreeverbSynth(Copyable, Movable):
         # without printing this, the compiler wants to free the buffer for some reason
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
 
-        self.play_buf = PlayBuf(self.w)
+        self.play_buf = Play(self.w)
         self.freeverb = Freeverb[2](self.w)
 
         self.room_size = 0.9

@@ -1,5 +1,5 @@
 from memory import UnsafePointer
-from .Buffer import *
+from mmm_dsp.SoundFile import *
 from mmm_src.MMMWorld import *
 from .Osc import Impulse
 from mmm_utils.functions import *

@@ -112,7 +112,7 @@ struct PanAz (Representable, Movable, Copyable):
 
         return sample * chan_amp
 
-struct Pan2 (Representable, Movable, Copyable):
+struct Pan2(Representable, Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
     var w: UnsafePointer[MMMWorld]
     var gains: SIMD[DType.float64, 2]

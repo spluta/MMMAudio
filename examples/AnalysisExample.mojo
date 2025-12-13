@@ -6,7 +6,7 @@ from mmm_dsp.Osc import *
 from mmm_utils.Messenger import *
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFT import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.Play import *
 
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var w: UnsafePointer[MMMWorld]
@@ -40,18 +40,18 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
 struct AnalysisExample(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var osc: Osc[2]
-    var buffer: Buffer
-    var playBuf: PlayBuf
+    var sf: SoundFile
+    var playBuf: Play
     var freq: Float64
     var analyzer: BufferedInput[CustomAnalysis[1024],1024,512]
     var m: Messenger
     var which: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.osc = Osc[2](w)
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w)
+        self.sf = SoundFile.load(self.w,"resources/Shiverer.wav")
+        self.playBuf = Play(self.w)
         self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](w, CustomAnalysis[1024](w))
         self.freq = 440.0
         self.m = Messenger(w)
@@ -63,7 +63,7 @@ struct AnalysisExample(Movable, Copyable):
         self.m.update(self.which,"which")
 
         oscs = self.osc.next(self.freq,0,False,[OscType.sine, OscType.saw])
-        flute = self.playBuf.next(self.buffer,0,1.0,True)
+        flute = self.playBuf.next(self.sf.data,0,1.0,True)
 
         sig = select(self.which,[oscs[0], oscs[1], flute])
         

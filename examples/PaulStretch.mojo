@@ -2,7 +2,7 @@ from mmm_src.MMMWorld import *
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Windows import WindowType
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from complex import ComplexFloat64

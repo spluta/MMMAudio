@@ -9,8 +9,8 @@ such as librosa in Python.
 """
 
 from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.SoundFile import *
+from mmm_dsp.Play import *
 from mmm_src.MMMWorld import *
 
 alias minfreq: Float64 = 100.0
@@ -42,7 +42,7 @@ fn main():
 
     buffer = SoundFile.load("resources/Shiverer.wav")
     world.sample_rate = buffer.sample_rate
-    playBuf = PlayBuf(w)
+    playBuf = Play(w)
 
     analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(w))
 

@@ -1,8 +1,8 @@
 """Spectral Centroid Unit Test"""
 
 from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.SoundFile import *
+from mmm_dsp.Play import *
 from mmm_dsp.FFT import *
 from mmm_src.MMMWorld import *
 
@@ -35,7 +35,7 @@ fn main():
     w = UnsafePointer(to=world)
 
     buffer = SoundFile.load("resources/Shiverer.wav")
-    playBuf = PlayBuf(w)
+    playBuf = Play(w)
     analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](w, Analyzer(w,world.sample_rate))
 
     for _ in range(buffer.num_frames):

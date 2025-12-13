@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import Messenger
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Windows import WindowType
@@ -76,7 +76,7 @@ alias window_size = 2048
 struct SpectralFreezeExample(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var play_buf: PlayBuf   
+    var play_buf: Play   
     var spectral_freeze: SpectralFreeze[window_size]
     var m: Messenger
     var stereo_switch: Bool
@@ -84,7 +84,7 @@ struct SpectralFreezeExample(Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.w = w
         self.buffer = SoundFile.load("resources/Shiverer.wav")
-        self.play_buf = PlayBuf(w) 
+        self.play_buf = Play(w) 
         self.spectral_freeze = SpectralFreeze[window_size](w)
         self.m = Messenger(w)
         self.stereo_switch: Bool = False
