@@ -1,6 +1,6 @@
 from python import PythonObject
 from mmm_dsp.Osc import OscBuffers
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from mmm_utils.Windows import *
 from mmm_utils.Print import Print
 import time

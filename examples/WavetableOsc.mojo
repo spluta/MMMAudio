@@ -6,7 +6,7 @@ from mmm_utils.functions import *
 
 from mmm_dsp.Osc import *
 from mmm_dsp.Env import ASREnv
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from mmm_utils.Messenger import Messenger
 
 struct OscVoice(Movable, Copyable):
@@ -52,7 +52,7 @@ struct WavetableOsc(Movable, Copyable):
         self.w = w
         self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
         self.wavetables_per_channel = 256
-        self.buffer = SoundFile.load(self.w,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
+        self.buffer = Buffer.load(self.w,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
         self.osc_voices = List[OscVoice]()
         for i in range(8):
             self.osc_voices.append(OscVoice(self.w, "voice_"+String(i)))
@@ -68,7 +68,7 @@ struct WavetableOsc(Movable, Copyable):
 
     fn loadBuffer(mut self):
         try:
-            self.buffer = SoundFile.load(self.w,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
+            self.buffer = Buffer.load(self.w,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
         except Exception:
             print("Error loading buffer from file:", self.file_name)
 

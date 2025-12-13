@@ -4,7 +4,7 @@ from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
 
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from mmm_dsp.Play import *
 from mmm_dsp.Filters import VAMoogLadder
 
@@ -26,7 +26,7 @@ struct BufSynth(Representable, Movable, Copyable):
         self.w = w 
 
         # load the audio buffer 
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason

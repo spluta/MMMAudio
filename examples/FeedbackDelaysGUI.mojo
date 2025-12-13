@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from mmm_dsp.Play import *
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
@@ -12,7 +12,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
     var main_lag: Lag
-    var sf: SoundFile
+    var buf: Buffer
     var playBuf: Play
     var delays: FB_Delay[N=2, interp=3]  # FB_Delay with 2 channels and interpolation type 3 (cubic)
     var delay_time_lag: Lag[2]
@@ -31,7 +31,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w  
         self.main_lag = Lag(self.w, 0.03)
-        self.sf = SoundFile.load(self.w,"resources/Shiverer.wav")
+        self.sf = Buffer.load(self.w,"resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         self.delays = FB_Delay[N=2, interp=3](self.w, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.w, 0.2)  # Initialize Lag with a default time constant
@@ -59,7 +59,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.m.update(self.mix,"mix")
         self.m.update(self.main,"main")
 
-        var sample = self.playBuf.next[N=2](self.sf.data, 0, 1 if self.play else 0, True)  # Read samples from the buffer
+        var sample = self.playBuf.next[N=2](self.buffer.data, 0, 1 if self.play else 0, True)  # Read samples from the buffer
         deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](self.delaytime_m, self.delaytime_m * 0.9))
 
 

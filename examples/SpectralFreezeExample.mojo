@@ -83,7 +83,7 @@ struct SpectralFreezeExample(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.play_buf = Play(w) 
         self.spectral_freeze = SpectralFreeze[window_size](w)
         self.m = Messenger(w)

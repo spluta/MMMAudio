@@ -19,7 +19,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var pitch_dispersion: Float64
     var time_dispersion: Float64
      
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.pitch_shift = PitchShift(w, 1.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
         self.messenger = Messenger(w)
@@ -31,7 +31,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        input_sig = self.w[].sound_in[8]
+        input_sig = self.w[].sound_in[0]
         self.messenger.update(self.shift,"pitch_shift")
         self.messenger.update(self.grain_size,"grain_size")
         self.messenger.update(self.pitch_dispersion,"pitch_dispersion")

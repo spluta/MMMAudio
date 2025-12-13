@@ -39,7 +39,7 @@ struct PaulStretch(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.w)
 
         self.paul_stretch = FFTProcess[

@@ -1,5 +1,5 @@
 from mmm_src.MMMWorld import *
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from math import exp, sin, sqrt, cos, pi
 
 struct Windows(Movable, Copyable):
@@ -24,15 +24,15 @@ struct Windows(Movable, Copyable):
 
         @parameter
         if window_type == WindowType.hann:
-            return ListFloat64Reader.read[interp,True,self.mask](w,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](w,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.hamming:
-            return ListFloat64Reader.read[interp,True,self.mask](w,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](w,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.blackman:
-            return ListFloat64Reader.read[interp,True,self.mask](w,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](w,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.kaiser:
-            return ListFloat64Reader.read[interp,True,self.mask](w,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](w,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.sine:
-            return ListFloat64Reader.read[interp,True,self.mask](w,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](w,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.rect:
             return 1.0 
         else:

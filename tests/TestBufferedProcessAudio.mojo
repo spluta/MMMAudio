@@ -48,7 +48,7 @@ struct TestBufferedProcessAudio(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         var multiply_process = BufferedMultiply(self.w)
         self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,512,0](self.w,process=multiply_process^)

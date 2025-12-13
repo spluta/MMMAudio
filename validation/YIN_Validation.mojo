@@ -9,7 +9,7 @@ such as librosa in Python.
 """
 
 from mmm_dsp.Analysis import *
-from mmm_dsp.SoundFile import *
+from mmm_dsp.Buffer import *
 from mmm_dsp.Play import *
 from mmm_src.MMMWorld import *
 
@@ -40,7 +40,7 @@ fn main():
     world = MMMWorld()
     w = UnsafePointer(to=world)
 
-    buffer = SoundFile.load("resources/Shiverer.wav")
+    buffer = Buffer.load("resources/Shiverer.wav")
     world.sample_rate = buffer.sample_rate
     playBuf = Play(w)
 

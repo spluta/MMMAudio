@@ -19,7 +19,7 @@
 * trait `Playable`
   * `fn __getitem__`
   * `fn at_phase[interp: Int = Interp.none]` for convenience re: windowing, etc.
-* struct `SoundFile` is for loading sound files and VWTs.
+* struct `Buffer` is for loading sound files and VWTs.
   * `var sample_rate`
 * struct `OscBuffer` will hold wavetables 2^14 in size
 * `BufferedProcess` will still make it's own windows to ensure they're the perfect size. Other UGens can of course do this as well.

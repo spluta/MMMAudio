@@ -21,7 +21,7 @@ struct TestDelayInterps(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         self.delay_none = Delay[interp=DelayInterpOptions.none](self.w,1.0)
         self.delay_linear = Delay[interp=DelayInterpOptions.linear](self.w,1.0)

@@ -82,7 +82,7 @@ struct TestFFTProcess(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.w,process=ScrambleAndLowPass(self.w))
         self.m = Messenger(w)

@@ -21,7 +21,7 @@ struct TestRMS(Movable, Copyable):
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
-        self.buffer = SoundFile.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         rms = RMS(self.w)
         self.rms = BufferedProcess[RMS,2400,2400](self.w,process=rms^)

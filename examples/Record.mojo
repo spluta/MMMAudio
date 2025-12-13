@@ -2,8 +2,8 @@ from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import *
 from mmm_utils.functions import *
 
-from mmm_dsp.SoundFile import *
-from mmm_dsp.RecordBuf import RecordBuf
+from mmm_dsp.Buffer import *
+from mmm_dsp.Recorder import Recorder
 from mmm_dsp.Play import Play
 from mmm_dsp.Env import min_env
 
