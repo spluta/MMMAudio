@@ -19,7 +19,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w  
-        self.sf = SoundFile.load(w,"resources/Shiverer.wav")
+        self.sf = SoundFile("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         # FB_Delay is initialized as 2 channel
         self.delays = FB_Delay[2, DelayInterpOptions.lagrange](self.w, 1.0) 

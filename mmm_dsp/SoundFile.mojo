@@ -10,41 +10,20 @@ alias dtype = DType.float64
 
 struct SoundFile(Movable, Copyable):
 
-    var w: UnsafePointer[MMMWorld]
-    var sample_rate: Float64  
     var data: List[List[Float64]]
     var num_chans: Int64
-    var num_frames: Int64
-    var num_frames_f64: Float64
+    var num_frames: Float64
+    var buf_sample_rate: Float64
+    var index: Float64
+    var duration: Float64
     
-    fn __init__(out self, w: UnsafePointer[MMMWorld], lists: List[List[Float64]], sample_rate: Float64 = 48000.0):
+    fn __init__(out self, filename: String, chans_per_channel: Int64 = 1):
+        """
+        Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
-        self.w = w
-        self.data = lists.copy()
-        self.num_chans = len(self.data)
-        self.num_frames = len(self.data[0])
-        self.num_frames_f64 = Float64(self.num_frames)
-        self.sample_rate = sample_rate
-
-    fn __init__(out self, w: UnsafePointer[MMMWorld], list: List[Float64], sample_rate: Float64 = 48000.0):
-
-        self.w = w
-        self.data = List[List[Float64]]()
-        self.data.append(list.copy())
-        self.num_chans = 1
-        self.num_frames = len(self.data[0])
-        self.num_frames_f64 = Float64(self.num_frames)
-        self.sample_rate = sample_rate
-
-        self.w[].print("Sample rate: ", self.sample_rate)
-        self.w[].print("chan[0], samples 1000-1005: ", self.data[0][1000], ",", self.data[0][1001], ",", self.data[0][1002], ",", self.data[0][1003], ",", self.data[0][1004], ",", self.data[0][1005])
-
-    fn __repr__(self) -> String:
-        return String("Buffer")
-
-    @staticmethod
-    def load(w: UnsafePointer[MMMWorld], filename: String, wavetables_per_channel: Int64 = 1) -> SoundFile:
-
+        Args:
+            filename: Path to the WAV file to load.
+        """
         # load the necessary Python modules
         try:
             scipy = Python.import_module("scipy")
@@ -57,8 +36,12 @@ struct SoundFile(Movable, Copyable):
             print("Warning: Failed to import NumPy module")
             np = PythonObject(None)
 
-        self_data = List[List[Float64]]()
-        self_index = 0.0
+        self.data = List[List[Float64]]()
+        self.index = 0.0
+        self.num_frames = 0.0 
+        self.buf_sample_rate = 48000.0  
+        self.duration = 0.0  
+        self.num_chans = 0
 
         if filename != "":
             # Load the file if a filename is provided
@@ -67,25 +50,27 @@ struct SoundFile(Movable, Copyable):
 
                 print(py_data)  # Print the loaded data for debugging
 
-                self_buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
+                self.buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
 
-                if wavetables_per_channel > 1:
-                    # If wavetables_per_channel is specified, calculate num_chans accordingly
+
+
+                if chans_per_channel > 1:
+                    # If chans_per_channel is specified, calculate num_chans accordingly
                     total_samples = py_data[1].shape[0]
-                    self_num_chans = wavetables_per_channel
-                    self_num_frames = Float64(total_samples) / Float64(wavetables_per_channel)
-                    self_duration = self_num_frames / self_buf_sample_rate  # Calculate duration in seconds
+                    self.num_chans = chans_per_channel
+                    self.num_frames = Float64(total_samples) / Float64(chans_per_channel)
+                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
                 else:
-                    self_num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
-                    self_duration = self_num_frames / self_buf_sample_rate  # Calculate duration in seconds
+                    self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
+                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
                     if len(py_data[1].shape) == 1:
                         # Mono file
-                        self_num_chans = 1
+                        self.num_chans = 1
                     else:
                         # Multi-channel file
-                        self_num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+                        self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
 
-                print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
+                print("num_chans:", self.num_chans, "num_frames:", self.num_frames)  # Print the shape of the data array for debugging
 
                 var data = py_data[1]  # Extract the actual sound data from the tuple
                 # Convert to float64 if it's not already
@@ -100,26 +85,28 @@ struct SoundFile(Movable, Copyable):
                 data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
 
                 # wavetables are stored in ordered channels, not interleaved
-                if wavetables_per_channel > 1:
-                    for c in range(self_num_chans):
+                if chans_per_channel > 1:
+                    for c in range(self.num_chans):
                         channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
-                            channel_data.append(data_ptr[(c * Int64(self_num_frames)) + f])
-                        self_data.append(channel_data^)
+                        for f in range(Int64(self.num_frames)):
+                            channel_data.append(data_ptr[(c * Int64(self.num_frames)) + f])
+                        self.data.append(channel_data^)
                 else:
                     # normal multi-channel interleaved data
-                    for c in range(self_num_chans):
+                    for c in range(self.num_chans):
                         channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
-                            channel_data.append(data_ptr[(f * self_num_chans) + c])
-                        self_data.append(channel_data^)
+                        for f in range(Int64(self.num_frames)):
+                            channel_data.append(data_ptr[(f * self.num_chans) + c])
+                        self.data.append(channel_data^)
 
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging
-                return SoundFile(w, self_data, self_buf_sample_rate)
             except err:
-                raise Error("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                self.num_frames = 0.0
+                self.num_chans = 0
         else:
-            raise Error("Buffer::__init__ No filename provided to load buffer.")
+            self.num_frames = 0.0
+            self.buf_sample_rate = 48000.0  # Default sample rate
 
     # I'm pretty sure this is completely unnecessary now
     # ==================================================

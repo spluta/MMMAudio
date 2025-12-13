@@ -3,14 +3,10 @@ from mmm_src.MMMWorld import MMMWorld
 from pathlib import Path
 
 def main():
-    w = MMMWorld()
-    
-    path = Path("resources/Shiverer.wav")
-    
-    if not path.exists():
-        raise Error("TestSoundFileLoad: File does not exist at path: " + path.name())
-    else:
-        for _ in range(100):
-            print("TestSoundFileLoad: File exists at path: " + path.name())
 
-    sf = SoundFile(UnsafePointer(to=w), String(path))
+    sf = SoundFile("resources/Shiverer.wav")
+    print("Loaded SoundFile:")
+    print("Sample Rate:", sf.buf_sample_rate)
+    print("Number of Channels:", sf.num_chans)
+    print("Number of Frames:", sf.num_frames)
+    print("Duration (s):", sf.duration)

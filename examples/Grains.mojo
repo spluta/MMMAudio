@@ -22,7 +22,7 @@ struct GrainSynth(Representable, Movable, Copyable):
         self.w = w  
 
         # buffer uses numpy to load a buffer into an N channel array
-        self.sf = SoundFile.load(w,"resources/Shiverer.wav")
+        self.sf = SoundFile("resources/Shiverer.wav")
 
         self.tgrains = TGrains[10](self.w)  
         self.impulse = Impulse(self.w)
