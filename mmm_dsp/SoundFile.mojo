@@ -13,11 +13,9 @@ struct SoundFile(Movable, Copyable):
     var data: List[List[Float64]]
     var num_chans: Int64
     var num_frames: Float64
-    var buf_sample_rate: Float64
-    var index: Float64
-    var duration: Float64
+    var sample_rate: Float64
     
-    fn __init__(out self, filename: String, chans_per_channel: Int64 = 1):
+    fn __init__(out self, filename: String, num_wavetables: Int64 = 1):
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
@@ -37,10 +35,8 @@ struct SoundFile(Movable, Copyable):
             np = PythonObject(None)
 
         self.data = List[List[Float64]]()
-        self.index = 0.0
         self.num_frames = 0.0 
-        self.buf_sample_rate = 48000.0  
-        self.duration = 0.0  
+        self.sample_rate = 48000.0  
         self.num_chans = 0
 
         if filename != "":
@@ -50,19 +46,15 @@ struct SoundFile(Movable, Copyable):
 
                 print(py_data)  # Print the loaded data for debugging
 
-                self.buf_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
+                self.sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
 
-
-
-                if chans_per_channel > 1:
-                    # If chans_per_channel is specified, calculate num_chans accordingly
+                if num_wavetables > 1:
+                    # If num_wavetables is specified, calculate num_chans accordingly
                     total_samples = py_data[1].shape[0]
-                    self.num_chans = chans_per_channel
-                    self.num_frames = Float64(total_samples) / Float64(chans_per_channel)
-                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
+                    self.num_chans = num_wavetables
+                    self.num_frames = Float64(total_samples) / Float64(num_wavetables)
                 else:
                     self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
-                    self.duration = self.num_frames / self.buf_sample_rate  # Calculate duration in seconds
                     if len(py_data[1].shape) == 1:
                         # Mono file
                         self.num_chans = 1
@@ -85,7 +77,7 @@ struct SoundFile(Movable, Copyable):
                 data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
 
                 # wavetables are stored in ordered channels, not interleaved
-                if chans_per_channel > 1:
+                if num_wavetables > 1:
                     for c in range(self.num_chans):
                         channel_data = List[Float64]()
                         for f in range(Int64(self.num_frames)):
@@ -106,7 +98,7 @@ struct SoundFile(Movable, Copyable):
                 self.num_chans = 0
         else:
             self.num_frames = 0.0
-            self.buf_sample_rate = 48000.0  # Default sample rate
+            self.sample_rate = 48000.0  # Default sample rate
 
     # I'm pretty sure this is completely unnecessary now
     # ==================================================

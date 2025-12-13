@@ -6,7 +6,6 @@ def main():
 
     sf = SoundFile("resources/Shiverer.wav")
     print("Loaded SoundFile:")
-    print("Sample Rate:", sf.buf_sample_rate)
+    print("Sample Rate:", sf.sample_rate)
     print("Number of Channels:", sf.num_chans)
     print("Number of Frames:", sf.num_frames)
-    print("Duration (s):", sf.duration)
