@@ -13,4 +13,4 @@ def main():
         for _ in range(100):
             print("TestSoundFileLoad: File exists at path: " + path.name())
 
-    sf = SoundFile.load(UnsafePointer(to=w), path.name())
+    sf = SoundFile(UnsafePointer(to=w), String(path))
