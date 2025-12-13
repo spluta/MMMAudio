@@ -59,6 +59,8 @@ struct Play(Representable, Movable, Copyable):
             The next sample(s) from the buffer as a SIMD vector.
         """
 
+        self.w[].print("Play.mojo: next(): rate=", rate, " loop=", loop, " trig=", trig, " start_frame=", start_frame, " num_frames=", num_frames, " start_chan=", start_chan)
+
         # [TODO] I think we need to make sure these are within valid ranges:
         # * start_frame 
         # * start_chan
@@ -66,9 +68,6 @@ struct Play(Representable, Movable, Copyable):
         # * num_frames in correspondence with start_frame and data length
 
         out = SIMD[DType.float64, num_chans](0.0)
-
-        if self.done:
-            return out  # Return zeros if done
 
         # Determine Length of the Data
         # ============================
@@ -92,6 +91,9 @@ struct Play(Representable, Movable, Copyable):
             self.start_frame = start_frame  # Set start frame
             self.phase_offset = Float64(self.start_frame) / data_len_f  
             self.reset_phase_point = Float64(num_frames) / data_len_f  
+        
+        if self.done:
+            return out  # Return zeros if done
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
@@ -100,6 +102,8 @@ struct Play(Representable, Movable, Copyable):
         prev_phase = (self.impulse.phasor.phase + self.phase_offset) % 1.0
         # advance phase
         eor = self.impulse.next_bool(freq, trig = trig)
+
+        # self.w[].print("Play.mojo: next(): phase=", self.impulse.phasor.phase, " freq=", freq, " prev_phase=", prev_phase, " data_len_f=", data_len_f, " reset_phase_point=", self.reset_phase_point)
 
         if loop:
             # Wrap Phase
@@ -120,6 +124,7 @@ struct Play(Representable, Movable, Copyable):
     @doc_private
     @always_inline
     fn return_sample[num_chans: Int, interp: Int](self, data: Readable, prev_phase: Float64, data_len_f: Float64, start_chan: Int64) -> SIMD[DType.float64, num_chans]:
+        
         if data.isa[List[Float64]]():
             return self.get_sample[num_chans,interp](data[List[Float64]], prev_phase, data_len_f)
         elif data.isa[List[List[Float64]]]() :
@@ -202,7 +207,11 @@ struct Grain(Representable, Movable, Copyable):
     @always_inline
     fn next_pan[N: Int = 1, win_type: Int = WindowType.hann](mut self, read buffer: Readable, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Int64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         
+        # self.w[].print("Grain.mojo: next_pan(): trig=", trig, " rate=", rate, " start_frame=", start_frame, " duration=", duration, " pan=", pan, " gain=", gain)
+
         var sample = self.next[N=N, win_type=win_type](buffer, start_chan, trig, rate, start_frame, duration, pan, gain)
+
+        # self.w[].print("Grain.mojo: next_pan(): sample=", sample)
 
         @parameter
         if N == 1:
@@ -213,7 +222,7 @@ struct Grain(Representable, Movable, Copyable):
     # N can only be 1 (default) or 2
     # [TODO]: add interp parameter
     @always_inline
-    fn next[N: Int = 1, win_type: Int = 0](mut self, read buffer: Readable, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Int64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, N]:
+    fn next[N: Int = 1, win_type: Int = WindowType.hann](mut self, read buffer: Readable, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Int64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, N]:
 
         if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
@@ -224,6 +233,8 @@ struct Grain(Representable, Movable, Copyable):
 
         sample = self.play_buf.next[num_chans=N,interp=Interp.linear](buffer, self.rate, False, trig, self.start_frame, self.num_frames, start_chan) # Get samples from Play
 
+        # self.w[].print("Grain.mojo: next(): sample=", sample)
+
         # Get the current phase of the Play
         # [TODO]: I don't understand this if statement
         if self.play_buf.reset_phase_point > 0.0:
@@ -231,7 +242,7 @@ struct Grain(Representable, Movable, Copyable):
         else:
             self.win_phase = 0.0  # Use the phase
 
-        win = self.w[].windows.at_phase[WindowType.hann](self.w, self.win_phase)
+        win = self.w[].windows.at_phase[win_type](self.w, self.win_phase)
 
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels 
         # [TODO]: Either make this work with multichannels or document this limitation
@@ -284,12 +295,11 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
                 self.counter = 0  # Reset counter if it exceeds the number of grains
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
+
         @parameter
         for i in range(max_grains):
             b = i == self.counter and self.rising_bool_detector.state
             out += self.grains[i].next_pan[N=N,win_type=win_type](buffer, buf_chan, b, rate, start_frame, duration, pan, gain)
-
-        self.w[].print("TGrains next sample: ", out[0], ",", out[1])
 
         return out
 

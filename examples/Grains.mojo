@@ -70,3 +70,4 @@ struct Grains(Representable, Movable, Copyable):
         sample = self.grain_synth.next()
 
         return sample  # Return the combined output sample
+

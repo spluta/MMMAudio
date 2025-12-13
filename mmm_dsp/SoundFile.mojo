@@ -12,10 +12,11 @@ struct SoundFile(Movable, Copyable):
 
     var data: List[List[Float64]]
     var num_chans: Int64
-    var num_frames: Float64
+    var num_frames: Int64
+    var num_frames_f64: Float64
     var sample_rate: Float64
     
-    fn __init__(out self, filename: String, num_wavetables: Int64 = 1):
+    def __init__(out self, filename: String, num_wavetables: Int64 = 1):
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
@@ -35,9 +36,6 @@ struct SoundFile(Movable, Copyable):
             np = PythonObject(None)
 
         self.data = List[List[Float64]]()
-        self.num_frames = 0.0 
-        self.sample_rate = 48000.0  
-        self.num_chans = 0
 
         if filename != "":
             # Load the file if a filename is provided
@@ -52,9 +50,9 @@ struct SoundFile(Movable, Copyable):
                     # If num_wavetables is specified, calculate num_chans accordingly
                     total_samples = py_data[1].shape[0]
                     self.num_chans = num_wavetables
-                    self.num_frames = Float64(total_samples) / Float64(num_wavetables)
+                    self.num_frames = Int64(Float64(total_samples) / Float64(num_wavetables))
                 else:
-                    self.num_frames = Float64(len(py_data[1]))  # num_frames is the length of the data array
+                    self.num_frames = Int64(len(py_data[1]))  # num_frames is the length of the data array
                     if len(py_data[1].shape) == 1:
                         # Mono file
                         self.num_chans = 1
@@ -62,6 +60,7 @@ struct SoundFile(Movable, Copyable):
                         # Multi-channel file
                         self.num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
 
+                self.num_frames_f64 = Float64(self.num_frames)
                 print("num_chans:", self.num_chans, "num_frames:", self.num_frames)  # Print the shape of the data array for debugging
 
                 var data = py_data[1]  # Extract the actual sound data from the tuple
@@ -93,12 +92,9 @@ struct SoundFile(Movable, Copyable):
 
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging
             except err:
-                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
-                self.num_frames = 0.0
-                self.num_chans = 0
+                raise Error("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
         else:
-            self.num_frames = 0.0
-            self.sample_rate = 48000.0  # Default sample rate
+            raise Error("SoundFile::__init__ No filename provided")
 
     # I'm pretty sure this is completely unnecessary now
     # ==================================================
