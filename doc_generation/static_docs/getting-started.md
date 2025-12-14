@@ -56,10 +56,18 @@ if you have trouble installing/running `pyaudio`, try this:
 Here are some hints to get the audio samples running under Windows/WSL2. 
 I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
 
-Use your package manager to install `ALSA runtime` and `ASLA utilities` as system-wide c libraries. On Ubuntu this is:
+Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
 
 ```shell
 sudo apt update
+sudo apt install libportaudio2 portaudio19-dev
+sudo apt install libhidapi-hidraw0 libhidapi-dev
+sudo apt install pulseaudio
+```
+
+Use your package manager to install `ALSA runtime` and `ASLA utilities` as system-wide c libraries. On Ubuntu this is:
+
+```shell
 sudo apt install alsa-utils
 sudo apt install libasound2-dev
 ```
