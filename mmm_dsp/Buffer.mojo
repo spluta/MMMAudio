@@ -529,7 +529,6 @@ struct OscBuffers(Buffable):
         
         return self.buffers[buf_num][index]
 
-
     # Get the next sample from the buffer using linear interpolation
     # Needs to receive an unsafe pointer to the buffer being used
     @always_inline

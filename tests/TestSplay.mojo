@@ -7,7 +7,7 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Osc import Osc
 from mmm_utils.functions import *
 from algorithm import parallelize
-from mmm_dsp.Pan import splay, Splay
+from mmm_dsp.Pan import splay, Splay, splay_gpu
 
 alias num_output_channels = 2
 # there can only be one graph in an MMMAudio instance

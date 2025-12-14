@@ -58,24 +58,41 @@ Before you run the code in a new REPL, make sure to close all terminal instances
 
 Go to the [Examples](examples/index.md) page to run an example!
 
-## Running in high priority mode
+## 4. Windows!!!
 
-> This step might not be necessary. If you're experiencing audio dropouts, try it.
+MMMAudio can run in Windows inside of WSL. The user first needs to install WSL if it has not be installed already.
 
-Python might need to run in high priority mode to avoid audio dropouts. On MacOS/Linux, you can do this by using the `nice` command.
+### Solution — PulseAudio bridge (recommended)
 
-To run in high priority mode, you need to run the Python interpreter with `sudo`. this is a bit tricky in a REPL environment, so the easiest way is to run the code from a terminal window.
+This makes real Windows audio devices visible inside WSL2.
+PyAudio & PortAudio will then work normally.
 
-First, make sure your venv is activated in the terminal window:
+Install PulseAudio on Ubuntu
+sudo apt install pulseaudio alsa-utils
 
-```shell
-source venv/bin/activate
-```
+Create ~/.asoundrc:
 
-Then run the python interpreter with sudo:
+pcm.!default {
+    type pulse
+}
+ctl.!default {
+    type pulse
+}
+Start pulseaudio:
+pulseaudio --start
 
-```shell
-sudo nice -n -20 venv/bin/python
-```
+I got a small error trying to startup pulseaudio manually: (it is unecessary)
 
-Then run the mmm_audio code from the terminal.
+to verify that the device can be found
+
+Verify the WSLg PulseAudio server is reachable
+ls -l /mnt/wslg/PulseServer
+
+Check that PortAudio detects PulseAudio
+pactl info
+
+Now run your MMMAudio script WITHOUT running pulseaudio --start:
+python3 examples/DefaultGraph.py
+
+enjoy the sound :-) 
+

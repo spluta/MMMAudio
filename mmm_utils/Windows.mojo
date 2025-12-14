@@ -188,6 +188,6 @@ fn pan_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
     var table = List[SIMD[DType.float64, 2]]()
 
     for i in range(size):
-        var angle = (pi / 2.0) * Float64(i) / Float64(size)
+        var angle = (pi / 2.0) * Float64(i) / Float64(size-1)
         table.append(cos(SIMD[DType.float64, 2](angle, (pi / 2.0) - angle)))
     return table^

@@ -7,5 +7,3 @@ mmm_audio.start_audio()
 
 mmm_audio.stop_audio()  
 
-from math import cos, pi
-cos(pi / 4 )

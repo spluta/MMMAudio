@@ -957,7 +957,7 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
 #         return output
 
 struct IIR[N: Int = 1](Representable, Movable, Copyable):
-    """Infinite Impulse Response (FIR) filter implementation.
+    """Infinite Impulse Response (IIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>

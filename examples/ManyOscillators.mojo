@@ -34,7 +34,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # support, see: https://spluta.github.io/MMMAudio/api/ 
         # Just FYI, it's not 2 because this is a stereo synth, it's 2 to
         # create some nice beating patterns. The output is stereo because later
-        # the Pan2 processor positions the summed oscillators in the stereo field
+        # the pan2 function positions the summed oscillators in the stereo field
 
         self.osc1 = Osc(world_ptr)
         self.osc2 = Osc(world_ptr)

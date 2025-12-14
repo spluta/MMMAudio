@@ -5,7 +5,7 @@ from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
 from .Osc import Dust, Impulse
 from mmm_utils.functions import *
-from .Pan import Pan2
+from .Pan import pan2
 from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
@@ -85,7 +85,6 @@ struct PlayBuf(Representable, Movable, Copyable):
                 _ = self.impulse.next(freq, trig = trig) 
                 if self.impulse.phasor.phase >= self.reset_phase_point:
                     self.impulse.phasor.phase -= self.reset_phase_point
-                # for i in range(N):
                 out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
@@ -116,7 +115,6 @@ struct Grain(Representable, Movable, Copyable):
     var pan: Float64  
     var gain: Float64 
     var rising_bool_detector: RisingBoolDetector
-    var panner: Pan2 
     var play_buf: PlayBuf
     var win_phase: Float64
 
@@ -128,8 +126,7 @@ struct Grain(Representable, Movable, Copyable):
         self.rate = 1.0
         self.pan = 0.5 
         self.gain = 1.0
-        self.rising_bool_detector = RisingBoolDetector()
-        self.panner = Pan2(world_ptr)  
+        self.rising_bool_detector = RisingBoolDetector() 
         self.play_buf = PlayBuf(world_ptr)
         self.win_phase = 0.0
 
@@ -144,7 +141,8 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if N == 1:
-            return self.panner.next(sample[0], self.pan)  # Return the output samples
+            panned = pan2(sample[0], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
+            return panned
         else:
             return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
 
