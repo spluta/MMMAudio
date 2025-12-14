@@ -149,6 +149,10 @@ struct ListInterpolator(Movable, Copyable):
             return ListInterpolator.read_linear[bWrap,mask](data, f_idx)
         elif interp == Interp.quad:
             return ListInterpolator.read_quad[bWrap,mask](data, f_idx)
+        elif interp == Interp.cubic:
+            return ListInterpolator.read_cubic[bWrap,mask](data, f_idx)
+        elif interp == Interp.lagrange4:
+            return ListInterpolator.read_lagrange4[bWrap,mask](data, f_idx)
         elif interp == Interp.sinc:
             return ListInterpolator.read_sinc[bWrap,mask](w,data, f_idx, prev_f_idx)
         else:
@@ -237,6 +241,87 @@ struct ListInterpolator(Movable, Copyable):
             y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
 
         return quadratic_interp(y0, y1, y2, frac)
+
+    @always_inline
+    @staticmethod
+    fn read_cubic[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
+        
+        idx1 = Int64(f_idx)
+        idx0 = idx1 - 1
+        idx2 = idx1 + 1
+        idx3 = idx1 + 2
+        frac: Float64 = f_idx - Float64(idx1)
+
+        @parameter
+        if bWrap:
+            @parameter
+            if mask != 0:
+                idx0 = idx0 & mask
+                idx1 = idx1 & mask
+                idx2 = idx2 & mask
+                idx3 = idx3 & mask
+            else:
+                length = len(data)
+                idx0 = idx0 % length
+                idx1 = idx1 % length
+                idx2 = idx2 % length
+                idx3 = idx3 % length
+
+            y0 = data[idx0]
+            y1 = data[idx1]
+            y2 = data[idx2]
+            y3 = data[idx3]
+            return cubic_interp(y0, y1, y2, y3, frac)
+        else:
+            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
+
+        return cubic_interp(y0, y1, y2, y3, frac)
+
+    @always_inline
+    @staticmethod
+    fn read_lagrange4[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
+       
+        idx0 = Int64(f_idx)
+        idx1 = idx0 + 1
+        idx2 = idx0 + 2
+        idx3 = idx0 + 3
+        idx4 = idx0 + 4
+        frac: Float64 = f_idx - Float64(idx0)
+
+        @parameter
+        if bWrap:
+            @parameter
+            if mask != 0:
+                idx0 = idx0 & mask
+                idx1 = idx1 & mask
+                idx2 = idx2 & mask
+                idx3 = idx3 & mask
+                idx4 = idx4 & mask
+            else:
+                length = len(data)
+                idx0 = idx0 % length
+                idx1 = idx1 % length
+                idx2 = idx2 % length
+                idx3 = idx3 % length
+                idx4 = idx4 % length
+
+            y0 = data[idx0]
+            y1 = data[idx1]
+            y2 = data[idx2]
+            y3 = data[idx3]
+            y4 = data[idx4]
+            return lagrange4(y0, y1, y2, y3, y4, frac)
+        else:
+            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
+            y4 = data[idx4] if ListInterpolator.idx_in_range(data, idx4) else 0.0
+
+        return lagrange4(y0, y1, y2, y3, y4, frac)
 
     @always_inline
     @staticmethod

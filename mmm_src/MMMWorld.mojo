@@ -105,7 +105,7 @@ struct Interp:
     alias linear: Int = 1
     alias quad: Int = 2
     alias cubic: Int = 3
-    alias lagrange: Int = 4
+    alias lagrange4: Int = 4
     alias sinc: Int = 5
 
 struct WindowType:
