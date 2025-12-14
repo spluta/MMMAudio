@@ -1,7 +1,7 @@
 
 
 def make_solo_graph2(graph_name: str, package_name: str) -> str:
-    with open("/Users/sam/Dev/mojo/MMMAudio/mmm_src/MMMAudioBridge.mojo", "r", encoding="utf-8") as src:
+    with open("./mmm_src/MMMAudioBridge.mojo", "r", encoding="utf-8") as src:
         string = src.read()  
         string = string.replace("examples", package_name)
         string = string.replace("FeedbackDelays", graph_name)

@@ -101,7 +101,7 @@ trait FFTProcessable(Movable,Copyable):
     fn get_messages(mut self) -> None:
         return None
 
-struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None, overlap_output: Bool = True](Movable,Copyable):
+struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None](Movable,Copyable):
     """Create an FFTProcess for audio manipulation in the frequency domain.
     
     FFTProcess is similar to BufferedProcess, but instead of passing time domain samples to the user defined struct,
@@ -117,10 +117,9 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         hop_size: The number of samples between each processed spectral frame. The default is 512.
         input_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the input samples before the FFT. See mmm_utils.Windows -> WindowTypes for the options.
         output_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See mmm_utils.Windows -> WindowTypes for the options.
-        overlap_output: If True, overlapping output samples after the IFFT (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. I'm not sure if this is useful for the `FFTProcess` struct, but it's here for consistency with `BufferedProcess`.
     """
     var world_ptr: UnsafePointer[MMMWorld]
-    var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape, overlap_output]
+    var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape]
 
     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
         """Initializes a FFTProcess struct.
@@ -133,7 +132,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
             An initialized FFTProcess struct.
         """
         self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape, overlap_output](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
+        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.

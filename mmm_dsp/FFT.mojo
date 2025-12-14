@@ -13,6 +13,20 @@ fn log2_int(n: Int) -> Int:
     return result
 
 struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
+    """Real-valued FFT implementation using Cooley-Tukey algorithm.
+
+    If you're looking to create an FFT-based FX, look to the FFTProcessable
+    trait used in conjunction with FFTProcess instead. This struct is a 
+    lower-level implementation that provides
+    FFT and inverse FFT on fixed windows of real values. FFTProcessable structs will enable you to 
+    send audio samples (such as in a custom struct's `.next()` `fn`) *into* and *out of* 
+    an FFT, doing some manipulation of the magnitudes and phases in between. (FFTProcessable
+    has this RealFFT struct inside of it.)
+
+    Parameters:
+        size: Size of the FFT (must be a power of two).
+        num_chans: Number of channels for SIMD processing.
+    """
     var result: List[ComplexSIMD[DType.float64, num_chans]]
     var reversed: List[ComplexSIMD[DType.float64, num_chans]]   
     alias log_n: Int = log2_int(size//2)
@@ -28,6 +42,10 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
     var unpack_twiddles: List[ComplexSIMD[DType.float64, num_chans]]
 
     fn __init__(out self):
+        """Initialize the RealFFT struct.
+        
+        All internal buffers and lookup tables are set up here based on the Parameters.
+        """
         self.result = List[ComplexSIMD[DType.float64, num_chans]](capacity=size // 2)
         self.reversed = List[ComplexSIMD[DType.float64, num_chans]](capacity=size)
         self.mags = List[SIMD[DType.float64, num_chans]](capacity=size // 2 + 1)
@@ -66,7 +84,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         for i in range(size // 2):
             self.bit_reverse_lut.append(self.bit_reverse(i, self.log_n))  # Full size
 
-
+    @doc_private
     fn bit_reverse(self,num: Int, bits: Int) -> Int:
         """Reverse the bits of a number."""
         var result = 0
