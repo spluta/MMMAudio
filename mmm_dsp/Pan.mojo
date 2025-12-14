@@ -23,23 +23,6 @@ fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn pan2(samples: SIMD[DType.float64, 2], pan: Float64, w: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
-    """
-    Panning function using a precomputed quarter cosine window.
-    Args:
-        samples: Mono input sample
-        pan: Pan value from -1.0 (left) to 1.0 (right)
-        w: Pointer to MMMWorld containing the pan_window
-    Returns:
-        Stereo output as SIMD[DType.float64, 2].
-    """
-    var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
-    var gains = w[].pan_window[Int((pan2 + 1.0) * 0.5 * Float64(w[].pan_window.__len__() - 1))]
-
-    samples_out = samples * gains
-    return samples_out  # Return stereo output as List
-
-@always_inline
 fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
     """
     Simple constant power panning function for stereo samples.
@@ -108,12 +91,12 @@ alias pi_over_2 = pi / 2.0
 
 struct SplayN[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var mul_list: List[SIMD[DType.float64, num_output_channels]]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.world_ptr = world_ptr
+        self.w = w
 
         js = SIMD[DType.float64, self.num_output_channels](0.0, 1.0)
         @parameter

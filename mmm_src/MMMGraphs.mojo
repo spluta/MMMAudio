@@ -18,31 +18,31 @@
 # from algorithm import parallelize
 
 # struct MMMGraphs(Representable, Movable):
-#     var world_ptr: UnsafePointer[MMMWorld]
+#     var w: UnsafePointer[MMMWorld]
 #     var graphs: Tuple[MMMGraph0, MMMGraph1, MMMGraph2, MMMGraph3, MMMGraph4, MMMGraph5, MMMGraph6, MMMGraph7, MMMGraph8, MMMGraph9]
 #     var active_graphs: List[Int64]
 #     var output: List[Float64]  # Output list for audio samples
 
-#     fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
-#         self.world_ptr = world_ptr  # Pointer to the MMMWorld instance
+#     fn __init__(out self, w: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
+#         self.w = w  # Pointer to the MMMWorld instance
 
 #         self.output = List[Float64]()
-#         for _ in range(self.world_ptr[0].num_chans):
+#         for _ in range(self.w[].num_chans):
 #             self.output.append(0.0)  # Initialize output list with zeros
 
 #         self.active_graphs = graphs
         
 #         self.graphs = Tuple[MMMGraph0, MMMGraph1, MMMGraph2, MMMGraph3, MMMGraph4, MMMGraph5, MMMGraph6, MMMGraph7, MMMGraph8, MMMGraph9](
-#             MMMGraph0(world_ptr), 
-#             MMMGraph1(world_ptr),
-#             MMMGraph2(world_ptr),
-#             MMMGraph3(world_ptr),
-#             MMMGraph4(world_ptr),
-#             MMMGraph5(world_ptr),
-#             MMMGraph6(world_ptr),
-#             MMMGraph7(world_ptr),
-#             MMMGraph8(world_ptr),
-#             MMMGraph9(world_ptr)
+#             MMMGraph0(w), 
+#             MMMGraph1(w),
+#             MMMGraph2(w),
+#             MMMGraph3(w),
+#             MMMGraph4(w),
+#             MMMGraph5(w),
+#             MMMGraph6(w),
+#             MMMGraph7(w),
+#             MMMGraph8(w),
+#             MMMGraph9(w)
 #         )
     
 #     fn __repr__(self) -> String:
@@ -59,25 +59,25 @@
 
 #     fn get_audio_samples(mut self: MMMGraphs, index: Int64, loc_wire_buffer: UnsafePointer[Float64]):
 
-#         for i in range(self.world_ptr[0].block_size):
+#         for i in range(self.w[].block_size):
             
 #             if i == 0:
-#                 self.world_ptr[0].block_state = 1  # Set block_state to True for the first sample
-#                 # if self.world_ptr[0].block_size == 1:
+#                 self.w[].block_state = 1  # Set block_state to True for the first sample
+#                 # if self.w[].block_size == 1:
 #                 #     # reset trigger messages to 0.0 after the messages have been sent
-#                 #     # self.world_ptr[0].reset_trigger_msgs()  # Reset trigger messages in
-#                 #     # self.world_ptr[0].block_state = -1
-#                 #     self.world_ptr[0].clear_msgs()
-#             # if self.world_ptr[0].block_size > 1:
+#                 #     # self.w[].reset_trigger_msgs()  # Reset trigger messages in
+#                 #     # self.w[].block_state = -1
+#                 #     self.w[].clear_msgs()
+#             # if self.w[].block_size > 1:
 #             #     if i == 1:
 #             #         # reset trigger messages to 0.0 after the messages have been sent
-#             #         # self.world_ptr[0].reset_trigger_msgs()  # Reset trigger messages in
-#             #         # self.world_ptr[0].block_state = -1
-#             #         self.world_ptr[0].clear_msgs()
-#             #         self.world_ptr[0].block_state = 0
-#             # if self.world_ptr[0].block_size > 2:
+#             #         # self.w[].reset_trigger_msgs()  # Reset trigger messages in
+#             #         # self.w[].block_state = -1
+#             #         self.w[].clear_msgs()
+#             #         self.w[].block_state = 0
+#             # if self.w[].block_size > 2:
 #             #     if i == 2:
-#             #         self.world_ptr[0].block_state = 0
+#             #         self.w[].block_state = 0
 
 #             zero(self.output)
 #             # Get the next sample from the AudioGraph
@@ -105,10 +105,10 @@
 #             # i have no idea if messages can arrive between the top of this loop and here
 #             # that would result in missed messages
 #             if i == 0:
-#                 self.world_ptr[0].clear_msgs()
+#                 self.w[].clear_msgs()
 
 #             # Fill the wire buffer with the sample data
-#             for j in range(self.world_ptr[0].num_chans):
+#             for j in range(self.w[].num_chans):
 #                 if j < self.output.__len__(): 
 #                     loc_wire_buffer[i * 2 + j] += self.output[j]  # Fill the wire buffer with the sample data
 

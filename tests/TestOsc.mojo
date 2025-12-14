@@ -12,13 +12,13 @@ from algorithm import parallelize
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestOsc[N: Int = 1, num: Int = 6000](Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var osc: List[Osc]
     var freqs: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.osc = [Osc(world_ptr) for _ in range(self.num)]
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.osc = [Osc(w) for _ in range(self.num)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]
 
     fn next(mut self) -> Float64:

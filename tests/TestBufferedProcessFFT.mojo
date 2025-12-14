@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowTypes
 from mmm_dsp.PlayBuf import PlayBuf
@@ -14,7 +14,7 @@ alias hop_size = window_size // 2
 
 # This corresponds to the user defined BufferedProcess.
 struct FFTLowPass[window_size: Int](BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var fft: RealFFT[window_size]
@@ -22,10 +22,10 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     var mags: List[Float64]
     var phases: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(world_ptr)
+        self.m = Messenger(w)
         self.fft = RealFFT[window_size]()
         # self.complex = List[ComplexFloat64](length=(window_size // 2) + 1, fill=ComplexFloat64(0.0,0.0))
         self.mags = List[Float64](length=(window_size // 2) + 1, fill=0.0)
@@ -44,7 +44,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
 
 # User's Synth
 struct TestBufferedProcessFFT(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
@@ -52,13 +52,13 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr) 
-        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.world_ptr,process=FFTLowPass[window_size](self.world_ptr))
-        self.m = Messenger(world_ptr)
-        self.ps = List[Print](length=2,fill=Print(world_ptr))
+        self.playBuf = PlayBuf(self.w) 
+        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.w,process=FFTLowPass[window_size](self.w))
+        self.m = Messenger(w)
+        self.ps = List[Print](length=2,fill=Print(w))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

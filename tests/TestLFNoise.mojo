@@ -11,15 +11,15 @@ from mmm_dsp.Pan import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestLFNoise[num_osc: Int = 4](Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var noise: LFNoise[num_osc, 1]
     var synth: Osc[num_osc]
     var interp: Int64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.noise = LFNoise[num_osc, 1](self.world_ptr)
-        self.synth = Osc[num_osc](self.world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.noise = LFNoise[num_osc, 1](self.w)
+        self.synth = Osc[num_osc](self.w)
         self.interp = 0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

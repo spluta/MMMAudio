@@ -1,7 +1,7 @@
 from python import PythonObject
 from python import Python
 from mmm_dsp.Osc import Impulse
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 from mmm_src.MMMWorld import MMMWorld
 from mmm_src.MMMTraits import *
 
@@ -9,13 +9,13 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     """
     A Mojo wrapper for a PyTorch MLP model using Python interop.
 
-    ``MLP[input_size, output_size](world_ptr,file_name)``
+    ``MLP[input_size, output_size](w,file_name)``
 
     Parameters:
       input_size: The size of the input vector - defaults to 2.
       output_size: The size of the output vector - defaults to 16.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var py_input: PythonObject  
     var py_output: PythonObject  
     var model: PythonObject  
@@ -30,8 +30,8 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var messenger: Messenger
     var file_name: String
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
+        self.w = w
         self.py_input = PythonObject(None) 
         self.py_output = PythonObject(None) 
         self.model = PythonObject(None)  
@@ -40,10 +40,10 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
         self.fake_model_output = [0.0 for _ in range(output_size)]    
-        self.inference_trig = Impulse(self.world_ptr)
+        self.inference_trig = Impulse(self.w)
         self.inference_gate = True
         self.trig_rate = trig_rate
-        self.messenger = Messenger(world_ptr, namespace)
+        self.messenger = Messenger(w, namespace)
         self.file_name = String()
 
         try:

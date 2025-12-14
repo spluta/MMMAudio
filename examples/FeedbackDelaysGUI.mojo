@@ -6,12 +6,12 @@ from mmm_dsp.Buffer import *
 from mmm_dsp.PlayBuf import *
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import dbamp
 from mmm_dsp.Filters import SVF
 
 struct DelaySynth(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
     var main_lag: Lag
     var buffer: Buffer
@@ -30,16 +30,16 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mix: Float64
     var main: Bool
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr  
-        self.main_lag = Lag(self.world_ptr, 0.03)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w  
+        self.main_lag = Lag(self.w, 0.03)
         self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world_ptr) 
-        self.delays = FB_Delay[N=2, interp=3](self.world_ptr, self.maxdelay) 
-        self.delay_time_lag = Lag[2](self.world_ptr, 0.2)  # Initialize Lag with a default time constant
-        self.m = Messenger(self.world_ptr)
-        self.gate_lag = Lag(self.world_ptr, 0.03)
-        self.svf = SVF[2](self.world_ptr)
+        self.playBuf = PlayBuf(self.w) 
+        self.delays = FB_Delay[N=2, interp=3](self.w, self.maxdelay) 
+        self.delay_time_lag = Lag[2](self.w, 0.2)  # Initialize Lag with a default time constant
+        self.m = Messenger(self.w)
+        self.gate_lag = Lag(self.w, 0.03)
+        self.svf = SVF[2](self.w)
         self.play = True
         self.delaytime_m = 0.5
         self.feedback = -6.0
@@ -79,12 +79,12 @@ struct DelaySynth(Representable, Movable, Copyable):
 
 
 struct FeedbackDelaysGUI(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
-        self.delay_synth = DelaySynth(world_ptr)  # Initialize the DelaySynth with the world instance
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
+        self.delay_synth = DelaySynth(w)  # Initialize the DelaySynth with the world instance
 
     fn __repr__(self) -> String:
         return String("FeedbackDelays")

@@ -1,5 +1,5 @@
 from mmm_src.MMMWorld import *
-from mmm_utils.Messengers import *
+from mmm_utils.Messenger import *
 
 from mmm_utils.functions import *
 from mmm_dsp.Osc import *
@@ -11,7 +11,7 @@ from mmm_src.MMMTraits import *
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
 struct TrigSynthVoice(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var env_params: EnvParams
     var env: Env
@@ -26,19 +26,19 @@ struct TrigSynthVoice(Movable, Copyable):
 
     var messenger: Messenger
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], name_space: String = ""):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld], name_space: String = ""):
+        self.w = w
 
-        self.mod = Osc(self.world_ptr)
-        self.car = Osc[1, 0, 0](self.world_ptr)
-        self.sub = Osc(self.world_ptr)
+        self.mod = Osc(self.w)
+        self.car = Osc[1, 0, 0](self.w)
+        self.sub = Osc(self.w)
 
         self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
-        self.env = Env(self.world_ptr)
+        self.env = Env(self.w)
 
         self.bend_mul = 1.0
 
-        self.messenger = Messenger(self.world_ptr, name_space)
+        self.messenger = Messenger(self.w, name_space)
 
         self.note = List[Float64]()
 
@@ -64,12 +64,12 @@ struct TrigSynthVoice(Movable, Copyable):
 
 
 struct TrigSynth(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
 
-    # the following 5 variables are messengers (imported from mmm_utils.Messengers.mojo)
+    # the following 5 variables are messengers (imported from mmm_utils.Messenger.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
     var messenger: Messenger
@@ -81,19 +81,19 @@ struct TrigSynth(Movable, Copyable):
     var filt_freq: Float64
     var bend_mul: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
+        self.w = w
         self.num_voices = num_voices
         self.current_voice = 0
 
-        self.messenger = Messenger(self.world_ptr)
+        self.messenger = Messenger(self.w)
 
         self.voices = List[TrigSynthVoice]()
         for i in range(self.num_voices):
-            self.voices.append(TrigSynthVoice(self.world_ptr, "voice_"+String(i)))
+            self.voices.append(TrigSynthVoice(self.w, "voice_"+String(i)))
 
-        self.svf = SVF(self.world_ptr)
-        self.filt_lag = Lag(self.world_ptr, 0.1)
+        self.svf = SVF(self.w)
+        self.filt_lag = Lag(self.w, 0.1)
         self.filt_freq = 1000.0
         self.bend_mul = 1.0
 
@@ -101,8 +101,8 @@ struct TrigSynth(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.filt_freq, "filt_freq")
         self.messenger.update(self.bend_mul, "bend_mul")
-        # self.world_ptr[0].print(self.filt_freq, self.bend_mul)
-        if self.world_ptr[0].top_of_block:
+        # self.w[].print(self.filt_freq, self.bend_mul)
+        if self.w[].top_of_block:
             for i in range(len(self.voices)):
                 self.voices[i].bend_mul = self.bend_mul
 
@@ -117,17 +117,17 @@ struct TrigSynth(Movable, Copyable):
         
 
 struct MidiSequencer(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
 
     var output: List[Float64]  # Output buffer for audio samples
 
     var trig_synth: TrigSynth  # Instance of the Oscillator
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.output = List[Float64](0.0, 0.0)  # Initialize output list
 
-        self.trig_synth = TrigSynth(world_ptr)  # Initialize the TrigSynth with the world instance
+        self.trig_synth = TrigSynth(w)  # Initialize the TrigSynth with the world instance
 
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")

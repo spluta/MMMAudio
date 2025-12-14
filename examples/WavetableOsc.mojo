@@ -7,27 +7,27 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Osc import *
 from mmm_dsp.Env import ASREnv
 from mmm_dsp.Buffer import Buffer
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,2,1]
     var tri: LFTri
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var env: ASREnv
     var gate: Bool
     var freq: Float64
     var wubb_rate: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], name_space: String = ""):
-        self.osc = Osc[1,2,1](world_ptr)
-        self.tri = LFTri(world_ptr)
-        self.env = ASREnv(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld], name_space: String = ""):
+        self.osc = Osc[1,2,1](w)
+        self.tri = LFTri(w)
+        self.env = ASREnv(w)
         self.gate = False
         self.freq = 440.0
         self.wubb_rate = 0.5
-        self.messenger = Messenger(world_ptr, name_space)
-        self.world_ptr = world_ptr
+        self.messenger = Messenger(w, name_space)
+        self.w = w
 
     fn next(mut self, ref buffer: Buffer) -> SIMD[DType.float64, 1]:
         self.messenger.update(self.gate, "gate")
@@ -37,7 +37,7 @@ struct OscVoice(Movable, Copyable):
         return self.osc.next_interp(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
 
 struct WavetableOsc(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  
+    var w: UnsafePointer[MMMWorld]  
     var osc_voices: List[OscVoice]
     var chans_per_channel: Int64
     var buffer: Buffer
@@ -48,20 +48,20 @@ struct WavetableOsc(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.w = w
         self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
         self.chans_per_channel = 256
         self.buffer = Buffer(self.file_name, chans_per_channel=self.chans_per_channel)
         self.osc_voices = List[OscVoice]()
         for i in range(8):
-            self.osc_voices.append(OscVoice(self.world_ptr, "voice_"+String(i)))
+            self.osc_voices.append(OscVoice(self.w, "voice_"+String(i)))
         
         self.notes = List[List[Float64]]()
-        self.messenger = Messenger(self.world_ptr)
+        self.messenger = Messenger(self.w)
         self.filter_cutoff = 20000.0
         self.filter_resonance = 0.5
-        self.moog_filter = VAMoogLadder[1,1](self.world_ptr)
+        self.moog_filter = VAMoogLadder[1,1](self.w)
 
     fn __repr__(self) -> String:
         return String("Default")

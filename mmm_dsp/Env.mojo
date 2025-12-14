@@ -48,9 +48,9 @@ struct Env(Representable, Movable, Copyable):
 
 
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
 
-        self.sweep = Sweep(world_ptr)
+        self.sweep = Sweep(w)
         self.rising_bool_detector = RisingBoolDetector()  # Initialize rising bool detector
         self.is_active = False
         self.times = List[Float64]()  # Initialize times list
@@ -221,8 +221,8 @@ struct ASREnv(Representable, Movable, Copyable):
     var bool_changed: Changed  # Track the last trigger state
     var freq: Float64  # Frequency for the envelope
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.sweep = Sweep(world_ptr)
+    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+        self.sweep = Sweep(w)
         self.bool_changed = Changed()  # Initialize last trigger state
         self.freq = 0.0  # Initialize frequency
 

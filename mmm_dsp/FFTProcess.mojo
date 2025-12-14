@@ -9,7 +9,7 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
     works to create spectral processes, see the `FFTProcessable` trait.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var process: T
 
     # this is a bit gross. In order to get this to work the FFT has to have the data structure of both single channel FFT and a two channel FFT.
@@ -22,8 +22,8 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     var st_phases: List[SIMD[DType.float64,2]]
 
     @doc_private
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
-        self.world_ptr = world_ptr
+    fn __init__(out self, w: UnsafePointer[MMMWorld], var process: T):
+        self.w = w
         self.process = process^
         self.fft = RealFFT[window_size, 1]()
         self.fft2 = RealFFT[window_size, 2]()
@@ -118,21 +118,21 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         input_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the input samples before the FFT. See mmm_utils.Windows -> WindowTypes for the options.
         output_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See mmm_utils.Windows -> WindowTypes for the options.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var w: UnsafePointer[MMMWorld]
     var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T):
+    fn __init__(out self, w: UnsafePointer[MMMWorld], var process: T):
         """Initializes a FFTProcess struct.
 
         Args:
-            world_ptr: A pointer to the MMMWorld.
+            w: A pointer to the MMMWorld.
             process: A user defined struct that implements the FFTProcessable trait.
 
         Returns:
             An initialized FFTProcess struct.
         """
-        self.world_ptr = world_ptr
-        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape](self.world_ptr, process=FFTProcessor[T, window_size](self.world_ptr, process=process^))
+        self.w = w
+        self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape](self.w, process=FFTProcessor[T, window_size](self.w, process=process^))
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
