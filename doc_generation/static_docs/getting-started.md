@@ -30,6 +30,8 @@ the main branch is tied to Mojo 0.25.6.1
 pip install mojo==0.25.6.1
 ```
 
+### 2a. Setup the Environment on MacOS
+
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
 
 ```shell
@@ -48,6 +50,60 @@ pip install hid pyaudio
 if you have trouble installing/running `pyaudio`, try this:
 1. [do this](https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed/68296168#68296168)
 2. Then this uninstall and reinstall `pyaudio` (`hidapi` may be the same).
+
+### 2b. Setup the Environment on Windows/WSL2 with Ubuntu
+
+Here are some hints to get the audio samples running under Windows/WSL2. 
+I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
+
+Use your package manager to install `ALSA runtime` and `ASLA utilities` as system-wide c libraries. On Ubuntu this is:
+
+```shell
+sudo apt update
+sudo apt install alsa-utils
+sudo apt install libasound2-dev
+```
+
+Verify the installation. You should see a version number
+
+```shell
+aplay --version
+pkg-config --modversion alsa
+```
+
+To make the Windows audio devices "visible" inside WSL2, please install and configure PulseAudio bridge as follows:
+
+Use youe packagemanger to install `PulseAudio`. On Ubuntu this is:
+```shell
+sudo apt install pulseaudio alsa-utils
+```
+
+Create a sound config rc file in your user home directory with the follwing content:
+~/.asoundrc
+```shell
+pcm.!default {
+    type pulse
+}
+ctl.!default {
+    type pulse
+}
+```
+
+Start pulseaudio and verify that the WSLg PulseAudio server is reachable:
+```shell
+pulseaudio --start
+ls -l /mnt/wslg/PulseServer
+```
+
+Check also that PortAudio detects PulseAudio
+```shell
+pactl info
+```
+
+Now run your MMMAudio script WITHOUT running pulseaudio --start and enjoy the sound:
+```shell
+python3 examples/DefaultGraph.py
+```
 
 ## 3. Run an Example
 
