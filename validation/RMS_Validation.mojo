@@ -9,11 +9,11 @@ alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var rms_values: List[Float64]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.rms_values = List[Float64]()
 
     fn next_window(mut self, mut buffer: List[Float64]):
@@ -23,13 +23,13 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     world = MMMWorld()
-    w = UnsafePointer(to=world)
+    world = UnsafePointer(to=world)
     world.sample_rate = 44100.0
 
     buffer = Buffer("resources/Shiverer.wav")
-    playBuf = PlayBuf(w)
+    playBuf = PlayBuf(world)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(w))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world, Analyzer(world))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

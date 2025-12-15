@@ -10,7 +10,7 @@ from mmm_dsp.RMS import RMS
 
 # User's Synth
 struct TestRMS(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     # samplerate of 48000 50 ms for the RMS = 2400 samples
@@ -19,14 +19,14 @@ struct TestRMS(Movable, Copyable):
     var printer: Print
     var vol: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
-        rms = RMS(self.w)
-        self.rms = BufferedProcess[RMS,2400,2400](self.w,process=rms^)
-        self.m = Messenger(w)
-        self.printer = Print(w)
+        self.playBuf = PlayBuf(self.world) 
+        rms = RMS(self.world)
+        self.rms = BufferedProcess[RMS,2400,2400](self.world,process=rms^)
+        self.m = Messenger(world)
+        self.printer = Print(world)
         self.vol = 0.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

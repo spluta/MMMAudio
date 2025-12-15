@@ -47,15 +47,15 @@ struct BinScramble(Copyable,Movable):
 
 # User defined struct that implements FFTProcessable
 struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var bin_scramble: BinScramble
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(w)
+        self.m = Messenger(world)
         self.bin_scramble = BinScramble(nbins=(window_size // 2) + 1, nscrambles=20)
 
     fn get_messages(mut self) -> None:
@@ -72,7 +72,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 
 # User's Main Synth
 struct TestFFTProcess(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: PlayBuf
     var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowTypes.hann]
@@ -80,13 +80,13 @@ struct TestFFTProcess(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.w) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowTypes.hann](self.w,process=ScrambleAndLowPass(self.w))
-        self.m = Messenger(w)
-        self.ps = List[Print](length=2,fill=Print(w))
+        self.playBuf = PlayBuf(self.world) 
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowTypes.hann](self.world,process=ScrambleAndLowPass(self.world))
+        self.m = Messenger(world)
+        self.ps = List[Print](length=2,fill=Print(world))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

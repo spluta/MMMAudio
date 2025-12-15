@@ -39,12 +39,12 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
       
     Args:
 
-      w: Pointer to the MMMWorld instance.
+      world: Pointer to the MMMWorld instance.
       
       max_delay: The maximum delay time in seconds.
     """
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var max_delay_time: Float64
     var max_delay_samples: Int64
     var delay_line: List[List[Float64]]
@@ -52,14 +52,14 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     var two_sample_duration: Float64
     var sample_duration: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
+        self.world = world
         self.max_delay_time = max_delay_time
-        self.max_delay_samples = Int64(max_delay_time * self.w[].sample_rate) + 1
+        self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate) + 1
         self.delay_line = [[Float64(0.0) for _ in range(self.max_delay_samples)] for _ in range(N)]
         self.write_idx = 0
-        self.two_sample_duration = 2.0 / self.w[].sample_rate
-        self.sample_duration = 1.0 / self.w[].sample_rate
+        self.two_sample_duration = 2.0 / self.world[].sample_rate
+        self.sample_duration = 1.0 / self.world[].sample_rate
 
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
@@ -106,7 +106,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
 
     @doc_private
     fn get_read_idx_and_frac(mut self, delay_time: SIMD[DType.float64, self.N]) -> (SIMD[DType.int64, self.N], SIMD[DType.float64, self.N]):
-        var float_sample_delay: SIMD[DType.float64, self.N] = delay_time * self.w[].sample_rate
+        var float_sample_delay: SIMD[DType.float64, self.N] = delay_time * self.world[].sample_rate
         var float_read_idx: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N]((SIMD[DType.float64, self.N](self.write_idx) - float_sample_delay) % SIMD[DType.float64, self.N](self.max_delay_samples))
         var int_read_idx: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](float_read_idx)
         var frac = float_read_idx - SIMD[DType.float64, self.N](int_read_idx)
@@ -167,7 +167,7 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
         """Perform Lagrange interpolation for 4th order case (from JOS Faust Model)
         """
 
-        var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.w[].sample_rate
+        var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world[].sample_rate
 
         var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
         var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
@@ -205,13 +205,13 @@ struct Comb[N: Int = 1, interp: Int = 2](Movable, Copyable):
     
     """
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp]
     var fb: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[N, interp](self.w, max_delay)
+    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[N, interp](self.world, max_delay)
         self.fb = SIMD[DType.float64, N](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
@@ -251,19 +251,19 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
       interp: The interpolation method to use (0 = linear, 2 = Lagrange).
 
     Args:
-      w: Pointer to the MMMWorld instance.
+      world: Pointer to the MMMWorld instance.
 
       max_delay: The maximum delay time in seconds.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp] # Delay line without automatic feedback
     var one_pole: VAOnePole[N]
     var fb: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[N, interp](self.w, max_delay)
-        self.one_pole = VAOnePole[N](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[N, interp](self.world, max_delay)
+        self.one_pole = VAOnePole[N](world)
         self.fb = SIMD[DType.float64, N](0.0)
 
     @always_inline
@@ -301,17 +301,17 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
       N: size of the SIMD vector - defaults to 1
 
     Args:
-      w: Pointer to the MMMWorld instance.
+      world: Pointer to the MMMWorld instance.
       max_delay: The maximum delay time in seconds.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp]
     var allpass_feedback: SIMD[DType.float64, N]
     var last_delay: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[N, interp](self.w, max_delay)
+    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[N, interp](self.world, max_delay)
         self.allpass_feedback = 0.0
         self.last_delay = SIMD[DType.float64, self.N](0.0)
 
@@ -342,15 +342,15 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
 struct FB_Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[N, interp]
     var dc: DCTrap[N]
     var fb: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[N, interp](self.w, max_delay)
-        self.dc = DCTrap[N](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[N, interp](self.world, max_delay)
+        self.dc = DCTrap[N](world)
         self.fb = SIMD[DType.float64, N](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], feedback: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:

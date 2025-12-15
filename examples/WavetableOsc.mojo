@@ -12,22 +12,22 @@ from mmm_utils.Messenger import Messenger
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,2,1]
     var tri: LFTri
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var env: ASREnv
     var gate: Bool
     var freq: Float64
     var wubb_rate: Float64
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], name_space: String = ""):
-        self.osc = Osc[1,2,1](w)
-        self.tri = LFTri(w)
-        self.env = ASREnv(w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld], name_space: String = ""):
+        self.osc = Osc[1,2,1](world)
+        self.tri = LFTri(world)
+        self.env = ASREnv(world)
         self.gate = False
         self.freq = 440.0
         self.wubb_rate = 0.5
-        self.messenger = Messenger(w, name_space)
-        self.w = w
+        self.messenger = Messenger(world, name_space)
+        self.world = world
 
     fn next(mut self, ref buffer: Buffer) -> SIMD[DType.float64, 1]:
         self.messenger.update(self.gate, "gate")
@@ -37,7 +37,7 @@ struct OscVoice(Movable, Copyable):
         return self.osc.next_interp(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
 
 struct WavetableOsc(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var osc_voices: List[OscVoice]
     var chans_per_channel: Int64
     var buffer: Buffer
@@ -48,20 +48,20 @@ struct WavetableOsc(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
         self.chans_per_channel = 256
         self.buffer = Buffer(self.file_name, chans_per_channel=self.chans_per_channel)
         self.osc_voices = List[OscVoice]()
         for i in range(8):
-            self.osc_voices.append(OscVoice(self.w, "voice_"+String(i)))
+            self.osc_voices.append(OscVoice(self.world, "voice_"+String(i)))
         
         self.notes = List[List[Float64]]()
-        self.messenger = Messenger(self.w)
+        self.messenger = Messenger(self.world)
         self.filter_cutoff = 20000.0
         self.filter_resonance = 0.5
-        self.moog_filter = VAMoogLadder[1,1](self.w)
+        self.moog_filter = VAMoogLadder[1,1](self.world)
 
     fn __repr__(self) -> String:
         return String("Default")

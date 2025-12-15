@@ -6,14 +6,14 @@ struct Print(Representable, Copyable, Movable):
     A struct for printing values in the MMMWorld environment.
     """
     var impulse: Impulse
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """
         Initialize the Print struct.
         """
-        self.w = w
-        self.impulse = Impulse(w)
+        self.world = world
+        self.impulse = Impulse(world)
 
     fn __repr__(self: Print) -> String:
         return String("Print")

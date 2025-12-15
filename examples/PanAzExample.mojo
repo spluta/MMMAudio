@@ -7,7 +7,7 @@ from mmm_dsp.Osc import Phasor, Osc
 from mmm_dsp.Pan import pan_az
 
 struct PanAz_Synth(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var osc: Osc
     var freq: Float64
 
@@ -15,14 +15,14 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     var num_speakers: Int64
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.osc = Osc(self.w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.osc = Osc(self.world)
         self.freq = 440.0
 
-        self.pan_osc = Phasor(self.w)
+        self.pan_osc = Phasor(self.world)
         self.num_speakers = 7  # default to 2 speakers
-        self.messenger = Messenger(self.w)
+        self.messenger = Messenger(self.world)
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -43,12 +43,12 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct PanAzExample(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var synth: PanAz_Synth
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.synth = PanAz_Synth(self.w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.synth = PanAz_Synth(self.world)
 
     fn __repr__(self) -> String:
         return String("PanAzExample")

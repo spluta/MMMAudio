@@ -91,12 +91,12 @@ alias pi_over_2 = pi / 2.0
 
 struct SplayN[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var mul_list: List[SIMD[DType.float64, num_output_channels]]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.w = w
+        self.world = world
 
         js = SIMD[DType.float64, self.num_output_channels](0.0, 1.0)
         @parameter

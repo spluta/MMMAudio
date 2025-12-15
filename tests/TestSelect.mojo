@@ -7,21 +7,21 @@ from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
 
 struct TestSelect(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var messenger: Messenger
     var vs: List[Float64]
     var printers: List[Print]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.messenger = Messenger(w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.messenger = Messenger(world)
         self.vs = List[Float64](capacity=8)
         self.printers = List[Print](capacity=2)
         for i in range(8):
             self.vs.append(i * 100)
 
-        self.printers[0] = Print(w)
-        self.printers[1] = Print(w)
+        self.printers[0] = Print(world)
+        self.printers[1] = Print(world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.vs[0] = self.messenger.get_val("v0", 0.0)

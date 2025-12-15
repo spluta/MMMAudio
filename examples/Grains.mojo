@@ -12,7 +12,7 @@ from random import random_float64
 # THE SYNTH
 
 struct GrainSynth(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
 
     var num_chans: Int64
@@ -21,15 +21,15 @@ struct GrainSynth(Representable, Movable, Copyable):
     var impulse: Impulse  
     var start_frame: Float64
      
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w  
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world  
 
         # buffer uses numpy to load a buffer into an N channel array
         self.buffer = Buffer("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
-        self.tgrains = TGrains[10](self.w)  
-        self.impulse = Impulse(self.w)
+        self.tgrains = TGrains[10](self.world)  
+        self.impulse = Impulse(self.world)
 
 
         self.start_frame = 0.0 
@@ -37,10 +37,10 @@ struct GrainSynth(Representable, Movable, Copyable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        imp_freq = linlin(self.w[].mouse_y, 0.0, 1.0, 1.0, 20.0)
+        imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, 20.0)
         var impulse = self.impulse.next_bool(imp_freq, True)  # Get the next impulse sample
 
-        start_frame = linlin(self.w[].mouse_x, 0.0, 1.0, 0.0, self.buffer.num_frames - 1.0)
+        start_frame = linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, self.buffer.num_frames - 1.0)
 
         # use the first channel of the buffer
         var grains = self.tgrains.next(self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
@@ -58,14 +58,14 @@ struct GrainSynth(Representable, Movable, Copyable):
 # THE GRAPH
 
 struct Grains(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var grain_synth: GrainSynth  # Instance of the GrainSynth
 
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
 
-        self.grain_synth = GrainSynth(w)  # Initialize the GrainSynth with the world instance
+        self.grain_synth = GrainSynth(world)  # Initialize the GrainSynth with the world instance
 
     fn __repr__(self) -> String:
         return String("TGrains")

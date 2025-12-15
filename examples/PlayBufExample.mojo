@@ -9,7 +9,7 @@ from mmm_dsp.PlayBuf import *
 from mmm_dsp.Filters import VAMoogLadder
 
 struct BufSynth(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld] 
+    var world: UnsafePointer[MMMWorld] 
     var buffer: Buffer
 
     var num_chans: Int64
@@ -22,8 +22,8 @@ struct BufSynth(Representable, Movable, Copyable):
     var lpf_freq_lag: Lag
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w 
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world 
 
         # load the audio buffer 
         self.buffer = Buffer("resources/Shiverer.wav")
@@ -34,13 +34,13 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.play_rate = 1.0
 
-        self.play_buf = PlayBuf(self.w)
+        self.play_buf = PlayBuf(self.world)
 
-        self.moog = VAMoogLadder[2, 1](self.w)
+        self.moog = VAMoogLadder[2, 1](self.world)
         self.lpf_freq = 20000.0
-        self.lpf_freq_lag = Lag(self.w, 0.1)
+        self.lpf_freq_lag = Lag(self.world, 0.1)
 
-        self.messenger = Messenger(self.w)
+        self.messenger = Messenger(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.lpf_freq, "lpf_freq")
@@ -57,14 +57,14 @@ struct BufSynth(Representable, Movable, Copyable):
 
 
 struct PlayBufExample(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
 
     var buf_synth: BufSynth  # Instance of the GrainSynth
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
 
-        self.buf_synth = BufSynth(w)  
+        self.buf_synth = BufSynth(world)  
 
     fn __repr__(self) -> String:
         return String("PlayBufExample")
