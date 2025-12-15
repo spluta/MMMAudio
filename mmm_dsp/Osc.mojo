@@ -8,6 +8,16 @@ from .Oversampling import Oversampling
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
+    """
+    A phasor oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio.
+
+    Params:
+
+        N: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+    Args:
+        world: Pointer to the MMMWorld instance.
+    """
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state

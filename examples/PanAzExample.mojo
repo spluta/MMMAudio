@@ -13,6 +13,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
     var pan_osc: Phasor
     var num_speakers: Int64
+    var width: Float64
     var messenger: Messenger
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -21,7 +22,8 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.freq = 440.0
 
         self.pan_osc = Phasor(self.world)
-        self.num_speakers = 7  # default to 2 speakers
+        self.num_speakers = 7  # default to 7 speakers
+        self.width = 2.0
         self.messenger = Messenger(self.world)
 
     fn __repr__(self) -> String:
@@ -30,9 +32,10 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 8]:
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.num_speakers, "num_speakers")
+        self.messenger.update(self.width, "width")
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
-        panned = pan_az[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers) * 0.1
+        panned = pan_az[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers, self.width) * 0.1
 
         if self.num_speakers == 2:
             return SIMD[DType.float64, 8](panned[0], panned[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)

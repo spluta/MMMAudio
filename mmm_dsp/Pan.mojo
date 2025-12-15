@@ -39,12 +39,12 @@ fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay(input: List[Float64], w: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay(input: List[Float64], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
     Args:
         input: List of input samples from multiple channels
-        w: Pointer to MMMWorld containing the pan_window
+        world: Pointer to MMMWorld containing the pan_window
     Returns:
         Stereo output as SIMD[DType.float64, 2].
     """
@@ -57,11 +57,30 @@ fn splay(input: List[Float64], w: UnsafePointer[MMMWorld]) -> SIMD[DType.float64
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
-            out += input[i] * w[].pan_window[Int(pan * Float64(w[].pan_window.__len__() - 1))]
+            out += input[i] * world[].pan_window[Int(pan * Float64(world[].pan_window.__len__() - 1))]
     return out
 
+
+
 @always_inline
-fn pan_az[simd_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_size]:
+fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
+    """
+    Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
+
+    Parameters:
+        simd_out_size: Number of output channels (speakers).
+
+    Args:
+        sample: Mono input sample.
+        pan: Pan position from 0.0 to 1.0.
+        num_speakers: Number of speakers to pan to.
+        width: Width of the speaker array (default is 2.0).
+        orientation: Orientation offset of the speaker array (default is 0.5).
+
+    Returns:
+
+        SIMD[DType.float64, simd_out_size]: The panned output sample for each speaker.
+    """
 
     var rwidth = 1.0 / width
     var frange = Float64(num_speakers) * rwidth
@@ -69,27 +88,49 @@ fn pan_az[simd_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64
 
     var aligned_pos_fac = 0.5 * Float64(num_speakers)
     var aligned_pos_const = width * 0.5 + orientation
-
     var constant = pan * 2.0 * aligned_pos_fac + aligned_pos_const
-    chan_pos = SIMD[DType.float64, simd_size](0.0)
-    chan_amp = SIMD[DType.float64, simd_size](0.0)
-    
-    for i in range(num_speakers):
-        chan_pos[Int(i)] = (constant - Float64(i)) * rwidth
 
-    chan_pos = (chan_pos - frange * floor(rrange * chan_pos)) * pi
+    out = SIMD[DType.float64, simd_out_size](0.0)
 
-    for i in range(num_speakers):
-        if chan_pos[Int(i)] >= pi:
-            chan_amp[Int(i)] = 0.0
-        else:
-            chan_amp[Int(i)] = sin(chan_pos[Int(i)])
+    alias simd_width: Int = simd_width_of[DType.float64]() * 2
 
-    return sample * chan_amp
+    @parameter
+    fn process_speakers[simd_width: Int](i: Int) -> None:
+        # Create index vector
+        var indices = SIMD[DType.float64, simd_width]()
+        for j in range(simd_width):
+            indices[j] = i + j
+        
+        # Compute chan_pos
+        var pos = (constant - indices) * rwidth
+        pos = (pos - frange * floor(rrange * pos)) * pi
+        
+        # Compute chan_amp with conditional
+        var mask: SIMD[DType.bool, simd_width] = pos.lt(pi)
+        sig = mask.select(sin(pos), SIMD[DType.float64, simd_width](0.0)) * sample
+        for j in range(simd_width):
+            out[Int(i + j)] = sig[j]
+
+    vectorize[process_speakers, simd_width](Int(num_speakers))
+
+    return out
 
 alias pi_over_2 = pi / 2.0
 
 struct SplayN[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
+    """
+    SplayN - Splays multiple input channels into N output channels. Different from splay which only outputs stereo, SplayN can output to any number of channels.
+
+    Args:
+
+        num_output_channels: Number of output channels to splay to.
+        pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
+    
+    Returns:
+
+        SIMD[DType.float64, num_output_channels]: The splayed output sample.
+   
+    """
     var output: List[Float64]  # Output list for stereo output
     var world: UnsafePointer[MMMWorld]
     var mul_list: List[SIMD[DType.float64, num_output_channels]]
