@@ -1,6 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
-from mmm_utils.Messengers import Messenger
+from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
 from mmm_utils.Windows import WindowTypes
 
@@ -15,14 +15,14 @@ from mmm_utils.Windows import WindowTypes
 
 # This corresponds to the user defined BufferedProcess.
 struct BufferedMultiply(BufferedProcessable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var factor: Float64
     var m: Messenger
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.factor = 0.5
-        self.m = Messenger(world_ptr)
+        self.m = Messenger(world)
 
     fn get_messages(mut self) -> None:
         self.m.update(self.factor,"factor")
@@ -34,19 +34,19 @@ struct BufferedMultiply(BufferedProcessable):
 
 # User's Synth
 struct TestBufferedProcess(Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024]
     var input: Float64
     var m: Messenger
     var ps: List[Print]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.input = 0.1
-        var multiply_process = BufferedMultiply(self.world_ptr)
-        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024](self.world_ptr,process=multiply_process^)
-        self.m = Messenger(world_ptr)
-        self.ps = List[Print](length=2,fill=Print(world_ptr))
+        var multiply_process = BufferedMultiply(self.world)
+        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024](self.world,process=multiply_process^)
+        self.m = Messenger(world)
+        self.ps = List[Print](length=2,fill=Print(world))
 
     fn next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.input,"input")

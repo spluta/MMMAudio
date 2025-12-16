@@ -6,11 +6,11 @@ from mmm_utils.functions import *
 from .Env import Env
 
 struct RecordBuf (Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var index: Int64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.index = 0
 
     fn __repr__(self) -> String:

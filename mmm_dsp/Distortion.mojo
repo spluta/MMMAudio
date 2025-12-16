@@ -13,14 +13,14 @@ fn bitcrusher[N: Int](in_samp: SIMD[DType.float64, N], bits: Int64) -> SIMD[DTyp
     return out_samp
 
 struct Latch[N: Int = 1](Copyable, Movable, Representable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var samp: SIMD[DType.float64, N]
     var last_trig: SIMD[DType.bool, N]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.samp = SIMD[DType.float64, N](0)
-        self.last_trig = SIMD[DType.bool, N](0)
+        self.last_trig = SIMD[DType.bool, N](False)
 
     fn __repr__(self) -> String:
         return String("Latch")

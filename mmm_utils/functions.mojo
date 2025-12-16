@@ -453,7 +453,7 @@ fn midicps[
 fn cpsmidi[
     width: Int, //
 ](freq: SIMD[DType.float64, width], reference_midi_note: Float64 = 69.0, reference_frequency: Float64 = 440.0) -> SIMD[DType.float64, width]:
-    n = 12.0 * log2(freq / reference_frequency) + reference_midi_note
+    n = 12.0 * log2(abs(freq) / reference_frequency) + reference_midi_note
     return n
 
 @always_inline
@@ -463,7 +463,8 @@ fn sanitize[
     var absx = abs(x)
     too_large: SIMD[DType.bool, width] = absx.gt(SIMD[DType.float64, width](1e15))
     too_small: SIMD[DType.bool, width] = absx.lt(SIMD[DType.float64, width](1e-15))
-    should_zero: SIMD[DType.bool, width] = too_large | too_small
+    is_nan: SIMD[DType.bool, width] = x.ne(x)
+    should_zero: SIMD[DType.bool, width] = too_large | too_small | is_nan
 
     return should_zero.select(0.0, x)
 

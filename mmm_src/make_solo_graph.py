@@ -10,17 +10,17 @@ from mmm_utils.functions import *
 from """+package_name+"""."""+graph_name+""" import """+graph_name+"""
 
 struct MMMGraph(Representable, Movable):
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var graph_ptr: UnsafePointer["""+graph_name+"""]
     var num_out_chans: Int64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
-        self.world_ptr = world_ptr  # Pointer to the MMMWorld instance
+    fn __init__(out self, world: UnsafePointer[MMMWorld], graphs: List[Int64] = List[Int64](0)):
+        self.world = world  # Pointer to the MMMWorld instance
 
-        self.num_out_chans = self.world_ptr[0].num_out_chans
+        self.num_out_chans = self.world[].num_out_chans
 
         self.graph_ptr = UnsafePointer["""+graph_name+"""].alloc(1)
-        __get_address_as_uninit_lvalue(self.graph_ptr.address) = """+graph_name+"""(self.world_ptr)
+        __get_address_as_uninit_lvalue(self.graph_ptr.address) = """+graph_name+"""(self.world)
         
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
         self.num_out_chans = num_out_chans
@@ -30,22 +30,22 @@ struct MMMGraph(Representable, Movable):
 
     fn get_audio_samples(mut self: MMMGraph, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
 
-        self.world_ptr[0].top_of_block = True
-        self.world_ptr[0].messengerManager.transfer_msgs()
+        self.world[].top_of_block = True
+        self.world[].messengerManager.transfer_msgs()
                 
-        for i in range(self.world_ptr[0].block_size):
-            self.world_ptr[0].block_state = i  # Update the block state
+        for i in range(self.world[].block_size):
+            self.world[].block_state = i  # Update the block state
 
             if i == 1:
-                self.world_ptr[0].top_of_block = False
-                self.world_ptr[0].messengerManager.empty_msg_dicts()
+                self.world[].top_of_block = False
+                self.world[].messengerManager.empty_msg_dicts()
 
-            if self.world_ptr[0].top_of_block:
-                self.world_ptr[0].print_counter += 1
+            if self.world[].top_of_block:
+                self.world[].print_counter += 1
 
             # fill the sound_in list with the current sample from all inputs
-            for j in range(self.world_ptr[0].num_in_chans):
-                self.world_ptr[0].sound_in[j] = Float64(loc_in_buffer[i * self.world_ptr[0].num_in_chans + j]) 
+            for j in range(self.world[].num_in_chans):
+                self.world[].sound_in[j] = Float64(loc_in_buffer[i * self.world[].num_in_chans + j]) 
 
             samples = self.graph_ptr[].next()  # Get the next audio samples from the graph
 
@@ -57,5 +57,6 @@ struct MMMGraph(Representable, Movable):
         self.get_audio_samples(loc_in_buffer, loc_out_buffer)
         """
     
-    with open("mmm_src/MMMGraph_solo.mojo", "w") as file:
+    with open("MMMGraph_solo.mojo", "w") as file:
         file.write(string)
+

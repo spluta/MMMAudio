@@ -42,7 +42,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var input_buffer_write_head: Int
@@ -50,11 +50,11 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
     var process: T
     var input_attenuation_window: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedInput struct.
 
         Args:
-            world_ptr: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
@@ -62,7 +62,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
             An initialized BufferedInput struct.
         """
         
-        self.world_ptr = world_ptr
+        self.world = world
         self.input_buffer_write_head = 0
         self.hop_counter = hop_start
         self.process = process^
@@ -91,7 +91,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         Args:
             input: The next input sample to process.
         """
-        if self.world_ptr[].top_of_block:
+        if self.world[].top_of_block:
             self.process.get_messages()
     
         self.input_buffer[self.input_buffer_write_head] = input
@@ -115,7 +115,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
 
-struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None,overlap_output: Bool = True](Movable, Copyable):
+struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
     
     BufferedProcess struct handles buffering of input samples and handing them as "windows" 
@@ -131,9 +131,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
         output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowTypes struct (e.g. WindowTypes.hann) found in mmm_utils.Windows. If None, no window is applied. The default is None.
-        overlap_output: If True, overlapping output samples (because hop_size < window_size) are summed together. If False, overlapping output samples overwrite previous samples. This would be useful to set to False if the user defined processing is doing something like pitch analysis and replacing all the values in the received List with the detected pitch value. In this case, summing would not make sense (neither would windowing the output) because it would be doing math on the pitch values that you want to just stay as they are. The default is True.
     """
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var output_buffer: List[Float64]
@@ -150,11 +149,11 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
         Args:
-            world_ptr: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
@@ -162,7 +161,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             An initialized BufferedProcess struct.
         """
         
-        self.world_ptr = world_ptr
+        self.world = world
         self.input_buffer_write_head = 0
         self.output_buffer_write_head = 0
         self.hop_counter = hop_start
@@ -214,7 +213,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Returns:
             The next output sample.
         """
-        if self.world_ptr[].top_of_block:
+        if self.world[].top_of_block:
             self.process.get_messages()
     
         self.input_buffer[self.input_buffer_write_head] = input
@@ -241,26 +240,16 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                 for i in range(window_size):
                     self.passing_buffer[i] *= self.output_attenuation_window[i]
 
-            @parameter
-            if overlap_output:
-                # @parameter
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+            for i in range(window_size):
+                self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.output_buffer[self.read_head]
+        self.output_buffer[self.read_head] = 0.0
 
-        @parameter
-        if overlap_output:
-            self.output_buffer[self.read_head] = 0.0
-        
         self.read_head = (self.read_head + 1) % window_size
         return outval
 
@@ -276,7 +265,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Returns:
             The next output sample.
         """
-        if self.world_ptr[].top_of_block:
+        if self.world[].top_of_block:
             self.process.get_messages()
 
         self.st_input_buffer[self.input_buffer_write_head] = input
@@ -303,24 +292,16 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                 for i in range(window_size):
                     self.st_passing_buffer[i] *= self.output_attenuation_window[i]
 
-            @parameter
-            if overlap_output:
-                # @parameter
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
-            else:
-                # @parameter
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+            for i in range(window_size):
+                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
+
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.st_output_buffer[self.read_head]
+        self.st_output_buffer[self.read_head] = 0.0
 
-        @parameter
-        if overlap_output:
-            self.st_output_buffer[self.read_head] = 0.0
         self.read_head = (self.read_head + 1) % window_size
         return outval
 
@@ -341,7 +322,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world[].sample_rate
                     # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
                     if index < buffer.get_num_frames() - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
@@ -349,7 +330,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                         self.passing_buffer[i] = 0.0
             else:
                 for i in range(window_size):
-                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world_ptr[].sample_rate
+                    index = phase * buffer.get_num_frames() + i * buffer.buf_sample_rate / self.world[].sample_rate
                     if index < buffer.get_num_frames() - 2 and index >= 0:
                         self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
                     else:
@@ -362,23 +343,15 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                 for i in range(window_size):
                     self.passing_buffer[i] *= self.output_attenuation_window[i]
 
-            @parameter
-            if overlap_output:
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
-            else:
-                for i in range(window_size):
-                    self.output_buffer[(self.output_buffer_write_head + i) % window_size] = self.passing_buffer[i]
+            for i in range(window_size):
+                self.output_buffer[(self.output_buffer_write_head + i) % window_size] += self.passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.output_buffer[self.read_head]
-
-        @parameter
-        if overlap_output:
-            self.output_buffer[self.read_head] = 0.0
+        self.output_buffer[self.read_head] = 0.0
         
         self.read_head = (self.read_head + 1) % window_size
         return outval
@@ -420,22 +393,15 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
                 for i in range(window_size):
                     self.st_passing_buffer[i] *= self.output_attenuation_window[i]
 
-            @parameter
-            if overlap_output:
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
-            else:
-                for i in range(window_size):
-                    self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] = self.st_passing_buffer[i]
+            for i in range(window_size):
+                self.st_output_buffer[(self.output_buffer_write_head + i) % window_size] += self.st_passing_buffer[i]
 
             self.output_buffer_write_head = (self.output_buffer_write_head + hop_size) % window_size
     
         self.hop_counter = (self.hop_counter + 1) % hop_size
 
         outval = self.st_output_buffer[self.read_head]
+        self.st_output_buffer[self.read_head] = 0.0
 
-        @parameter
-        if overlap_output:
-            self.st_output_buffer[self.read_head] = 0.0
         self.read_head = (self.read_head + 1) % window_size
         return outval

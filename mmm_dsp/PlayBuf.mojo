@@ -5,7 +5,7 @@ from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
 from .Osc import Dust, Impulse
 from mmm_utils.functions import *
-from .Pan import Pan2
+from .Pan import pan2
 from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
@@ -17,22 +17,22 @@ struct PlayBuf(Representable, Movable, Copyable):
     var impulse: Impulse  # Current phase of the buffer
     var sample_rate: Float64
     var done: Bool
-    var world_ptr: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var rising_bool_detector: RisingBoolDetector
     var start_frame: Float64 
     var end_frame: Float64  
     var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        """ world_ptr: pointer to the MMMWorld instance.
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """ world: pointer to the MMMWorld instance.
             num_chans: number of channels in the buffer.
 
         """
         # Use the world instance directly instead of trying to copy it
-        self.world_ptr = world_ptr
-        self.impulse = Impulse(world_ptr)
-        self.sample_rate = self.world_ptr[0].sample_rate  # Sample rate from the MMMWorld instance
+        self.world = world
+        self.impulse = Impulse(world)
+        self.sample_rate = self.world[].sample_rate  # Sample rate from the MMMWorld instance
         self.done = True
         self.rising_bool_detector = RisingBoolDetector()
 
@@ -85,7 +85,6 @@ struct PlayBuf(Representable, Movable, Copyable):
                 _ = self.impulse.next(freq, trig = trig) 
                 if self.impulse.phasor.phase >= self.reset_phase_point:
                     self.impulse.phasor.phase -= self.reset_phase_point
-                # for i in range(N):
                 out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
@@ -108,7 +107,7 @@ struct PlayBuf(Representable, Movable, Copyable):
 
 
 struct Grain(Representable, Movable, Copyable):
-    var world_ptr: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var start_frame: Float64
     var num_frames: Float64  
@@ -116,21 +115,19 @@ struct Grain(Representable, Movable, Copyable):
     var pan: Float64  
     var gain: Float64 
     var rising_bool_detector: RisingBoolDetector
-    var panner: Pan2 
     var play_buf: PlayBuf
     var win_phase: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], num_chans: Int64 = 2):
-        self.world_ptr = world_ptr  
+    fn __init__(out self, world: UnsafePointer[MMMWorld], num_chans: Int64 = 2):
+        self.world = world  
 
         self.start_frame = 0.0
         self.num_frames = 0.0
         self.rate = 1.0
         self.pan = 0.5 
         self.gain = 1.0
-        self.rising_bool_detector = RisingBoolDetector()
-        self.panner = Pan2(world_ptr)  
-        self.play_buf = PlayBuf(world_ptr)
+        self.rising_bool_detector = RisingBoolDetector() 
+        self.play_buf = PlayBuf(world)
         self.win_phase = 0.0
 
 
@@ -144,7 +141,8 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if N == 1:
-            return self.panner.next(sample[0], self.pan)  # Return the output samples
+            panned = pan2(sample[0], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
+            return panned
         else:
             return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
 
@@ -170,7 +168,7 @@ struct Grain(Representable, Movable, Copyable):
 
         @parameter
         if win_num == 0:
-            win = self.world_ptr[0].hann_window.read_phase(0, self.win_phase)
+            win = self.world[].hann_window.read_phase(0, self.win_phase)
         # Future window types can be added here with elif statements
         else:
             win = 1-2*abs(self.win_phase - 0.5) # hackey triangular window
@@ -186,16 +184,16 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     Triggered granular synthesis. Each trigger starts a new grain.
     """
     var grains: List[Grain]  
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var counter: Int 
     var rising_bool_detector: RisingBoolDetector 
     var trig: Bool
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.world_ptr = world_ptr  # Use the world instance directly
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(max_grains):
-            self.grains.append(Grain(world_ptr, 2))  
+            self.grains.append(Grain(world, 2))  
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
@@ -241,13 +239,13 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         N: Number of channels (default is 1).
 
     Args:
-        world_ptr: Pointer to the MMMWorld instance.
+        world: Pointer to the MMMWorld instance.
         buf_dur: Duration of the internal buffer in seconds.
 
 
     """
     var grains: List[Grain]  
-    var world_ptr: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var counter: Int 
     var rising_bool_detector: RisingBoolDetector
     var trig: Bool
@@ -255,21 +253,21 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
     var impulse: Dust
     var pitch_ratio: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
         """ 
-            world_ptr: pointer to the MMMWorld instance.
+            world: pointer to the MMMWorld instance.
             buf_dur: duration of the internal buffer in seconds.
         """
-        self.world_ptr = world_ptr  # Use the world instance directly
+        self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(overlaps+2):
-            self.grains.append(Grain(world_ptr)) 
+            self.grains.append(Grain(world)) 
             
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-        self.buffer = Buffer(1, Int(buf_dur * world_ptr[0].sample_rate), world_ptr[0].sample_rate)  # Empty buffer to be set later
-        self.impulse = Dust(world_ptr)
+        self.buffer = Buffer(1, Int(buf_dur * world[].sample_rate), world[].sample_rate)  # Empty buffer to be set later
+        self.impulse = Dust(world)
         self.pitch_ratio = 1.0
     
     fn __repr__(self) -> String:
@@ -318,7 +316,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
                 if self.pitch_ratio <= 1.0:
                     start_frame = Int(self.buffer.index)
                 else:
-                    start_frame = Int(self.buffer.index - ((win_size * self.world_ptr[0].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.num_frames)
+                    start_frame = Int(self.buffer.index - ((win_size * self.world[].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.num_frames)
             if i == self.counter:
                 out += self.grains[i].next[win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, 0.0, gain)
             else:

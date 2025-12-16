@@ -12,4 +12,5 @@ mmm_audio.send_float("which_fx", 3.0)
 
 mmm_audio.send_float("delay_time", 0.002)
 
+mmm_audio.stop_audio()
 mmm_audio.plot(1024)

@@ -8,8 +8,8 @@ struct Oversampling[N: Int = 1, times_oversampling: Int = 0](Representable, Mova
     var lpf: lpf_LR4[N]
     var filter_cutoff: Float64
 
-    fn __init__(out self, world_ptr: UnsafePointer[MMMWorld]):
-        self.lpf = lpf_LR4[self.N](world_ptr)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.lpf = lpf_LR4[self.N](world)
         self.buffer = InlineArray[SIMD[DType.float64, N], times_oversampling](fill=SIMD[DType.float64, N](0.0))
 
         self.counter = 0
