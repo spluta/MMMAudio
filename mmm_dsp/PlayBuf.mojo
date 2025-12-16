@@ -5,11 +5,12 @@ from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
 from .Osc import Dust, Impulse
 from mmm_utils.functions import *
-from .Pan import pan2
+from .Pan import pan2, pan_az
 from mmm_utils.Windows import hann_window
 from mmm_dsp.Filters import DCTrap
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 from time import time
+from bit import next_power_of_two
 
 alias dtype = DType.float64
 
@@ -45,9 +46,11 @@ struct PlayBuf(Representable, Movable, Copyable):
         return String("PlayBuf")
 
     @always_inline
-    fn next[N: Int=1](mut self: PlayBuf, mut buffer: Buffer, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, num_frames: Float64 = -1) -> SIMD[DType.float64, N]: 
+    fn next[num_playback_chans: Int=1](mut self: PlayBuf, mut buffer: Buffer, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, num_frames: Float64 = -1) -> SIMD[DType.float64, num_playback_chans]: 
         """
-        get the next sample from an audio buffer (Buffer)
+        Get the next sample from an audio buffer (Buffer).
+
+
 
         Args:
             buffer: The audio buffer to read from (Buffer struct).
@@ -63,7 +66,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         else:
             num_frames2 = num_frames
 
-        out = SIMD[DType.float64, N](0.0)
+        out = SIMD[DType.float64, num_playback_chans](0.0)
 
         # this should happen on the first call if trig > 0.0
         # or when any trig happens
@@ -85,7 +88,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                 _ = self.impulse.next(freq, trig = trig) 
                 if self.impulse.phasor.phase >= self.reset_phase_point:
                     self.impulse.phasor.phase -= self.reset_phase_point
-                out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
+                out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
@@ -94,7 +97,7 @@ struct PlayBuf(Representable, Movable, Copyable):
                     self.done = True  # Set done flag if phase is out of bounds
                     return out
                 else:
-                    out = buffer.read_phase[N, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
+                    out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             
             return out
 
@@ -135,19 +138,27 @@ struct Grain(Representable, Movable, Copyable):
         return String("Grain")
 
     @always_inline
-    fn next_pan[N: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+    fn next_pan2[num_playback_chans: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
         
-        var sample = self.next[N=N, win_num=win_num](buffer, start_chan, trig, rate, start_frame, duration, pan, gain)
+        var sample = self.next[num_playback_chans=num_playback_chans, win_num=win_num](buffer, start_chan, trig, rate, start_frame, duration, pan, gain)
 
         @parameter
-        if N == 1:
+        if num_playback_chans == 1:
             panned = pan2(sample[0], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
             return panned
         else:
-            return SIMD[DType.float64, 2](sample[0], sample[1])  # Return the output samples
+            panned = pan2(SIMD[DType.float64, 2](sample[0], sample[1]), self.pan) #self.panner.next(sample[0], sample[1], self.pan)  # Return the output samples
+            return panned  # Return the output samples
 
-    # N can only be 1 (default) or 2
-    fn next[N: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, N]:
+    @always_inline
+    fn next_pan_az[num_simd_chans: Int = 4, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, num_speakers: Int = 4, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, num_simd_chans]:
+        
+        var sample = self.next[num_playback_chans=1, win_num=win_num](buffer, start_chan, trig, rate, start_frame, duration, pan, gain)
+
+        panned = pan_az[num_simd_chans](sample[0], self.pan, num_speakers) #self.panner.next(sample[0], self.pan)  # Return the output samples
+        return panned
+
+    fn next[num_playback_chans: Int = 1, win_num: Int = 0](mut self, mut buffer: Buffer, start_chan: Int, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.0, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, num_playback_chans]:
 
         if self.rising_bool_detector.next(trig):
             self.start_frame = start_frame
@@ -156,9 +167,9 @@ struct Grain(Representable, Movable, Copyable):
             self.gain = gain
             self.pan = pan
 
-            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, trig, self.start_frame, self.num_frames) # Get samples from PlayBuf
+            sample = self.play_buf.next[num_playback_chans](buffer, start_chan, self.rate, False, trig, self.start_frame, self.num_frames) # Get samples from PlayBuf
         else:
-            sample = self.play_buf.next[N=N](buffer, start_chan, self.rate, False, False, self.start_frame, self.num_frames)  # Call next on PlayBuf with no trigger
+            sample = self.play_buf.next[num_playback_chans](buffer, start_chan, self.rate, False, False, self.start_frame, self.num_frames)  # Call next on PlayBuf with no trigger
 
         # Get the current phase of the PlayBuf
         if self.play_buf.reset_phase_point > 0.0:
@@ -202,9 +213,12 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         return String("TGrains")
 
     @always_inline
-    fn next[N: Int = 1](mut self, mut buffer: Buffer, buf_chan: Int = 0, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
-        """Generate the next set of grains.
+    fn next[num_playback_chans: Int = 1](mut self, mut buffer: Buffer, buf_chan: Int = 0, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, 2]:
+        """Generate the next set of grains. Uses pan2 to pan to 2 channels. Depending on num_playback_chans, will either pan a mono signal out 2 channels or a stereo signal out 2 channels.
         
+        Parameters:
+            num_playback_chans: Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.
+
         Args:.
             buffer: Audio buffer containing the source sound.
             trig: Trigger signal (>0 to start a new grain).
@@ -227,16 +241,47 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         @parameter
         for i in range(max_grains):
             b = i == self.counter and self.rising_bool_detector.state
-            out += self.grains[i].next_pan[N=N](buffer, buf_chan, b, rate, start_frame, duration, pan, gain)
+            out += self.grains[i].next_pan2[num_playback_chans](buffer, buf_chan, b, rate, start_frame, duration, pan, gain)
 
         return out
 
-struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
+    @always_inline
+    fn next_pan_az[num_simd_chans: Int = 2](mut self, mut buffer: Buffer, buf_chan: Int = 0, trig: Bool = False, rate: Float64 = 1.0, start_frame: Float64 = 0.0, duration: Float64 = 0.1, num_speakers: Int = 2, pan: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, num_simd_chans]:
+        """Generate the next set of grains. Uses azimuth panning for N channel output.
+        
+        Args:.
+            buffer: Audio buffer containing the source sound.
+            trig: Trigger signal (>0 to start a new grain).
+            rate: Playback rate of the grains (1.0 = normal speed).
+            start_frame: Starting frame position in the buffer.
+            duration: Duration of each grain in seconds.
+            pan: Panning position from -1.0 (left) to 1.0 (right).
+            gain: Amplitude scaling factor for the grains.
+
+        Returns:
+            List of output samples for all channels.
+        """
+
+        if self.rising_bool_detector.next(trig):
+            self.counter += 1  # Increment the counter on trigger
+            if self.counter >= max_grains:
+                self.counter = 0  # Reset counter if it exceeds the number of grains
+
+        out = SIMD[DType.float64, num_simd_chans](0.0)
+        @parameter
+        for i in range(max_grains):
+            b = i == self.counter and self.rising_bool_detector.state
+            out += self.grains[i].next_pan_az[num_simd_chans](buffer, buf_chan, b, rate, start_frame, duration, num_speakers, pan, gain)
+
+        return out
+
+struct PitchShift[num_chans: Int = 1, overlaps: Int = 4](Movable, Copyable):
     """
-    Triggered granular synthesis. Each trigger starts a new grain.
+    An N channel granular pitchshifter. Each channel is processed in parrallel, thus each of the grains
 
     Parameters:
-        N: Number of channels (default is 1).
+        num_chans: Number of input/output channels.
+        overlaps: Number of overlapping grains (default is 4).
 
     Args:
         world: Pointer to the MMMWorld instance.
@@ -266,7 +311,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-        self.buffer = Buffer(1, Int(buf_dur * world[].sample_rate), world[].sample_rate)  # Empty buffer to be set later
+        self.buffer = Buffer(num_chans, Int(buf_dur * world[].sample_rate), world[].sample_rate)  # Empty buffer to be set later
         self.impulse = Dust(world)
         self.pitch_ratio = 1.0
     
@@ -276,11 +321,8 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
     # PitchShift.ar(in: 0.0, windowSize: 0.2, pitchRatio: 1.0, pitchDispersion: 0.0, timeDispersion: 0.0, mul: 1.0, add: 0.0)
 
     @always_inline
-    fn next(mut self, in_sig: Float64, win_size: Float64 = 0.2, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, gain: Float64 = 1.0) -> Float64:
+    fn next(mut self, in_sig: SIMD[DType.float64, num_chans], win_size: Float64 = 0.2, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
         """Generate the next set of grains.
-        
-        Parameters:
-            out_chans: Number of output channels.
 
         Args:.
             buffer: Audio buffer containing the source sound.
@@ -305,7 +347,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         if trig:
             self.counter = (self.counter + 1) % overlaps_plus_2  # Cycle through 6 grains
 
-        out = Float64(0.0)
+        out = SIMD[DType.float64, num_chans](0.0)
 
         @parameter
         for i in range(overlaps_plus_2):
@@ -318,8 +360,8 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
                 else:
                     start_frame = Int(self.buffer.index - ((win_size * self.world[].sample_rate) * (self.pitch_ratio-1))) % Int(self.buffer.num_frames)
             if i == self.counter:
-                out += self.grains[i].next[win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, 0.0, gain)
+                out += self.grains[i].next[num_chans, win_num=1](self.buffer, 0, True, self.pitch_ratio, start_frame, win_size, 0.0, gain)
             else:
-                out += self.grains[i].next[win_num=1](self.buffer, 0, False, self.pitch_ratio, start_frame, win_size, 0.0, gain)
+                out += self.grains[i].next[num_chans, win_num=1](self.buffer, 0, False, self.pitch_ratio, start_frame, win_size, 0.0, gain)
 
         return out

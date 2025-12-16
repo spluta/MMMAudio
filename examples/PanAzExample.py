@@ -6,7 +6,6 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="PanAzExample", package_name="examples", num_output_channels=8)
 mmm_audio.start_audio() 
 
-# not really design for 2 channels
 mmm_audio.send_int("num_speakers", 2 ) # set the number of speakers to between 2 and 8
 
 mmm_audio.send_int("num_speakers", 8 ) # set the number of speakers to between 2 and 8
