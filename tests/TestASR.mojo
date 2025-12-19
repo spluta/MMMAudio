@@ -31,7 +31,6 @@ struct TestASR(Movable, Copyable):
             curves = self.messenger.get_list("curves")
             for i in range(min(2, len(curves))):
                 self.curves[i] = curves[i]
-        # [TODO] it would be great to get "gate" from Python as a boolean
         gate = self.messenger.get_val("gate", 0.0) > 0.5
 
         env = self.env.next(self.w[].mouse_x, 1, self.w[].mouse_y, gate, self.curves)

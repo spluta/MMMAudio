@@ -1,5 +1,6 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
+
 from mmm_dsp.Delays import *
 from mmm_dsp.Osc import *
 from mmm_utils.Messenger import Messenger
@@ -19,43 +20,54 @@ struct TestDelayInterps(Movable, Copyable):
     var lfo: Osc
     var m: Messenger
     var mouse_lag: Lag
+    var max_delay_time: Float64
+    var lfo_freq: Float64
+    var mix: Float64
+    var which_delay: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
         self.delay_none = Delay[interp=Interp.none](self.w,1.0)
         self.delay_linear = Delay[interp=Interp.linear](self.w,1.0)
+        self.delay_quadratic = Delay[interp=Interp.quad](self.w,1.0)
         self.delay_cubic = Delay[interp=Interp.cubic](self.w,1.0)
-        self.delay_lagrange = Delay[interp=Interp.lagrange](self.w,1.0)
+        self.delay_lagrange = Delay[interp=Interp.lagrange4](self.w,1.0)
+        self.delay_sinc = Delay[interp=Interp.sinc](self.w,1.0)
         self.lag = Lag(self.w, 0.2)
         self.lfo = Osc(self.w)
-        self.m = Messenger(w)
+        self.m = Messenger(self.w)
         self.mouse_lag = Lag(self.w, 0.05)
+        self.max_delay_time = 1.0
+        self.lfo_freq = 0.5
+        self.mix = 0.5
+        self.which_delay = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        var max_delay_time = self.m.get_val("max_delay_time", 0.5)  # Get delay time from messenger, default to 0.5 seconds
-        max_delay_time = self.lag.next(max_delay_time)  # Apply lag to the delay time for smooth changes
-        lfo_freq = self.m.get_val("lfo_freq",0.5)
-        var delay_time = linlin(self.lfo.next(lfo_freq),-1,1,0,max_delay_time)
-        var mix = self.m.get_val("mix", 0.5)  # Get mix level from messenger, default to 0.5
-
-        var mouse_onoff = self.m.get_val("mouse_onoff", 0)
-        delay_time = select(mouse_onoff,[delay_time, self.mouse_lag.next(linlin(self.w[].mouse_x, 0.0, 1.0, 0.0, 0.001))])
-
-        var which_delay = self.m.get_val("which_delay", 0)  # Get which delay type to use from messenger, default to 0 (none)
-
-
-
+        self.m.update(self.max_delay_time,"max_delay_time")  # Get delay time from messenger, default to 0.5 seconds
+        # self.max_delay_time = self.lag.next(self.max_delay_time)  # Apply lag to the delay time for smooth changes
         
-        var sample = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
-        var delay_none = self.delay_none.next(sample, delay_time)
-        var delay_linear = self.delay_linear.next(sample, delay_time)
-        var delay_cubic = self.delay_cubic.next(sample, delay_time)
-        var delay_lagrange = self.delay_lagrange.next(sample, delay_time)
+        self.m.update(self.lfo_freq,"lfo_freq")
+        delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0,self.max_delay_time)
 
-        var one_delay = select(which_delay,[delay_none,delay_linear,delay_cubic,delay_lagrange])
-        var sig = sample * (1.0 - mix) + one_delay * mix  # Mix the dry and wet signals based on the mix level
-        var out = SIMD[DType.float64, 2](sample,sig)
+        dry = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        sample_none = self.delay_none.next(dry, delay_time)
+        sample_linear = self.delay_linear.next(dry, delay_time)
+        sample_quadratic = self.delay_quadratic.next(dry, delay_time)
+        sample_cubic = self.delay_cubic.next(dry, delay_time)
+        sample_lagrange = self.delay_lagrange.next(dry, delay_time)
+        sample_sinc = self.delay_sinc.next(dry, delay_time)
 
+        self.m.update(self.mix,"mix")  # Get mix level from messenger, default to 0.5
+        self.m.update(self.which_delay, "which_delay")  # Get which delay type to use from messenger, default to 0 (none)
+
+        # self.w[].print("max_delay_time: ", self.max_delay_time, " mix: ", self.mix, " which_delay: ", self.which_delay, " delay_time: ", delay_time)
+
+        one_delay = select(self.which_delay,[sample_none,sample_linear,sample_quadratic,sample_cubic,sample_lagrange,sample_sinc])
+        sig = dry * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
+        
+        self.w[].print("dry: ", dry, " one_delay: ", one_delay, " sig: ", sig)
+
+        out = SIMD[DType.float64, 2](dry[0],sig[0])
         return out
