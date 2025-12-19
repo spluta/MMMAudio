@@ -12,6 +12,7 @@ struct Buffer(Movable, Copyable):
     var num_frames: Int64
     var num_frames_f64: Float64
     var sample_rate: Float64
+    var duration: Float64
 
     def __init__(out self, data: List[List[Float64]], sample_rate: Float64):
 
@@ -26,6 +27,7 @@ struct Buffer(Movable, Copyable):
         self.num_chans = len(data)
         self.num_frames = len(data[0]) if self.num_chans > 0 else 0
         self.num_frames_f64 = Float64(self.num_frames)
+        self.duration = self.num_frames_f64 / self.sample_rate
 
     @staticmethod
     def zeros(num_frames: Int64, num_chans: Int64 = 1, sample_rate: Float64 = 48000.0) -> Buffer:
@@ -239,8 +241,7 @@ struct ListInterpolator(Movable, Copyable):
             y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
             y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
             y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
-
-        return quadratic_interp(y0, y1, y2, frac)
+            return quadratic_interp(y0, y1, y2, frac)
 
     @always_inline
     @staticmethod
@@ -277,8 +278,7 @@ struct ListInterpolator(Movable, Copyable):
             y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
             y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
             y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
-
-        return cubic_interp(y0, y1, y2, y3, frac)
+            return cubic_interp(y0, y1, y2, y3, frac)
 
     @always_inline
     @staticmethod
@@ -320,8 +320,7 @@ struct ListInterpolator(Movable, Copyable):
             y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
             y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
             y4 = data[idx4] if ListInterpolator.idx_in_range(data, idx4) else 0.0
-
-        return lagrange4(y0, y1, y2, y3, y4, frac)
+            return lagrange4(y0, y1, y2, y3, y4, frac)
 
     @always_inline
     @staticmethod

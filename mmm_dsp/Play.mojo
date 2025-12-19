@@ -58,7 +58,7 @@ struct Play(Representable, Movable, Copyable):
             The next sample(s) from the buf as a SIMD vector.
         """
 
-        self.w[].print("Play.mojo: next(): rate=", rate, " loop=", loop, " trig=", trig, " start_frame=", start_frame, " num_frames=", num_frames, " start_chan=", start_chan)
+        # self.w[].print("Play.mojo: next(): rate=", rate, " loop=", loop, " trig=", trig, " start_frame=", start_frame, " num_frames=", num_frames, " start_chan=", start_chan)
 
         # [TODO] I think we need to make sure these are within valid ranges:
         # * start_frame 
@@ -70,6 +70,8 @@ struct Play(Representable, Movable, Copyable):
 
         # Determine Length of the Data
         # ============================
+        if num_frames < 0 or num_frames + start_frame > buf.num_frames:
+            num_frames = buf.num_frames - start_frame
 
         # Check for Trigger and if so, Update Values
         # ==========================================
@@ -84,13 +86,13 @@ struct Play(Representable, Movable, Copyable):
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
-        freq = rate / (buf.num_frames_f64 / self.w[].sample_rate)  # Calculate step size based on rate and sample rate
+        freq = rate / buf.duration  # Calculate step size based on rate and sample rate
         # keep previous phase for sinc interp
         prev_phase = (self.impulse.phasor.phase + self.phase_offset) % 1.0
         # advance phase
         eor = self.impulse.next_bool(freq, trig = trig)
 
-        self.w[].print("Play.mojo: next(): phase=", self.impulse.phasor.phase, " freq=", freq, " prev_phase=", prev_phase, " data_len_f=", buf.num_frames_f64, " reset_phase_point=", self.reset_phase_point)
+        # self.w[].print("Play.mojo: next(): phase=", self.impulse.phasor.phase, " freq=", freq, " prev_phase=", prev_phase, " data_len_f=", buf.num_frames_f64, " reset_phase_point=", self.reset_phase_point)
 
         if loop:
             # Wrap Phase

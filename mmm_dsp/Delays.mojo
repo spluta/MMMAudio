@@ -53,8 +53,6 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
           The processed output sample.
 
         """
-        self.delay_line.write_previous(input)
-
         delay_time = min(delay_time, self.max_delay_time)
         
         out = SIMD[DType.float64, self.num_chans](0.0)
@@ -63,29 +61,30 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         @parameter
         for chan in range(self.num_chans):
           @parameter
-          if interp == Interp.none:
+          if self.interp == Interp.none:
             delay_time = max(delay_time, 0.0)
             out[chan] = ListInterpolator.read_none[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif interp == Interp.linear:
+          elif self.interp == Interp.linear:
             delay_time = max(delay_time, 0.0)
             out[chan] = ListInterpolator.read_linear[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif interp == Interp.quad:
-            delay_time = max(delay_time, self.sample_duration)
+          elif self.interp == Interp.quad:
+            delay_time = max(delay_time, 0.0)
             out[chan] = ListInterpolator.read_quad[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif interp == Interp.cubic:
-            delay_time = max(delay_time, self.two_sample_duration)
+          elif self.interp == Interp.cubic:
+            delay_time = max(delay_time, self.sample_duration)
             out[chan] = ListInterpolator.read_cubic[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif interp == Interp.lagrange4:
+          elif self.interp == Interp.lagrange4:
             delay_time = max(delay_time, 0.0)
             out[chan] = ListInterpolator.read_lagrange4[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif interp == Interp.sinc:
+          elif self.interp == Interp.sinc:
+            # [TODO] How many minimum samples do we need for sinc interpolation?
             delay_time = max(delay_time, 0.0)
             f_idx = self.get_f_idx(delay_time[chan])
             out[chan] = ListInterpolator.read_sinc[bWrap=True](self.w, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
             self.prev_f_idx[chan] = f_idx
-          else:
-            delay_time = max(delay_time, 0.0)
-            out[chan] = ListInterpolator.read_none[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+
+        self.delay_line.write_previous(input)
+
         return out
 
     fn get_f_idx(self, delay_time: Float64) -> Float64:
@@ -93,7 +92,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         # Because the ListInterpolator functions always "read" forward,
         # we're writing into the delay line buffer backwards, so therefore,
         # here to go backwards in time we add the delay samples to the write head.
-        f_idx = (Float64(self.delay_line.write_head) + delay_samps) % Float64(self.delay_line.buf.num_frames)
+        f_idx = (Float64(self.delay_line.write_head) + delay_samps + 1) % Float64(self.delay_line.buf.num_frames)
         return f_idx
 
 fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], decaytime: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
