@@ -1,6 +1,5 @@
 from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-
 from mmm_dsp.Delays import *
 from mmm_dsp.Osc import *
 from mmm_utils.Messenger import Messenger
@@ -10,10 +9,12 @@ struct TestDelayInterps(Movable, Copyable):
     var w: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
-    var delay_none: Delay[interp=DelayInterpOptions.none]
-    var delay_linear: Delay[interp=DelayInterpOptions.linear]
-    var delay_cubic: Delay[interp=DelayInterpOptions.cubic]
-    var delay_lagrange: Delay[interp=DelayInterpOptions.lagrange]
+    var delay_none: Delay[interp=Interp.none]
+    var delay_linear: Delay[interp=Interp.linear]
+    var delay_quadratic: Delay[interp=Interp.quad]
+    var delay_cubic: Delay[interp=Interp.cubic]
+    var delay_lagrange: Delay[interp=Interp.lagrange4]
+    var delay_sinc: Delay[interp=Interp.sinc]
     var lag: Lag
     var lfo: Osc
     var m: Messenger
@@ -23,10 +24,10 @@ struct TestDelayInterps(Movable, Copyable):
         self.w = w
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
-        self.delay_none = Delay[interp=DelayInterpOptions.none](self.w,1.0)
-        self.delay_linear = Delay[interp=DelayInterpOptions.linear](self.w,1.0)
-        self.delay_cubic = Delay[interp=DelayInterpOptions.cubic](self.w,1.0)
-        self.delay_lagrange = Delay[interp=DelayInterpOptions.lagrange](self.w,1.0)
+        self.delay_none = Delay[interp=Interp.none](self.w,1.0)
+        self.delay_linear = Delay[interp=Interp.linear](self.w,1.0)
+        self.delay_cubic = Delay[interp=Interp.cubic](self.w,1.0)
+        self.delay_lagrange = Delay[interp=Interp.lagrange](self.w,1.0)
         self.lag = Lag(self.w, 0.2)
         self.lfo = Osc(self.w)
         self.m = Messenger(w)
