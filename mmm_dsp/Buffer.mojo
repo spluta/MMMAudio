@@ -38,7 +38,7 @@ struct Buffer(Movable, Copyable):
         """
 
         var data = List[List[Float64]]()
-        for __repr__ in range(num_chans):
+        for _ in range(num_chans):
             channel_data = List[Float64]()
             for _ in range(num_frames):
                 channel_data.append(0.0)

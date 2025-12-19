@@ -32,6 +32,11 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.write(value, self.write_head)
         self.write_head = (self.write_head + 1) % self.buf.num_frames
     
+    fn write_previous(mut self, value: SIMD[DType.float64, num_chans]):
+        self.write_head = ((self.write_head - 1) + self.buf.num_frames) % self.buf.num_frames
+        self.write(value, self.write_head)
+
+    # [TODO]: This is not tested yet
     fn write_next_grow(mut self, input: SIMD[DType.float64, num_chans]):
         if self.write_head < self.buf.num_frames:
             self.write(input, self.write_head)
