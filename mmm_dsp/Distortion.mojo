@@ -98,17 +98,17 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
     
     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
     
-    Parameters:
+    Params:
+    
         num_chans: The number of channels for SIMD operations.
     
     Methods:
-        __init__(): Initializes the `HardClipAD` struct.
+
         next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
             Computes the first order anti-aliased `hard_clip` of `x`.
         next2(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
             Computes the second order anti-aliased `hard_clip` of `x`.
     
-
     """
     var x1: SIMD[DType.float64, num_chans]
     var x2: SIMD[DType.float64, num_chans]
@@ -231,9 +231,11 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         self.x2 = SIMD[DType.float64, num_chans](0.0)
 
+    @doc_private
     fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         return tanh(x)
 
+    @doc_private
     fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         return log (cosh (x))
 
