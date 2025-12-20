@@ -46,14 +46,13 @@ struct PlayBuf(Representable, Movable, Copyable):
         return String("PlayBuf")
 
     @always_inline
-    fn next[num_playback_chans: Int=1](mut self: PlayBuf, mut buffer: Buffer, start_chan: Int,rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, num_frames: Float64 = -1) -> SIMD[DType.float64, num_playback_chans]: 
+    fn next[num_playback_chans: Int=1](mut self: PlayBuf, mut buffer: Buffer, start_chan: Int, rate: Float64, loop: Bool = True, trig: Bool = True, start_frame: Float64 = 0, num_frames: Float64 = -1) -> SIMD[DType.float64, num_playback_chans]: 
         """
         Get the next sample from an audio buffer (Buffer).
 
-
-
         Args:
             buffer: The audio buffer to read from (Buffer struct).
+            start_chan: The start channel for playback (default: 0).
             rate: The playback rate. 1 is the normal speed of the buffer.
             loop: Whether to loop the buffer (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).
@@ -85,26 +84,26 @@ struct PlayBuf(Representable, Movable, Copyable):
             var freq = rate / buffer.duration  # Calculate step size based on rate and sample rate
 
             if loop:
-                _ = self.impulse.next(freq, trig = trig) 
-                if self.impulse.phasor.phase >= self.reset_phase_point:
-                    self.impulse.phasor.phase -= self.reset_phase_point
-                out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
+                _ = self.impulse.next(freq, trig = trig)
+                if self.impulse.phase >= self.reset_phase_point:
+                    self.impulse.phase -= self.reset_phase_point
+                out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             else:
                 var eor = self.impulse.next_bool(freq, trig = trig)
                 if trig: eor = False
-                phase = self.impulse.phasor.phase
+                phase = self.impulse.phase
                 if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_phase_point:
                     self.done = True  # Set done flag if phase is out of bounds
                     return out
                 else:
-                    out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phasor.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
+                    out = buffer.read_phase[num_playback_chans, 1](start_chan, (self.impulse.phase + self.phase_offset) % 1.0)  # Read the sample from the buffer at the current phase
             
             return out
 
     
     fn get_win_phase(mut self: PlayBuf) -> Float64:
         if self.reset_phase_point > 0.0:
-            return self.impulse.get_phase() / self.reset_phase_point  
+            return self.impulse.phase / self.reset_phase_point  
         else:
             return 0.0  # Use the phase
 
@@ -173,7 +172,7 @@ struct Grain(Representable, Movable, Copyable):
 
         # Get the current phase of the PlayBuf
         if self.play_buf.reset_phase_point > 0.0:
-            self.win_phase = self.play_buf.impulse.phasor.phase / self.play_buf.reset_phase_point  
+            self.win_phase = self.play_buf.impulse.phase / self.play_buf.reset_phase_point  
         else:
             self.win_phase = 0.0  # Use the phase
 

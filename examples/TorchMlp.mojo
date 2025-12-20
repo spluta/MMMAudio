@@ -129,7 +129,7 @@ struct TorchSynth(Movable, Copyable):
 
 # THE GRAPH
 
-struct TorchMlp():
+struct TorchMlp(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 

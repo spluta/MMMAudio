@@ -14,26 +14,30 @@ struct TestImpulse(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var synth: Impulse[2]
     var trig: SIMD[DType.bool, 2]
-    var freq: Float64
+    var freqs: SIMD[DType.float64, 2]
     var messenger: Messenger
+    var ints: List[Int64]
+
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.synth = Impulse[2](self.world)
         self.trig = SIMD[DType.bool, 2](fill=True)
-        self.freq = 0.5
+        self.freqs = SIMD[DType.float64, 2](0.5, 0.5)
         self.messenger = Messenger(world)
+        self.ints = []
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.world[].top_of_block:
-            if self.messenger.triggered("trig"):
-                temp = self.messenger.get_list("trig")
-                for i in range(min(2, len(temp))):
-                    self.trig[i] = temp[i] > 0.0
-            else:
-                self.trig = SIMD[DType.bool, 2](fill = False)
+        if self.messenger.notify_update(self.ints, "trig"):
+            for i in range(min(2, len(self.ints))):
+                self.trig[i] = self.ints[i] > 0
+        else:
+            self.trig = SIMD[DType.bool, 2](fill = False)
 
-            self.freq = self.messenger.get_val("freq", 0.5)
+        freqs = List[Float64]()
+        if self.messenger.notify_update(freqs, "freqs"):
+            for i in range(min(2, len(freqs))):
+                self.freqs[i] = freqs[i]
 
-        sample = self.synth.next(self.freq, self.trig)  # Get the next sample from the synth
+        sample = self.synth.next(self.freqs, self.trig)  # Get the next sample from the synth
         return sample * 0.2  # Get the next sample from the synth

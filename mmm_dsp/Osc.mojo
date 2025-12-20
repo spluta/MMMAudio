@@ -23,11 +23,13 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
+
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.phase = SIMD[DType.float64, N](0.0)
         self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
+
 
     fn __repr__(self) -> String:
         return String("Phasor")
@@ -35,15 +37,13 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     fn increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.N]):
         self.phase += (freq * self.freq_mul)
 
-        self.phase = self.phase - floor(self.phase)  
+        self.phase = self.phase - floor(self.phase)
 
     @always_inline
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
         self.increment_phase(freq)
         
         var resets = self.rising_bool_detector.next(trig)
-        
-        # SIMD conditional reset - no loop needed!
         self.phase = resets.select(0.0, self.phase)
         
         return (self.phase + phase_offset) % 1.0
@@ -96,13 +96,10 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
-
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-
             trig: Trigger signal to reset the phase (default is 0.0).
+            osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square. (default is 0).
 
-            osc_type: Type of waveform (0 = Sine, 1 = Saw, 2 = Square, 3 = Triangle, 4 = BandLimited Triangle, 5 = BandLimited Saw, 6 = BandLimited Square; 
-            default is 0).
         """
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
@@ -155,17 +152,10 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
         
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
-
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-
             trig: Trigger signal to reset the phase (default is 0.0).
-
             osc_types: List of waveform types to interpolate between (default is [0,4,5,6] - sine, triangle, saw, square).
-
-            trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
-
-            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
-
+            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list.
         """
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
@@ -228,9 +218,8 @@ struct Osc[N: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movabl
             buffer: Reference to a Buffer containing the waveforms to interpolate between.
             freq: Frequency of the oscillator in Hz (default is 100.0).
             phase_offset: Phase offset in the range [0.0, 1.0] (default is 0.0).
-            trig: Trigger signal to reset the phase (default is 0.0).
             trig: Trigger signal to reset the phase (default is 0.0). All waveforms will reset together.
-            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list. 
+            osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list.
         """
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
 
@@ -349,53 +338,52 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
         var trig_mask = SIMD[DType.bool, self.N](fill=trig)
         return (abs((self.phasor.next(freq, phase_offset-0.25, trig_mask) * 4.0) - 2.0) - 1.0)
 
-struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
-    """An oscillator that generates an impulse signal.
+struct Impulse[N: Int = 1, os_index: Int = 0](Movable, Copyable):
+    """
+    An impulse oscillator.
+
+    Params:
+
+        N: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
     Args:
         world: Pointer to the MMMWorld instance.
     """
-    var phasor: Phasor[N]
-    var last_phase: SIMD[DType.float64, N]
-    var last_trig: SIMD[DType.bool, N]
-    var rising_bool_detector: RisingBoolDetector[N]
+    var phase: SIMD[DType.float64, N]
+    var tick: SIMD[DType.bool, N]
+    var freq_mul: Float64
+    var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N](world)
-        self.last_phase = SIMD[DType.float64, self.N](0.0)
-        self.last_trig = SIMD[DType.bool, self.N](fill=False)
-        self.rising_bool_detector = RisingBoolDetector[self.N]()
-
-    fn __repr__(self) -> String:
-        return String("Impulse")
-
-    # @always_inline
-    # fn next(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
-    #     return Float64(self.next(freq, trig))
+        self.world = world
+        self.phase = SIMD[DType.float64, N](0.0)
+        self.tick = SIMD[DType.bool, N](fill=False)
+        self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
+        self.rising_bool_detector = RisingBoolDetector[N]()
 
     @always_inline
-    fn next(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.float64, self.N]:
+    fn increment_phase(mut self, freq: SIMD[DType.float64, self.N]):
+        self.phase += (freq * self.freq_mul)
 
-        return SIMD[DType.float64, self.N](self.next_bool(freq, trig).cast[DType.float64]())
+        fl = floor(self.phase)
+        self.tick = abs(fl).gt(0)
+
+        self.phase = self.phase - fl 
 
     @always_inline
-    fn next_bool(mut self: Impulse, freq: SIMD[DType.float64, self.N] = 100, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
-        """Generate the next impulse sample."""
-        phase = self.phasor.next(freq, 0.0, trig)  # Update the phase
-        test = SIMD[DType.bool, self.N](fill=False)
-        rbd = self.rising_bool_detector.next(trig)
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.bool, self.N]:
+        self.increment_phase(freq)
+        
+        var rbd = self.rising_bool_detector.next(trig)
+        self.phase = rbd.select(0.0, self.phase)
+        
+        return (self.tick or rbd)
 
-        for i in range(self.N):
-            if (freq[i] > 0.0 and phase[i] < self.last_phase[i]) or (freq[i] < 0.0 and phase[i] > self.last_phase[i]):  # Check for an impulse (crossing the 0.5 threshold)
-                test[i] = True
-            elif rbd[i]:
-                test[i] = True
-                self.phasor.phase[i] = 0.0  # Reset phase on trigger
-        self.last_phase = phase
+    @always_inline
+    fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
+        return self.next_bool(freq, trig).cast[DType.float64]()
 
-        return test
-
-    fn get_phase(mut self: Impulse) -> SIMD[DType.float64, self.N]:
-        return self.phasor.phase
 
 struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     """A low-frequency dust noise oscillator."""
@@ -429,9 +417,6 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
                 self.freq[i] = random_exp_float64(low[i], high[i])
                 out[i] = True
         return out
-
-    fn get_phase(mut self: Dust) -> SIMD[DType.float64, self.N]:
-        return self.impulse.last_phase
 
 struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""
@@ -492,7 +477,7 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
             for i in range(self.N):
                 p0[i] = self.history[self.history_index[i]][i]
                 p1[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
-            return lerp(p0, p1, self.impulse.phasor.phase)
+            return lerp(p0, p1, self.impulse.phase)
         else:
             p0 = SIMD[DType.float64, self.N](0.0)
             p1 = SIMD[DType.float64, self.N](0.0)
@@ -505,7 +490,7 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
                 p2[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
                 p3[i] = self.history[(self.history_index[i] + 2) % len(self.history)][i]
             # Cubic interpolation
-            return cubic_interp(p0, p1, p2, p3, self.impulse.phasor.phase)
+            return cubic_interp(p0, p1, p2, p3, self.impulse.phase)
 
 struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
