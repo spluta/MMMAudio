@@ -26,7 +26,7 @@ struct TestLFNoise[num_osc: Int = 4](Movable, Copyable):
         self.get_msgs()
         freq = self.noise.next(SIMD[DType.float64, num_osc](0.5,0.4,0.3,0.2)) * 200.0 + 300.0
         sample = self.synth.next(freq)  # Get the next sample from the synth
-        return splay(sample) * 0.2  # Get the next sample from the synth
+        return splay(sample, self.world) * 0.2  # Get the next sample from the synth
 
     fn get_msgs(mut self: Self):
         # Get messages from the world

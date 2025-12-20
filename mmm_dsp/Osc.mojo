@@ -389,12 +389,10 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     """A low-frequency dust noise oscillator."""
     var impulse: Impulse[N]
     var freq: SIMD[DType.float64, N]
-    var rising_bool_detector: RisingBoolDetector[N]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.impulse = Impulse[N](world)
         self.freq = SIMD[DType.float64, N](1.0)
-        self.rising_bool_detector = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
         return String("Dust")
@@ -406,17 +404,15 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     @always_inline
     fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.bool, self.N]:
         """Generate the next dust noise sample."""
-        rbd = self.rising_bool_detector.next(trig)
 
         var tick = self.impulse.next_bool(self.freq, trig)  # Update the phase
-        var out = SIMD[DType.bool, self.N](fill=False)
 
         @parameter
         for i in range(self.N):
-            if tick[i] or rbd[i]:
-                self.freq[i] = random_exp_float64(low[i], high[i])
-                out[i] = True
-        return out
+            if tick[i]:
+                self.freq[i] = random_float64(low[i], high[i])
+
+        return tick
 
 struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""
