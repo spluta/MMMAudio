@@ -1,4 +1,4 @@
-from math import sin, floor
+from math import sin, floor, isclose
 from random import random_float64
 from mmm_utils.functions import *
 from mmm_src.MMMWorld import *
@@ -162,12 +162,13 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
 
         var max_osc_frac = len(osc_types)-1
 
-        var scaled_osc_frac = Float64(max_osc_frac) * (osc_frac % 1.0)
+        var scaled_osc_frac = Float64(max_osc_frac) * min(osc_frac, 1.0) #can't use a modulus here
 
         var osc_type0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](scaled_osc_frac)
         var osc_type1 = SIMD[DType.int64, self.num_chans](osc_type0 + 1)
         osc_type0 = clip(osc_type0, 0,  max_osc_frac)
         osc_type1 = clip(osc_type1, 0, max_osc_frac)
+        self.w[].print(scaled_osc_frac, osc_type0, osc_type1)
         @parameter
         for i in range(self.num_chans):
             osc_type0[i] = osc_types[osc_type0[i]]
@@ -232,6 +233,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
+                self.w[].print(osc_frac_interp)
                 self.oversampling.add_sample(linear_interp(sample0, sample1, osc_frac_interp))
             return self.oversampling.get_sample()
     
@@ -263,7 +265,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
 
         var max_osc_frac = buffer.num_chans - 1
 
-        var chan0_fl = Float64(max_osc_frac) * (osc_frac % 1.0)
+        var chan0_fl = Float64(max_osc_frac) * min(osc_frac, 1.0) #can't use a modulus here
 
         var buf_chan0: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](chan0_fl)
         var buf_chan1 = SIMD[DType.int64, self.num_chans](buf_chan0 + 1)
