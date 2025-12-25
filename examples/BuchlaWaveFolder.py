@@ -11,6 +11,3 @@ mmm_audio.start_audio()
 mmm_audio.stop_audio()
 
 mmm_audio.plot(4000)
-
-
-xq

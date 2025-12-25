@@ -29,8 +29,8 @@ struct TorchSynth(Movable, Copyable):
 
     var latch1: Latch
     var latch2: Latch
-    var impulse1: Impulse
-    var impulse2: Impulse
+    var impulse1: Phasor
+    var impulse2: Phasor
 
     var filt1: SVF
     var filt2: SVF
@@ -56,8 +56,8 @@ struct TorchSynth(Movable, Copyable):
 
         self.latch1 = Latch(self.world)
         self.latch2 = Latch(self.world)
-        self.impulse1 = Impulse(self.world)
-        self.impulse2 = Impulse(self.world)
+        self.impulse1 = Phasor(self.world)
+        self.impulse2 = Phasor(self.world)
         self.filt1 = SVF(self.world)
         self.filt2 = SVF(self.world)
         self.dc1 = DCTrap(self.world)

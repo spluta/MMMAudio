@@ -1,7 +1,6 @@
 from memory import UnsafePointer
 from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
-from .Osc import Impulse
 from mmm_utils.functions import *
 from .Env import Env
 
@@ -21,9 +20,3 @@ struct RecordBuf (Representable, Movable, Copyable):
         self.index += 1
         if self.index >= Int64(buffer.num_frames):
             self.index = 0
-
-    # fn write(mut self, input: List[Float64], mut buffer: Buffer):
-    #     buffer.write(input, self.index, 0)
-    #     self.index += 1
-    #     if self.index >= Int64(buffer.num_frames):
-    #         self.index = 0

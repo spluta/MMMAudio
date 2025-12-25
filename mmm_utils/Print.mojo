@@ -1,11 +1,11 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Osc import Impulse
+from mmm_dsp.Osc import Phasor
 
 struct Print(Representable, Copyable, Movable):
     """
     A struct for printing values in the MMMWorld environment.
     """
-    var impulse: Impulse
+    var impulse: Phasor
     var world: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -13,7 +13,7 @@ struct Print(Representable, Copyable, Movable):
         Initialize the Print struct.
         """
         self.world = world
-        self.impulse = Impulse(world)
+        self.impulse = Phasor(world)
 
     fn __repr__(self: Print) -> String:
         return String("Print")
@@ -32,17 +32,3 @@ struct Print(Representable, Copyable, Movable):
                 print(label.value() + ": ", value)
             else:
                 print(value)
-
-    # fn next[T: Writable](mut self, *value: T) -> None:
-    #     """
-    #     Print the value at a given frequency.
-
-    #     Args:
-    #         value: The value to print.
-    #         label: An optional label to prepend to the printed value.
-    #         freq: The frequency (in Hz) at which to print the value.
-    #     """
-    #     if self.impulse.next_bool(self.freq):
-    #         for v in value:
-    #             print(v, end=" ")
-    #         print()

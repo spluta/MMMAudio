@@ -20,7 +20,7 @@ struct Grains(Movable, Copyable):
     var buffer: Buffer
     
     var tgrains: TGrains[10]
-    var impulse: Impulse  
+    var impulse: Phasor  
     var start_frame: Float64
      
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -30,7 +30,7 @@ struct Grains(Movable, Copyable):
         self.buffer = Buffer("resources/Shiverer.wav")
 
         self.tgrains = TGrains[10](self.world)  
-        self.impulse = Impulse(self.world)
+        self.impulse = Phasor(self.world)
 
 
         self.start_frame = 0.0 

@@ -14,6 +14,7 @@ struct BuchlaWaveFolder(Representable, Movable, Copyable):
     var lag: Lag
     var m: Messenger
 
+
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor

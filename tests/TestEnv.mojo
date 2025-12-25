@@ -17,7 +17,7 @@ struct TestEnv(Movable, Copyable):
     var env: Env
     var synth: Osc
     var messenger: Messenger
-    var impulse: Impulse
+    var impulse: Phasor
     var mul: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -26,7 +26,7 @@ struct TestEnv(Movable, Copyable):
         self.env = Env(self.world)
         self.synth = Osc(self.world)
         self.messenger = Messenger(world)
-        self.impulse = Impulse(self.world)
+        self.impulse = Phasor(self.world)
         self.mul = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

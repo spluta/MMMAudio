@@ -13,7 +13,7 @@ from mmm_dsp.Osc import *
 # a graph can have as many synths as you want
 struct TestCombAllpass(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
-    var synth: Impulse[1]
+    var synth: Phasor[1]
     var messenger: Messenger
     var which: Float64
     var comb: Comb[1, DelayInterpOptions.lagrange]
@@ -24,7 +24,7 @@ struct TestCombAllpass(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.synth = Impulse[1](self.world)
+        self.synth = Phasor[1](self.world)
         self.messenger = Messenger(world)
         self.which = 0
         self.comb = Comb[1, DelayInterpOptions.lagrange](self.world, max_delay=2.0)
@@ -37,7 +37,7 @@ struct TestCombAllpass(Movable, Copyable):
         self.messenger.update(self.which, "which_fx")
         self.messenger.update(self.delay_time, "delay_time")
 
-        sample = self.synth.next(0.4)  # Get the next sample from the synth
+        sample = self.synth.next_impulse(0.4)  # Get the next sample from the synth
 
         comb0 = self.comb.next(sample, self.delay_time, 0.9)
         allpass0 = self.allpass.next(comb0, self.delay_time, 0.9)

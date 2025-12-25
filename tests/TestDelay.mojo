@@ -7,21 +7,21 @@ from mmm_utils.Messenger import Messenger
 
 struct TestDelay(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
-    var synth: Impulse[2]
-    var delay: Delay[2]
+    var synth: Phasor
+    var delay: Delay
     var freq: Float64
     var messenger: Messenger
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.synth = Impulse[2](self.world)
-        self.delay = Delay[2](self.world, 1.0)
+        self.synth = Phasor(self.world)
+        self.delay = Delay(self.world, 1.0)
         self.freq = 0.5
         self.messenger = Messenger(world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.freq,"freq")
         trig = self.messenger.notify_trig("trig")
-        sample = self.synth.next(self.freq, trig)  # Get the next sample from the synth
+        sample = self.synth.next_impulse(self.freq, SIMD[DType.bool, 1](fill=trig))  # Get the next sample from the synth
         delay = self.delay.next(sample, 0.5)
-        return (delay+sample) * 0.2  # Get the next sample from the synth
+        return SIMD[DType.float64, 2](sample, delay) * 0.2  # Get the next sample from the synth

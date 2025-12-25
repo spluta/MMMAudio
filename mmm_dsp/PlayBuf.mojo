@@ -3,7 +3,7 @@ from python import Python
 from memory import UnsafePointer
 from .Buffer import *
 from mmm_src.MMMWorld import MMMWorld
-from .Osc import Dust, Impulse
+from .Osc import Dust, Phasor
 from mmm_utils.functions import *
 from .Pan import pan2, pan_az
 from mmm_utils.Windows import hann_window
@@ -15,7 +15,7 @@ from bit import next_power_of_two
 alias dtype = DType.float64
 
 struct PlayBuf(Representable, Movable, Copyable):
-    var impulse: Impulse  # Current phase of the buffer
+    var impulse: Phasor  # Current phase of the buffer
     var sample_rate: Float64
     var done: Bool
     var world: UnsafePointer[MMMWorld]  
@@ -32,7 +32,7 @@ struct PlayBuf(Representable, Movable, Copyable):
         """
         # Use the world instance directly instead of trying to copy it
         self.world = world
-        self.impulse = Impulse(world)
+        self.impulse = Phasor(world)
         self.sample_rate = self.world[].sample_rate  # Sample rate from the MMMWorld instance
         self.done = True
         self.rising_bool_detector = RisingBoolDetector()

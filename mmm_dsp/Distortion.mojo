@@ -2,6 +2,7 @@ from mmm_src.MMMWorld import MMMWorld
 from math import tanh, floor, pi, exp
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 from mmm_utils.functions import clip
+from mmm_dsp.Utils import Li2
 
 
 fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int64) -> SIMD[DType.float64, num_chans]:
@@ -31,8 +32,8 @@ fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var 
     Buchla waveshaper implementation
     
     Args:
-        input: signal in - between 0 and +/-40.
-        amp: Amplitude/gain control (0.001 to 20 in original)
+        input: Signal in - between 0 and +/-40.
+        amp: Amplitude/gain control (1 to 40).
     
     Returns:
         Waveshaped output signal
@@ -43,14 +44,14 @@ fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var 
     var sig_sign = sign(sig)
 
     # Apply Buchla cells
-    var v1 = buchla_cell(sig, sig_sign, 0.6, 0.8333, 0.5, 12.0)
-    var v2 = buchla_cell(sig, sig_sign, 2.994, 0.3768, 1.1281, 27.777)
-    var v3 = buchla_cell(sig, sig_sign, 5.46, 0.2829, 1.5446, 21.428)
+    var v1 = buchla_cell(sig, sig_sign, 0.6, 0.8333, 0.5, -12.0)
+    var v2 = buchla_cell(sig, sig_sign, 2.994, 0.3768, 1.1281, -27.777)
+    var v3 = buchla_cell(sig, sig_sign, 5.46, 0.2829, 1.5446, -21.428)
     var v4 = buchla_cell(sig, sig_sign, 1.8, 0.5743, 1.0338, 17.647)
     var v5 = buchla_cell(sig, sig_sign, 4.08, 0.2673, 1.0907, 36.363)
     var v6 = sig * 5.0
     
-    out = (v1 + v2 + v3) * (-1) + (v4 + v5 + v6)
+    out = (v1 + v2 + v3) + (v4 + v5 + v6)
 
     # Scale output
     return tanh(out / amp)
@@ -119,42 +120,48 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
         self.x2 = SIMD[DType.float64, num_chans](0.0)
 
     @doc_private
+    @always_inline
     fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
         return mask.select(x, sign(x))
 
     @doc_private
+    @always_inline
     fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
-        return mask.select(x * x / 2.0, x * sign(x) - 0.5)
+        return mask.select(x * x * 0.5, x * sign(x) - 0.5)
 
     @doc_private
+    @always_inline
     fn _next_AD2(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
 
-        return mask.select(x * x * x / 6.0, ((x * x / 2.0) + (1.0 / 6.0)) * sign(x) - (x/2))
+        return mask.select(x * x * x / 6.0, ((x * x * 0.5) + (1.0 / 6.0)) * sign(x) - (x/2))
 
     @doc_private
+    @always_inline
     fn _calcD(mut self, x0: SIMD[DType.float64, num_chans], x1: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
 
         mask: SIMD[DType.bool, num_chans] = abs(x0 - x1).lt(self.TOL)
 
         return mask.select(
-            self._next_AD1((x0 + x1) / 2.0),
+            self._next_AD1((x0 + x1) * 0.5),
             (self._next_AD2(x0) - self._next_AD2(x0) - self._next_AD2(x1)) / (x0 - x1)
         )
 
     @doc_private
-    fn fallback(mut self, x0: SIMD[DType.float64, num_chans], x2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        x_bar = (x0 + x2) / 2.0
+    @always_inline
+    fn _fallback(mut self, x0: SIMD[DType.float64, num_chans], x2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        x_bar = (x0 + x2) * 0.5
         delta = x_bar - x0
 
         mask: SIMD[DType.bool, num_chans] = abs(delta).lt(self.TOL)  # Changed to abs(delta)
         return mask.select(
-            self._next_norm((x_bar + x0) / 2.0),
+            self._next_norm((x_bar + x0) * 0.5),
             (2.0 / delta) * (self._next_AD1(x_bar) + (self._next_AD2(x0) - self._next_AD2(x_bar)) / delta)
         )
 
+    @always_inline
     fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `hard_clip` of `x`.
@@ -167,10 +174,11 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
         """
         mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
 
-        out = mask.select(self._next_norm((x + self.x1) / 2.0), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
+        out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
 
+    @always_inline
     fn next2(mut self, x:SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the second-order anti-aliased `hard_clip` of `x`.
@@ -190,7 +198,7 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
         y = mask_x2.select(
             self._next_norm(x),  # not sure if this always works
             mask_x1.select(
-                self.fallback(x, self.x2), 
+                self._fallback(x, self.x2), 
                 (2.0 / (x - self.x2)) * (self._calcD(x, self.x1) - self._calcD(self.x1, self.x2))
             )
         )
@@ -224,12 +232,12 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
     """
 
     var x1: SIMD[DType.float64, num_chans]
-    var x2: SIMD[DType.float64, num_chans]
+    # var x2: SIMD[DType.float64, num_chans]
     alias TOL = 1.0e-5
 
     fn __init__(out self):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
-        self.x2 = SIMD[DType.float64, num_chans](0.0)
+        # self.x2 = SIMD[DType.float64, num_chans](0.0)
 
     @doc_private
     fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
@@ -252,10 +260,150 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
         """
         mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
 
-        out = mask.select(self._next_norm((x + self.x1) / 2.0), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
+        out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
 
-    # in order to implement the next2 ADAA function, we need an implementation of the C++ Polylogarithm::Li2 function. maybe this could be brought in with ffi?
 
+# not yet working
 
+    # @doc_private
+    # fn _next_AD2(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    #     # return 0.5 * (x * (x + 2.0 * log(exp(-2.0 * x) + 1.0)) - Li2(1.0 + exp(-2 * x)))
+    #     # return 0.5 * (x * (x + 2.0 * log(exp(-2.0 * x) + 1.0)) - self._dilog_approx(exp(-2 * x)))
+    #     var expVal = exp(-2.0 * x)
+    #     return 0.5 * (Li2(-expVal) \
+    #         - x * (x + 2.0 * log(expVal + 1.0) - 2.0 * log(cosh(x)))) \
+    #         + (pi * pi / 24.0)
+
+    # @doc_private
+    # fn _calcD(mut self, x0: SIMD[DType.float64, num_chans], x1: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+
+    #     mask: SIMD[DType.bool, num_chans] = abs(x0 - x1).lt(self.TOL)
+
+    #     return mask.select(
+    #         self._next_AD1((x0 + x1) * 0.5),
+    #         (self._next_AD2(x0) - self._next_AD2(x0) - self._next_AD2(x1)) / (x0 - x1)
+    #     )
+
+    # @doc_private
+    # fn fallback(mut self, x0: SIMD[DType.float64, num_chans], x2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    #     x_bar = (x0 + x2) * 0.5
+    #     delta = x_bar - x0
+
+    #     mask: SIMD[DType.bool, num_chans] = abs(delta).lt(self.TOL)  # Changed to abs(delta)
+    #     return mask.select(
+    #         self._next_norm((x_bar + x0) * 0.5),
+    #         (2.0 / delta) * (self._next_AD1(x_bar) + (self._next_AD2(x0) - self._next_AD2(x_bar)) / delta)
+    #     )
+    
+    # fn next2(mut self, x:SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    #     """
+    #     Computes the second-order anti-aliased `hard_clip` of `x`.
+
+    #     Args:
+    #         x: The input sample.
+
+    #     Returns:
+    #         The anti-aliased `hard_clip` of `x`.
+    #     """
+    #     # Check if x is too close to x2 (would cause division by zero)
+    #     mask_x2: SIMD[DType.bool, num_chans] = abs(x - self.x2).lt(self.TOL)
+        
+    #     # Check if x is too close to x1
+    #     mask_x1: SIMD[DType.bool, num_chans] = abs(x - self.x1).lt(self.TOL)
+        
+    #     y = mask_x2.select(
+    #         self._next_norm(x),  # not sure if this always works
+    #         mask_x1.select(
+    #             self.fallback(x, self.x2), 
+    #             (2.0 / (x - self.x2)) * (self._calcD(x, self.x1) - self._calcD(self.x1, self.x2))
+    #         )
+    #     )
+        
+    #     self.x2 = self.x1
+    #     self.x1 = x
+        
+    #     return y 
+
+# struct Buchla_Wavefolder[num_chans: Int = 1](Copyable, Movable):
+#     """
+#     Anti-Derivative Anti-Aliasing hard-clipping function.
+    
+#     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
+    
+#     Params:
+    
+#         num_chans: The number of channels for SIMD operations.
+    
+#     Methods:
+
+#         next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+#             Computes the first order anti-aliased `hard_clip` of `x`.
+#         next2(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+#             Computes the second order anti-aliased `hard_clip` of `x`.
+    
+#     """
+#     var x1: SIMD[DType.float64, num_chans]
+#     alias TOL = 1.0e-5
+
+#     fn __init__(out self):
+#         self.x1 = SIMD[DType.float64, num_chans](0.0)
+
+#     @doc_private
+#     fn _next_norm(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+#         return buchla_wavefolder(x, amp)
+
+#     fn buchla_cell_AD1(mut self, sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], 
+#         thresh: SIMD[DType.float64, num_chans], 
+#         sig_mul1: SIMD[DType.float64, num_chans], 
+#         sign_mul: SIMD[DType.float64, num_chans], 
+#         sig_mul2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+#         """Implements the Buchla cell function"""
+#         var mask: SIMD[DType.bool, num_chans] = abs(sig).gt(thresh)
+#     # gain(g), bias(b), thresh(t), mix(m),
+#     # sig_mul1,  sign_mul, thresh, mix
+#         (sig * sig_mul1 - (sign * sign_mul)) * sig_mul2
+
+#         return mask.select(0.5 * sig_mul1 * sig * sig - sig * sign_mul * sign - (0.5 * sig_mul1 * thresh * thresh - sign_mul * thresh), 0.0)
+
+#     @doc_private
+#     fn _buchla_wavefolderAD(mut self, input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]:
+#         # Generate sine wave at given phase
+#         amp = clip(amp, 1.0, 40.0)
+#         var sig = input * amp
+#         var sig_sign = sign(sig)
+
+#         # Apply Buchla cells
+#         var v1 = self.buchla_cell_AD1(sig, sig_sign, 0.6, 0.8333, 0.5, -12.0)
+#         var v2 = self.buchla_cell_AD1(sig, sig_sign, 2.994, 0.3768, 1.1281, -27.777)
+#         var v3 = self.buchla_cell_AD1(sig, sig_sign, 5.46, 0.2829, 1.5446, -21.428)
+#         var v4 = self.buchla_cell_AD1(sig, sig_sign, 1.8, 0.5743, 1.0338, 17.647)
+#         var v5 = self.buchla_cell_AD1(sig, sig_sign, 4.08, 0.2673, 1.0907, 36.363)
+#         var v6 = sig * 5.0
+        
+#         out = (v1 + v2 + v3) + (v4 + v5 + v6)
+
+#         # Scale output
+#         return tanh(out / amp)
+
+#     @doc_private
+#     fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+        
+#         return self._buchla_wavefolderAD(x, amp)
+
+#     fn next1(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+#         """
+#         Computes the first-order anti-aliased `hard_clip` of `x`.
+
+#         Args:
+#             x: The input sample.
+
+#         Returns:
+#             The anti-aliased `hard_clip` of `x`.
+#         """
+#         mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
+
+#         out = mask.select(self._next_norm((x + self.x1) * 0.5, amp), (self._next_AD1(x, amp) - self._next_AD1(self.x1, amp)) / (x - self.x1))
+#         self.x1 = x
+#         return out
