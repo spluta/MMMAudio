@@ -30,13 +30,14 @@ struct TestBuffer(Copyable,Movable):
     fn next(mut self) -> SIMD[DType.float64,2]:
 
         self.m.update(self.which,"which")
+        rate = self.world[].mouse_x * 20000
 
         none = self.none.next[1,Interp.none](self.buf)
         linear = self.linear.next[1,Interp.linear](self.buf)
         quad = self.quad.next[1,Interp.quad](self.buf)
         cubic = self.cubic.next[1,Interp.cubic](self.buf)
         lagrange = self.lagrange.next[1,Interp.lagrange4](self.buf)
-        sinc = self.sinc.next[1,Interp.sinc](self.buf)
+        sinc = self.sinc.next[1,Interp.sinc](self.buf, rate)
         out = select(self.which,[none,linear,quad,cubic,lagrange,sinc])
 
         return out

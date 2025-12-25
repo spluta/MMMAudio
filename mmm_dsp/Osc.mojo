@@ -132,7 +132,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
 
             return self.oversampling.get_sample()
 
-    fn vwt_get_one_sample()
+    # fn vwt_get_one_sample()
 
     @always_inline
     fn next_vwt(

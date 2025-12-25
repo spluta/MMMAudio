@@ -15,7 +15,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     # so here we have sinc interpolation with 2x oversampling
     # var osc: Osc[1,2,1]
     # var lag: Lag[1]
-    var osc: Osc[2,2,1]
+    var osc: Osc[2,5,1]
     var lag: Lag[2]
     var m: Messenger
     var x: Float64
@@ -26,7 +26,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         # for efficiency we set the interpolation and oversampling in the constructor
-        self.osc = Osc[2,2,1](self.w)
+        self.osc = Osc[2,5,1](self.w)
         self.lag = Lag[2](self.w, 0.1)
         self.m = Messenger(self.w)
         self.x = 0.0
@@ -53,6 +53,6 @@ struct VariableOsc(Representable, Movable, Copyable):
 
         # osc_frac = self.w[].mouse_x
         osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
-        sample = self.osc.next_interp(freq, osc_frac = osc_frac)
+        sample = self.osc.next_vwt(freq, osc_frac = osc_frac)
 
         return sample * 0.1 * env
