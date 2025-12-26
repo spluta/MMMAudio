@@ -54,6 +54,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
         """
         delay_time = min(delay_time, self.max_delay_time)
+        # print(delay_time)
         
         out = SIMD[DType.float64, self.num_chans](0.0)
         # minimum delay time depends on interpolation method
@@ -83,6 +84,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
             out[chan] = ListInterpolator.read_sinc[bWrap=True](self.w, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
             self.prev_f_idx[chan] = f_idx
 
+        
         self.delay_line.write_previous(input)
 
         return out

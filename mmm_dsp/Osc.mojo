@@ -41,7 +41,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         
         return (self.phase + phase_offset) % 1.0
 
-struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
+struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling. 
 
