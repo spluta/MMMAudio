@@ -324,15 +324,15 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
         Returns:
           The processed output sample.
         """
+
+        var delayed = self.delay.next(self.last_delay, delay_time)
         
-        temp = self.allpass_feedback + input
-        temp2 = self.delay.next(temp, delay_time)  # Get the delayed sample and write to the delay line
-        self.allpass_feedback = (temp2 * (feedback_coef))
-
-        out2 = temp * -feedback_coef + self.last_delay
-        self.last_delay = temp2
-
-        return out2
+        var output = -feedback_coef * input + delayed
+        
+        var to_delay = input + feedback_coef * delayed
+        self.last_delay = to_delay
+        
+        return output
 
     fn next_decaytime(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], decay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
         """Process one sample through the all-pass comb filter with decay time calculation."""
