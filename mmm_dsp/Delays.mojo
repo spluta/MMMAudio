@@ -245,7 +245,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable,
         feedback = calc_feedback(delay_time, decay_time)
         return self.next(input, delay_time, feedback)
 
-struct FB_Delay[num_chans: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
+struct FB_Delay[num_chans: Int = 1, interp: Int = 4](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
 
     var w: UnsafePointer[MMMWorld]

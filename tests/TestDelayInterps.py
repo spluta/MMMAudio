@@ -5,9 +5,9 @@ mmm_audio.start_audio()
 
 mmm_audio.send_float("max_delay_time", 0.00827349827)
 mmm_audio.send_float("max_delay_time", 0.09238497837)
-mmm_audio.send_float("max_delay_time", 1.0)
-mmm_audio.send_float("lfo_freq",0.1)
-mmm_audio.send_float("mix", 1.0)
+mmm_audio.send_float("max_delay_time", 0.2)
+mmm_audio.send_float("lfo_freq",0.03)
+mmm_audio.send_float("mix", 0.5)
 
 # listen to the differences
 mmm_audio.send_float("which_delay", 0) # none

@@ -40,7 +40,7 @@ struct TestDelayInterps(Movable, Copyable):
         self.m = Messenger(self.w)
         self.mouse_lag = Lag(self.w, 0.05)
         self.max_delay_time = 1.0
-        self.lfo_freq = 0.5
+        self.lfo_freq = 0.1
         self.mix = 0.5
         self.which_delay = 0.0
 
@@ -50,21 +50,24 @@ struct TestDelayInterps(Movable, Copyable):
         
         self.m.update(self.lfo_freq,"lfo_freq")
         delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0.001,self.max_delay_time)
+        # delay_time = self.lag.next(self.w[].mouse_x)
+
 
         dry = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
-        sample_none = self.delay_none.next(dry, delay_time)
-        sample_linear = self.delay_linear.next(dry, delay_time)
-        sample_quadratic = self.delay_quadratic.next(dry, delay_time)
-        sample_cubic = self.delay_cubic.next(dry, delay_time)
+        # sample_none = self.delay_none.next(dry, delay_time)
+        # sample_linear = self.delay_linear.next(dry, delay_time)
+        # sample_quadratic = self.delay_quadratic.next(dry, delay_time)
+        # sample_cubic = self.delay_cubic.next(dry, delay_time)
         sample_lagrange = self.delay_lagrange.next(dry, delay_time)
-        sample_sinc = self.delay_sinc.next(dry, delay_time)
+        # sample_sinc = self.delay_sinc.next(dry, delay_time)
 
         self.m.update(self.mix,"mix")  # Get mix level from messenger, default to 0.5
         self.m.update(self.which_delay, "which_delay")  # Get which delay type to use from messenger, default to 0 (none)
 
         # self.w[].print("max_delay_time: ", self.max_delay_time, " mix: ", self.mix, " which_delay: ", self.which_delay, " delay_time: ", delay_time)
 
-        one_delay = select(self.which_delay,[sample_none,sample_linear,sample_quadratic,sample_cubic,sample_lagrange,sample_sinc])
+        # one_delay = select(self.which_delay,[sample_none,sample_linear,sample_quadratic,sample_cubic,sample_lagrange,sample_sinc])
+        one_delay = sample_lagrange
         sig = dry * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
         
         # self.w[].print("dry: ", dry, " one_delay: ", one_delay, " sig: ", sig)

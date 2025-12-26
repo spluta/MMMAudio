@@ -313,6 +313,7 @@ struct ListInterpolator(Movable, Copyable):
             y2 = data[idx2]
             y3 = data[idx3]
             y4 = data[idx4]
+            # print(idx0,idx1,idx2,idx3,idx4,y0,y1,y2,y3,y4)
             return lagrange4(y0, y1, y2, y3, y4, frac)
         else:
             y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0

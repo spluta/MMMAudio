@@ -14,7 +14,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var main_lag: Lag
     var buf: Buffer
     var playBuf: Play
-    var delays: FB_Delay[N=2, interp=3]  # FB_Delay with 2 channels and interpolation type 3 (cubic)
+    var delays: FB_Delay[num_chans=2, interp=4]  # FB_Delay with 2 channels and interpolation type 3 ()
     var delay_time_lag: Lag[2]
     var m: Messenger
     var gate_lag: Lag[1]
@@ -31,9 +31,9 @@ struct DelaySynth(Representable, Movable, Copyable):
     def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w  
         self.main_lag = Lag(self.w, 0.03)
-        self.sf = Buffer.load(self.w,"resources/Shiverer.wav")
+        self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.w) 
-        self.delays = FB_Delay[N=2, interp=3](self.w, self.maxdelay) 
+        self.delays = FB_Delay[num_chans=2, interp=4](self.w, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.w, 0.2)  # Initialize Lag with a default time constant
         self.m = Messenger(self.w)
         self.gate_lag = Lag(self.w, 0.03)
@@ -59,7 +59,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.m.update(self.mix,"mix")
         self.m.update(self.main,"main")
 
-        var sample = self.playBuf.next[N=2](self.buffer.data, 0, 1 if self.play else 0, True)  # Read samples from the buffer
+        var sample = self.playBuf.next[num_chans=2](self.buf, 1, True)  # Read samples from the buffer
         deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](self.delaytime_m, self.delaytime_m * 0.9))
 
 
