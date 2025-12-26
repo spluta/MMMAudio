@@ -18,6 +18,15 @@ struct TestDelayInterps(Movable, Copyable):
     var lfo: Osc
     var m: Messenger
     var mouse_lag: Lag
+    var max_delay_time: Float64
+    var lfo_freq: Float64
+    var mix: Float64
+    var which_delay: Float64
+    var mouse_onoff: Float64
+
+
+
+
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
@@ -31,20 +40,30 @@ struct TestDelayInterps(Movable, Copyable):
         self.lfo = Osc(self.world)
         self.m = Messenger(world)
         self.mouse_lag = Lag(self.world, 0.05)
+        self.max_delay_time = 0.5
+        self.lfo_freq = 0.5
+        self.mix = 0.5
+        self.which_delay = 0
+        self.mouse_onoff = 0
+
+
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        var max_delay_time = self.m.get_val("max_delay_time", 0.5)  # Get delay time from messenger, default to 0.5 seconds
-        max_delay_time = self.lag.next(max_delay_time)  # Apply lag to the delay time for smooth changes
-        lfo_freq = self.m.get_val("lfo_freq",0.5)
-        var delay_time = linlin(self.lfo.next(lfo_freq),-1,1,0,max_delay_time)
-        var mix = self.m.get_val("mix", 0.5)  # Get mix level from messenger, default to 0.5
 
-        var mouse_onoff = self.m.get_val("mouse_onoff", 0)
-        delay_time = select(mouse_onoff,[delay_time, self.mouse_lag.next(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, 0.001))])
+        self.m.update(self.max_delay_time,"max_delay_time")  # Get delay time from messenger, default to 0.5 seconds
+        # self.max_delay_time = self.lag.next(self.max_delay_time)  # Apply lag to the delay time for smooth changes
+        
+        self.m.update(self.lfo_freq,"lfo_freq")
 
-        var which_delay = self.m.get_val("which_delay", 0)  # Get which delay type to use from messenger, default to 0 (none)
+        delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0.001,self.max_delay_time)
+
+        self.m.update(self.mix,"mix")
 
 
+        self.m.update(self.mouse_onoff, "mouse_onoff")
+        delay_time = select(self.mouse_onoff,[delay_time, self.mouse_lag.next(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, 0.001))])
+
+        self.m.update(self.which_delay, "which_delay")
 
         
         var sample = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
@@ -53,8 +72,8 @@ struct TestDelayInterps(Movable, Copyable):
         var delay_cubic = self.delay_cubic.next(sample, delay_time)
         var delay_lagrange = self.delay_lagrange.next(sample, delay_time)
 
-        var one_delay = select(which_delay,[delay_none,delay_linear,delay_cubic,delay_lagrange])
-        var sig = sample * (1.0 - mix) + one_delay * mix  # Mix the dry and wet signals based on the mix level
+        var one_delay = select(self.which_delay,[delay_none,delay_linear,delay_cubic,delay_lagrange])
+        var sig = sample * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
         var out = SIMD[DType.float64, 2](sample,sig)
 
         return out
