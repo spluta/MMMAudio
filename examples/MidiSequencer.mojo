@@ -17,7 +17,7 @@ struct TrigSynthVoice(Movable, Copyable):
     var env: Env
 
     var mod: Osc
-    var car: Osc[1, 0, 0]
+    var car: Osc[1, Interp.linear, 0]
     var sub: Osc
 
     var bend_mul: Float64
@@ -30,7 +30,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.w = w
 
         self.mod = Osc(self.w)
-        self.car = Osc[1, 0, 0](self.w)
+        self.car = Osc[1, Interp.linear, 0](self.w)
         self.sub = Osc(self.w)
 
         self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])

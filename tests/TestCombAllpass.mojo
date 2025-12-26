@@ -16,21 +16,21 @@ struct TestCombAllpass(Movable, Copyable):
     var synth: Impulse[1]
     var messenger: Messenger
     var which: Float64
-    var comb: Comb[1, DelayInterpOptions.lagrange]
-    var allpass: Allpass_Comb[1, DelayInterpOptions.lagrange]
-    var comb2: Comb[1, DelayInterpOptions.lagrange]
-    var allpass2: Allpass_Comb[1, DelayInterpOptions.lagrange]
+    var comb: Comb[1, Interp.lagrange4]
+    var allpass: Allpass_Comb[1, Interp.lagrange4]
+    var comb2: Comb[1, Interp.lagrange4]
+    var allpass2: Allpass_Comb[1, Interp.lagrange4]
     var delay_time: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    def __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.synth = Impulse[1](self.w)
         self.messenger = Messenger(w)
         self.which = 0
-        self.comb = Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
-        self.allpass = Allpass_Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
-        self.comb2 = Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
-        self.allpass2 = Allpass_Comb[1, DelayInterpOptions.lagrange](self.w, max_delay=2.0)
+        self.comb = Comb[1, Interp.lagrange4](self.w, max_delay=2.0)
+        self.allpass = Allpass_Comb[1, Interp.lagrange4](self.w, max_delay=2.0)
+        self.comb2 = Comb[1, Interp.lagrange4](self.w, max_delay=2.0)
+        self.allpass2 = Allpass_Comb[1, Interp.lagrange4](self.w, max_delay=2.0)
         self.delay_time = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

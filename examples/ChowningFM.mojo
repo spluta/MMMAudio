@@ -9,7 +9,7 @@ from mmm_utils.Messenger import *
 struct ChowningFM(Representable, Movable, Copyable):
     var w: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var m: Messenger
-    var c_osc: Osc[1,0,1]  # Carrier oscillator
+    var c_osc: Osc[1,1,1]  # Carrier oscillator
     var m_osc: Osc  # Modulator oscillator
     var index_env: Env
     var index_env_params: EnvParams
@@ -22,7 +22,7 @@ struct ChowningFM(Representable, Movable, Copyable):
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
         self.w = w
         self.m = Messenger(w)
-        self.c_osc = Osc[1,0,1](w)
+        self.c_osc = Osc[1,1,1](w)
         self.m_osc = Osc(w)
         self.index_env = Env(w)
         self.index_env_params = EnvParams()

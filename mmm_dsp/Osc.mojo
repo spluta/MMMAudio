@@ -340,10 +340,10 @@ struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
     This is a convenience struct as internally it uses Osc and indicates `osc_type = 0`
     """
 
-    var osc: Osc[N, os_index]  # Instance of the Oscillator
+    var osc: Osc[N, Interp.linear, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.osc = Osc[self.N, os_index](w)  # Initialize the Oscillator with the world instance
+        self.osc = Osc[self.N, Interp.linear, os_index](w)  # Initialize the Oscillator with the world instance
 
     fn __repr__(self) -> String:
         return String("SinOsc")
