@@ -39,11 +39,11 @@ struct TestCombAllpass(Movable, Copyable):
 
         sample = self.synth.next_impulse(0.4)  # Get the next sample from the synth
 
-        comb0 = self.comb.next(sample, self.delay_time, 0.5)
-        allpass0 = self.allpass.next(comb0, self.delay_time, 0.5)
-        comb1 = self.comb2.next_decaytime(allpass0, self.delay_time, 1)
-        allpass1 = self.allpass2.next_decaytime(comb1, self.delay_time, 1)
+        comb0 = self.comb.next(sample, self.delay_time, 0.9)
+        allpass0 = self.allpass.next(sample, self.delay_time, 0.9)
+        comb1 = self.comb2.next_decaytime(sample, self.delay_time, 1)
+        allpass1 = self.allpass2.next_decaytime(sample, self.delay_time, 1)
 
-        sample = select(self.which, [comb0, allpass0, comb1, allpass1])
+        filt = select(self.which, [comb0, allpass0, comb1, allpass1])
 
-        return sample * 0.2  # Get the next sample from the synth
+        return SIMD[DType.float64, 2](sample, filt)
