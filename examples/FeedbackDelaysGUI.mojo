@@ -59,7 +59,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.m.update(self.mix,"mix")
         self.m.update(self.main,"main")
 
-        var sample = self.playBuf.next[num_chans=2](self.buf, 1, True)  # Read samples from the buffer
+        var sample = self.playBuf.next[num_chans=2](self.buf, 1 if self.play else 0)  # Read samples from the buffer
         deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](self.delaytime_m, self.delaytime_m * 0.9))
 
 
