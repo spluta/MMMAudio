@@ -60,7 +60,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
                 WindowType.hann,
                 WindowType.hann
             ](self.world,process=SpectralFreezeWindow[window_size](self.world, namespace))
-        self.m = Messenger(w, namespace)
+        self.m = Messenger(self.world, namespace)
         self.freeze_gate = False
         self.asr = ASREnv(self.world)
 
@@ -92,7 +92,7 @@ struct SpectralFreezeExample(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.stereo_switch,"stereo_switch")
 
-        out = self.play_buf.next[2](self.buffer, 0, 1)
+        out = self.play_buf.next[2](self.buffer,1)
 
         out = self.spectral_freeze.next(out)
 
