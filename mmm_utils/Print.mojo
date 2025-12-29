@@ -1,11 +1,11 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Osc import Phasor
+from mmm_dsp.Osc import Impulse
 
 struct Print(Representable, Copyable, Movable):
     """
     A struct for printing values in the MMMWorld environment.
     """
-    var impulse: Phasor
+    var impulse: Impulse
     var world: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -13,7 +13,7 @@ struct Print(Representable, Copyable, Movable):
         Initialize the Print struct.
         """
         self.world = world
-        self.impulse = Phasor(world)
+        self.impulse = Impulse(world)
 
     fn __repr__(self: Print) -> String:
         return String("Print")
