@@ -33,7 +33,7 @@ struct Tone(Movable,Copyable):
 
         return sig
 
-struct MessengersExample():
+struct MessengerExample(Copyable, Movable):
     var world: UnsafePointer[MMMWorld]
     var m: Messenger
     var tones: List[Tone]
