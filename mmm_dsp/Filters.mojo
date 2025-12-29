@@ -5,7 +5,7 @@ from mmm_utils.functions import *
 
 from sys import simd_width_of
 from algorithm import vectorize
-from .Oversampling import Oversampling
+from .Oversampling import Oversampling, Upsampler
 
 from mmm_src.MMMTraits import *
 
@@ -645,7 +645,10 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
 
     Parameters:
         N: Number of channels to process in parallel.
-        os_index: Oversampling factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc.)
+        os_index: Oversampling factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc).
+    
+    Args:
+        world: Pointer to the MMMWorld.
     """
     var nyquist: Float64
     var step_val: Float64
@@ -654,6 +657,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
     var last_3: SIMD[DType.float64, N]
     var last_4: SIMD[DType.float64, N]
     var oversampling: Oversampling[N, 2 ** os_index]
+    var upsampler: Upsampler[N, 2 ** os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the VAMoogLadder filter.
@@ -661,13 +665,15 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.nyquist = world[].sample_rate * 0.5
-        self.step_val = 1.0 / world[].sample_rate
+        self.nyquist = world[].sample_rate * 0.5 * (2 ** os_index)
+        self.step_val = 1.0 / self.nyquist
         self.last_1 = SIMD[DType.float64, N](0.0)
         self.last_2 = SIMD[DType.float64, N](0.0)
         self.last_3 = SIMD[DType.float64, N](0.0)
         self.last_4 = SIMD[DType.float64, N](0.0)
         self.oversampling = Oversampling[self.N, 2 ** os_index](world)
+        self.upsampler = Upsampler[self.N, 2 ** os_index](world)
+
 
     fn __repr__(self) -> String:
         return String(
@@ -699,11 +705,12 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
         
         # internally clips the feedback signal to prevent the filter from blowing up
-        for i in range(self.N):
-            if s4[i] > 2.0:
-                s4[i] = tanh(s4[i] - 1.0) + 1.0
-            elif s4[i] < -2.0:
-                s4[i] = tanh(s4[i] + 1.0) - 1.0
+        mask1: SIMD[DType.bool, self.N] = s4.gt(2.0)
+        mask2: SIMD[DType.bool, self.N] = s4.lt(-2.0)
+
+        s4 = mask1.select(
+            tanh(s4 - 1.0) + 1.0,
+            mask2.select(tanh(s4 + 1.0) - 1.0, s4))
 
         # input is the incoming signal minus the feedback from the last stage
         var input = (sig - k * s4) / (1.0 + k * g4)
@@ -728,7 +735,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         return lp4
 
     @always_inline
-    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N] = 100, q_val: SIMD[DType.float64, self.N] = 0.5) -> SIMD[DType.float64, self.N]:
         """Process one sample through the Moog Ladder lowpass filter with optional oversampling.
 
         Args:
@@ -747,8 +754,11 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
             alias times_oversampling = 2 ** os_index
 
             @parameter
-            for _ in range(times_oversampling):
-                var lp4 = self.lp4(sig, freq, q_val)
+            for i in range(times_oversampling):
+                # upsample the input
+                sig2 = self.upsampler.next(sig, i)
+
+                var lp4 = self.lp4(sig2, freq, q_val)
                 @parameter
                 if os_index == 0:
                     return lp4

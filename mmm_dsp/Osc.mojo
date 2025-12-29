@@ -25,6 +25,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
+    var rising_bool_detector_impulse: RisingBoolDetector[N]  # Track the last reset state
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -32,6 +33,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         self.phase = SIMD[DType.float64, N](0.0)
         self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
+        self.rising_bool_detector_impulse = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
         return String("Phasor")
@@ -42,11 +44,12 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         self.phase = self.phase - floor(self.phase)
 
     @always_inline
-    fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.N]) -> SIMD[DType.bool, N]:
+    fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.N], phase_offset: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.bool, N]:
         self.phase += (freq * self.freq_mul)
         fl = floor(self.phase)
+        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0))
         self.phase = self.phase - fl 
-        return abs(fl).gt(0.0)
+        return rbd
 
     @always_inline
     fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.float64, self.N]:
@@ -58,16 +61,18 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         return (self.phase + phase_offset) % 1.0
 
     @always_inline
-    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.bool, self.N]:
-        tick = self._increment_phase_impulse(freq)
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
+        tick = self._increment_phase_impulse(freq, phase_offset)
         rbd = self.rising_bool_detector.next(trig)
         self.phase = rbd.select(0.0, self.phase)
         
         return (tick or rbd)
 
     @always_inline
-    fn next_impulse(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
-        return self.next_bool(freq, trig).cast[DType.float64]()
+    fn next_impulse(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
+        return self.next_bool(freq, phase_offset, trig).cast[DType.float64]()
+
+
 
 struct Impulse[N: Int = 1, os_index: Int = 0](Movable, Copyable):
     """
@@ -89,12 +94,12 @@ struct Impulse[N: Int = 1, os_index: Int = 0](Movable, Copyable):
         return String("Impulse")
 
     @always_inline
-    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.bool, self.N]:
-        return self.phasor.next_bool(freq, trig) 
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
+        return self.phasor.next_bool(freq, phase_offset, trig) 
 
     @always_inline
-    fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
-        return self.phasor.next_impulse(freq, trig)
+    fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill= True)) -> SIMD[DType.float64, self.N]:
+        return self.phasor.next_impulse(freq, phase_offset, trig)
 
 struct OscType:
     alias sine: Int64 = 0
@@ -394,19 +399,22 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.impulse = Phasor[N](world)
+        # this will cause all Dusts to start at a different phase
+        for i in range(self.N):
+            self.impulse.phase[i] = random_float64(0.0, 1.0)
         self.freq = SIMD[DType.float64, N](1.0)
 
     fn __repr__(self) -> String:
         return String("Dust")
 
-    fn next(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill= False)) -> SIMD[DType.float64, self.N]:
         return self.next_bool(low, high, trig).cast[DType.float64]()
 
     @always_inline
-    fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = True) -> SIMD[DType.bool, self.N]:
+    fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill= False)) -> SIMD[DType.bool, self.N]:
         """Generate the next dust noise sample."""
 
-        var tick = self.impulse.next_bool(self.freq, trig)  # Update the phase
+        var tick = self.impulse.next_bool(self.freq, 0, trig)  # Update the phase
 
         @parameter
         for i in range(self.N):
@@ -414,6 +422,13 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
                 self.freq[i] = random_float64(low[i], high[i])
 
         return tick
+
+    fn get_phase(self) -> SIMD[DType.float64, self.N]:
+        return self.impulse.phase
+
+    fn set_phase(mut self, phase: SIMD[DType.float64, self.N]):
+        self.impulse.phase = phase
+
 
 struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""

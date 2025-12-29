@@ -7,7 +7,7 @@ from mmm_src.MMMTraits import *
 from mmm_dsp.Osc import Osc
 from mmm_utils.functions import *
 from algorithm import parallelize
-from mmm_dsp.Pan import splay, Splay, splay_gpu
+from mmm_dsp.Pan import splay
 
 alias num_output_channels = 2
 # there can only be one graph in an MMMAudio instance
@@ -18,7 +18,7 @@ struct TestSplay[num: Int = 1000](Movable, Copyable):
     var freqs: List[Float64]
     var mult: Float64
     var samples: List[Float64]
-    var splay: Splay[num_output_channels]
+    # var splay: Splay[num_output_channels]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
@@ -26,7 +26,7 @@ struct TestSplay[num: Int = 1000](Movable, Copyable):
         self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]
         self.mult = 0.2 / Float64(self.num)
         self.samples = [0.0 for _ in range(self.num)]
-        self.splay = Splay[num_output_channels](world)
+        # self.splay = Splay[num_output_channels](world)
 
     fn next(mut self) -> SIMD[DType.float64, num_output_channels]:
         for i in range(self.num):

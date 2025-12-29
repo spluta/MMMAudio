@@ -507,3 +507,4 @@ fn random_exp_float64[N: Int = 1](min: SIMD[DType.float64, N], max: SIMD[DType.f
         u[i] = random_float64()
     u = linexp(u, 0.0, 1.0, min, max)
     return u
+

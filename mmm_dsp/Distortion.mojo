@@ -3,6 +3,7 @@ from math import tanh, floor, pi, exp
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 from mmm_utils.functions import clip
 from mmm_dsp.Utils import Li2
+from mmm_dsp.Oversampling import *
 
 
 fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int64) -> SIMD[DType.float64, num_chans]:
@@ -57,12 +58,10 @@ fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var 
     return tanh(out / amp)
 
 struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
-    var world: UnsafePointer[MMMWorld]
     var samp: SIMD[DType.float64, num_chans]
     var last_trig: SIMD[DType.bool, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.world = world
+    fn __init__(out self):
         self.samp = SIMD[DType.float64, num_chans](0)
         self.last_trig = SIMD[DType.bool, num_chans](False)
 
@@ -93,7 +92,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 fn hard_clip[num_chans: Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         return x if abs(x) < 1 else sign(x)
 
-struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
+struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing hard-clipping function.
     
@@ -113,11 +112,15 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
     """
     var x1: SIMD[DType.float64, num_chans]
     var x2: SIMD[DType.float64, num_chans]
+    var oversampling: Oversampling[num_chans, 2 ** os_index]
+    var upsampler: Upsampler[num_chans, 2 ** os_index]
     alias TOL = 1.0e-5
 
-    fn __init__(out self):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         self.x2 = SIMD[DType.float64, num_chans](0.0)
+        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
+        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
 
     @doc_private
     @always_inline
@@ -161,6 +164,14 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
             (2.0 / delta) * (self._next_AD1(x_bar) + (self._next_AD2(x0) - self._next_AD2(x_bar)) / delta)
         )
 
+    @doc_private
+    @always_inline
+    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
+        out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
+        self.x1 = x
+        return out
+
     @always_inline
     fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
@@ -172,41 +183,74 @@ struct HardClipAD[num_chans: Int = 1](Copyable, Movable):
         Returns:
             The anti-aliased `hard_clip` of `x`.
         """
-        mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
+        @parameter
+        if os_index == 0:
+            return self._next1(x)
+        else:
+            alias times_oversampling = 2 ** os_index
+            @parameter
+            for i in range(times_oversampling):
+                # upsample the input
+                x2 = self.upsampler.next(x, i)
+                y = self._next1(x2)
+                self.oversampling.add_sample(y)
+            return self.oversampling.get_sample()
 
-        out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
-        self.x1 = x
-        return out
 
-    @always_inline
-    fn next2(mut self, x:SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        """
-        Computes the second-order anti-aliased `hard_clip` of `x`.
+    # @doc_private
+    # @always_inline
+    # fn _next2(mut self, x:SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    #     """
+    #     Computes the second-order anti-aliased `hard_clip` of `x`.
 
-        Args:
-            x: The input sample.
+    #     Args:
+    #         x: The input sample.
 
-        Returns:
-            The anti-aliased `hard_clip` of `x`.
-        """
-        # Check if x is too close to x2 (would cause division by zero)
-        mask_x2: SIMD[DType.bool, num_chans] = abs(x - self.x2).lt(self.TOL)
+    #     Returns:
+    #         The anti-aliased `hard_clip` of `x`.
+    #     """
+    #     # Check if x is too close to x2 (would cause division by zero)
+    #     mask_x2: SIMD[DType.bool, num_chans] = abs(x - self.x2).lt(self.TOL)
         
-        # Check if x is too close to x1
-        mask_x1: SIMD[DType.bool, num_chans] = abs(x - self.x1).lt(self.TOL)
+    #     # Check if x is too close to x1
+    #     mask_x1: SIMD[DType.bool, num_chans] = abs(x - self.x1).lt(self.TOL)
         
-        y = mask_x2.select(
-            self._next_norm(x),  # not sure if this always works
-            mask_x1.select(
-                self._fallback(x, self.x2), 
-                (2.0 / (x - self.x2)) * (self._calcD(x, self.x1) - self._calcD(self.x1, self.x2))
-            )
-        )
+    #     y = mask_x2.select(
+    #         self._next_norm(x),  # not sure if this always works
+    #         mask_x1.select(
+    #             self._fallback(x, self.x2), 
+    #             (2.0 / (x - self.x2)) * (self._calcD(x, self.x1) - self._calcD(self.x1, self.x2))
+    #         )
+    #     )
         
-        self.x2 = self.x1
-        self.x1 = x
+    #     self.x2 = self.x1
+    #     self.x1 = x
         
-        return y
+    #     return y
+
+    # @always_inline
+    # fn next2(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    #     """
+    #     Computes the first-order anti-aliased `hard_clip` of `x`.
+
+    #     Args:
+    #         x: The input sample.
+
+    #     Returns:
+    #         The anti-aliased `hard_clip` of `x`.
+    #     """
+    #     @parameter
+    #     if os_index == 0:
+    #         return self._next2(x)
+    #     else:
+    #         alias times_oversampling = 2 ** os_index
+    #         @parameter
+    #         for i in range(times_oversampling):
+    #             # upsample the input
+    #             x2 = self.upsampler.next(x, i)
+    #             y = self._next2(x2)
+    #             self.oversampling.add_sample(y)
+    #         return self.oversampling.get_sample()
 
 struct TanhAD[num_chans: Int = 1](Copyable, Movable):
     """

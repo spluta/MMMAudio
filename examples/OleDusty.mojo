@@ -7,16 +7,16 @@ from mmm_dsp.Filters import *
 
 struct Dusty(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  
-    var dust: Dust[2] 
+    var dust: Dust[4] 
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.dust = Dust[2](world)
+        self.dust = Dust[4](world)
 
     fn __repr__(self) -> String:
         return String("OleDusty")
 
-    fn next(mut self, freq: Float64) -> SIMD[DType.float64, 2]:
+    fn next(mut self, freq: Float64) -> SIMD[DType.float64, 4]:
 
         out = self.dust.next(freq*0.125, freq*8, SIMD[DType.bool, 1](fill=False)) * 0.5
 
@@ -30,13 +30,13 @@ struct Dusty(Representable, Movable, Copyable):
 struct OleDusty(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  
     var dusty: Dusty
-    var reson: Reson[2]
+    var reson: Reson[4]
     var freq: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.dusty = Dusty(world)
-        self.reson = Reson[2](world)
+        self.reson = Reson[4](world)
         self.freq = 20.0
 
     fn __repr__(self) -> String:
@@ -53,4 +53,4 @@ struct OleDusty(Representable, Movable, Copyable):
         # the reson filter uses SIMD to run 2 filters in parallel, each processing a channel of the dusty synth
         out = self.reson.hpf(out, freq, 10.0, 1.0)  # apply a bandpass filter to the output of the Dusty synth
 
-        return out
+        return out[0]

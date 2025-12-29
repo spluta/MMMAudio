@@ -39,25 +39,30 @@ fn pan2(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay(input: List[Float64], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
+
     Args:
-        input: List of input samples from multiple channels
-        world: Pointer to MMMWorld containing the pan_window
+        input: List of input samples from multiple channels.
+        world: Pointer to MMMWorld containing the pan_window.
+
     Returns:
         Stereo output as SIMD[DType.float64, 2].
     """
-    num_input_channels = len(input)
+    num_input_channels = len(input) * num_simd
     out = SIMD[DType.float64, 2](0.0)
 
     for i in range(num_input_channels):
         if num_input_channels == 1:
-            out = input[0] * SIMD[DType.float64, 2](0.7071, 0.7071)
+            out = input[0][0] * SIMD[DType.float64, 2](0.7071, 0.7071)
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
-            out += input[i] * world[].pan_window[Int(pan * Float64(world[].pan_window.__len__() - 1))]
+            index0 = i // num_simd
+            index1 = i % num_simd
+
+            out += input[index0][index1] * world[].pan_window[Int(pan * Float64(world[].pan_window.__len__() - 1))]
     return out
 
 @always_inline

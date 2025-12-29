@@ -39,7 +39,7 @@ struct Grains(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, num_simd_chans]:
 
         imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, 20.0)
-        var impulse = self.impulse.next_bool(imp_freq, True)  # Get the next impulse sample
+        var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
 
         start_frame = linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, self.buffer.num_frames - 1.0)
 
