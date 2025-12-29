@@ -82,7 +82,7 @@ struct Benjolin(Representable, Movable, Copyable):
 
         for _ in range(8):
             self.delays.append(Delay[1,3](self.world, max_delay_time=0.1))
-            self.latches.append(Latch(self.world))
+            self.latches.append(Latch())
 
         for _ in range(9):
             self.filters.append(SVF(self.world))
