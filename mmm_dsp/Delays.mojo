@@ -213,12 +213,11 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable,
       max_delay: The maximum delay time in seconds.
     """
     var world: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp]
+    var delay: Delay[num_chans, interp]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world = world
-        self.delay = Delay[N, interp](self.world, max_delay)
-
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback_coef: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the all-pass comb filter
 
