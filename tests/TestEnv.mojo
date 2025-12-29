@@ -17,7 +17,7 @@ struct TestEnv(Movable, Copyable):
     var env: Env
     var synth: Osc
     var messenger: Messenger
-    var impulse: Phasor
+    var impulse: Impulse
     var mul: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):

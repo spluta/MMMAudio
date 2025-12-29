@@ -21,7 +21,7 @@ struct TestLatch(Movable, Copyable):
         self.world = world
         self.osc = SinOsc(self.world)
         self.lfo = SinOsc(self.world)
-        self.latch = Latch(self.world)
+        self.latch = Latch()
         self.dusty = Dust(self.world)
         self.messenger = Messenger(self.world)
 

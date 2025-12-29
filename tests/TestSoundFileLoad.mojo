@@ -4,7 +4,7 @@ from pathlib import Path
 
 def main():
 
-    sf = Buffer.load("resources/Shiverer.wav")
+    buffer = Buffer.load("resources/Shiverer.wav")
     print("Loaded Buffer:")
     print("Sample Rate:", buffer.sample_rate)
     print("Number of Channels:", buffer.num_chans)

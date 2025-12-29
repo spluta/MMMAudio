@@ -26,7 +26,6 @@ struct TestSplay[num: Int = 1000](Movable, Copyable):
         self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]
         self.mult = 0.2 / Float64(self.num)
         self.samples = [0.0 for _ in range(self.num)]
-        self.splay = Splay[num_output_channels](self.world)
 
     fn next(mut self) -> SIMD[DType.float64, num_output_channels]:
         for i in range(self.num):
