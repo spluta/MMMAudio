@@ -52,7 +52,7 @@ struct WavetableOsc(Movable, Copyable):
         self.world = world
         self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
         self.wavetables_per_channel = 256
-        self.buffer = Buffer.load(self.world,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
+        self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
         self.osc_voices = List[OscVoice]()
         for i in range(8):
             self.osc_voices.append(OscVoice(self.world, "voice_"+String(i)))
@@ -68,7 +68,7 @@ struct WavetableOsc(Movable, Copyable):
 
     fn loadBuffer(mut self):
         try:
-            self.buffer = Buffer.load(self.world,self.file_name, wavetables_per_channel=self.wavetables_per_channel)
+            self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
         except Exception:
             print("Error loading buffer from file:", self.file_name)
 

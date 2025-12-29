@@ -40,7 +40,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
 struct AnalysisExample(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var osc: Osc[2]
-    var buf: Buffer
+    var buffer: Buffer
     var playBuf: Play
     var freq: Float64
     var analyzer: BufferedInput[CustomAnalysis[1024],1024,512]
@@ -50,7 +50,7 @@ struct AnalysisExample(Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc[2](self.world)
-        self.sf = Buffer.load(self.world,"resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
         self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](self.world, CustomAnalysis[1024](self.world))
         self.freq = 440.0
@@ -63,7 +63,7 @@ struct AnalysisExample(Movable, Copyable):
         self.m.update(self.which,"which")
 
         oscs = self.osc.next(self.freq,0,False,[OscType.sine, OscType.saw])
-        flute = self.playBuf.next(self.buffer.data,0,1.0,True)
+        flute = self.playBuf.next(self.buffer)
 
         sig = select(self.which,[oscs[0], oscs[1], flute])
         

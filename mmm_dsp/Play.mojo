@@ -119,7 +119,7 @@ struct Play(Representable, Movable, Copyable):
         @parameter
         for out_chan in range(num_chans):
             out[out_chan] = ListInterpolator.read[interp=interp,bWrap=False](
-                w=self.world,
+                world=self.world,
                 data=buf.data[(out_chan + start_chan) % len(buf.data)], # wrap around channels
                 f_idx=((self.impulse.phasor.phase + self.phase_offset) % 1.0) * buf.num_frames_f64,
                 prev_f_idx=prev_phase * buf.num_frames_f64
