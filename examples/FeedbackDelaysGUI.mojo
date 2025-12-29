@@ -28,7 +28,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mix: Float64
     var main: Bool
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world  
         self.main_lag = Lag(self.world, 0.03)
         self.buf = Buffer.load("resources/Shiverer.wav")
@@ -80,7 +80,7 @@ struct FeedbackDelaysGUI(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 

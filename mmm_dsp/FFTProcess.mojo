@@ -125,7 +125,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         """Initializes a FFTProcess struct.
 
         Args:
-            w: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
             process: A user defined struct that implements the FFTProcessable trait.
 
         Returns:

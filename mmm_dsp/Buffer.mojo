@@ -14,7 +14,7 @@ struct Buffer(Movable, Copyable):
     var sample_rate: Float64
     var duration: Float64
 
-    def __init__(out self, data: List[List[Float64]], sample_rate: Float64):
+    fn __init__(out self, data: List[List[Float64]], sample_rate: Float64):
 
         if len(data) > 1:
             for chan in range(1,len(data)):
@@ -156,7 +156,7 @@ struct ListInterpolator(Movable, Copyable):
         elif interp == Interp.lagrange4:
             return ListInterpolator.read_lagrange4[bWrap,mask](data, f_idx)
         elif interp == Interp.sinc:
-            return ListInterpolator.read_sinc[bWrap,mask](w,data, f_idx, prev_f_idx)
+            return ListInterpolator.read_sinc[bWrap,mask](self.world,data, f_idx, prev_f_idx)
         else:
             print("ListInterpolator fn read:: Unsupported interpolation method")
             return 0.0

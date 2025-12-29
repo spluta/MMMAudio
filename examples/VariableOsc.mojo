@@ -26,7 +26,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
-        self.osc = Osc[2,5,1](self.world)
+        self.osc = Osc[2,2,1](self.world)
         self.lag = Lag[2](self.world, 0.1)
         self.m = Messenger(self.world)
         self.x = 0.0

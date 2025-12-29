@@ -8,6 +8,7 @@ mmm_audio = MMMAudio(128, num_input_channels = 12, graph_name="PitchShiftExample
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
+mmm_audio.send_float("which_input", 0)
 mmm_audio.send_float("pitch_shift", 1.25)
 mmm_audio.send_float("grain_size", 0.4)
 mmm_audio.send_float("pitch_dispersion", 0.4)

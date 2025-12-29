@@ -22,7 +22,7 @@ struct Messenger(Copyable, Movable):
         For example usage, see the [TODO] file in 'Examples.'
 
         Args:
-            w: An `UnsafePointer[MMMWorld]` to the world to check for new messages.
+            world: An `UnsafePointer[MMMWorld]` to the world to check for new messages.
             namespace: A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger.
 
         Returns:

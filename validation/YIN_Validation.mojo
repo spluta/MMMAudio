@@ -38,13 +38,13 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     world = MMMWorld()
-    w = UnsafePointer(to=world)
+    world = UnsafePointer(to=world)
 
-    buffer = Buffer.load("resources/Shiverer.wav")
-    world.sample_rate = buffer.sample_rate
-    playBuf = Play(self.world)
+    buffer = Buffer("resources/Shiverer.wav")
+    world.sample_rate = buffer.buf_sample_rate
+    playBuf = PlayBuf(world)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(self.world))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world, Analyzer(world))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

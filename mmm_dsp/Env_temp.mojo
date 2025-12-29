@@ -23,14 +23,14 @@
 
 #     fn __init__(out self, world: UnsafePointer[MMMWorld]):
 
-#         self.sweep = Sweep(self.world)
+#         self.sweep = Sweep(world)
 #         self.last_trig = 0.0  # Initialize last trigger state
 #         self.is_active = False
 #         self.times = List[Float64]()  # Initialize times list
 #         self.dur = 0.0  # Initialize total duration
 #         self.freq = 0.0
 #         self.last_out = 0.0  # Initialize last output value
-#         self.Lag = Lag[1, 0.001](self.world)  # Initialize Lag filter with the MMMWorld instance
+#         self.Lag = Lag[1, 0.001](world)  # Initialize Lag filter with the MMMWorld instance
 
 #     fn __repr__(self) -> String:
 #         return String("Env")

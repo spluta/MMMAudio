@@ -83,3 +83,37 @@ struct BrownNoise[N: Int = 1](Copyable, Movable):
         # Integrate white noise to get brown noise
         self.last_output += (white - self.last_output) * SIMD[DType.float64, N](0.02)
         return self.last_output * gain
+
+struct TExpRand[num_simd: Int = 1](Copyable, Movable):
+    var stored_output: SIMD[DType.float64, num_simd]
+    var last_trig: SIMD[DType.bool, num_simd]
+
+    fn __init__(out self):
+        self.stored_output = SIMD[DType.float64, num_simd](0.0)
+        self.last_trig = SIMD[DType.bool, num_simd](fill=False)
+
+    fn next(mut self, min: SIMD[DType.float64, num_simd], max: SIMD[DType.float64, num_simd], trig: SIMD[DType.bool, num_simd]) -> SIMD[DType.float64, num_simd]:
+        rising_edge: SIMD[DType.bool, self.num_simd] = trig & ~self.last_trig
+        @parameter
+        for i in range(num_simd):
+            if rising_edge[i]:
+                self.stored_output[i] = random_exp_float64(min[i], max[i])
+        self.last_trig = trig
+        return self.stored_output
+
+struct TRand[num_simd: Int = 1](Copyable, Movable):
+    var stored_output: SIMD[DType.float64, num_simd]
+    var last_trig: SIMD[DType.bool, num_simd]
+
+    fn __init__(out self):
+        self.stored_output = SIMD[DType.float64, num_simd](0.0)
+        self.last_trig = SIMD[DType.bool, num_simd](fill=False)
+
+    fn next(mut self, min: SIMD[DType.float64, num_simd], max: SIMD[DType.float64, num_simd], trig: SIMD[DType.bool, num_simd]) -> SIMD[DType.float64, num_simd]:
+        rising_edge: SIMD[DType.bool, self.num_simd] = trig & ~self.last_trig
+        @parameter
+        for i in range(num_simd):
+            if rising_edge[i]:
+                self.stored_output[i] = random_float64(min[i], max[i])
+        self.last_trig = trig
+        return self.stored_output

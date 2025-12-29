@@ -39,7 +39,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         """Initialize the YIN pitch detector.
 
         Args:
-            w: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
 
         Returns:
             An initialized YIN struct.

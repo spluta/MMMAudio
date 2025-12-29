@@ -26,7 +26,7 @@ struct OscVoice(Movable, Copyable):
         self.gate = False
         self.freq = 440.0
         self.wubb_rate = 0.5
-        self.messenger = Messenger(w, name_space)
+        self.messenger = Messenger(self.world, name_space)
         self.world = world
 
     fn next(mut self, ref buffer: Buffer) -> SIMD[DType.float64, 1]:
@@ -48,7 +48,7 @@ struct WavetableOsc(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
         self.wavetables_per_channel = 256

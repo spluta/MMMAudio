@@ -15,7 +15,7 @@ struct TestBuffer(Copyable,Movable):
     var which: Float64
     var m: Messenger
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.none = Play(self.world)

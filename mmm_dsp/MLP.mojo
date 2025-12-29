@@ -1,6 +1,6 @@
 from python import PythonObject
 from python import Python
-from mmm_dsp.Osc import Impulse
+from mmm_dsp.Osc import Phasor
 from mmm_utils.Messenger import *
 from mmm_src.MMMWorld import *
 
@@ -9,7 +9,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     """
     A Mojo wrapper for a PyTorch MLP model using Python interop.
 
-    ``MLP[input_size, output_size](w,file_name)``
+    ``MLP[input_size, output_size](world,file_name)``
 
     Parameters:
       input_size: The size of the input vector - defaults to 2.
@@ -24,7 +24,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var model_input: InlineArray[Float64, input_size]  
     var model_output: InlineArray[Float64, output_size]  
     var fake_model_output: List[Float64]
-    var inference_trig: Impulse
+    var inference_trig: Phasor
     var inference_gate: Bool
     var trig_rate: Float64
     var messenger: Messenger
@@ -40,10 +40,10 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
         self.fake_model_output = [0.0 for _ in range(output_size)]    
-        self.inference_trig = Impulse(self.world)
+        self.inference_trig = Phasor(self.world)
         self.inference_gate = True
         self.trig_rate = trig_rate
-        self.messenger = Messenger(w, namespace)
+        self.messenger = Messenger(world, namespace)
         self.file_name = String()
 
         try:

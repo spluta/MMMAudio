@@ -47,12 +47,12 @@ struct AnalysisExample(Movable, Copyable):
     var m: Messenger
     var which: Float64
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc[2](self.world)
         self.sf = Buffer.load(self.world,"resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](w, CustomAnalysis[1024](self.world))
+        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](self.world, CustomAnalysis[1024](self.world))
         self.freq = 440.0
         self.m = Messenger(self.world)
         self.which = 0.0

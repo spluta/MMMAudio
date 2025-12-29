@@ -53,7 +53,7 @@ struct MessengersExample():
 
         self.tones = List[Tone]()
         for i in range(2):
-            self.tones.append(Tone(w, "tone_" + String(i)))
+            self.tones.append(Tone(self.world, "tone_" + String(i)))
 
         self.bool = False
         self.bools = List[Bool](False, False)

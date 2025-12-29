@@ -20,7 +20,7 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world = world
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(w, namespace)
+        self.m = Messenger(world, namespace)
         self.freeze_gate = False
         self.stored_phases = [SIMD[DType.float64, 2](0.0) for _ in range(window_size)]
         self.stored_mags = [SIMD[DType.float64, 2](0.0) for _ in range(window_size)]

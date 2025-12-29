@@ -17,7 +17,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mouse_x: Float64
     var mouse_y: Float64
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world  
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -59,7 +59,7 @@ struct FeedbackDelays(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    def __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 

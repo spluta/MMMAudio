@@ -9,7 +9,7 @@ mmm_audio.send_trig("trig")
 
 mmm_audio.stop_audio()
 
-mmm_audio.send_float("freq", 20.0)
+mmm_audio.send_float("freq", 21)
 mmm_audio.send_trig("trig")
 
-mmm_audio.plot(1024)
+mmm_audio.plot(2048)

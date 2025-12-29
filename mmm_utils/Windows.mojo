@@ -24,15 +24,15 @@ struct Windows(Movable, Copyable):
 
         @parameter
         if window_type == WindowType.hann:
-            return ListInterpolator.read[interp,True,self.mask](w,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](world,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.hamming:
-            return ListInterpolator.read[interp,True,self.mask](w,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](world,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.blackman:
-            return ListInterpolator.read[interp,True,self.mask](w,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](world,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.kaiser:
-            return ListInterpolator.read[interp,True,self.mask](w,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](world,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.sine:
-            return ListInterpolator.read[interp,True,self.mask](w,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
+            return ListInterpolator.read[interp,True,self.mask](world,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.rect:
             return 1.0 
         else:
@@ -175,6 +175,6 @@ fn pan_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
     var table = List[SIMD[DType.float64, 2]]()
 
     for i in range(size):
-        var angle = (pi / 2.0) * Float64(i) / Float64(size)
+        var angle = (pi / 2.0) * Float64(i) / Float64(size-1)
         table.append(cos(SIMD[DType.float64, 2](angle, (pi / 2.0) - angle)))
     return table^

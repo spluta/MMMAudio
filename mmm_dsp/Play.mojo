@@ -219,7 +219,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(max_grains):
-            self.grains.append(Grain(w, 2))
+            self.grains.append(Grain(self.world, 2))
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
@@ -266,7 +266,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         overlaps: Number of overlapping grains.
 
     Args:
-        w: Pointer to the MMMWorld instance.
+        world: Pointer to the MMMWorld instance.
         buf_dur: Duration of the internal buf in seconds.
 
 
@@ -280,7 +280,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
     var impulse: Dust
     var pitch_ratio: Float64
 
-    def __init__(out self, world: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
         """ 
             w: pointer to the MMMWorld instance.
             buf_dur: duration of the internal buf in seconds.
@@ -293,7 +293,7 @@ struct PitchShift[overlaps: Int = 4](Representable, Movable, Copyable):
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-        self.recorder = Recorder[1](w,Int64(buf_dur * w[].sample_rate), w[].sample_rate)
+        self.recorder = Recorder[1](self.world,Int64(buf_dur * w[].sample_rate), w[].sample_rate)
         self.impulse = Dust(self.world)
         self.pitch_ratio = 1.0
     

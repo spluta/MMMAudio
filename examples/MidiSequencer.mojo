@@ -69,7 +69,7 @@ struct TrigSynth(Movable, Copyable):
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
 
-    # the following 5 variables are messengers (imported from mmm_utils.Messengers.mojo)
+    # the following 5 variables are messengers (imported from mmm_utils.Messenger.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
     var messenger: Messenger

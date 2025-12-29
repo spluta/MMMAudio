@@ -29,7 +29,7 @@ fn main():
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(self.world)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(self.world))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize](self.world, Analyzer(self.world))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

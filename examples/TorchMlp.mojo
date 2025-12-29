@@ -29,8 +29,8 @@ struct TorchSynth(Movable, Copyable):
 
     var latch1: Latch
     var latch2: Latch
-    var impulse1: Impulse
-    var impulse2: Impulse
+    var impulse1: Phasor
+    var impulse2: Phasor
 
     var filt1: SVF
     var filt2: SVF
@@ -44,7 +44,7 @@ struct TorchSynth(Movable, Copyable):
         self.osc2 = Osc[1, 2, 1](self.world)
 
         # load the trained model
-        self.model = MLP(w,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
+        self.model = MLP(self.world,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
@@ -56,8 +56,8 @@ struct TorchSynth(Movable, Copyable):
 
         self.latch1 = Latch(self.world)
         self.latch2 = Latch(self.world)
-        self.impulse1 = Impulse(self.world)
-        self.impulse2 = Impulse(self.world)
+        self.impulse1 = Phasor(self.world)
+        self.impulse2 = Phasor(self.world)
         self.filt1 = SVF(self.world)
         self.filt2 = SVF(self.world)
         self.dc1 = DCTrap(self.world)
@@ -129,7 +129,7 @@ struct TorchSynth(Movable, Copyable):
 
 # THE GRAPH
 
-struct TorchMlp():
+struct TorchMlp(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 

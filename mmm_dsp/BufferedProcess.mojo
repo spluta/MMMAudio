@@ -55,7 +55,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         """Initializes a BufferedInput struct.
 
         Args:
-            w: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
@@ -154,7 +154,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         """Initializes a BufferedProcess struct.
 
         Args:
-            w: A pointer to the MMMWorld.
+            world: A pointer to the MMMWorld.
             process: A user defined struct that implements the BufferedProcessable trait.
             hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 

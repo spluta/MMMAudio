@@ -24,10 +24,13 @@ pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi ma
 ```
 
 install modular's max/mojo library
+the main branch is tied to Mojo 0.25.6.1
 
 ```shell
-pip install mojo
+pip install mojo==0.25.6.1
 ```
+
+### 2a. Setup the Environment on MacOS
 
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
 
@@ -48,6 +51,68 @@ if you have trouble installing/running `pyaudio`, try this:
 1. [do this](https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed/68296168#68296168)
 2. Then this uninstall and reinstall `pyaudio` (`hidapi` may be the same).
 
+### 2b. Setup the Environment on Windows/WSL2 with Ubuntu
+
+Here are some hints to get the audio samples running under Windows/WSL2. 
+I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
+
+Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
+
+```shell
+sudo apt update
+sudo apt install libportaudio2 portaudio19-dev
+sudo apt install libhidapi-hidraw0 libhidapi-dev
+sudo apt install pulseaudio
+```
+
+Use your package manager to install `ALSA runtime` and `ASLA utilities` as system-wide c libraries. On Ubuntu this is:
+
+```shell
+sudo apt install alsa-utils
+sudo apt install libasound2-dev
+```
+
+Verify the installation. You should see a version number
+
+```shell
+aplay --version
+pkg-config --modversion alsa
+```
+
+To make the Windows audio devices "visible" inside WSL2, please install and configure PulseAudio bridge as follows:
+
+Use youe packagemanger to install `PulseAudio`. On Ubuntu this is:
+```shell
+sudo apt install pulseaudio alsa-utils
+```
+
+Create a sound config rc file in your user home directory with the follwing content:
+~/.asoundrc
+```shell
+pcm.!default {
+    type pulse
+}
+ctl.!default {
+    type pulse
+}
+```
+
+Start pulseaudio and verify that the WSLg PulseAudio server is reachable:
+```shell
+pulseaudio --start
+ls -l /mnt/wslg/PulseServer
+```
+
+Check also that PortAudio detects PulseAudio
+```shell
+pactl info
+```
+
+Now run your MMMAudio script WITHOUT running pulseaudio --start and enjoy the sound:
+```shell
+python3 examples/DefaultGraph.py
+```
+
 ## 3. Run an Example
 
 The best way to run MMMAudio is in REPL mode in your editor. 
@@ -58,24 +123,3 @@ Before you run the code in a new REPL, make sure to close all terminal instances
 
 Go to the [Examples](examples/index.md) page to run an example!
 
-## Running in high priority mode
-
-> This step might not be necessary. If you're experiencing audio dropouts, try it.
-
-Python might need to run in high priority mode to avoid audio dropouts. On MacOS/Linux, you can do this by using the `nice` command.
-
-To run in high priority mode, you need to run the Python interpreter with `sudo`. this is a bit tricky in a REPL environment, so the easiest way is to run the code from a terminal window.
-
-First, make sure your venv is activated in the terminal window:
-
-```shell
-source venv/bin/activate
-```
-
-Then run the python interpreter with sudo:
-
-```shell
-sudo nice -n -20 venv/bin/python
-```
-
-Then run the mmm_audio code from the terminal.

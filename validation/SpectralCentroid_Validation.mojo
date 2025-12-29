@@ -23,8 +23,8 @@ struct Analyzer(BufferedProcessable):
 
     fn next_window(mut self, mut buffer: List[Float64]):
         self.fft.fft(buffer)
-        # Passing in the "self.sample_rate" here instead of using the w sample rate
-        # because the w was causing issues. Somehow the pointer was getting losses or something.
+        # Passing in the "self.sample_rate" here instead of using the world sample rate
+        # because the world was causing issues. Somehow the pointer was getting losses or something.
         val = SpectralCentroid.from_mags(self.fft.mags, self.sample_rate)
         self.centroids.append(val)
         return
@@ -36,7 +36,7 @@ fn main():
 
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(self.world)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](w, Analyzer(w,world.sample_rate))
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](self.world, Analyzer(self.world,world.sample_rate))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)
