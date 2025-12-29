@@ -32,12 +32,12 @@ struct TestDelayInterps(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world) 
-        self.delay_none = Delay[interp=DelayInterpOptions.none](self.world,1.0)
-        self.delay_linear = Delay[interp=DelayInterpOptions.linear](self.world,1.0)
-        self.delay_cubic = Delay[interp=DelayInterpOptions.cubic](self.world,1.0)
-        self.delay_lagrange = Delay[interp=DelayInterpOptions.lagrange](self.world,1.0)
+        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.playBuf = Play(self.world) 
+        self.delay_none = Delay[interp=Interp.none](self.world,1.0)
+        self.delay_linear = Delay[interp=Interp.linear](self.world,1.0)
+        self.delay_cubic = Delay[interp=Interp.cubic](self.world,1.0)
+        self.delay_lagrange = Delay[interp=Interp.lagrange](self.world,1.0)
         self.lag = Lag(self.world, 0.2)
         self.lfo = Osc(self.world)
         self.m = Messenger(world)
