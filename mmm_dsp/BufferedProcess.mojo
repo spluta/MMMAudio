@@ -319,25 +319,17 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         """
         
         if self.hop_counter == 0:
-           
-           var num_frames_f: Float64 = Float64(buffer.num_frames)
 
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = phase * num_frames_f + i * buffer.sample_rate / self.world[].sample_rate
-                    # setting the index bounds to num_frames -2 to avoid reading beyond the end of the buffer when interpolation is used
-                    if index < num_frames_f - 2.0 and index >= 0:
-                        self.passing_buffer[i] = read_none(buffer.data[0], index) * self.input_attenuation_window[i]
-                    else:
-                        self.passing_buffer[i] = 0.0
+                    index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
+                    self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
             else:
                 for i in range(window_size):
-                    index = phase * buffer.num_frames + i * buffer.sample_rate / self.world[].sample_rate
-                    if index < buffer.num_frames - 2 and index >= 0:
-                        self.passing_buffer[i] = buffer.read_index(start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.passing_buffer[i] = 0.0
+                    index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
+                    self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index)
+
 
             self.process.next_window(self.passing_buffer)
 
@@ -376,18 +368,13 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             @parameter
             if input_window_shape:
                 for i in range(window_size):
-                    index = floor(phase * buffer.num_frames) + i
-                    if index < buffer.num_frames and index >= 0:
-                        self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.st_passing_buffer[i] = 0.0
+                    index = floor(phase * buffer.num_frames_f64) + i
+                    self.st_passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
+
             else:
                 for i in range(window_size):
-                    index = floor(phase * buffer.num_frames) + i
-                    if index < buffer.num_frames and index >= 0:
-                        self.st_passing_buffer[i] = buffer.read_index[2](start_chan, index) * self.input_attenuation_window[i]
-                    else:
-                        self.st_passing_buffer[i] = 0.0
+                    index = floor(phase * buffer.num_frames_f64) + i
+                    self.st_passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index)
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
