@@ -62,7 +62,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
+        i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         o = self.fftlowpass.next(i)
         return SIMD[DType.float64,2](o,o)
 

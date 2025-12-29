@@ -4,9 +4,9 @@ mmm_audio = MMMAudio(128, graph_name="TestDelayInterps", package_name="tests")
 mmm_audio.start_audio()
 
 mmm_audio.send_float("max_delay_time", 0.00827349827)
-mmm_audio.send_float("max_delay_time", 0.09238497837)
+mmm_audio.send_float("max_delay_time", 0.99238497837)
 mmm_audio.send_float("max_delay_time", 0.2)
-mmm_audio.send_float("lfo_freq",0.03)
+mmm_audio.send_float("lfo_freq",1.03)
 mmm_audio.send_float("mix", 1)
 
 # listen to the differences
