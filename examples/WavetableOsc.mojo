@@ -20,13 +20,13 @@ struct OscVoice(Movable, Copyable):
     var messenger: Messenger
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], name_space: String = ""):
-        self.osc = Osc[1,2,1](self.world)
-        self.tri = LFTri(self.world)
-        self.env = ASREnv(self.world)
+        self.osc = Osc[1,2,1](world)
+        self.tri = LFTri(world)
+        self.env = ASREnv(world)
         self.gate = False
         self.freq = 440.0
         self.wubb_rate = 0.5
-        self.messenger = Messenger(self.world, name_space)
+        self.messenger = Messenger(world, name_space)
         self.world = world
 
     fn next(mut self, ref buffer: Buffer) -> SIMD[DType.float64, 1]:
@@ -50,7 +50,7 @@ struct WavetableOsc(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
+        self.file_name = "/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav"
         self.wavetables_per_channel = 256
         self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
         self.osc_voices = List[OscVoice]()
@@ -67,10 +67,7 @@ struct WavetableOsc(Movable, Copyable):
         return String("Default")
 
     fn loadBuffer(mut self):
-        try:
-            self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
-        except Exception:
-            print("Error loading buffer from file:", self.file_name)
+        self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.wavetables_per_channel, "wavetables_per_channel")
