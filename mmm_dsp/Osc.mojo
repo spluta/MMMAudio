@@ -22,7 +22,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     Args:
         world: Pointer to the MMMWorld instance.
     """
-    var phase: SIMD[DType.float64, N]
+    var phase: SIMD[DType.float64, N] # phase is always between 0 and 1. phase offset is not stored in this value!
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
     var rising_bool_detector_impulse: RisingBoolDetector[N]  # Track the last reset state
@@ -47,7 +47,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.N], phase_offset: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.bool, N]:
         self.phase += (freq * self.freq_mul)
         fl = floor(self.phase)
-        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0))
+        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+(phase_offset%1.0)).gt(1.0))
         self.phase = self.phase - fl 
         return rbd
 
@@ -71,8 +71,6 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     @always_inline
     fn next_impulse(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
         return self.next_bool(freq, phase_offset, trig).cast[DType.float64]()
-
-
 
 struct Impulse[N: Int = 1, os_index: Int = 0](Movable, Copyable):
     """

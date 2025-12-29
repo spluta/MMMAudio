@@ -89,6 +89,101 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 #     fn next_AD2[num_chans: Int](mut self, input: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
 #         ...
 
+struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
+    """
+    Anti-Derivative Anti-Aliasing hard-clipping function.
+    
+    This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
+    
+    Params:
+    
+        num_chans: The number of channels for SIMD operations.
+    
+    Methods:
+
+        next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+            Computes the first order anti-aliased `hard_clip` of `x`.
+        next2(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+            Computes the second order anti-aliased `hard_clip` of `x`.
+    
+    """
+    alias times_oversampling = 2 ** os_index
+    var x1: SIMD[DType.float64, num_chans]
+    var oversampling: Oversampling[num_chans, Self.times_oversampling]
+    var upsampler: Upsampler[num_chans, Self.times_oversampling]
+    var degree_use: Int
+    alias TOL = 1.0e-5
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.x1 = SIMD[DType.float64, num_chans](0.0)
+        if os_index > 1:
+            print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
+        self.oversampling = Oversampling[num_chans, Self.times_oversampling](world)
+        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
+        self.degree_use = degree // 2 * 2 + 1  # ensure degree is odd
+
+    @doc_private
+    @always_inline
+    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+        """Transfer function: x - x^n/n"""
+        
+        x_norm = clip(x / thresh, -1.0, 1.0)
+        return (x_norm - pow(x_norm, self.degree_use) / self.degree_use) * thresh
+
+    @doc_private
+    @always_inline
+    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+        """First antiderivative: x²/2 - x^(n+1) / (n*(n+1))"""
+        x_norm = clip(x / thresh, -1.0, 1.0)
+        n = self.degree_use
+        result = x_norm**2 / 2 - pow(x_norm, n + 1) / (n * (n + 1))
+        return result * (thresh ** 2)
+
+    @doc_private
+    @always_inline
+    fn _next1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+        diff = x - self.x1
+        abs_x = abs(x)
+        abs_x1 = abs(self.x1)
+        
+        mask = abs(diff).lt(self.TOL) | abs_x.gt(thresh) | abs_x1.gt(thresh) 
+        
+        fallback = self._next_norm(x, thresh)
+        
+        ad1_curr = self._next_AD1(x, thresh)
+        ad1_prev = self._next_AD1(self.x1, thresh)
+        # Avoid division by zero in lanes where diff is small
+        safe_diff = mask.select(SIMD[DType.float64, num_chans](1.0), diff)
+        normal = (ad1_curr - ad1_prev) / safe_diff
+        
+        out = mask.select(fallback, normal)
+        
+        self.x1 = x
+        return out
+
+    @always_inline
+    fn next1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+        """
+        Computes the first-order anti-aliased `hard_clip` of `x`.
+
+        Args:
+            x: The input sample.
+
+        Returns:
+            The anti-aliased `hard_clip` of `x`.
+        """
+        @parameter
+        if os_index == 0:
+            return self._next1(x, thresh)
+        else:
+            @parameter
+            for i in range(self.times_oversampling):
+                # upsample the input
+                x2 = self.upsampler.next(x, i)
+                y = self._next1(x2, thresh)
+                self.oversampling.add_sample(y)
+            return self.oversampling.get_sample()
+
 fn hard_clip[num_chans: Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         return x if abs(x) < 1 else sign(x)
 
@@ -251,7 +346,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     #             y = self._next2(x2)
     #             self.oversampling.add_sample(y)
     #         return self.oversampling.get_sample()
-
+    
 struct TanhAD[num_chans: Int = 1](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing first order tanh function.
