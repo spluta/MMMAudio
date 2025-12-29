@@ -19,7 +19,7 @@ struct Buffer(Movable, Copyable):
         if len(data) > 1:
             for chan in range(1,len(data)):
                 if len(data[chan]) != len(data[0]):
-                    raise Error("Buffer::__init__ All channels must have the same number of frames")
+                    print("Buffer::__init__ All channels must have the same number of frames")
 
         self.data = data.copy()
         self.sample_rate = sample_rate
@@ -30,7 +30,7 @@ struct Buffer(Movable, Copyable):
         self.duration = self.num_frames_f64 / self.sample_rate
 
     @staticmethod
-    def zeros(num_frames: Int64, num_chans: Int64 = 1, sample_rate: Float64 = 48000.0) -> Buffer:
+    fn zeros(num_frames: Int64, num_chans: Int64 = 1, sample_rate: Float64 = 48000.0) -> Buffer:
         """Initialize a Buffer with zeros.
 
         Args:
@@ -49,12 +49,13 @@ struct Buffer(Movable, Copyable):
         return Buffer(data, sample_rate)
 
     @staticmethod
-    def load(filename: String, num_wavetables: Int64 = 1) -> Buffer:
+    fn load(filename: String, num_wavetables: Int64 = 1) -> Buffer:
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
         Args:
             filename: Path to the WAV file to load.
+            num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
         """
         # load the necessary Python modules
         try:
@@ -126,9 +127,11 @@ struct Buffer(Movable, Copyable):
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging
                 return Buffer(self_data, self_sample_rate)
             except err:
-                raise Error("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                return Buffer.zeros(0,0,48000.0)
         else:
-            raise Error("Buffer::__init__ No filename provided")
+            print("Buffer::__init__ No filename provided")
+            return Buffer.zeros(0,0,48000.0)
 
 struct ListInterpolator(Movable, Copyable):
 
@@ -156,7 +159,7 @@ struct ListInterpolator(Movable, Copyable):
         elif interp == Interp.lagrange4:
             return ListInterpolator.read_lagrange4[bWrap,mask](data, f_idx)
         elif interp == Interp.sinc:
-            return ListInterpolator.read_sinc[bWrap,mask](self.world,data, f_idx, prev_f_idx)
+            return ListInterpolator.read_sinc[bWrap,mask](world,data, f_idx, prev_f_idx)
         else:
             print("ListInterpolator fn read:: Unsupported interpolation method")
             return 0.0
@@ -326,4 +329,4 @@ struct ListInterpolator(Movable, Copyable):
     @always_inline
     @staticmethod
     fn read_sinc[bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
-        return w[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)
+        return world[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)
