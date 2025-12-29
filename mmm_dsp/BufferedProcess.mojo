@@ -186,8 +186,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         elif input_window_shape == WindowType.sine:
             self.input_attenuation_window = sine_window(window_size)
         else:
-            # never used, just allocate a bunch of zeros
-            self.input_attenuation_window = List[Float64](length=window_size, fill=0.0)
+            # never used, just allocate a bunch of ones
+            self.input_attenuation_window = List[Float64](length=window_size, fill=1.0)
 
         @parameter
         if output_window_shape == WindowType.hann:
@@ -199,8 +199,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         elif output_window_shape == WindowType.sine:
             self.output_attenuation_window = sine_window(window_size)
         else:
-            # never used, just allocate a bunch of zeros
-            self.output_attenuation_window = List[Float64](length=window_size, fill=0.0)
+            # never used, just allocate a bunch of ones
+            self.output_attenuation_window = List[Float64](length=window_size, fill=1.0)
 
     fn next(mut self, input: Float64) -> Float64:
         """Process the next input sample and return the next output sample.

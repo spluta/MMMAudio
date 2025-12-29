@@ -30,18 +30,17 @@ struct BufferedMultiply(BufferedProcessable):
     fn get_messages(mut self) -> None:
         self.m.update(self.vol,"vol")
 
-    fn next_window(mut self, mut input: List[Float64]) -> None:
-
+    fn next_window(self, mut input: List[Float64]) -> None:
         amp = dbamp(self.vol)
-        for ref v in input:
-            v *= amp
+        for i in range(len(input)):
+            input[i] *= amp
 
 # User's Synth
 struct TestBufferedProcessAudio(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
-    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,512,0]
+    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,512,None,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -51,14 +50,18 @@ struct TestBufferedProcessAudio(Movable, Copyable):
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
         var multiply_process = BufferedMultiply(self.world)
-        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,512,0](self.world,process=multiply_process^)
+        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,512,None,WindowType.hann](self.world,process=multiply_process^)
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
+        i = self.playBuf.next(self.buffer,1.0)  # Read samples from the buffer
+        v = self.my_buffered_mul.process.vol
+        self.ps[0].next(v,"vol")
         o = self.my_buffered_mul.next(i)
+        # self.ps[0].next(i[0],"input")
+        self.ps[1].next(o[0],"output")
         self.m.update(self.which,"which")
         o = select(self.which,[i,o])
         return SIMD[DType.float64,2](o,o)
