@@ -6,18 +6,18 @@ from mmm_dsp.Osc import *
 from mmm_utils.Messenger import Messenger
 
 struct TestDelay(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var synth: Impulse[2]
     var delay: Delay[2]
     var freq: Float64
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.synth = Impulse[2](self.w)
-        self.delay = Delay[2](self.w, 1.0)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.synth = Impulse[2](self.world)
+        self.delay = Delay[2](self.world, 1.0)
         self.freq = 0.5
-        self.messenger = Messenger(w)
+        self.messenger = Messenger(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.freq,"freq")

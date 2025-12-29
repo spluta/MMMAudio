@@ -15,12 +15,12 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
     """
 
     alias simd_width = simd_width_of[DType.float64]()
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var val: SIMD[DType.float64, N]
     var b1: SIMD[DType.float64, N]
     var lag: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, N] = SIMD[DType.float64, N](0.02)):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, N] = SIMD[DType.float64, N](0.02)):
         """Initialize the lag processor with given lag time in seconds.
 
         Args:
@@ -31,9 +31,9 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
             None.
         """
         
-        self.w = w
+        self.world = world
         self.val = SIMD[DType.float64, self.N](0.0)
-        self.b1 = exp(-6.907755278982137 / (lag * self.w[].sample_rate))
+        self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
         self.lag = lag
         
     fn __repr__(self) -> String:
@@ -67,14 +67,14 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
             None.
         """
         self.lag = lag
-        self.b1 = exp(-6.907755278982137 / (lag * self.w[].sample_rate))
+        self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
 
 alias simd_width = simd_width_of[DType.float64]() * 2
 
 struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
     var list: List[Lag[simd_width]]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], lag_times: List[Float64]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], lag_times: List[Float64]):
 
         alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
         self.list = [Lag[simd_width](w, lag_times[i%N]) for i in range(num_simd)]
@@ -137,7 +137,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
     ...
     ```mojo
     # initialize
-    self.svf = SVF(w)
+    self.svf = SVF(self.world)
     ```
     ...
     ```mojo
@@ -153,7 +153,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
     var ic2eq: SIMD[DType.float64, N]  # Internal state 2
     var sample_rate: Float64
     
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the SVF.
         
         Args:
@@ -421,14 +421,14 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
     var q: Float64
 
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the 4th-order Linkwitz-Riley lowpass filter
         
         Args:
             w: Pointer to the MMMWorld.
         """
-        self.svf1 = SVF[self.N](w)
-        self.svf2 = SVF[self.N](w)
+        self.svf1 = SVF[self.N](self.world)
+        self.svf2 = SVF[self.N](self.world)
         self.q = 1.0 / sqrt(2.0)  # 1/sqrt(2) for Butterworth response
 
     fn __repr__(self) -> String:
@@ -494,7 +494,7 @@ struct OnePole[N: Int = 1](Representable, Movable, Copyable):
 #     var last_samp: Float64  # Previous output
 #     var sample_rate: Float64
     
-#     fn __init__(out self, w: UnsafePointer[MMMWorld]):
+#     fn __init__(out self, world: UnsafePointer[MMMWorld]):
 #         self.last_samp = 0.0
 #         self.sample_rate = w[].sample_rate
     
@@ -515,7 +515,7 @@ struct OnePole[N: Int = 1](Representable, Movable, Copyable):
 #     var last_samp: Float64  # Previous output
 #     var sample_rate: Float64
     
-#     fn __init__(out self, w: UnsafePointer[MMMWorld]):
+#     fn __init__(out self, world: UnsafePointer[MMMWorld]):
 #         """Initialize the one-zero filter"""
 
 #         self.last_samp = 0.0
@@ -541,7 +541,7 @@ struct DCTrap[N: Int=1](Representable, Movable, Copyable):
     var last_samp: SIMD[DType.float64, N]
     var last_inner: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the DC blocker filter.
         
         Args:
@@ -584,7 +584,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     var last_1: SIMD[DType.float64, N]  # Previous output
     var step_val: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the VAOnePole filter.
 
         Args:
@@ -653,7 +653,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
     var last_4: SIMD[DType.float64, N]
     var oversampling: Oversampling[N, 2 ** os_index]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the VAMoogLadder filter.
 
         Args:
@@ -665,7 +665,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         self.last_2 = SIMD[DType.float64, N](0.0)
         self.last_3 = SIMD[DType.float64, N](0.0)
         self.last_4 = SIMD[DType.float64, N](0.0)
-        self.oversampling = Oversampling[self.N, 2 ** os_index](w)
+        self.oversampling = Oversampling[self.N, 2 ** os_index](self.world)
 
     fn __repr__(self) -> String:
         return String(
@@ -765,17 +765,17 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
     """
     var tf2: tf2[N]
     var coeffs: List[SIMD[DType.float64, N]]
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the Reson filter.
 
         Args:
             w: Pointer to the MMMWorld.
         """
-        self.tf2 = tf2[N](w)
+        self.tf2 = tf2[N](self.world)
         self.coeffs = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
-        self.w = w
+        self.world = world
 
     fn __repr__(self) -> String:
         return String("Reson")
@@ -800,7 +800,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         var b1 = SIMD[DType.float64, self.N](0.0)
         var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.w[].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
 
         return self.tf2.next(input, self.coeffs)
 
@@ -824,7 +824,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         var b1 = SIMD[DType.float64, self.N](0.0)
         var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.w[].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
 
         return gain*input - self.tf2.next(input, self.coeffs)
 
@@ -848,7 +848,7 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         var b1 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
         var b0 = SIMD[DType.float64, self.N](0.0)
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.w[].sample_rate)
+        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
         return self.tf2.next(input, self.coeffs)
 
 struct FIR[N: Int = 1](Representable, Movable, Copyable):
@@ -864,7 +864,7 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
     var buffer: List[SIMD[DType.float64, N]]
     var index: Int
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], num_coeffs: Int):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], num_coeffs: Int):
         """Initialize the FIR.
 
         Args:
@@ -904,7 +904,7 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
 #     var index: Int
 #     var num_coeffs: Int
 
-#     fn __init__(out self, w: UnsafePointer[MMMWorld], num_coeffs: Int):
+#     fn __init__(out self, world: UnsafePointer[MMMWorld], num_coeffs: Int):
 #         self.buffer = [SIMD[DType.float64, self.N](0.0) for _ in range(num_coeffs)]
 #         self.index = 0
 #         self.num_coeffs = num_coeffs
@@ -967,7 +967,7 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
     var fir2: FIR[N]
     var fb: SIMD[DType.float64, N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the IIR.
 
         Args:
@@ -1007,13 +1007,13 @@ struct tf2[N: Int = 1](Representable, Movable, Copyable):
     """
     var iir: IIR[N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the tf2 filter.
 
         Args:
             w: Pointer to the MMMWorld.
         """
-        self.iir = IIR[self.N](w)
+        self.iir = IIR[self.N](self.world)
 
     fn __repr__(self) -> String:
         return String("tf2")

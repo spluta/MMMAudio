@@ -23,7 +23,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var pitch: Float64
     var confidence: Float64
     var sample_rate: Float64
@@ -35,7 +35,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
     var yin_buffer: List[Float64]
     var yin_values: List[Float64]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the YIN pitch detector.
 
         Args:
@@ -44,10 +44,10 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         Returns:
             An initialized YIN struct.
         """
-        self.w = w
+        self.world = world
         self.pitch = 0.0
         self.confidence = 0.0
-        self.sample_rate = self.w[].sample_rate
+        self.sample_rate = self.world[].sample_rate
         self.fft = RealFFT[window_size * 2]()
         self.fft_input = List[Float64](length=window_size * 2, fill=0.0)
         self.fft_power_mags = List[Float64](length=window_size + 1, fill=0.0)
@@ -174,11 +174,11 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         power_mag: If True, use power magnitudes (squared) for the centroid calculation.
     """
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var centroid: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.centroid = 0.0
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
@@ -190,7 +190,7 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
             mags: The input magnitudes as a List of Float64.
             phases: The input phases as a List of Float64.
         """
-        self.centroid = self.from_mags(mags, self.w[].sample_rate)
+        self.centroid = self.from_mags(mags, self.world[].sample_rate)
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64) -> Float64:

@@ -141,7 +141,7 @@ struct ListInterpolator(Movable, Copyable):
     # a reference to the MMMWorld is not needed for every read call.
     @always_inline
     @staticmethod
-    fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](w: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
+    fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
         """Read a value from a List[Float64] using provided index and interpolation method."""
         
         @parameter
@@ -325,5 +325,5 @@ struct ListInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    fn read_sinc[bWrap: Bool = True, mask: Int = 0](w: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
+    fn read_sinc[bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
         return w[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)

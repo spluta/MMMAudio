@@ -11,12 +11,12 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
     """
     A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
     
-    ``Freeverb[N](w)``
+    ``Freeverb[N](self.world)``
 
     Parameters:
       N: size of the SIMD vector - defaults to 1
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     # var lp_combs: List[LP_CombN[8]]
     var lp_comb0: LP_Comb[N]
     var lp_comb1: LP_Comb[N]
@@ -33,22 +33,22 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         
         # I tried doing this with lists of LP_Comb[N] but avoiding lists seems to work better in Mojo currently
 
-        self.lp_comb0 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb1 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb2 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb3 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb4 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb5 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb6 = LP_Comb[N](self.w, 0.04)
-        self.lp_comb7 = LP_Comb[N](self.w, 0.04)
+        self.lp_comb0 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb1 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb2 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb3 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb4 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb5 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb6 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb7 = LP_Comb[N](self.world, 0.04)
 
         self.temp = [0.0 for _ in range(8)]
-        self.allpass_combs = [Allpass_Comb[N, 0](self.w, 0.015) for _ in range(4)]
+        self.allpass_combs = [Allpass_Comb[N, 0](self.world, 0.015) for _ in range(4)]
         
         self.feedback = [0.0]
         self.lp_comb_lpfreq = [1000.0]

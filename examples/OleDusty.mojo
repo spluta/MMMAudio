@@ -6,12 +6,12 @@ from mmm_dsp.Filters import *
 # THE SYNTH
 
 struct Dusty(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var dust: Dust[2] 
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.dust = Dust[2](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.dust = Dust[2](self.world)
 
     fn __repr__(self) -> String:
         return String("OleDusty")
@@ -28,15 +28,15 @@ struct Dusty(Representable, Movable, Copyable):
 # THE GRAPH
 
 struct OleDusty(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var dusty: Dusty
     var reson: Reson[2]
     var freq: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.dusty = Dusty(w)
-        self.reson = Reson[2](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.dusty = Dusty(self.world)
+        self.reson = Reson[2](self.world)
         self.freq = 20.0
 
     fn __repr__(self) -> String:
@@ -44,9 +44,9 @@ struct OleDusty(Representable, Movable, Copyable):
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        freq = linexp(self.w[].mouse_y, 0.0, 1.0, 100.0, 2000.0)
+        freq = linexp(self.world[].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 
-        out = self.dusty.next(linlin(self.w[].mouse_x, 0.0, 1.0, 5.0, 200.0))
+        out = self.dusty.next(linlin(self.world[].mouse_x, 0.0, 1.0, 5.0, 200.0))
 
         # there is really no difference between ugens, synths, graphs
         # thus there is no reason you can't process the output of a synth directly in the graph

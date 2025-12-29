@@ -12,26 +12,26 @@ from random import random_float64
 # THE SYNTH
 
 struct GrainSynth(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buf: Buffer
     
     var tgrains: TGrains[10]
     var impulse: Impulse  
      
-    def __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w  
+    def __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world  
 
         # buffer uses numpy to load a buffer into an N channel array
         self.buf = Buffer.load("resources/Shiverer.wav")
 
-        self.tgrains = TGrains[10](self.w)  
-        self.impulse = Impulse(self.w)
+        self.tgrains = TGrains[10](self.world)  
+        self.impulse = Impulse(self.world)
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
-        x = self.w[].mouse_x
-        y = self.w[].mouse_y
+        x = self.world[].mouse_x
+        y = self.world[].mouse_y
 
         imp_freq = linlin(y, 0.0, 1.0, 1.0, 20.0)
         var impulse = self.impulse.next_bool(imp_freq, True)  # Get the next impulse sample
@@ -53,14 +53,14 @@ struct GrainSynth(Representable, Movable, Copyable):
 # THE GRAPH
 
 struct Grains(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var grain_synth: GrainSynth  # Instance of the GrainSynth
 
 
-    def __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    def __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
 
-        self.grain_synth = GrainSynth(w)  # Initialize the GrainSynth with the world instance
+        self.grain_synth = GrainSynth(self.world)  # Initialize the GrainSynth with the world instance
 
     fn __repr__(self) -> String:
         return String("TGrains")

@@ -11,21 +11,21 @@ from mmm_dsp.Osc import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestImpulse(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var synth: Impulse[2]
     var trig: SIMD[DType.bool, 2]
     var freq: Float64
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.synth = Impulse[2](self.w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.synth = Impulse[2](self.world)
         self.trig = SIMD[DType.bool, 2](fill=True)
         self.freq = 0.5
-        self.messenger = Messenger(w)
+        self.messenger = Messenger(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        if self.w[].top_of_block:
+        if self.world[].top_of_block:
             if self.messenger.triggered("trig"):
                 temp = self.messenger.get_list("trig")
                 for i in range(min(2, len(temp))):

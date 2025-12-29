@@ -19,7 +19,7 @@ from mmm_dsp.Filters import *
 from mmm_utils.Print import Print
 
 struct Benjolin(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]  
+    var world: UnsafePointer[MMMWorld]  
     var m: Messenger
     var feedback: Float64
     var rungler: Float64
@@ -49,20 +49,20 @@ struct Benjolin(Representable, Movable, Copyable):
     var outSignalL: Float64
     var outSignalR: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.m = Messenger(self.w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.m = Messenger(self.world)
         self.feedback = 0.0
         self.rungler = 0.0
-        self.tri1 = Osc[interp=2,os_index=1](self.w)
-        self.tri2 = Osc[interp=2,os_index=1](self.w)
-        self.pulse1 = Osc[interp=2,os_index=1](self.w)
-        self.pulse2 = Osc[interp=2,os_index=1](self.w)
+        self.tri1 = Osc[interp=2,os_index=1](self.world)
+        self.tri2 = Osc[interp=2,os_index=1](self.world)
+        self.pulse1 = Osc[interp=2,os_index=1](self.world)
+        self.pulse2 = Osc[interp=2,os_index=1](self.world)
         self.delays = List[Delay[1,3]](capacity=8)
         self.latches = List[Latch](capacity=8)
         self.filters = List[SVF](capacity=9)
         self.filter_outputs = List[Float64](capacity=9)
-        self.sample_dur = 1.0 / self.w[].sample_rate
+        self.sample_dur = 1.0 / self.world[].sample_rate
         self.sh = List[Float64](capacity=9)
         self.dctraps = List[DCTrap](capacity=2)
 
@@ -81,16 +81,16 @@ struct Benjolin(Representable, Movable, Copyable):
         self.outSignalR = 3
 
         for _ in range(8):
-            self.delays.append(Delay[1,3](self.w, max_delay_time=0.1))
-            self.latches.append(Latch(self.w))
+            self.delays.append(Delay[1,3](self.world, max_delay_time=0.1))
+            self.latches.append(Latch(self.world))
 
         for _ in range(9):
-            self.filters.append(SVF(self.w))
+            self.filters.append(SVF(self.world))
             self.filter_outputs.append(0.0)
             self.sh.append(0.0)
 
         for _ in range(2):
-            self.dctraps.append(DCTrap(self.w))
+            self.dctraps.append(DCTrap(self.world))
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -163,12 +163,12 @@ struct Benjolin(Representable, Movable, Copyable):
         return output * 0.4
 
 struct BenjolinExample(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var benjolin: Benjolin
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.benjolin = Benjolin(self.w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.benjolin = Benjolin(self.world)
 
     fn __repr__(self) -> String:
         return String("Benjolin_Example")

@@ -10,13 +10,13 @@ alias windowsize: Int = 1024
 alias hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var fft: RealFFT[windowsize]
     var centroids: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], sample_rate: Float64):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld], sample_rate: Float64):
+        self.world = world
         self.fft = RealFFT[windowsize]()
         self.centroids = List[Float64]()
         self.sample_rate = sample_rate
@@ -35,7 +35,7 @@ fn main():
     w = UnsafePointer(to=world)
 
     buffer = Buffer.load("resources/Shiverer.wav")
-    playBuf = Play(w)
+    playBuf = Play(self.world)
     analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](w, Analyzer(w,world.sample_rate))
 
     for _ in range(buffer.num_frames):

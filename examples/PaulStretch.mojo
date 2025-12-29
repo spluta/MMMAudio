@@ -14,12 +14,12 @@ alias window_size = 2048
 alias hop_size = window_size // 2
 
 struct PaulStretchWindow[window_size: Int](FFTProcessable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var m: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.m = Messenger(w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.m = Messenger(self.world)
 
     fn get_messages(mut self) -> None:
         pass
@@ -30,17 +30,17 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 
 # User's Synth
 struct PaulStretch(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
     var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.saw = LFSaw(self.w)
+        self.saw = LFSaw(self.world)
 
         self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
@@ -48,9 +48,9 @@ struct PaulStretch(Movable, Copyable):
                 hop_size,
                 WindowType.sine,
                 WindowType.sine
-            ](self.w,process=PaulStretchWindow[window_size](self.w))
+            ](self.world,process=PaulStretchWindow[window_size](self.world))
 
-        self.m = Messenger(w)
+        self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

@@ -11,12 +11,12 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
-    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.phase = SIMD[DType.float64, N](0.0)
-        self.freq_mul = self.w[].os_multiplier[os_index] / self.w[].sample_rate
+        self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
@@ -57,13 +57,13 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
     """
 
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
-    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var oversampling: Oversampling[num_chans, 2**os_index]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.phasor = Phasor[self.num_chans, os_index](w)
-        self.oversampling = Oversampling[self.num_chans, 2**os_index](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.phasor = Phasor[self.num_chans, os_index](self.world)
+        self.oversampling = Oversampling[self.num_chans, 2**os_index](self.world)
 
     fn __repr__(self) -> String:
         return String("Osc")
@@ -102,8 +102,8 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
@@ -123,8 +123,8 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
@@ -168,7 +168,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
         var osc_type1 = SIMD[DType.int64, self.num_chans](osc_type0 + 1)
         osc_type0 = clip(osc_type0, 0,  max_osc_frac)
         osc_type1 = clip(osc_type1, 0, max_osc_frac)
-        self.w[].print(scaled_osc_frac, osc_type0, osc_type1)
+        self.world[].print(scaled_osc_frac, osc_type0, osc_type1)
         @parameter
         for i in range(self.num_chans):
             osc_type0[i] = osc_types[osc_type0[i]]
@@ -190,8 +190,8 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type0[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type0[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
@@ -200,8 +200,8 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type1[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type1[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
@@ -218,8 +218,8 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type0[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type0[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
@@ -228,12 +228,12 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=OscBuffersMask
                     ](
-                        w = self.w,
-                        data=self.w[].osc_buffers.buffers[osc_type1[chan]],
+                        w = self.world,
+                        data=self.world[].osc_buffers.buffers[osc_type1[chan]],
                         f_idx=phase[chan] * OscBuffersSize,
                         prev_f_idx=last_phase[chan] * OscBuffersSize
                     )
-                self.w[].print(osc_frac_interp)
+                self.world[].print(osc_frac_interp)
                 self.oversampling.add_sample(linear_interp(sample0, sample1, osc_frac_interp))
             return self.oversampling.get_sample()
     
@@ -286,7 +286,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=0
                     ](
-                        w = self.w,
+                        w = self.world,
                         data=buffer.data[buf_chan0[out_chan]],
                         f_idx=phase[out_chan] * buffer.num_frames_f64,
                         prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
@@ -296,7 +296,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                         bWrap=True,
                         mask=0
                     ](
-                        w = self.w,
+                        w = self.world,
                         data=buffer.data[buf_chan1[out_chan]],
                         f_idx=phase[out_chan] * buffer.num_frames_f64,
                         prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
@@ -315,7 +315,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                             bWrap=True,
                             mask=0
                         ](
-                            w = self.w,
+                            w = self.world,
                             data=buffer.data[buf_chan0[out_chan]],
                             f_idx=phase[out_chan] * buffer.num_frames_f64,
                             prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
@@ -325,7 +325,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 1, os_index: Int = 0](Representable
                             bWrap=True,
                             mask=0
                         ](
-                            w = self.w,
+                            w = self.world,
                             data=buffer.data[buf_chan1[out_chan]],
                             f_idx=phase[out_chan] * buffer.num_frames_f64,
                             prev_f_idx=last_phase[out_chan] * buffer.num_frames_f64
@@ -342,8 +342,8 @@ struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var osc: Osc[N, Interp.linear, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.osc = Osc[self.N, Interp.linear, os_index](w)  # Initialize the Oscillator with the world instance
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.osc = Osc[self.N, Interp.linear, os_index](self.world)  # Initialize the Oscillator with the world instance
 
     fn __repr__(self) -> String:
         return String("SinOsc")
@@ -357,8 +357,8 @@ struct LFSaw[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](self.world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSaw")
@@ -374,8 +374,8 @@ struct LFSquare[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](self.world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSquare")
@@ -390,8 +390,8 @@ struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
 
     var phasor: Phasor[N, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](w)  # Initialize the Phasor with the world instance
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](self.world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFTri")
@@ -411,8 +411,8 @@ struct Impulse[N: Int = 1] (Representable, Movable, Copyable):
     var last_trig: SIMD[DType.bool, N]
     var rising_bool_detector: RisingBoolDetector[N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N](self.world)
         self.last_phase = SIMD[DType.float64, self.N](0.0)
         self.last_trig = SIMD[DType.bool, self.N](fill=False)
         self.rising_bool_detector = RisingBoolDetector[self.N]()
@@ -455,8 +455,8 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
     var freq: SIMD[DType.float64, N]
     var rising_bool_detector: RisingBoolDetector[N]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.impulse = Impulse[N](w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.impulse = Impulse[N](self.world)
         self.freq = SIMD[DType.float64, N](1.0)
         self.rising_bool_detector = RisingBoolDetector[N]()
 
@@ -487,7 +487,7 @@ struct Dust[N: Int = 1] (Representable, Movable, Copyable):
 
 struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     """Low-frequency noise oscillator."""
-    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var impulse: Impulse[N]
 
     # Cubic inerpolation only needs 4 points, but it needs to know the true previous point so the history
@@ -498,10 +498,10 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
     # phase is moving *towards* history_index + 1
     var history_index: List[Int8]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.history_index = [0 for _ in range(self.N)]
-        self.impulse = Impulse[N](w)
+        self.impulse = Impulse[N](self.world)
         self.history = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
         for i in range(self.N):
             for j in range(len(self.history)):
@@ -563,12 +563,12 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, N]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
-    var w: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.phase = SIMD[DType.float64, N](0.0)
-        self.freq_mul = self.w[].os_multiplier[os_index] / self.w[].sample_rate
+        self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[N]()
 
     fn __repr__(self) -> String:
@@ -596,7 +596,7 @@ alias OscBuffersMask: Int = 16383  # 2^14 - 1
 struct OscBuffers(Movable, Copyable):
     var buffers: InlineArray[List[Float64],7]
 
-    fn at_phase[osc_type: Int, interp: Int = Interp.none](self, w: UnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0) -> Float64:
+    fn at_phase[osc_type: Int, interp: Int = Interp.none](self, world: UnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0) -> Float64:
         return ListInterpolator.read[
             interp=interp,
             bWrap=True,

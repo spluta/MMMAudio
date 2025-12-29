@@ -15,7 +15,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
       input_size: The size of the input vector - defaults to 2.
       output_size: The size of the output vector - defaults to 16.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var py_input: PythonObject  
     var py_output: PythonObject  
     var model: PythonObject  
@@ -30,8 +30,8 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var messenger: Messenger
     var file_name: String
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
+        self.world = world
         self.py_input = PythonObject(None) 
         self.py_output = PythonObject(None) 
         self.model = PythonObject(None)  
@@ -40,7 +40,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.model_input = InlineArray[Float64, input_size](fill=0.0)
         self.model_output = InlineArray[Float64, output_size](fill=0.0)
         self.fake_model_output = [0.0 for _ in range(output_size)]    
-        self.inference_trig = Impulse(self.w)
+        self.inference_trig = Impulse(self.world)
         self.inference_gate = True
         self.trig_rate = trig_rate
         self.messenger = Messenger(w, namespace)

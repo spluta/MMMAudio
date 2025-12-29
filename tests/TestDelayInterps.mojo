@@ -7,7 +7,7 @@ from mmm_utils.Messenger import Messenger
 from mmm_dsp.Play import *
 
 struct TestDelayInterps(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
     var delay_none: Delay[interp=Interp.none]
@@ -25,20 +25,20 @@ struct TestDelayInterps(Movable, Copyable):
     var mix: Float64
     var which_delay: Float64
 
-    def __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    def __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.playBuf = Play(self.w) 
-        self.delay_none = Delay[interp=Interp.none](self.w,1.0)
-        self.delay_linear = Delay[interp=Interp.linear](self.w,1.0)
-        self.delay_quadratic = Delay[interp=Interp.quad](self.w,1.0)
-        self.delay_cubic = Delay[interp=Interp.cubic](self.w,1.0)
-        self.delay_lagrange = Delay[interp=Interp.lagrange4](self.w,1.0)
-        self.delay_sinc = Delay[interp=Interp.sinc](self.w,1.0)
-        self.lag = Lag(self.w, 0.2)
-        self.lfo = Osc(self.w)
-        self.m = Messenger(self.w)
-        self.mouse_lag = Lag(self.w, 0.05)
+        self.playBuf = Play(self.world) 
+        self.delay_none = Delay[interp=Interp.none](self.world,1.0)
+        self.delay_linear = Delay[interp=Interp.linear](self.world,1.0)
+        self.delay_quadratic = Delay[interp=Interp.quad](self.world,1.0)
+        self.delay_cubic = Delay[interp=Interp.cubic](self.world,1.0)
+        self.delay_lagrange = Delay[interp=Interp.lagrange4](self.world,1.0)
+        self.delay_sinc = Delay[interp=Interp.sinc](self.world,1.0)
+        self.lag = Lag(self.world, 0.2)
+        self.lfo = Osc(self.world)
+        self.m = Messenger(self.world)
+        self.mouse_lag = Lag(self.world, 0.05)
         self.max_delay_time = 1.0
         self.lfo_freq = 0.1
         self.mix = 0.5
@@ -63,14 +63,14 @@ struct TestDelayInterps(Movable, Copyable):
         self.m.update(self.mix,"mix")  # Get mix level from messenger, default to 0.5
         self.m.update(self.which_delay, "which_delay")  # Get which delay type to use from messenger, default to 0 (none)
 
-        # self.w[].print("max_delay_time: ", self.max_delay_time, " mix: ", self.mix, " which_delay: ", self.which_delay, " delay_time: ", delay_time)
+        # self.world[].print("max_delay_time: ", self.max_delay_time, " mix: ", self.mix, " which_delay: ", self.which_delay, " delay_time: ", delay_time)
 
         one_delay = select(self.which_delay,[sample_none,sample_linear,sample_quadratic,sample_cubic,sample_lagrange,sample_sinc])
         sig = dry * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
         
-        # self.w[].print("dry: ", dry, " one_delay: ", one_delay, " sig: ", sig)
+        # self.world[].print("dry: ", dry, " one_delay: ", one_delay, " sig: ", sig)
 
-        # self.w[].print("which_delay: ", self.which_delay, " delay_time: ", delay_time)
+        # self.world[].print("which_delay: ", self.which_delay, " delay_time: ", delay_time)
 
         out = SIMD[DType.float64, 2](sig[0],sig[1])
         return out

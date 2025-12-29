@@ -21,16 +21,16 @@
 #     var last_out: Float64  # Last output value of the envelope
 #     var Lag: Lag[1, 0.001]  # Lag filter for smoothing the envelope output
 
-#     fn __init__(out self, w: UnsafePointer[MMMWorld]):
+#     fn __init__(out self, world: UnsafePointer[MMMWorld]):
 
-#         self.sweep = Sweep(w)
+#         self.sweep = Sweep(self.world)
 #         self.last_trig = 0.0  # Initialize last trigger state
 #         self.is_active = False
 #         self.times = List[Float64]()  # Initialize times list
 #         self.dur = 0.0  # Initialize total duration
 #         self.freq = 0.0
 #         self.last_out = 0.0  # Initialize last output value
-#         self.Lag = Lag[1, 0.001](w)  # Initialize Lag filter with the MMMWorld instance
+#         self.Lag = Lag[1, 0.001](self.world)  # Initialize Lag filter with the MMMWorld instance
 
 #     fn __repr__(self) -> String:
 #         return String("Env")

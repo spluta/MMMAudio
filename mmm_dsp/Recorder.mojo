@@ -6,12 +6,12 @@ from mmm_utils.functions import *
 from .Env import Env
 
 struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var write_head: Int64
     var buf: Buffer
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], num_frames: Int64, sample_rate: Float64):
-        self.w = w
+    def __init__(out self, world: UnsafePointer[MMMWorld], num_frames: Int64, sample_rate: Float64):
+        self.world = world
         self.write_head = 0
         self.buf = Buffer.zeros(num_frames, num_chans, sample_rate)
 

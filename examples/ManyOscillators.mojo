@@ -16,7 +16,7 @@ from mmm_dsp.Pan import pan2
 # the ManyOscillators graph below.
 
 struct StereoBeatingSines(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld] # pointer to the MMMWorld
+    var world: UnsafePointer[MMMWorld] # pointer to the MMMWorld
     var osc1: Osc[interp=Interp.linear] # first oscillator
     var osc2: Osc[interp=Interp.linear] # second oscillator
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
@@ -25,8 +25,8 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     var vol_osc: Osc # LFO for volume
     var vol_osc_freq: Float64 # frequency for the volume LFO
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld], center_freq: Float64):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld], center_freq: Float64):
+        self.world = world
 
         # create two oscillators. The [2] here is *kind of* like an array
         # with two elements, but the more accurate way to look at it is a
@@ -36,13 +36,13 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # create some nice beating patterns. The output is stereo because later
         # the Pan2 processor positions the summed oscillators in the stereo field
 
-        self.osc1 = Osc[interp=Interp.linear](w)
-        self.osc2 = Osc[interp=Interp.linear](w)
+        self.osc1 = Osc[interp=Interp.linear](self.world)
+        self.osc2 = Osc[interp=Interp.linear](self.world)
         
-        self.pan2_osc = Osc(w)
+        self.pan2_osc = Osc(self.world)
         self.pan2_freq = random_float64(0.03, 0.1)
 
-        self.vol_osc = Osc(w)
+        self.vol_osc = Osc(self.world)
         self.vol_osc_freq = random_float64(0.05, 0.2)
         self.osc_freqs = SIMD[DType.float64, 2](
             center_freq + random_float64(1.0, 5.0),
@@ -70,23 +70,23 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 # it is the struct that has the same name as this).
 
 struct ManyOscillators(Copyable, Movable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var synths: List[StereoBeatingSines]  # Instances of the StereoBeatingSines synth
     var messenger: Messenger
     var num_pairs: Int64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
 
         # initialize the list of synths
         self.synths = List[StereoBeatingSines]()
 
-        self.messenger = Messenger(self.w)
+        self.messenger = Messenger(self.world)
         self.num_pairs = 10
 
         # add 10 pairs to the list
         for _ in range(self.num_pairs):
-            self.synths.append(StereoBeatingSines(self.w, random_exp_float64(100.0, 1000.0)))
+            self.synths.append(StereoBeatingSines(self.world, random_exp_float64(100.0, 1000.0)))
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -96,7 +96,7 @@ struct ManyOscillators(Copyable, Movable):
                 if self.num_pairs > len(self.synths):
                     # add more
                     for _ in range(self.num_pairs - len(self.synths)):
-                        self.synths.append(StereoBeatingSines(self.w, random_exp_float64(100.0, 1000.0)))
+                        self.synths.append(StereoBeatingSines(self.world, random_exp_float64(100.0, 1000.0)))
                 else:
                     # remove some
                     for _ in range(len(self.synths) - self.num_pairs):

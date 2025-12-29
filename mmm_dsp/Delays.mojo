@@ -19,7 +19,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
       max_delay: The maximum delay time in seconds.
     """
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var max_delay_time: Float64
     var max_delay_samples: Int64
     var delay_line: Recorder[num_chans]
@@ -27,13 +27,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     var sample_duration: Float64
     var prev_f_idx: List[Float64]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
-        self.w = w
+    def __init__(out self, world: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
+        self.world = world
         self.max_delay_time = max_delay_time
-        self.max_delay_samples = Int64(max_delay_time * self.w[].sample_rate)
-        self.delay_line = Recorder[num_chans](self.w, self.max_delay_samples, self.w[].sample_rate)
-        self.two_sample_duration = 2.0 / self.w[].sample_rate
-        self.sample_duration = 1.0 / self.w[].sample_rate
+        self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate)
+        self.delay_line = Recorder[num_chans](self.world, self.max_delay_samples, self.world[].sample_rate)
+        self.two_sample_duration = 2.0 / self.world[].sample_rate
+        self.sample_duration = 1.0 / self.world[].sample_rate
         self.prev_f_idx = List[Float64](self.num_chans, 0.0)
 
     fn __repr__(self) -> String:
@@ -81,7 +81,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
             # [TODO] How many minimum samples do we need for sinc interpolation?
             delay_time = max(delay_time, 0.0)
             f_idx = self.get_f_idx(delay_time[chan])
-            out[chan] = ListInterpolator.read_sinc[bWrap=True](self.w, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
+            out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
             self.prev_f_idx[chan] = f_idx
 
         
@@ -90,7 +90,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         return out
 
     fn get_f_idx(self, delay_time: Float64) -> Float64:
-        delay_samps = delay_time * self.w[].sample_rate
+        delay_samps = delay_time * self.world[].sample_rate
         # Because the ListInterpolator functions always "read" forward,
         # we're writing into the delay line buffer backwards, so therefore,
         # here to go backwards in time we add the delay samples to the write head.
@@ -113,13 +113,13 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     
     """
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
     var fb: SIMD[DType.float64, num_chans]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[num_chans, interp](self.w, max_delay)
+    def __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
         self.fb = SIMD[DType.float64, num_chans](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
@@ -163,15 +163,15 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = 0](Movable, Copyable):
 
       max_delay: The maximum delay time in seconds.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp] # Delay line without automatic feedback
     var one_pole: VAOnePole[num_chans]
     var fb: SIMD[DType.float64, num_chans]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[num_chans, interp](self.w, max_delay)
-        self.one_pole = VAOnePole[num_chans](w)
+    def __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+        self.one_pole = VAOnePole[num_chans](self.world)
         self.fb = SIMD[DType.float64, num_chans](0.0)
 
     @always_inline
@@ -212,14 +212,14 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable,
       w: Pointer to the MMMWorld instance.
       max_delay: The maximum delay time in seconds.
     """
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
     var allpass_feedback: SIMD[DType.float64, num_chans]
     var last_delay: SIMD[DType.float64, num_chans]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[num_chans, interp](self.w, max_delay)
+    def __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
         self.allpass_feedback = 0.0
         self.last_delay = SIMD[DType.float64, self.num_chans](0.0)
 
@@ -250,15 +250,15 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable,
 struct FB_Delay[num_chans: Int = 1, interp: Int = 4](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
 
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
     var dc: DCTrap[num_chans]
     var fb: SIMD[DType.float64, num_chans]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
-        self.w = w
-        self.delay = Delay[num_chans, interp](self.w, max_delay)
-        self.dc = DCTrap[num_chans](w)
+    def __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+        self.world = world
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+        self.dc = DCTrap[num_chans](self.world)
         self.fb = SIMD[DType.float64, num_chans](0.0)
 
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], feedback: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:

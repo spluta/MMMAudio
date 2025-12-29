@@ -24,7 +24,7 @@ fn pan2_st(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64,
 alias pi_over_2 = pi / 2.0
 
 @always_inline
-fn splay(input: List[Float64], w: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay(input: List[Float64], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
 
     num_input_channels = len(input)
     out = SIMD[DType.float64, 2](0.0)
@@ -73,11 +73,11 @@ fn pan_az[simd_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64
 # was trying to do it with SIMD
 struct PanAz (Representable, Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.w = w
+        self.world = world
 
     fn __repr__(self) -> String:
         return String("PanAz")
@@ -106,7 +106,7 @@ struct PanAz (Representable, Movable, Copyable):
             if chan_pos[Int(i)] >= 0.5:
                 chan_amp[Int(i)] = 0.0
             else:
-                chan_amp[Int(i)] = self.w[].osc_buffers.read_none(chan_pos[Int(i)], 0)
+                chan_amp[Int(i)] = self.world[].osc_buffers.read_none(chan_pos[Int(i)], 0)
 
         # with more than 4 channels, this SIMD multiplication is inefficient
 
@@ -114,12 +114,12 @@ struct PanAz (Representable, Movable, Copyable):
 
 struct Pan2(Representable, Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var gains: SIMD[DType.float64, 2]
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.w = w
+        self.world = world
         self.gains = SIMD[DType.float64, 2](0.0, 0.0)
 
     fn __repr__(self) -> String:
@@ -130,21 +130,21 @@ struct Pan2(Representable, Movable, Copyable):
         # Calculate left and right channel samples based on pan value
         pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
         
-        self.gains[0] = self.w[].osc_buffers.at_phase[osc_type=OscType.sine](self.w, linlin(-pan2,-1.0, 1.0, 0.0, 0.25))
-        self.gains[1] = self.w[].osc_buffers.at_phase[osc_type=OscType.sine](self.w, linlin(pan2, -1.0, 1.0, 0.0, 0.25))
+        self.gains[0] = self.world[].osc_buffers.at_phase[osc_type=OscType.sine](self.world, linlin(-pan2,-1.0, 1.0, 0.0, 0.25))
+        self.gains[1] = self.world[].osc_buffers.at_phase[osc_type=OscType.sine](self.world, linlin(pan2, -1.0, 1.0, 0.0, 0.25))
 
         samples_out = samples * self.gains
         return samples_out  # Return stereo output as List
 
 struct Splay[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     var output: List[Float64]  # Output list for stereo output
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var mul_list: List[SIMD[DType.float64, num_output_channels]]
     var zero: Float64
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
-        self.w = w
+        self.world = world
         self.zero = 0.0
 
         js = SIMD[DType.float64, self.num_output_channels](0.0, 1.0)

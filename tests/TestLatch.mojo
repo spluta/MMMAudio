@@ -10,20 +10,20 @@ from mmm_dsp.Osc import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestLatch(Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var osc: SinOsc
     var lfo: SinOsc
     var latch: Latch 
     var dusty: Dust
     var messenger: Messenger
 
-    fn __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.osc = SinOsc(w)
-        self.lfo = SinOsc(w)
-        self.latch = Latch(w)
-        self.dusty = Dust(w)
-        self.messenger = Messenger(w)
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.osc = SinOsc(self.world)
+        self.lfo = SinOsc(self.world)
+        self.latch = Latch(self.world)
+        self.dusty = Dust(self.world)
+        self.messenger = Messenger(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         freq = self.lfo.next(0.1) * 200 + 300

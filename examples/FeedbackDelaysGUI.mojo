@@ -9,7 +9,7 @@ from mmm_utils.functions import dbamp
 from mmm_dsp.Filters import SVF
 
 struct DelaySynth(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
     var main_lag: Lag
     var buf: Buffer
@@ -28,16 +28,16 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mix: Float64
     var main: Bool
 
-    def __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w  
-        self.main_lag = Lag(self.w, 0.03)
+    def __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world  
+        self.main_lag = Lag(self.world, 0.03)
         self.buf = Buffer.load("resources/Shiverer.wav")
-        self.playBuf = Play(self.w) 
-        self.delays = FB_Delay[num_chans=2, interp=4](self.w, self.maxdelay) 
-        self.delay_time_lag = Lag[2](self.w, 0.2)  # Initialize Lag with a default time constant
-        self.m = Messenger(self.w)
-        self.gate_lag = Lag(self.w, 0.03)
-        self.svf = SVF[2](self.w)
+        self.playBuf = Play(self.world) 
+        self.delays = FB_Delay[num_chans=2, interp=4](self.world, self.maxdelay) 
+        self.delay_time_lag = Lag[2](self.world, 0.2)  # Initialize Lag with a default time constant
+        self.m = Messenger(self.world)
+        self.gate_lag = Lag(self.world, 0.03)
+        self.svf = SVF[2](self.world)
         self.play = True
         self.delaytime_m = 0.5
         self.feedback = -6.0
@@ -77,12 +77,12 @@ struct DelaySynth(Representable, Movable, Copyable):
 
 
 struct FeedbackDelaysGUI(Representable, Movable, Copyable):
-    var w: UnsafePointer[MMMWorld]
+    var world: UnsafePointer[MMMWorld]
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    def __init__(out self, w: UnsafePointer[MMMWorld]):
-        self.w = w
-        self.delay_synth = DelaySynth(w)  # Initialize the DelaySynth with the world instance
+    def __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 
     fn __repr__(self) -> String:
         return String("FeedbackDelays")
