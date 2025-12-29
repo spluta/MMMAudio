@@ -8,7 +8,7 @@ mmm_audio = MMMAudio(128, graph_name="TestASR", package_name="tests")
 
 mmm_audio.start_audio()
 
-mmm_audio.send_msg("curves", 4.0, -4.0)  # set the curves to logarithmic attack and exponential decay
+mmm_audio.send_floats("curves", [4.0, -4.0])  # set the curves to logarithmic attack and exponential decay
 
 # this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 if True:
@@ -21,7 +21,7 @@ if True:
     mido.get_input_names()
 
     # open your midi device - you may need to change the device name
-    in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+    in_port = mido.open_input('Oxygen 25')
 
     # Create stop event
     stop_event = threading.Event()
@@ -33,15 +33,15 @@ if True:
                 print("Received MIDI message:", end=" ")
                 print(msg)
 
-                if msg.type == "note_on" and msg.note == 48:
-                    mmm_audio.send_msg("gate", 1)
-                elif msg.type == "note_off" and msg.note == 48:
-                    mmm_audio.send_msg("gate", 0)
+                if msg.type == "note_on":
+                    mmm_audio.send_bool("gate", True)
+                elif msg.type == "note_off":
+                    mmm_audio.send_bool("gate", False)
             time.sleep(0.01)
 
     # Start the thread
     midi_thread = threading.Thread(target=start_midi, daemon=True)
     midi_thread.start()
 
-# To stop the thread:
+# After you've pressed a MIDI key to test it: stop the thread:
 stop_event.set()
