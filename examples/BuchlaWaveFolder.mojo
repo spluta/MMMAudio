@@ -1,6 +1,5 @@
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
 
 from mmm_dsp.Osc import Osc
 from mmm_dsp.Filters import Lag
@@ -28,7 +27,7 @@ struct BuchlaWaveFolder(Representable, Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         amp = self.lag.next(self.world[].mouse_x * 39.0) + 1
 
-        sample = self.osc.next_interp(40)
+        sample = self.osc.next_vwt(40)
         sample = buchla_wavefolder(sample, amp)
 
         return sample
