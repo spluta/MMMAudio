@@ -5,7 +5,7 @@ from mmm_utils.functions import *
 
 
 from mmm_dsp.Osc import Osc
-from mmm_dsp.Distortion import HardClipAD, TanhAD
+from mmm_dsp.Distortion import *
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
 
@@ -14,24 +14,25 @@ from mmm_dsp.Filters import Lag
 # a graph can have as many synths as you want
 struct TestHardClipADAA[N: Int = 2](Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
-    var osc: Osc[N]
-    var lag: Lag[N]
-    var clip: HardClipAD[N, 2]
+    var osc: Osc
+    var lag: Lag
+    var clip: SoftClipAD[1, 1]
     var overdrive: TanhAD[N]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = Osc[N](world)
-        self.clip = HardClipAD[N, 2](world)
+        self.osc = Osc(world)
+        self.clip = SoftClipAD[1, 1](world)
         self.overdrive = TanhAD[N]()
-        self.lag = Lag[N](world)
+        self.lag = Lag(world)
 
     fn next(mut self) -> SIMD[DType.float64, self.N]:
-        sample = self.osc.next(40)  # Get the next white noise sample
+        sample = self.osc.next(self.world[].mouse_y * 40.0 + 20)  # Get the next white noise sample
         gain = self.lag.next(self.world[].mouse_x * 20.0)
-        sample = self.clip.next1(sample*gain) 
+
+        sample2 = self.clip.next1(sample*gain) 
         # sample = self.overdrive.next1(sample*gain)
-        return sample * 0.5
+        return SIMD[DType.float64, self.N](sample, sample2)
 
 
         

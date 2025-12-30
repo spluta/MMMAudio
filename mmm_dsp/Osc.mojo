@@ -8,7 +8,21 @@ from mmm_dsp.Oversampling import Oversampling
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
 struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
-    var phase: SIMD[DType.float64, N]
+    """
+    A phasor oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio. 
+    
+    The Phasor can act as a simple phasor with the .next() function. 
+    
+    However, it can also be an impulse with next_impulse() and a boolean impulse with next_bool().
+
+    Params:
+
+        N: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+    Args:
+        world: Pointer to the MMMWorld instance.
+    """
+    var phase: SIMD[DType.float64, N] # phase is always between 0 and 1. phase offset is not stored in this value!
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
@@ -27,22 +41,57 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         self.phase = self.phase - floor(self.phase)  
 
     @always_inline
-    fn next(
-            mut self: Phasor, 
-            freq: SIMD[DType.float64, self.N] = 100.0, 
-            phase_offset: SIMD[DType.float64, self.N] = 0.0, 
-            trig: SIMD[DType.bool, self.N] = False
-        ) -> SIMD[DType.float64, self.N]:
+    fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.N], phase_offset: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.bool, N]:
+        self.phase += (freq * self.freq_mul)
+        fl = floor(self.phase)
+        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+(phase_offset%1.0)).gt(1.0))
+        self.phase = self.phase - fl 
+        return rbd
 
-        self.increment_phase(freq)
+    @always_inline
+    fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.float64, self.N]:
+        self._increment_phase(freq)
+        
         var resets = self.rising_bool_detector.next(trig)
         # SIMD conditional reset - no loop needed!
         self.phase = resets.select(0.0, self.phase)
         
         return (self.phase + phase_offset) % 1.0
 
-struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](Representable, Movable, Copyable):
-    """A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling.
+    @always_inline
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
+        tick = self._increment_phase_impulse(freq, phase_offset)
+        rbd = self.rising_bool_detector.next(trig)
+        self.phase = rbd.select(0.0, self.phase)
+        
+        return (tick or rbd)
+
+    @always_inline
+    fn next_impulse(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
+        return self.next_bool(freq, phase_offset, trig).cast[DType.float64]()
+
+struct Impulse[N: Int = 1, os_index: Int = 0](Movable, Copyable):
+    """
+    An impulse oscillator.
+
+    Params:
+
+        N: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+    Args:
+        world: Pointer to the MMMWorld instance.
+    """
+    var phasor: Phasor[N, os_index]  # Instance of the Phasor
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.phasor = Phasor[self.N, os_index](world)
+
+    fn __repr__(self) -> String:
+        return String("Impulse")
+
+    @always_inline
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
+        return self.phasor.next_bool(freq, phase_offset, trig) 
 
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
