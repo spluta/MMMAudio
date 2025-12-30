@@ -1,12 +1,12 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import *
 from mmm_dsp.Env import ASREnv
-from mmm_dsp.Buffer import Buffer
+from mmm_dsp.Buffer import *
 from mmm_utils.Messenger import Messenger
 
 struct OscVoice(Movable, Copyable):
@@ -34,12 +34,12 @@ struct OscVoice(Movable, Copyable):
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.wubb_rate, "wubb_rate")
         osc_frac = self.tri.next(self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
-        return self.osc.next_interp(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
+        return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
 
 struct WavetableOsc(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  
     var osc_voices: List[OscVoice]
-    var chans_per_channel: Int64
+    var wavetables_per_channel: Int64
     var buffer: Buffer
     var file_name: String
     var notes: List[List[Float64]]
@@ -50,9 +50,9 @@ struct WavetableOsc(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.file_name = "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav"
-        self.chans_per_channel = 256
-        self.buffer = Buffer(self.file_name, chans_per_channel=self.chans_per_channel)
+        self.file_name = "/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav"
+        self.wavetables_per_channel = 256
+        self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
         self.osc_voices = List[OscVoice]()
         for i in range(8):
             self.osc_voices.append(OscVoice(self.world, "voice_"+String(i)))
@@ -66,11 +66,13 @@ struct WavetableOsc(Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default")
 
+    fn loadBuffer(mut self):
+        self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
+
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        self.messenger.update(self.chans_per_channel, "chans_per_channel")
+        self.messenger.update(self.wavetables_per_channel, "wavetables_per_channel")
         if self.messenger.notify_update(self.file_name, "load_file"):
-            # if we get a new file name, load it into the buffer
-            self.buffer = Buffer(self.file_name, chans_per_channel=256)
+            self.loadBuffer()
 
         var sample = 0.0
         for ref voice in self.osc_voices:

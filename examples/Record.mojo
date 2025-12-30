@@ -1,10 +1,10 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Buffer import *
-from mmm_dsp.RecordBuf import RecordBuf
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_dsp.Recorder import Recorder
+from mmm_dsp.Play import Play
 from mmm_dsp.Env import min_env
 
 import time
@@ -22,7 +22,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var trig: Bool
     var write_pos: Int64 
     var record_buf: RecordBuf
-    var play_buf: PlayBuf
+    var play_buf: Play
     var note_time: Float64
     var num_frames: Float64
     var input_chan: Int64
@@ -31,18 +31,18 @@ struct Record_Synth(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.buf_dur = 10.0  # seconds
-        self.buffer = Buffer(1, Int64(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
+        self.buffer = Buffer.zeros(self.world,Int64(self.world[].sample_rate*self.buf_dur), 1, self.world[].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
         self.trig = False
         self.playback_speed = 1.0
-        self.record_buf = RecordBuf(world)
-        self.play_buf = PlayBuf(world)
+        self.record_buf = RecordBuf(self.world)
+        self.play_buf = Play(self.world)
         self.write_pos = 0
         self.note_time = 0.0
         self.num_frames = 0
         self.input_chan = 0
-        self.messenger = Messenger(world)
+        self.messenger = Messenger(self.world)
 
     fn __repr__(self) -> String:
         return String("Record_Synth")

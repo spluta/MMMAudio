@@ -1,11 +1,11 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import Messenger
-from mmm_src.MMMTraits import *
+
 from mmm_utils.functions import *
 from mmm_dsp.Filters import Lag
 
 from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.Play import *
 from mmm_dsp.Filters import VAMoogLadder
 
 struct BufSynth(Representable, Movable, Copyable):
@@ -14,7 +14,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
     var num_chans: Int64
 
-    var play_buf: PlayBuf
+    var play_buf: Play
     var play_rate: Float64
     
     var moog: VAMoogLadder[2, 1] # 2 channels, os_index == 1 (2x oversampling)
@@ -26,7 +26,7 @@ struct BufSynth(Representable, Movable, Copyable):
         self.world = world 
 
         # load the audio buffer 
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason
@@ -34,7 +34,7 @@ struct BufSynth(Representable, Movable, Copyable):
 
         self.play_rate = 1.0
 
-        self.play_buf = PlayBuf(self.world)
+        self.play_buf = Play(self.world)
 
         self.moog = VAMoogLadder[2, 1](self.world)
         self.lpf_freq = 20000.0
@@ -56,7 +56,7 @@ struct BufSynth(Representable, Movable, Copyable):
         return String("BufSynth")
 
 
-struct PlayBufExample(Representable, Movable, Copyable):
+struct PlayExample(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
 
     var buf_synth: BufSynth  # Instance of the GrainSynth
@@ -64,10 +64,10 @@ struct PlayBufExample(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
 
-        self.buf_synth = BufSynth(world)  
+        self.buf_synth = BufSynth(self.world)  
 
     fn __repr__(self) -> String:
-        return String("PlayBufExample")
+        return String("PlayExample")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         #return SIMD[DType.float64, 2](0.0)

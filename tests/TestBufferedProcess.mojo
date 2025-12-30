@@ -2,7 +2,7 @@ from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
-from mmm_utils.Windows import WindowTypes
+from mmm_utils.Windows import WindowType
 
 ###########################################################
 #                   Test BufferedProcess                  #
@@ -22,7 +22,7 @@ struct BufferedMultiply(BufferedProcessable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.factor = 0.5
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
 
     fn get_messages(mut self) -> None:
         self.m.update(self.factor,"factor")
@@ -45,8 +45,8 @@ struct TestBufferedProcess(Movable, Copyable):
         self.input = 0.1
         var multiply_process = BufferedMultiply(self.world)
         self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024](self.world,process=multiply_process^)
-        self.m = Messenger(world)
-        self.ps = List[Print](length=2,fill=Print(world))
+        self.m = Messenger(self.world)
+        self.ps = List[Print](length=2,fill=Print(self.world))
 
     fn next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.input,"input")

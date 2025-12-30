@@ -10,11 +10,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_src.MMMAudio import MMMAudio
 
-mmm_audio = MMMAudio(128, graph_name="PlayBufExample", package_name="examples")
+mmm_audio = MMMAudio(128, graph_name="PlayExample", package_name="examples")
 
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
-# this example uses open sound control to control PlayBuf's playback speed and VAMoogFilter's cutoff frequency
+# this example uses open sound control to control Play's playback speed and VAMoogFilter's cutoff frequency
 # there is a simple touchosc patch provided for control
 # it is looking for /fader1 and /fader2 on port 5005; these can be adjusted
 # Start the OSC server on its own thread

@@ -3,8 +3,8 @@ from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFTProcess import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
-from mmm_utils.Windows import WindowTypes
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_utils.Windows import WindowType
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from random import random
@@ -55,7 +55,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
         self.bin_scramble = BinScramble(nbins=(window_size // 2) + 1, nscrambles=20)
 
     fn get_messages(mut self) -> None:
@@ -74,23 +74,23 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 struct TestFFTProcess(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
-    var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowTypes.hann]
+    var playBuf: Play
+    var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowTypes.hann](self.world,process=ScrambleAndLowPass(self.world))
-        self.m = Messenger(world)
-        self.ps = List[Print](length=2,fill=Print(world))
+        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.playBuf = Play(self.world) 
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.world,process=ScrambleAndLowPass(self.world))
+        self.m = Messenger(self.world)
+        self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
+        i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         o = self.fftlowpass.next(i)
         return SIMD[DType.float64,2](o,o)
 

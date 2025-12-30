@@ -5,7 +5,7 @@
 
 # from .Osc import Sweep
 # from .Filters import Lag
-# from mmm_src.MMMWorld import MMMWorld
+# from mmm_src.MMMWorld import *
 # from mmm_utils.functions import *
 # # from .Buffer import Buffer
 
@@ -91,7 +91,7 @@
 
 #         norm_seg = norm_seg ** abs(curves[segment % len(curves)])  # Apply curve to normalized segment
         
-#         self.last_out = lerp(values[segment], values[segment + 1], norm_seg)  # Update last output value
+#         self.last_out = linear_interp(values[segment], values[segment + 1], norm_seg)  # Update last output value
 
 #         return self.Lag.next(self.last_out)
 

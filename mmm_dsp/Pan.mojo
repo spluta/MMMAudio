@@ -1,5 +1,5 @@
 from mmm_utils.functions import clip, linlin
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from math import sqrt, floor, cos, pi, sin
 from bit import next_power_of_two
 from sys import simd_width_of

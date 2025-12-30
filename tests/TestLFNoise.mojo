@@ -1,8 +1,8 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import *
 from mmm_dsp.Pan import *

@@ -1,7 +1,7 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
 
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.Play import *
 from mmm_dsp.Filters import VAMoogLadder
 from mmm_utils.functions import linexp
 from random import random_float64
@@ -22,8 +22,8 @@ struct PitchShiftExample(Representable, Movable, Copyable):
      
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.pitch_shift = PitchShift[num_chans=2](world, 1.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
-        self.messenger = Messenger(world)
+        self.pitch_shift = PitchShift[num_chans=2](self.world, 1.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
+        self.messenger = Messenger(self.world)
         self.shift = 1.0
         self.grain_size = 0.2
         self.pitch_dispersion = 0.0

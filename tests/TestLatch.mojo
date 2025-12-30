@@ -1,9 +1,9 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 
@@ -19,11 +19,11 @@ struct TestLatch(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = SinOsc(world)
-        self.lfo = SinOsc(world)
-        self.latch = Latch(world)
-        self.dusty = Dust(world)
-        self.messenger = Messenger(world)
+        self.osc = SinOsc(self.world)
+        self.lfo = SinOsc(self.world)
+        self.latch = Latch()
+        self.dusty = Dust(self.world)
+        self.messenger = Messenger(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         freq = self.lfo.next(0.1) * 200 + 300

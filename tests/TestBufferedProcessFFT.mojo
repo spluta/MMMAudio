@@ -2,8 +2,8 @@ from mmm_src.MMMWorld import *
 from mmm_dsp.BufferedProcess import BufferedProcess, BufferedProcessable
 from mmm_utils.Messenger import Messenger
 from mmm_utils.Print import Print
-from mmm_utils.Windows import WindowTypes
-from mmm_dsp.PlayBuf import PlayBuf
+from mmm_utils.Windows import WindowType
+from mmm_dsp.Play import Play
 from mmm_utils.functions import select
 from mmm_utils.functions import dbamp
 from mmm_dsp.FFT import RealFFT
@@ -25,7 +25,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.bin = (window_size // 2) + 1
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
         self.fft = RealFFT[window_size]()
         # self.complex = List[ComplexFloat64](length=(window_size // 2) + 1, fill=ComplexFloat64(0.0,0.0))
         self.mags = List[Float64](length=(window_size // 2) + 1, fill=0.0)
@@ -46,23 +46,23 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
 struct TestBufferedProcessFFT(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
-    var playBuf: PlayBuf
-    var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var playBuf: Play
+    var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world) 
-        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine](self.world,process=FFTLowPass[window_size](self.world))
-        self.m = Messenger(world)
-        self.ps = List[Print](length=2,fill=Print(world))
+        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.playBuf = Play(self.world) 
+        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine](self.world,process=FFTLowPass[window_size](self.world))
+        self.m = Messenger(self.world)
+        self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer, 0, 1.0, True)  # Read samples from the buffer
+        i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         o = self.fftlowpass.next(i)
         return SIMD[DType.float64,2](o,o)
 

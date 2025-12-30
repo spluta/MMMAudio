@@ -1,9 +1,9 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import *
 
@@ -18,8 +18,6 @@ struct TestImpulse(Movable, Copyable):
     var messenger: Messenger
     var ints: List[Int64]
     var phase_offsets: SIMD[DType.float64, 2]
-
-
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world

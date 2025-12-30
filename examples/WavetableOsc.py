@@ -1,24 +1,19 @@
+"""Example of a wavetable oscillator using custom wavetables loaded from files.
 """
-Example of a wavetable oscillator using custom wavetables loaded from files.
-
-"""
-
 
 from mmm_src.MMMAudio import MMMAudio
 
-
-# instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 
 mmm_audio.start_audio() 
 
 # load a different wavetable if you like - these are just example paths - change to your own files
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 10.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 11.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 12.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 13.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 14.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 11.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 12.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 13.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 14.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 15.wav'")
 
 def midi_func():
     import threading
@@ -28,10 +23,10 @@ def midi_func():
     from mmm_src.Patterns import PVoiceAllocator
 
     # find your midi devices
-    mido.get_input_names()
+    print(mido.get_input_names())
 
     # open your midi device - you may need to change the device name
-    in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
+    in_port = mido.open_input('Oxygen 25')
 
     voice_allocator = PVoiceAllocator(8)
 

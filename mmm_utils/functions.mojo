@@ -350,16 +350,12 @@ fn cubic_interp[
     """
     return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
-
-# this is
 @always_inline
 fn lagrange4[
     dtype: DType, width: Int, //
 ](sample0: SIMD[dtype, width], sample1: SIMD[dtype, width], sample2: SIMD[dtype, width], sample3: SIMD[dtype, width], sample4: SIMD[dtype, width], frac: SIMD[dtype, width]) -> SIMD[dtype, width]:
     """
     Perform Lagrange interpolation for 4th order case (from JOS Faust Model). This is extrapolated from the JOS Faust filter model.
-
-    lagrange4[width](sample0, sample1, sample2, sample3, sample4, frac) -> SIMD[dtype, width]
 
     Args:
         sample0: The first sample.
@@ -420,9 +416,9 @@ fn lagrange4[
         out[i] = products.reduce_add() + sample4[i] * coeff4[i]
 
     return out
-    
+
 @always_inline
-fn lerp[
+fn linear_interp[
     dtype: DType, width: Int, //
 ](p0: SIMD[dtype, width], p1: SIMD[dtype, width], t: SIMD[dtype, width]) -> SIMD[dtype, width]:
     """

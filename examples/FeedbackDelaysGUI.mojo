@@ -1,9 +1,7 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-
 from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
+from mmm_dsp.Play import *
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
 from mmm_utils.Messenger import Messenger
@@ -14,9 +12,9 @@ struct DelaySynth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     alias maxdelay = 1.0
     var main_lag: Lag
-    var buffer: Buffer
-    var playBuf: PlayBuf
-    var delays: FB_Delay[N=2, interp=3]  # FB_Delay with 2 channels and interpolation type 3 (cubic)
+    var buf: Buffer
+    var playBuf: Play
+    var delays: FB_Delay[num_chans=2, interp=4]  # FB_Delay with 2 channels and interpolation type 3 ()
     var delay_time_lag: Lag[2]
     var m: Messenger
     var gate_lag: Lag[1]
@@ -33,9 +31,9 @@ struct DelaySynth(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world  
         self.main_lag = Lag(self.world, 0.03)
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world) 
-        self.delays = FB_Delay[N=2, interp=3](self.world, self.maxdelay) 
+        self.buf = Buffer.load("resources/Shiverer.wav")
+        self.playBuf = Play(self.world) 
+        self.delays = FB_Delay[num_chans=2, interp=4](self.world, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.world, 0.2)  # Initialize Lag with a default time constant
         self.m = Messenger(self.world)
         self.gate_lag = Lag(self.world, 0.03)
@@ -61,7 +59,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.m.update(self.mix,"mix")
         self.m.update(self.main,"main")
 
-        var sample = self.playBuf.next[N=2](self.buffer, 0, 1 if self.play else 0, True)  # Read samples from the buffer
+        var sample = self.playBuf.next[num_chans=2](self.buf, 1 if self.play else 0)  # Read samples from the buffer
         deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](self.delaytime_m, self.delaytime_m * 0.9))
 
 
@@ -84,7 +82,7 @@ struct FeedbackDelaysGUI(Representable, Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.delay_synth = DelaySynth(world)  # Initialize the DelaySynth with the world instance
+        self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 
     fn __repr__(self) -> String:
         return String("FeedbackDelays")

@@ -1,6 +1,6 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Delays import *
 from mmm_dsp.Osc import *
 from mmm_utils.Messenger import Messenger
@@ -22,6 +22,6 @@ struct TestDelay(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.freq,"freq")
         trig = self.messenger.notify_trig("trig")
-        sample = self.synth.next_impulse(self.freq, 0.0, SIMD[DType.bool, 1](fill=trig))  # Get the next sample from the synth
+        sample = self.synth.next(self.freq, 0.0, SIMD[DType.bool, 1](fill=trig))  # Get the next sample from the synth
         delay = self.delay.next(sample, 0.5)
         return SIMD[DType.float64, 2](sample, delay) * 0.2  # Get the next sample from the synth

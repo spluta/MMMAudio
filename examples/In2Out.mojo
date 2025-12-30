@@ -1,6 +1,6 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_utils.Messenger import *
 
 
@@ -11,7 +11,7 @@ struct In2Out(Representable, Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.messenger = Messenger(world)
+        self.messenger = Messenger(self.world)
 
     fn __repr__(self) -> String:
         return String("In2Out")

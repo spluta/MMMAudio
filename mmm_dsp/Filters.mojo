@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from math import exp, sqrt, tan, pi, tanh, ceil, floor
 from bit import next_power_of_two
 from mmm_utils.functions import *
@@ -6,8 +6,6 @@ from mmm_utils.functions import *
 from sys import simd_width_of
 from algorithm import vectorize
 from .Oversampling import Oversampling, Upsampler
-
-from mmm_src.MMMTraits import *
 
 struct Lag[N: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
@@ -985,6 +983,8 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
+        self.fir1 = FIR[N](world,2)
+        self.fir2 = FIR[N](world,3)
         self.fir1 = FIR[N](world,2)
         self.fir2 = FIR[N](world,3)
         self.fb = SIMD[DType.float64, self.N](0.0)

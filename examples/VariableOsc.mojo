@@ -1,8 +1,8 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import Osc
 from mmm_dsp.Filters import Lag
@@ -15,7 +15,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     # so here we have sinc interpolation with 2x oversampling
     # var osc: Osc[1,2,1]
     # var lag: Lag[1]
-    var osc: Osc[2,2,1]
+    var osc: Osc[2,Interp.linear,os_index=1]
     var lag: Lag[2]
     var m: Messenger
     var x: Float64
@@ -26,7 +26,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
-        self.osc = Osc[2,2,1](self.world)
+        self.osc = Osc[2,Interp.linear,os_index=1](self.world)
         self.lag = Lag[2](self.world, 0.1)
         self.m = Messenger(self.world)
         self.x = 0.0
@@ -53,6 +53,7 @@ struct VariableOsc(Representable, Movable, Copyable):
 
         # osc_frac = self.world[].mouse_x
         osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
-        sample = self.osc.next_interp(freq, osc_frac = osc_frac)
+        self.world[].print(osc_frac)
+        sample = self.osc.next_vwt(freq, osc_frac = osc_frac)
 
         return sample * 0.1 * env

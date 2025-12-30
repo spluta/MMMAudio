@@ -1,8 +1,8 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Osc import Osc
 from mmm_utils.functions import *
@@ -22,11 +22,10 @@ struct TestSplay[num: Int = 1000](Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = [Osc(world) for _ in range(self.num)]
+        self.osc = [Osc(self.world) for _ in range(self.num)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]
         self.mult = 0.2 / Float64(self.num)
         self.samples = [0.0 for _ in range(self.num)]
-        # self.splay = Splay[num_output_channels](world)
 
     fn next(mut self) -> SIMD[DType.float64, num_output_channels]:
         for i in range(self.num):

@@ -1,7 +1,7 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 from mmm_utils.Print import Print
@@ -33,7 +33,7 @@ struct Tone(Movable,Copyable):
 
         return sig
 
-struct MessengersExample():
+struct MessengerExample(Copyable, Movable):
     var world: UnsafePointer[MMMWorld]
     var m: Messenger
     var tones: List[Tone]
@@ -49,11 +49,11 @@ struct MessengersExample():
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
 
         self.tones = List[Tone]()
         for i in range(2):
-            self.tones.append(Tone(world, "tone_" + String(i)))
+            self.tones.append(Tone(self.world, "tone_" + String(i)))
 
         self.bool = False
         self.bools = List[Bool](False, False)

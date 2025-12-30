@@ -2,7 +2,7 @@
 
 from mmm_src.MMMWorld import MMMWorld
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 
 from mmm_dsp.Noise import WhiteNoise
 from mmm_dsp.Filters import VAMoogLadder

@@ -1,8 +1,8 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_utils.Messenger import Messenger
 
 from mmm_dsp.Osc import *
@@ -17,7 +17,7 @@ struct TestEnv(Movable, Copyable):
     var env: Env
     var synth: Osc
     var messenger: Messenger
-    var impulse: Phasor
+    var impulse: Impulse
     var mul: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -25,8 +25,8 @@ struct TestEnv(Movable, Copyable):
         self.env_params = EnvParams(List[Float64](0, 1.0, 0.5, 0.5, 0.0), List[Float64](1, 1, 0.5, 4), List[Float64](2), True, 0.1)
         self.env = Env(self.world)
         self.synth = Osc(self.world)
-        self.messenger = Messenger(world)
-        self.impulse = Phasor(self.world)
+        self.messenger = Messenger(self.world)
+        self.impulse = Impulse(self.world)
         self.mul = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:

@@ -1,98 +1,45 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
 from math import tanh
 from mmm_dsp.Filters import *
-from sys import simd_width_of
-from algorithm import vectorize
 from mmm_dsp.Filters import VAOnePole, DCTrap
 from math import log
+from mmm_dsp.Recorder import Recorder
+from bit import next_power_of_two
 
-alias simd_width = simd_width_of[DType.float64]()*2
-
-struct DelayInterpOptions:
-    """
-    Interpolation options. When passed as an argument it is *actually* an integer, 
-    so this struct provides a convenient way to not need to memorize those which integer
-    corresponds to which interpolation method. The options are:
-    
-    - `.none` (0): No interpolation, simply read the nearest sample from the delay line.
-    - `.linear` (1): Linear interpolation between the two nearest samples.
-    - `.cubic` (2): Cubic interpolation using the four nearest samples.
-    - `.lagrange4` (3): Lagrange interpolation using the four nearest samples.
-    """
-    alias none: Int = 0
-    alias linear: Int = 1
-    alias cubic: Int = 2
-    alias lagrange: Int = 3
-
-struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
-    """
-    A variable delay line with Lagrange interpolation.
-    
-    Delay
+struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Movable, Copyable):
+    """A variable delay line with interpolation.
 
     Parameters:
+      num_chans: Size of the SIMD vector - defaults to 1.
+      interp: The interpolation method to use (0 = no interpolation, 1 = linear, 2 = cubic, 3 = Lagrange). See `struct Interp` for how you can specify the desired interpolation method with words rather than integers.
 
-      N: size of the SIMD vector - defaults to 1
-      
-      interp: The interpolation method to use (0 = no interpolation, 1 = linear, 2 = cubic, 3 = Lagrange). See `struct DelayInterpOptions` for how you can specify the desired interpolation method with words rather than integers.
-      
     Args:
-
-      world: Pointer to the MMMWorld instance.
-      
+      w: Pointer to the MMMWorld instance.
       max_delay: The maximum delay time in seconds.
     """
 
     var world: UnsafePointer[MMMWorld]
     var max_delay_time: Float64
     var max_delay_samples: Int64
-    var delay_line: List[List[Float64]]
-    var write_idx: Int64
+    var delay_line: Recorder[num_chans]
     var two_sample_duration: Float64
     var sample_duration: Float64
+    var prev_f_idx: List[Float64]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
         self.world = world
         self.max_delay_time = max_delay_time
-        self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate) + 1
-        self.delay_line = [[Float64(0.0) for _ in range(self.max_delay_samples)] for _ in range(N)]
-        self.write_idx = 0
+        self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate)
+        self.delay_line = Recorder[num_chans](self.world, self.max_delay_samples, self.world[].sample_rate)
         self.two_sample_duration = 2.0 / self.world[].sample_rate
         self.sample_duration = 1.0 / self.world[].sample_rate
+        self.prev_f_idx = List[Float64](self.num_chans, 0.0)
 
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
-    fn write(mut self, input: SIMD[DType.float64, self.N]):
-      self.write_idx = (self.write_idx + 1) % self.max_delay_samples
-      # Write the input sample to the delay line
-      @parameter
-      for i in range(self.N):
-          self.delay_line[i][self.write_idx] = input[i]
-    
-    fn read(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-      delay_time2 = min(delay_time, self.max_delay_time)
-        
-      # minimum delay time depends on interpolation method
-      @parameter
-      if interp == DelayInterpOptions.none:
-        delay_time2 = max(delay_time2, 0.0)
-        return self.none(delay_time2)
-      elif interp == DelayInterpOptions.linear:
-        delay_time2 = max(delay_time2, 0.0)
-        return self.linear_loc(delay_time2)
-      elif interp == DelayInterpOptions.cubic:
-        delay_time2 = max(delay_time2, self.two_sample_duration)
-        return self.cubic_loc(delay_time2)
-      elif interp == DelayInterpOptions.lagrange:
-        delay_time2 = max(delay_time2, 0.0)
-        return self.lagrange4(delay_time2)
-      else: 
-        delay_time2 = max(delay_time2, 0.0)
-        return self.none(delay_time2)
-
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], var delay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the delay line.
         This function computes the average of two values.
 
@@ -106,123 +53,76 @@ struct Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
           The processed output sample.
 
         """
-        sig = self.read(delay_time)
-        self.write(input)
-        return sig
-
+        delay_time = min(delay_time, self.max_delay_time)
+        # print(delay_time)
         
-
-    @doc_private
-    fn get_read_idx_and_frac(mut self, delay_time: SIMD[DType.float64, self.N]) -> (SIMD[DType.int64, self.N], SIMD[DType.float64, self.N]):
-        var float_sample_delay: SIMD[DType.float64, self.N] = delay_time * self.world[].sample_rate
-        var float_read_idx: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N]((SIMD[DType.float64, self.N](self.write_idx) - float_sample_delay) % SIMD[DType.float64, self.N](self.max_delay_samples))
-        var int_read_idx: SIMD[DType.int64, self.N] = SIMD[DType.int64, self.N](float_read_idx)
-        var frac = float_read_idx - SIMD[DType.float64, self.N](int_read_idx)
-        return (int_read_idx, frac)
-
-    @doc_private
-    fn none(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-      var (read_idx, _) = self.get_read_idx_and_frac(delay_time)
-
-      var out: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-      @parameter
-      for i in range(self.N):
-          out[i] = self.delay_line[i][read_idx[i]]
-      return out
-
-    @doc_private
-    fn linear_loc(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-      (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
-      var next_idx = (read_idx + 1) % self.max_delay_samples
-      var samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-      var next_samps: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-      @parameter
-      for i in range(self.N):
-        samps[i] = self.delay_line[i][read_idx[i]]
-        next_samps[i] = self.delay_line[i][next_idx[i]]
-
-      return lerp(samps, next_samps, frac)
-
-    @doc_private
-    fn cubic_loc(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-
-      (read_idx, frac) = self.get_read_idx_and_frac(delay_time)
-
-      # this is tested and ok: Mojo allows `negative_number` % `positive_number`
-      # to yield a positive result, so we can safely use modulo for wrapping indices.
-      var p0_idx = (read_idx - 1) % self.max_delay_samples
-      var p1_idx = read_idx
-      var p2_idx = (read_idx + 1) % self.max_delay_samples
-      var p3_idx = (read_idx + 2) % self.max_delay_samples
-
-      var p0: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-      var p1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-      var p2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-      var p3: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-
-      @parameter
-      for i in range(self.N):
-        p0[i] = self.delay_line[i][p0_idx[i]]
-        p1[i] = self.delay_line[i][p1_idx[i]]
-        p2[i] = self.delay_line[i][p2_idx[i]]
-        p3[i] = self.delay_line[i][p3_idx[i]]
-
-      return cubic_interp(p0, p1, p2, p3, frac)
-
-    @doc_private
-    fn lagrange4(mut self, delay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
-        """Perform Lagrange interpolation for 4th order case (from JOS Faust Model)
-        """
-
-        var fsample_delay: SIMD[DType.float64, self.N] = delay_time * self.world[].sample_rate
-
-        var sample_delay = SIMD[DType.int64, self.N](fsample_delay)
-        var frac = fsample_delay - SIMD[DType.float64, self.N](sample_delay)
-        
-        var p0: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        var p1: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        var p2: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        var p3: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
-        var p4: SIMD[DType.float64, self.N] = SIMD[DType.float64, self.N](0.0)
+        out = SIMD[DType.float64, self.num_chans](0.0)
+        # minimum delay time depends on interpolation method
 
         @parameter
-        for i in range(self.N):
-            var read_idx = (self.write_idx - sample_delay[i]) % self.max_delay_samples
-            p0[i] = self.delay_line[i][(read_idx) % self.max_delay_samples]
-            p1[i] = self.delay_line[i][(read_idx - 1) % self.max_delay_samples]
-            p2[i] = self.delay_line[i][(read_idx - 2) % self.max_delay_samples]
-            p3[i] = self.delay_line[i][(read_idx - 3) % self.max_delay_samples]
-            p4[i] = self.delay_line[i][(read_idx - 4) % self.max_delay_samples]
+        for chan in range(self.num_chans):
+          @parameter
+          if self.interp == Interp.none:
+            delay_time = max(delay_time, 0.0)
+            out[chan] = ListInterpolator.read_none[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+          elif self.interp == Interp.linear:
+            delay_time = max(delay_time, 0.0)
+            out[chan] = ListInterpolator.read_linear[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+          elif self.interp == Interp.quad:
+            delay_time = max(delay_time, 0.0)
+            out[chan] = ListInterpolator.read_quad[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+          elif self.interp == Interp.cubic:
+            delay_time = max(delay_time, self.sample_duration)
+            out[chan] = ListInterpolator.read_cubic[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+          elif self.interp == Interp.lagrange4:
+            delay_time = max(delay_time, 0.0)
+            out[chan] = ListInterpolator.read_lagrange4[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+          elif self.interp == Interp.sinc:
+            # [TODO] How many minimum samples do we need for sinc interpolation?
+            delay_time = max(delay_time, 0.0)
+            f_idx = self.get_f_idx(delay_time[chan])
+            out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
+            self.prev_f_idx[chan] = f_idx
 
-        return lagrange4(p0, p1, p2, p3, p4, frac)
+        
+        self.delay_line.write_previous(input)
 
-fn calc_feedback[N: Int = 1](delaytime: SIMD[DType.float64, N], decaytime: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+        return out
+
+    fn get_f_idx(self, delay_time: Float64) -> Float64:
+        delay_samps = delay_time * self.world[].sample_rate
+        # Because the ListInterpolator functions always "read" forward,
+        # we're writing into the delay line buffer backwards, so therefore,
+        # here to go backwards in time we add the delay samples to the write head.
+        f_idx = (Float64(self.delay_line.write_head) + delay_samps + 1) % Float64(self.delay_line.buf.num_frames)
+        return f_idx
+
+fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], decaytime: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
       alias log001: Float64 = log(0.001)
 
-      zero: SIMD[DType.bool, N] = delaytime.eq(0) or decaytime.eq(0)
-      dec_pos: SIMD[DType.bool, N] = decaytime.ge(0)
+      zero: SIMD[DType.bool, num_chans] = delaytime.eq(0) or decaytime.eq(0)
+      dec_pos: SIMD[DType.bool, num_chans] = decaytime.ge(0)
 
       absret = exp(log001 * delaytime / abs(decaytime))
 
-      return zero.select(SIMD[DType.float64, N](0.0), dec_pos.select(absret, -absret))
+      return zero.select(SIMD[DType.float64, num_chans](0.0), dec_pos.select(absret, -absret))
 
-struct Comb[N: Int = 1, interp: Int = 2](Movable, Copyable):
+struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     """
     A simple comb filter using a delay line with feedback.
     
     """
 
     var world: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp]
-    var fb: SIMD[DType.float64, N]
+    var delay: Delay[num_chans, interp]
+    var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world = world
-        self.delay = Delay[N, interp](self.world, max_delay)
-        self.fb = SIMD[DType.float64, N](0.0)
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+        self.fb = SIMD[DType.float64, num_chans](0.0)
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the comb filter.
         
         next(input, delay_time=0.0, feedback=0.0)
@@ -245,12 +145,12 @@ struct Comb[N: Int = 1, interp: Int = 2](Movable, Copyable):
 
         return out  # Return the delayed sample
 
-    fn next_decaytime(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], decay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next_decaytime(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], decay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the comb filter with decay time calculation."""
         feedback = calc_feedback(delay_time, decay_time)
         return self.next(input, delay_time, feedback)
 
-struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
+struct LP_Comb[num_chans: Int = 1, interp: Int = 0](Movable, Copyable):
     """
     A simple comb filter with an integrated one-pole low-pass filter.
     
@@ -264,18 +164,18 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
       max_delay: The maximum delay time in seconds.
     """
     var world: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp] # Delay line without automatic feedback
-    var one_pole: VAOnePole[N]
-    var fb: SIMD[DType.float64, N]
+    var delay: Delay[num_chans, interp] # Delay line without automatic feedback
+    var one_pole: VAOnePole[num_chans]
+    var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world = world
-        self.delay = Delay[N, interp](self.world, max_delay)
-        self.one_pole = VAOnePole[N](world)
-        self.fb = SIMD[DType.float64, N](0.0)
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+        self.one_pole = VAOnePole[num_chans](self.world)
+        self.fb = SIMD[DType.float64, num_chans](0.0)
 
     @always_inline
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback: SIMD[DType.float64, self.N] = 0.0, lp_freq: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback: SIMD[DType.float64, self.num_chans] = 0.0, lp_freq: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the comb filter.
         
         next(input, delay_time=0.0, feedback=0.0)
@@ -301,7 +201,7 @@ struct LP_Comb[N: Int = 1, interp: Int = 0](Movable, Copyable):
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movable, Copyable):
+struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable, Copyable):
     """
     A simple all-pass comb filter using a delay line with feedback.
     
@@ -313,13 +213,12 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
       max_delay: The maximum delay time in seconds.
     """
     var world: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp]
+    var delay: Delay[num_chans, interp]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world = world
-        self.delay = Delay[N, interp](self.world, max_delay)
-
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N] = 0.0, feedback_coef: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback_coef: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the all-pass comb filter
 
         Args:
@@ -337,27 +236,27 @@ struct Allpass_Comb[N: Int = 1, interp: Int = DelayInterpOptions.lagrange](Movab
         
         return output
 
-    fn next_decaytime(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], decay_time: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next_decaytime(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], decay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the all-pass comb filter with decay time calculation."""
         feedback = calc_feedback(delay_time, decay_time)
         return self.next(input, delay_time, feedback)
     
 
-struct FB_Delay[N: Int = 1, interp: Int = 3](Representable, Movable, Copyable):
+struct FB_Delay[num_chans: Int = 1, interp: Int = 4](Representable, Movable, Copyable):
     """Like a Comb filter but with any amount of feedback and a tanh function."""
 
     var world: UnsafePointer[MMMWorld]
-    var delay: Delay[N, interp]
-    var dc: DCTrap[N]
-    var fb: SIMD[DType.float64, N]
+    var delay: Delay[num_chans, interp]
+    var dc: DCTrap[num_chans]
+    var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
         self.world = world
-        self.delay = Delay[N, interp](self.world, max_delay)
-        self.dc = DCTrap[N](world)
-        self.fb = SIMD[DType.float64, N](0.0)
+        self.delay = Delay[num_chans, interp](self.world, max_delay)
+        self.dc = DCTrap[num_chans](self.world)
+        self.fb = SIMD[DType.float64, num_chans](0.0)
 
-    fn next(mut self, input: SIMD[DType.float64, self.N], delay_time: SIMD[DType.float64, self.N], feedback: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], feedback: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample or SIMD vector through the feedback delay.
         
         Args:

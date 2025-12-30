@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.functions import *
 from mmm_utils.Messenger import *
 
@@ -40,11 +40,11 @@ struct TorchSynth(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc1 = Osc[1, 2, 1](world)
-        self.osc2 = Osc[1, 2, 1](world)
+        self.osc1 = Osc[1, 2, 1](self.world)
+        self.osc2 = Osc[1, 2, 1](self.world)
 
         # load the trained model
-        self.model = MLP(world,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
+        self.model = MLP(self.world,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
 
         # make a lag for each output of the nn - pair them in twos for SIMD processing
         # self.lag_vals = InlineArray[Float64, model_out_size](fill=random_float64())
@@ -95,7 +95,7 @@ struct TorchSynth(Movable, Copyable):
         # next_interp implements a variable wavetable oscillator between the N provided wave types
         # in this case, we are using 0, 4, 5, 6 - Sine, BandLimited Tri, BL Saw, BL Square
         osc_frac1 = linlin(self.lag_vals[3], 0.0, 1.0, 0.0, 1.0)
-        osc1 = self.osc1.next_interp(freq1, 0.0, False, [0,4,5,6], osc_frac1)
+        osc1 = self.osc1.next_vwt(freq1, 0.0, False, [0,4,5,6], osc_frac1)
 
         # samplerate reduction
         osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lag_vals[4], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
@@ -113,7 +113,7 @@ struct TorchSynth(Movable, Copyable):
         # var which_osc2 = self.lag_vals[10] #not used...whoops
 
         osc_frac2 = linlin(self.lag_vals[11], 0.0, 1.0, 0.0, 1.0)
-        var osc2 = self.osc2.next_interp(freq2, 0.0, False, [0,4,5,6], osc_frac2)
+        var osc2 = self.osc2.next_vwt(freq2, 0.0, False, [0,4,5,6], osc_frac2)
 
         osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lag_vals[12], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
 
@@ -136,7 +136,7 @@ struct TorchMlp(Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
 
-        self.torch_synth = TorchSynth(world)  # Initialize the TorchSynth with the world instance
+        self.torch_synth = TorchSynth(self.world)  # Initialize the TorchSynth with the world instance
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         return self.torch_synth.next()

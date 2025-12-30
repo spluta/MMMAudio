@@ -1,6 +1,6 @@
 from mmm_dsp.BufferedProcess import *
 from mmm_dsp.FFT import *
-from mmm_dsp.Buffer import Buffer
+from mmm_dsp.Buffer import *
 
 @doc_private
 struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):
@@ -115,8 +115,8 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         T: A user defined struct that implements the FFTProcessable trait.
         window_size: The size of the FFT window. The default is 1024 samples.
         hop_size: The number of samples between each processed spectral frame. The default is 512.
-        input_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the input samples before the FFT. See mmm_utils.Windows -> WindowTypes for the options.
-        output_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See mmm_utils.Windows -> WindowTypes for the options.
+        input_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the input samples before the FFT. See mmm_utils.Windows -> WindowType for the options.
+        output_window_shape: An Optional[Int] specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See mmm_utils.Windows -> WindowType for the options.
     """
     var world: UnsafePointer[MMMWorld]
     var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape]

@@ -6,7 +6,7 @@ from mmm_dsp.Osc import *
 from mmm_dsp.Filters import *
 from mmm_dsp.Env import *
 
-from mmm_src.MMMTraits import *
+
 
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
@@ -17,7 +17,7 @@ struct TrigSynthVoice(Movable, Copyable):
     var env: Env
 
     var mod: Osc
-    var car: Osc[1, 0, 0]
+    var car: Osc[1, Interp.linear, 0]
     var sub: Osc
 
     var bend_mul: Float64
@@ -30,7 +30,7 @@ struct TrigSynthVoice(Movable, Copyable):
         self.world = world
 
         self.mod = Osc(self.world)
-        self.car = Osc[1, 0, 0](self.world)
+        self.car = Osc[1, Interp.linear, 0](self.world)
         self.sub = Osc(self.world)
 
         self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
@@ -127,7 +127,7 @@ struct MidiSequencer(Representable, Movable, Copyable):
         self.world = world
         self.output = List[Float64](0.0, 0.0)  # Initialize output list
 
-        self.trig_synth = TrigSynth(world)  # Initialize the TrigSynth with the world instance
+        self.trig_synth = TrigSynth(self.world)  # Initialize the TrigSynth with the world instance
 
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")

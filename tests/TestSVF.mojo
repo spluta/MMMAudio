@@ -1,9 +1,9 @@
 """use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+from mmm_src.MMMWorld import *
 from mmm_utils.Messenger import Messenger
 from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
+
 from mmm_dsp.Distortion import *
 from mmm_dsp.Osc import *
 
@@ -18,14 +18,14 @@ struct TestSVF(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = LFSaw[1,2](world)
-        self.messenger = Messenger(world)
+        self.osc = LFSaw[1,2](self.world)
+        self.messenger = Messenger(self.world)
         self.filts = List[SVF](capacity=2)
         self.freq = 440
         self.cutoff = 1000.0
         self.res = 1.0
         for i in range(2):
-            self.filts[i] = SVF(world)
+            self.filts[i] = SVF(self.world)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.freq,"freq")

@@ -59,7 +59,7 @@ nav:
       - OscBuffers: api/mmm_dsp/OscBuffers.md
       - Oversampling: api/mmm_dsp/Oversampling.md
       - Pan: api/mmm_dsp/Pan.md
-      - PlayBuf: api/mmm_dsp/PlayBuf.md
+      - Play: api/mmm_dsp/Play.md
       - RecordBuf: api/mmm_dsp/RecordBuf.md
       - Reverb: api/mmm_dsp/Reverb.md
       - Utilities: api/mmm_utils/functions.md
