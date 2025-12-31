@@ -50,7 +50,7 @@ struct WavetableOsc(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.file_name = "/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav"
+        self.file_name = "resources/Growl 15.wav"
         self.wavetables_per_channel = 256
         self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
         self.osc_voices = List[OscVoice]()

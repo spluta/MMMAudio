@@ -43,6 +43,8 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: Unsaf
     """
     Splay multiple input channels into stereo output.
 
+    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single SIMD vector. In the case of a list of SIMD vectors, each vector represents multiple channels, and each channel within the vector is treated separately for panning.
+
     Args:
         input: List of input samples from multiple channels.
         world: Pointer to MMMWorld containing the pan_window.
@@ -61,14 +63,18 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: Unsaf
 
             index0 = i // num_simd
             index1 = i % num_simd
-
-            out += input[index0][index1] * world[].pan_window[Int(pan * Float64(world[].pan_window.__len__() - 1))]
+            
+            # should change this to use ListInterpolator when available for SIMD types
+            out += input[index0][index1] * world[].windows.pan2[Int(pan * 255.0)]
     return out
 
 @always_inline
 fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
+
+    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single SIMD vector. In the case of a list of SIMD vectors, each vector represents multiple channels, and each channel within the vector is treated separately for panning. 
+
     Args:
         input: List of input samples from multiple channels
         world: Pointer to MMMWorld containing the pan_window
@@ -83,7 +89,8 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
-            out += input[i] * world[].pan_window[Int(pan * Float64(world[].pan_window.__len__() - 1))]
+            # should change this to use ListInterpolator when available for SIMD types
+            out += input[i] * world[].windows.pan2[Int(pan * 255.0)]
     return out
 
 @always_inline

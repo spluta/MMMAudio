@@ -1,40 +1,40 @@
 from random import random_float64
 from mmm_utils.functions import *
 
-struct WhiteNoise[N: Int = 1](Copyable, Movable):
+struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate white noise samples."""
     fn __init__(out self):
         pass  # No initialization needed for white noise
 
-    fn next(self, gain: SIMD[DType.float64, N] = SIMD[DType.float64, N](1.0)) -> SIMD[DType.float64, N]:
+    fn next(self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
         """Generate the next white noise sample.
         
         Returns:
             A random value between -gain and gain.
         """
         # Generate random value between -1 and 1, then scale by gain
-        return random_lin_float64[N](-1.0, 1.0) * gain
+        return random_lin_float64[num_chans](-1.0, 1.0) * gain
 
-struct PinkNoise[N: Int = 1](Copyable, Movable):
+struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate pink noise samples (SIMD version)."""
-    var b0: SIMD[DType.float64, N]
-    var b1: SIMD[DType.float64, N]
-    var b2: SIMD[DType.float64, N]
-    var b3: SIMD[DType.float64, N]
-    var b4: SIMD[DType.float64, N]
-    var b5: SIMD[DType.float64, N]
-    var b6: SIMD[DType.float64, N]
+    var b0: SIMD[DType.float64, num_chans]
+    var b1: SIMD[DType.float64, num_chans]
+    var b2: SIMD[DType.float64, num_chans]
+    var b3: SIMD[DType.float64, num_chans]
+    var b4: SIMD[DType.float64, num_chans]
+    var b5: SIMD[DType.float64, num_chans]
+    var b6: SIMD[DType.float64, num_chans]
 
     fn __init__(out self):
-        self.b0 = SIMD[DType.float64, N](0.0)
-        self.b1 = SIMD[DType.float64, N](0.0)
-        self.b2 = SIMD[DType.float64, N](0.0)
-        self.b3 = SIMD[DType.float64, N](0.0)
-        self.b4 = SIMD[DType.float64, N](0.0)
-        self.b5 = SIMD[DType.float64, N](0.0)
-        self.b6 = SIMD[DType.float64, N](0.0)
+        self.b0 = SIMD[DType.float64, num_chans](0.0)
+        self.b1 = SIMD[DType.float64, num_chans](0.0)
+        self.b2 = SIMD[DType.float64, num_chans](0.0)
+        self.b3 = SIMD[DType.float64, num_chans](0.0)
+        self.b4 = SIMD[DType.float64, num_chans](0.0)
+        self.b5 = SIMD[DType.float64, num_chans](0.0)
+        self.b6 = SIMD[DType.float64, num_chans](0.0)
 
-    fn next(mut self, gain: SIMD[DType.float64, N] = SIMD[DType.float64, N](1.0)) -> SIMD[DType.float64, N]:
+    fn next(mut self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
         """Generate the next pink noise sample (SIMD) using the Voss-McCartney algorithm (https://www.firstpr.com.au/dsp/pink-noise/#Voss-McCartney).
 
         Args:
@@ -44,7 +44,7 @@ struct PinkNoise[N: Int = 1](Copyable, Movable):
             A SIMD pink noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_lin_float64[N](-1.0, 1.0)
+        var white = random_lin_float64[num_chans](-1.0, 1.0)
 
         # Filter white noise to get pink noise (Voss-McCartney algorithm)
         self.b0 = self.b0 * 0.99886 + white * 0.0555179
@@ -60,15 +60,15 @@ struct PinkNoise[N: Int = 1](Copyable, Movable):
         # Scale and return the result
         return pink * (gain * 0.125)
 
-struct BrownNoise[N: Int = 1](Copyable, Movable):
+struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate brown noise samples (SIMD version)."""
 
-    var last_output: SIMD[DType.float64, N]
+    var last_output: SIMD[DType.float64, num_chans]
 
     fn __init__(out self):
-        self.last_output = SIMD[DType.float64, N](0.0)
+        self.last_output = SIMD[DType.float64, num_chans](0.0)
 
-    fn next(mut self, gain: SIMD[DType.float64, N] = SIMD[DType.float64, N](1.0)) -> SIMD[DType.float64, N]:
+    fn next(mut self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
         """Generate the next brown noise sample (SIMD).
 
         Args:
@@ -78,10 +78,10 @@ struct BrownNoise[N: Int = 1](Copyable, Movable):
             A SIMD brown noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_lin_float64[N](-1.0, 1.0)
+        var white = random_lin_float64[num_chans](-1.0, 1.0)
 
         # Integrate white noise to get brown noise
-        self.last_output += (white - self.last_output) * SIMD[DType.float64, N](0.02)
+        self.last_output += (white - self.last_output) * SIMD[DType.float64, num_chans](0.02)
         return self.last_output * gain
 
 struct TExpRand[num_simd: Int = 1](Copyable, Movable):

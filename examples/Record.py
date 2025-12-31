@@ -2,8 +2,8 @@ if True:
     from mmm_src.MMMAudio import *
     list_audio_devices()
 
-    in_device = "Fireface UFX+ (24082112)"
-    out_device = "Fireface UFX+ (24082112)"
+    in_device = "Fireface UCX II (24219339)"
+    out_device = "Fireface UCX II (24219339)"
 
     # in_device = "MacBook Pro Microphone"
     # out_device = "External Headphones"
@@ -13,7 +13,7 @@ if True:
     mmm_audio = MMMAudio(128, num_input_channels=12, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
     # the default input channel (in the Record_Synth) is 0, but you can change it
-    mmm_audio.send_int("set_input_chan", 8) 
+    mmm_audio.send_int("set_input_chan", 0) 
     mmm_audio.start_audio() 
 
 mmm_audio.send_bool("is_recording", True)

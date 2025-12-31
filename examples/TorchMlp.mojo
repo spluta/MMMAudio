@@ -54,8 +54,8 @@ struct TorchSynth(Movable, Copyable):
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
 
-        self.latch1 = Latch(self.world)
-        self.latch2 = Latch(self.world)
+        self.latch1 = Latch()
+        self.latch2 = Latch()
         self.impulse1 = Phasor(self.world)
         self.impulse2 = Phasor(self.world)
         self.filt1 = SVF(self.world)

@@ -39,4 +39,4 @@ struct MoogPops(Movable, Copyable):
         qs = self.t_rand.next(0.5, 1.04, dusts)
         sig = self.filts.next(dusts.cast[DType.float64]() * self.t_rand2.next(0.2, 1.0, dusts), freqs, qs) 
 
-        return splay(sig*2, self.world)
+        return splay(sig, self.world)

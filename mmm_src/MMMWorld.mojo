@@ -115,6 +115,8 @@ struct WindowType:
     alias blackman: Int = 3
     alias kaiser: Int = 4
     alias sine: Int = 5
+    alias tri: Int = 6
+    alias pan2: Int = 7
 
 struct OscType:
     alias sine: Int = 0

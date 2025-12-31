@@ -8,6 +8,7 @@ struct Windows(Movable, Copyable):
     var blackman: List[Float64]
     var sine: List[Float64]
     var kaiser: List[Float64]
+    var pan2: List[SIMD[DType.float64, 2]]
     alias size: Int64 = 2048
     alias size_f64: Float64 = 2048.0
     alias mask: Int = 2047 # yep, gotta make sure this is size - 1
@@ -18,6 +19,7 @@ struct Windows(Movable, Copyable):
         self.blackman = blackman_window(self.size)
         self.sine = sine_window(self.size)
         self.kaiser = kaiser_window(self.size, 5.0)
+        self.pan2 = pan2_window(256)
 
     fn at_phase[window_type: Int64,interp: Int = Interp.none](self, world: UnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0.0) -> Float64:
         """Get window value at given phase (0.0 to 1.0) for specified window type."""
@@ -35,6 +37,8 @@ struct Windows(Movable, Copyable):
             return ListInterpolator.read[interp,True,self.mask](world,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.rect:
             return 1.0 
+        elif window_type == WindowType.tri:
+            return 1-2*abs(phase - 0.5)
         else:
             print("Windows.at_phase: Unsupported window type")
             return 0.0
@@ -161,7 +165,7 @@ fn sine_window(n: Int64) -> List[Float64]:
     return window.copy()
 
 # Create a compile-time function to generate values
-fn pan_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
+fn pan2_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
     """
     Generate a SIMD[DType.float64, 2] quarter cosine window for panning. value 0 is for the left channel, value 1 is for the right channel.
     0 = cos(0) = 1.0 (full left)

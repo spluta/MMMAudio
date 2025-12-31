@@ -46,7 +46,7 @@ struct BufSynth(Representable, Movable, Copyable):
         self.messenger.update(self.lpf_freq, "lpf_freq")
         self.messenger.update(self.play_rate, "play_rate")
 
-        out = self.play_buf.next[num_playback_chans=2](self.buffer, 0, self.play_rate, True)
+        out = self.play_buf.next[num_chans=2](self.buffer, self.play_rate, True)
 
         freq = self.lpf_freq_lag.next(self.lpf_freq)
         out = self.moog.next(out, freq, 1.0)
@@ -70,5 +70,4 @@ struct PlayExample(Representable, Movable, Copyable):
         return String("PlayExample")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        #return SIMD[DType.float64, 2](0.0)
         return self.buf_synth.next()  # Return the combined output sample

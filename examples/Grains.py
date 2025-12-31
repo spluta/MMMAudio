@@ -7,3 +7,5 @@ mmm_audio = MMMAudio(128, num_output_channels = 8, graph_name="Grains", package_
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
 mmm_audio.stop_audio() # stop/pause the audio thread
+
+mmm_audio.plot(20000)

@@ -39,6 +39,57 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
+    @always_inline
+    fn read(mut self, var delay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+      """Reads into the delay line.
+
+      read(delay_time)
+      
+      Args:
+        delay_time: The amount of delay to apply (in seconds).
+
+      Returns:
+        A single sample read from the delay buffer.
+
+      """
+      delay_time = min(delay_time, self.max_delay_time)
+      # print(delay_time)
+        
+      out = SIMD[DType.float64, self.num_chans](0.0)
+      # minimum delay time depends on interpolation method
+
+      @parameter
+      for chan in range(self.num_chans):
+        @parameter
+        if self.interp == Interp.none:
+          delay_time = max(delay_time, 0.0)
+          out[chan] = ListInterpolator.read_none[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+        elif self.interp == Interp.linear:
+          delay_time = max(delay_time, 0.0)
+          out[chan] = ListInterpolator.read_linear[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+        elif self.interp == Interp.quad:
+          delay_time = max(delay_time, 0.0)
+          out[chan] = ListInterpolator.read_quad[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+        elif self.interp == Interp.cubic:
+          delay_time = max(delay_time, self.sample_duration)
+          out[chan] = ListInterpolator.read_cubic[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+        elif self.interp == Interp.lagrange4:
+          delay_time = max(delay_time, 0.0)
+          out[chan] = ListInterpolator.read_lagrange4[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
+        elif self.interp == Interp.sinc:
+          # [TODO] How many minimum samples do we need for sinc interpolation?
+          delay_time = max(delay_time, 0.0)
+          f_idx = self.get_f_idx(delay_time[chan])
+          out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
+          self.prev_f_idx[chan] = f_idx
+          
+      return out
+
+    @always_inline
+    fn write(mut self, input: SIMD[DType.float64, self.num_chans]):
+        self.delay_line.write_previous(input)
+
+    @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], var delay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the delay line.
         This function computes the average of two values.
@@ -53,42 +104,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
           The processed output sample.
 
         """
-        delay_time = min(delay_time, self.max_delay_time)
-        # print(delay_time)
         
-        out = SIMD[DType.float64, self.num_chans](0.0)
-        # minimum delay time depends on interpolation method
-
-        @parameter
-        for chan in range(self.num_chans):
-          @parameter
-          if self.interp == Interp.none:
-            delay_time = max(delay_time, 0.0)
-            out[chan] = ListInterpolator.read_none[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif self.interp == Interp.linear:
-            delay_time = max(delay_time, 0.0)
-            out[chan] = ListInterpolator.read_linear[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif self.interp == Interp.quad:
-            delay_time = max(delay_time, 0.0)
-            out[chan] = ListInterpolator.read_quad[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif self.interp == Interp.cubic:
-            delay_time = max(delay_time, self.sample_duration)
-            out[chan] = ListInterpolator.read_cubic[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif self.interp == Interp.lagrange4:
-            delay_time = max(delay_time, 0.0)
-            out[chan] = ListInterpolator.read_lagrange4[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
-          elif self.interp == Interp.sinc:
-            # [TODO] How many minimum samples do we need for sinc interpolation?
-            delay_time = max(delay_time, 0.0)
-            f_idx = self.get_f_idx(delay_time[chan])
-            out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
-            self.prev_f_idx[chan] = f_idx
-
-        
-        self.delay_line.write_previous(input)
+        out = self.read(delay_time)
+        self.write(input)
 
         return out
 
+    @always_inline
     fn get_f_idx(self, delay_time: Float64) -> Float64:
         delay_samps = delay_time * self.world[].sample_rate
         # Because the ListInterpolator functions always "read" forward,

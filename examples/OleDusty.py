@@ -5,4 +5,4 @@ mmm_audio = MMMAudio(128, graph_name="OleDusty", package_name="examples")
 mmm_audio.start_audio() 
 mmm_audio.stop_audio()
 
-mmm_audio.plot(4096)
+mmm_audio.plot(48000)

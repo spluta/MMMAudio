@@ -26,7 +26,7 @@ def midi_func():
     print(mido.get_input_names())
 
     # open your midi device - you may need to change the device name
-    in_port = mido.open_input('Oxygen 25')
+    in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
     voice_allocator = PVoiceAllocator(8)
 
@@ -40,6 +40,7 @@ def midi_func():
                     return
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
+                    print(msg)
                     if msg.type == "note_on":
                         voice = voice_allocator.get_free_voice(msg.note)
                         if voice == -1:
@@ -74,4 +75,5 @@ def midi_func():
     midi_thread = threading.Thread(target=start_midi, daemon=True)
     midi_thread.start()
 
+# you will need to run this function to start receiving midi
 midi_func()

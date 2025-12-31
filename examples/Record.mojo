@@ -15,28 +15,26 @@ from mmm_dsp.Osc import Osc
 struct Record_Synth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buf_dur: Float64
-    var buffer: Buffer
+    var buffer: Recorder
     var is_recording: Bool
     var is_playing: Float64
     var playback_speed: Float64
     var trig: Bool
     var write_pos: Int64 
-    var record_buf: RecordBuf
     var play_buf: Play
     var note_time: Float64
-    var num_frames: Float64
+    var num_frames: Int64
     var input_chan: Int64
     var messenger: Messenger
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.buf_dur = 10.0  # seconds
-        self.buffer = Buffer.zeros(self.world,Int64(self.world[].sample_rate*self.buf_dur), 1, self.world[].sample_rate)
+        self.buffer = Recorder(self.world, Int64(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
         self.trig = False
         self.playback_speed = 1.0
-        self.record_buf = RecordBuf(self.world)
         self.play_buf = Play(self.world)
         self.write_pos = 0
         self.note_time = 0.0
@@ -57,13 +55,12 @@ struct Record_Synth(Representable, Movable, Copyable):
     
     fn stop_recording(mut self):
         self.note_time = min(time.perf_counter() - self.note_time, self.buf_dur)
-        self.num_frames = floor(self.note_time*self.world[].sample_rate)
-        self.note_time = self.num_frames / self.world[].sample_rate
+        self.num_frames = Int64(self.note_time*self.world[].sample_rate)
+        self.note_time = Float64(self.num_frames) / self.world[].sample_rate
         self.is_recording = False
         self.is_playing = 1.0
         self.trig = True
         self.write_pos = 0
-        print(self.note_time, self.num_frames/self.world[].sample_rate)
         print("Recorded duration:", self.note_time, "seconds")
         print("Recording stopped. Now playing.")
 
@@ -85,16 +82,16 @@ struct Record_Synth(Representable, Movable, Copyable):
             # the sound_in List in the world holds the audio in data for the current sample, so grab it from there.
             self.buffer.write(self.world[].sound_in[self.input_chan], self.write_pos)
             self.write_pos += 1
-            if self.write_pos >= Int(self.buffer.num_frames):
+            if self.write_pos >= Int(self.buffer.buf.num_frames):
                 self.is_recording = False
                 print("Recording stopped: buffer full")
                 self.is_playing = 1.0
                 self.trig = True
                 self.write_pos = 0
 
-        out = self.play_buf.next(self.buffer, 0, self.playback_speed, True, self.trig, start_frame = 0, num_frames = self.num_frames)
+        out = self.play_buf.next(self.buffer.buf, self.playback_speed, True, self.trig, start_frame = 0, num_frames = self.num_frames)
 
-        env = min_env(self.play_buf.get_win_phase(), self.note_time, 0.01)
+        env = min_env(self.play_buf.get_relative_phase(), self.note_time, 0.01)
 
         out = out * self.is_playing * env
 

@@ -27,6 +27,7 @@ def osc_msg_handler(key, *args):
     print(f"Received OSC message: {key} with arguments: {args}")
     if key == "/fader1":
         val = lincurve(args[0], 0.0, 1.0, -4.0, 4.0, -1)
+        print(f"Mapped play_rate value: {val}")
         mmm_audio.send_float("play_rate", val)
     elif key == "/fader2":
         val = linexp(args[0], 0.0, 1.0, 100.0, 20000.0)
@@ -35,4 +36,3 @@ def osc_msg_handler(key, *args):
 # Start server
 osc_server = OSCServer("0.0.0.0", 5005, osc_msg_handler)
 osc_server.start()
-

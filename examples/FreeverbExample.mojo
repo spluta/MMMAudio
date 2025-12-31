@@ -54,7 +54,7 @@ struct FreeverbSynth(Copyable, Movable):
         self.m.update(self.mix,"mix")
 
         added_space_simd = SIMD[DType.float64, 2](self.added_space, self.added_space * 0.99)
-        out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
+        out = self.play_buf.next[num_chans=2](self.buffer, 1.0, True)
         out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.2 * self.mix + out * (1.0 - self.mix)
         return out
 

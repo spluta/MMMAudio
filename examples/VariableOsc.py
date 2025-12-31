@@ -19,8 +19,6 @@ from mmm_src.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="VariableOsc", package_name="examples")
 mmm_audio.start_audio() 
 
-
-
 from mmm_utils.GUI import Slider2D
 from mmm_src.MMMAudio import MMMAudio
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox

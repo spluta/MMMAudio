@@ -149,8 +149,8 @@ class MMMAudio:
     
     def plot(self, samples, clear=True):
         a = self.get_samples(samples)
-        if clear:
-            plt.clf()
+        # if clear:
+        #     plt.clf()
         
         # Plot each channel on its own subplot
         num_channels = a.shape[1] if len(a.shape) > 1 else 1
