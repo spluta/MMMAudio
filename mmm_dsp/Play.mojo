@@ -96,7 +96,6 @@ struct Play(Representable, Movable, Copyable):
         prev_phase = (self.impulse.phase + self.phase_offset) % 1.0
         # advance phase
         eor = self.impulse.next_bool(freq, trig = trig)
-
         if loop:
             # Wrap Phase
             if self.impulse.phase >= self.reset_phase_point:
@@ -123,7 +122,8 @@ struct Play(Representable, Movable, Copyable):
             out[out_chan] = ListInterpolator.read[interp=interp,bWrap=bWrap](
                 world=self.world,
                 data=buf.data[(out_chan + start_chan) % len(buf.data)], # wrap around channels
-                f_idx=((self.impulse.phase + self.phase_offset) % 1.0) * buf.num_frames_f64,
+                # f_idx=((self.impulse.phase + self.phase_offset) % 1.0) * buf.num_frames_f64,
+                f_idx=((self.impulse.phase + self.phase_offset)) * buf.num_frames_f64, #no wrapping here
                 prev_f_idx=prev_phase * buf.num_frames_f64
             )
         return out
@@ -192,8 +192,6 @@ struct Grain(Representable, Movable, Copyable):
             self.rate = rate
             self.gain = gain
             self.pan = pan
-
-            print(self.start_frame, self.num_frames, buffer.num_frames, bWrap)
 
             sample = self.play_buf.next[num_chans=num_playback_chans,interp=Interp.linear, bWrap=bWrap](buffer, self.rate, loop, trig, self.start_frame, self.num_frames, start_chan) # Get samples from PlayBuf
         else:

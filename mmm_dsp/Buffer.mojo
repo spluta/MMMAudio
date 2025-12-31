@@ -146,8 +146,6 @@ struct ListInterpolator(Movable, Copyable):
     @staticmethod
     fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
         """Read a value from a List[Float64] using provided index and interpolation method."""
-
-        # print(bWrap, mask, f_idx)
         
         @parameter
         if interp == Interp.none:
@@ -188,7 +186,6 @@ struct ListInterpolator(Movable, Copyable):
     @staticmethod
     fn read_linear[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
         """Read a value from a List[Float64] using provided index with linear interpolation."""
-        
         idx0: Int64 = Int64(f_idx)
         idx1: Int64 = idx0 + 1
         frac: Float64 = f_idx - Float64(idx0)
