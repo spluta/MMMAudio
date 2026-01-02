@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import *
 from math import exp, sqrt, tan, pi, tanh, ceil, floor
 from bit import next_power_of_two
 from mmm_utils.functions import *
@@ -7,20 +7,36 @@ from sys import simd_width_of
 from algorithm import vectorize
 from .Oversampling import Oversampling, Upsampler
 
-struct Lag[N: Int = 1](Representable, Movable, Copyable):
+struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
 
-    Parameters:
-        N: Number of SIMD channels to process in parallel.
+    Params:
+
+        num_chans: Number of SIMD channels to process in parallel.
+
+    Init:
+    ```mojo
+    Lag[num_chans](world: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](0.02))
+    ```
+
+    Public Methods:
+
+      next(mut self, in_samp: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        
+        Process one sample through the lag processor.
+
+      set_lag_time(mut self, lag: SIMD[DType.float64, num_chans]):
+        
+        Set a new lag time in seconds for each channel.
     """
 
     alias simd_width = simd_width_of[DType.float64]()
     var world: UnsafePointer[MMMWorld]
-    var val: SIMD[DType.float64, N]
-    var b1: SIMD[DType.float64, N]
-    var lag: SIMD[DType.float64, N]
+    var val: SIMD[DType.float64, num_chans]
+    var b1: SIMD[DType.float64, num_chans]
+    var lag: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, N] = SIMD[DType.float64, N](0.02)):
+    fn __init__(out self, world: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](0.02)):
         """Initialize the lag processor with given lag time in seconds.
 
         Args:
@@ -32,7 +48,7 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         """
         
         self.world = world
-        self.val = SIMD[DType.float64, self.N](0.0)
+        self.val = SIMD[DType.float64, self.num_chans](0.0)
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
         self.lag = lag
         
@@ -40,15 +56,15 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         return String("Lag")
 
     @always_inline
-    fn next(mut self, in_samp: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, in_samp: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """
         Process one sample through the lag processor.
         
         Args:
-            in_samp: (SIMD[DType.float64, N]): Input SIMD vector of Float64 values.
+            in_samp: (SIMD[DType.float64, num_chans]): Input SIMD vector of Float64 values.
         
         Returns:
-            SIMD[DType.float64, N]: Output SIMD vector of Float64 values after applying the lag.
+            SIMD[DType.float64, num_chans]: Output SIMD vector of Float64 values after applying the lag.
         """
 
         self.val = in_samp + self.b1 * (self.val - (in_samp))
@@ -57,7 +73,7 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
         return self.val
 
     @always_inline
-    fn set_lag_time(mut self, lag: SIMD[DType.float64, self.N]):
+    fn set_lag_time(mut self, lag: SIMD[DType.float64, self.num_chans]):
         """Set a new lag time in seconds for each channel.
         
         Args:
@@ -71,18 +87,18 @@ struct Lag[N: Int = 1](Representable, Movable, Copyable):
 
 alias simd_width = simd_width_of[DType.float64]() * 2
 
-struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
+struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
     var list: List[Lag[simd_width]]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], lag_times: List[Float64]):
 
-        alias num_simd = N // simd_width + (0 if N % simd_width == 0 else 1)
-        self.list = [Lag[simd_width](world, lag_times[i%N]) for i in range(num_simd)]
+        alias num_simd = num_chans // simd_width + (0 if num_chans % simd_width == 0 else 1)
+        self.list = [Lag[simd_width](world, lag_times[i%num_chans]) for i in range(num_simd)]
 
     @always_inline
     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
         vals = SIMD[DType.float64, simd_width](0.0)
-        N = len(out_list)
+        num_chans = len(out_list)
         in_len = len(in_list)
 
         @parameter
@@ -96,7 +112,7 @@ struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
 
             temp = self.list[i // simd_width].next(vals)
             # More efficient storing
-            remaining = N - i
+            remaining = num_chans - i
             if remaining >= simd_width:
                 out_list.unsafe_ptr().store(i, temp)
             else:
@@ -105,7 +121,7 @@ struct LagN[lag: Float64 = 0.02, N: Int = 1](Movable, Copyable):
                 for j in range(simd_width):
                     if j < remaining:
                         out_list[i + j] = temp[j]
-        vectorize[closure, simd_width](N)
+        vectorize[closure, simd_width](num_chans)
 
 struct SVFModes:
     alias lowpass: Int64 = 0
@@ -118,7 +134,7 @@ struct SVFModes:
     alias lowshelf: Int64 = 7
     alias highshelf: Int64 = 8
 
-struct SVF[N: Int = 1](Representable, Movable, Copyable):
+struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     """State Variable Filter
     
     Implementation from 
@@ -146,11 +162,11 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
     ```
 
     Parameters:
-        N: Number of SIMD channels to process in parallel.
+        num_chans: Number of SIMD channels to process in parallel.
     """
 
-    var ic1eq: SIMD[DType.float64, N]  # Internal state 1
-    var ic2eq: SIMD[DType.float64, N]  # Internal state 2
+    var ic1eq: SIMD[DType.float64, num_chans]  # Internal state 1
+    var ic2eq: SIMD[DType.float64, num_chans]  # Internal state 2
     var sample_rate: Float64
     
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -162,8 +178,8 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             None
         """
-        self.ic1eq = SIMD[DType.float64, N](0.0)
-        self.ic2eq = SIMD[DType.float64, N](0.0)
+        self.ic1eq = SIMD[DType.float64, num_chans](0.0)
+        self.ic2eq = SIMD[DType.float64, num_chans](0.0)
         self.sample_rate = world[].sample_rate
 
     fn __repr__(self) -> String:
@@ -178,20 +194,20 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         Returns:
             None
         """
-        self.ic1eq = SIMD[DType.float64, N](0.0)
-        self.ic2eq = SIMD[DType.float64, N](0.0)
+        self.ic1eq = SIMD[DType.float64, num_chans](0.0)
+        self.ic2eq = SIMD[DType.float64, num_chans](0.0)
 
     @doc_private
     @always_inline
-    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
+    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
         """Compute filter coeficients based on type and parameters"""
         
         # Compute A (gain factor)
-        var A: SIMD[DType.float64, self.N] = pow(SIMD[DType.float64, self.N](10.0), gain_db / 40.0)
+        var A: SIMD[DType.float64, self.num_chans] = pow(SIMD[DType.float64, self.num_chans](10.0), gain_db / 40.0)
 
         # Compute g (frequency warping)
         var base_g = tan(frequency * pi / self.sample_rate)
-        var g: SIMD[DType.float64, self.N]
+        var g: SIMD[DType.float64, self.num_chans]
         @parameter
         if filter_type == 7:  # lowshelf
             g = base_g / sqrt(A)
@@ -201,7 +217,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
             g = base_g
         
         # Compute k (resonance factor)
-        var k: SIMD[DType.float64, self.N]
+        var k: SIMD[DType.float64, self.num_chans]
         @parameter
         if filter_type == 6:  # bell
             k = 1.0 / (q * A)
@@ -215,15 +231,15 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, N], A: SIMD[DType.float64, self.N]) -> (SIMD[DType.float64, self.N], SIMD[DType.float64, self.N], SIMD[DType.float64, self.N]):
+    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, num_chans], A: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
         """Get mixing coeficients for different filter types"""
         
-        mc0 = SIMD[DType.float64, self.N](1.0)
-        mc1 = SIMD[DType.float64, self.N](0.0)
-        mc2 = SIMD[DType.float64, self.N](0.0)
+        mc0 = SIMD[DType.float64, self.num_chans](1.0)
+        mc1 = SIMD[DType.float64, self.num_chans](0.0)
+        mc2 = SIMD[DType.float64, self.num_chans](0.0)
 
         @parameter
-        for i in range(self.N):
+        for i in range(self.num_chans):
             @parameter
             if filter_type == SVFModes.lowpass:    
                 mc0[i], mc1[i], mc2[i] = 0.0, 0.0, 1.0
@@ -250,7 +266,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn next[filter_type: Int64](mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next[filter_type: Int64](mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the SVF filter of the given type."""
         
         var coefs = self._compute_coeficients[filter_type](frequency, q, gain_db)
@@ -277,7 +293,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return sanitize(output)
     
     @always_inline
-    fn lpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn lpf(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Lowpass filter
         
         Args:
@@ -291,7 +307,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.lowpass](input, frequency, q)
 
     @always_inline
-    fn bpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn bpf(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Bandpass filter
         
         Args:
@@ -305,7 +321,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.bandpass](input, frequency, q)
 
     @always_inline
-    fn hpf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn hpf(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Highpass filter
 
         Args:
@@ -319,7 +335,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.highpass](input, frequency, q)
 
     @always_inline
-    fn notch(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn notch(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Notch filter
         
         Args:
@@ -333,7 +349,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.notch](input, frequency, q)
 
     @always_inline
-    fn peak(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn peak(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Peak filter
 
         Args:
@@ -347,7 +363,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.peak](input, frequency, q)
 
     @always_inline
-    fn allpass(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn allpass(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Allpass filter
         
         Args:
@@ -361,7 +377,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.allpass](input, frequency, q)
 
     @always_inline
-    fn bell(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn bell(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Bell filter (parametric EQ)
         
         Args:
@@ -376,7 +392,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.bell](input, frequency, q, gain_db)
 
     @always_inline
-    fn lowshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn lowshelf(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Low shelf filter
 
         Args:
@@ -391,7 +407,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
-    fn highshelf(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain_db: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn highshelf(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """High shelf filter
 
         Args:
@@ -405,7 +421,7 @@ struct SVF[N: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[SVFModes.highshelf](input, frequency, q, gain_db)
 
-struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
+struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
     """A 4th-order [Linkwitz-Riley](https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter) lowpass filter.
 
     Linkwitz-Riley filters are commonly used for 
@@ -414,10 +430,10 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
     at the same cutoff frequency.
 
     Parameters:
-        N: Number of SIMD channels to process in parallel.
+        num_chans: Number of SIMD channels to process in parallel.
     """
-    var svf1: SVF[N]
-    var svf2: SVF[N]
+    var svf1: SVF[num_chans]
+    var svf2: SVF[num_chans]
     var q: Float64
 
 
@@ -427,8 +443,8 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.svf1 = SVF[self.N](world)
-        self.svf2 = SVF[self.N](world)
+        self.svf1 = SVF[self.num_chans](world)
+        self.svf2 = SVF[self.num_chans](world)
         self.q = 1.0 / sqrt(2.0)  # 1/sqrt(2) for Butterworth response
 
     fn __repr__(self) -> String:
@@ -439,7 +455,7 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
         self.svf2.sample_rate = sample_rate
 
     @always_inline
-    fn next(mut self, input: SIMD[DType.float64, self.N], frequency: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """A single sample through the 4th order Linkwitz-Riley lowpass filter.
         
         Args:
@@ -454,24 +470,24 @@ struct lpf_LR4[N: Int = 1](Representable, Movable, Copyable):
         # Second stage
         return self.svf2.lpf(cf, frequency, self.q)  # Second stage
 
-struct OnePole[N: Int = 1](Representable, Movable, Copyable):
+struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     Simple one-pole IIR filter that can be configured as lowpass or highpass.
 
     Parameters:
-        N: Number of channels to process in parallel.
+        num_chans: Number of channels to process in parallel.
     """
-    var last_samp: SIMD[DType.float64, N]  # Previous output
+    var last_samp: SIMD[DType.float64, num_chans]  # Previous output
     
     fn __init__(out self):
         """Initialize the one-pole filter"""
 
-        self.last_samp = SIMD[DType.float64, N](0.0)
+        self.last_samp = SIMD[DType.float64, num_chans](0.0)
     
     fn __repr__(self) -> String:
         return String("OnePoleFilter")
 
-    fn next(mut self, input: SIMD[DType.float64, N], coef: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    fn next(mut self, input: SIMD[DType.float64, num_chans], coef: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process one sample through the filter
 
         Args:
@@ -530,16 +546,16 @@ struct OnePole[N: Int = 1](Representable, Movable, Copyable):
 #         self.last_samp = output
 #         return output
 
-struct DCTrap[N: Int=1](Representable, Movable, Copyable):
+struct DCTrap[num_chans: Int=1](Representable, Movable, Copyable):
     """DC Trap from Digital Sound Generation by Beat Frei.
 
     Parameters:
-        N: Number of channels to process in parallel.
+        num_chans: Number of channels to process in parallel.
     """
 
     var alpha: Float64
-    var last_samp: SIMD[DType.float64, N]
-    var last_inner: SIMD[DType.float64, N]
+    var last_samp: SIMD[DType.float64, num_chans]
+    var last_inner: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the DC blocker filter.
@@ -548,13 +564,13 @@ struct DCTrap[N: Int=1](Representable, Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
         self.alpha = 2 * pi * 5.0 / world[].sample_rate  # 5 Hz cutoff frequency
-        self.last_samp = SIMD[DType.float64, N](0.0)
-        self.last_inner = SIMD[DType.float64, N](0.0)
+        self.last_samp = SIMD[DType.float64, num_chans](0.0)
+        self.last_inner = SIMD[DType.float64, num_chans](0.0)
 
     fn __repr__(self) -> String:
         return String("DCBlockerFilter")
 
-    fn next(mut self, input: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    fn next(mut self, input: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process one sample through the DC blocker filter.
         
         Args:
@@ -570,7 +586,7 @@ struct DCTrap[N: Int=1](Representable, Movable, Copyable):
 
         return sample
 
-struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
+struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     One-pole filter based on the Virtual Analog design by 
     Vadim Zavalishin in "The Art of VA Filter Design"
@@ -578,10 +594,10 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
     This implementation supports both lowpass and highpass modes.
 
     Parameters:
-        N: Number of channels to process in parallel.
+        num_chans: Number of channels to process in parallel.
     """
 
-    var last_1: SIMD[DType.float64, N]  # Previous output
+    var last_1: SIMD[DType.float64, num_chans]  # Previous output
     var step_val: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -590,7 +606,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.last_1 = SIMD[DType.float64, N](0.0)
+        self.last_1 = SIMD[DType.float64, num_chans](0.0)
         self.step_val = 1.0 / world[].sample_rate
 
     fn __repr__(self) -> String:
@@ -599,7 +615,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         )
 
     @always_inline
-    fn lpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    fn lpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process one sample through the VA one-pole lowpass filter.
 
         Args:
@@ -621,7 +637,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         return output
 
     @always_inline
-    fn hpf(mut self, input: SIMD[DType.float64, N], freq: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+    fn hpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process one sample through the VA one-pole highpass filter.
 
         Args:
@@ -633,7 +649,7 @@ struct VAOnePole[N: Int = 1](Representable, Movable, Copyable):
         """
         return input - self.lpf(input, freq)
 
-struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
+struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     """Virtual Analog Moog Ladder Filter.
     
     Implementation based on the Virtual Analog design by Vadim Zavalishin in 
@@ -642,7 +658,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
     This implementation supports 4-pole lowpass filtering with optional oversampling.
 
     Parameters:
-        N: Number of channels to process in parallel.
+        num_chans: Number of channels to process in parallel.
         os_index: Oversampling factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc).
     
     Args:
@@ -650,12 +666,12 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
     """
     var nyquist: Float64
     var step_val: Float64
-    var last_1: SIMD[DType.float64, N]
-    var last_2: SIMD[DType.float64, N]
-    var last_3: SIMD[DType.float64, N]
-    var last_4: SIMD[DType.float64, N]
-    var oversampling: Oversampling[N, 2 ** os_index]
-    var upsampler: Upsampler[N, 2 ** os_index]
+    var last_1: SIMD[DType.float64, num_chans]
+    var last_2: SIMD[DType.float64, num_chans]
+    var last_3: SIMD[DType.float64, num_chans]
+    var last_4: SIMD[DType.float64, num_chans]
+    var oversampling: Oversampling[num_chans, 2 ** os_index]
+    var upsampler: Upsampler[num_chans, 2 ** os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the VAMoogLadder filter.
@@ -665,12 +681,12 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         """
         self.nyquist = world[].sample_rate * 0.5 * (2 ** os_index)
         self.step_val = 1.0 / self.nyquist
-        self.last_1 = SIMD[DType.float64, N](0.0)
-        self.last_2 = SIMD[DType.float64, N](0.0)
-        self.last_3 = SIMD[DType.float64, N](0.0)
-        self.last_4 = SIMD[DType.float64, N](0.0)
-        self.oversampling = Oversampling[self.N, 2 ** os_index](world)
-        self.upsampler = Upsampler[self.N, 2 ** os_index](world)
+        self.last_1 = SIMD[DType.float64, num_chans](0.0)
+        self.last_2 = SIMD[DType.float64, num_chans](0.0)
+        self.last_3 = SIMD[DType.float64, num_chans](0.0)
+        self.last_4 = SIMD[DType.float64, num_chans](0.0)
+        self.oversampling = Oversampling[self.num_chans, 2 ** os_index](world)
+        self.upsampler = Upsampler[self.num_chans, 2 ** os_index](world)
 
 
     fn __repr__(self) -> String:
@@ -680,7 +696,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
 
     @doc_private
     @always_inline
-    fn lp4(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q_val: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn lp4(mut self, sig: SIMD[DType.float64, self.num_chans], freq: SIMD[DType.float64, self.num_chans], q_val: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the 4-pole Moog Ladder lowpass filter.
 
         Args:
@@ -703,8 +719,8 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
         
         # internally clips the feedback signal to prevent the filter from blowing up
-        mask1: SIMD[DType.bool, self.N] = s4.gt(2.0)
-        mask2: SIMD[DType.bool, self.N] = s4.lt(-2.0)
+        mask1: SIMD[DType.bool, self.num_chans] = s4.gt(2.0)
+        mask2: SIMD[DType.bool, self.num_chans] = s4.lt(-2.0)
 
         s4 = mask1.select(
             tanh(s4 - 1.0) + 1.0,
@@ -733,7 +749,7 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
         return lp4
 
     @always_inline
-    fn next(mut self, sig: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N] = 100, q_val: SIMD[DType.float64, self.N] = 0.5) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, sig: SIMD[DType.float64, self.num_chans], freq: SIMD[DType.float64, self.num_chans] = 100, q_val: SIMD[DType.float64, self.num_chans] = 0.5) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the Moog Ladder lowpass filter with optional oversampling.
 
         Args:
@@ -764,17 +780,17 @@ struct VAMoogLadder[N: Int = 1, os_index: Int = 0](Representable, Movable, Copya
                     self.oversampling.add_sample(lp4)
             return self.oversampling.get_sample()
 
-struct Reson[N: Int = 1](Representable, Movable, Copyable):
+struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
 
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
     Parameters:
-        N: Number of SIMD channels to process in parallel.
+        num_chans: Number of SIMD channels to process in parallel.
     """
-    var tf2: tf2[N]
-    var coeffs: List[SIMD[DType.float64, N]]
+    var tf2: tf2[num_chans]
+    var coeffs: List[SIMD[DType.float64, num_chans]]
     var world: UnsafePointer[MMMWorld]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -783,15 +799,15 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.tf2 = tf2[N](world)
-        self.coeffs = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
+        self.tf2 = tf2[num_chans](world)
+        self.coeffs = [SIMD[DType.float64, self.num_chans](0.0) for _ in range(5)]
         self.world = world
 
     fn __repr__(self) -> String:
         return String("Reson")
 
     @always_inline
-    fn lpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn lpf(mut self: Reson, input: SIMD[DType.float64, self.num_chans], freq: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process input through a resonant lowpass filter.
 
         Args:
@@ -805,17 +821,17 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         """
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = SIMD[DType.float64, self.N](1.0)
-        var b2 = SIMD[DType.float64, self.N](0.0)
-        var b1 = SIMD[DType.float64, self.N](0.0)
-        var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
+        var a0 = SIMD[DType.float64, self.num_chans](1.0)
+        var b2 = SIMD[DType.float64, self.num_chans](0.0)
+        var b1 = SIMD[DType.float64, self.num_chans](0.0)
+        var b0 = SIMD[DType.float64, self.num_chans](clip(gain, 0.0, 1.0))
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
+        tf2s[self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
 
         return self.tf2.next(input, self.coeffs)
 
     @always_inline
-    fn hpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn hpf(mut self: Reson, input: SIMD[DType.float64, self.num_chans], freq: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process input through a resonant highpass filter.
 
         Args:
@@ -829,17 +845,17 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         """
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = SIMD[DType.float64, self.N](1.0)
-        var b2 = SIMD[DType.float64, self.N](0.0)
-        var b1 = SIMD[DType.float64, self.N](0.0)
-        var b0 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
+        var a0 = SIMD[DType.float64, self.num_chans](1.0)
+        var b2 = SIMD[DType.float64, self.num_chans](0.0)
+        var b1 = SIMD[DType.float64, self.num_chans](0.0)
+        var b0 = SIMD[DType.float64, self.num_chans](clip(gain, 0.0, 1.0))
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
+        tf2s[self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
 
         return gain*input - self.tf2.next(input, self.coeffs)
 
     @always_inline
-    fn bpf(mut self: Reson, input: SIMD[DType.float64, self.N], freq: SIMD[DType.float64, self.N], q: SIMD[DType.float64, self.N], gain: SIMD[DType.float64, self.N]) -> SIMD[DType.float64, self.N]:
+    fn bpf(mut self: Reson, input: SIMD[DType.float64, self.num_chans], freq: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process input through a resonant bandpass filter.
 
         Args:
@@ -853,25 +869,25 @@ struct Reson[N: Int = 1](Representable, Movable, Copyable):
         """
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = SIMD[DType.float64, self.N](1.0)
-        var b2 = SIMD[DType.float64, self.N](0.0)
-        var b1 = SIMD[DType.float64, self.N](clip(gain, 0.0, 1.0))
-        var b0 = SIMD[DType.float64, self.N](0.0)
+        var a0 = SIMD[DType.float64, self.num_chans](1.0)
+        var b2 = SIMD[DType.float64, self.num_chans](0.0)
+        var b1 = SIMD[DType.float64, self.num_chans](clip(gain, 0.0, 1.0))
+        var b0 = SIMD[DType.float64, self.num_chans](0.0)
 
-        tf2s[self.N]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
+        tf2s[self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
         return self.tf2.next(input, self.coeffs)
 
-struct FIR[N: Int = 1](Representable, Movable, Copyable):
+struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
     """Finite Impulse Response (FIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
     Parameters:
-        N: The number of SIMD channels to process.
+        num_chans: The number of SIMD channels to process.
     """
 
-    var buffer: List[SIMD[DType.float64, N]]
+    var buffer: List[SIMD[DType.float64, num_chans]]
     var index: Int
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], num_coeffs: Int):
@@ -880,14 +896,14 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.buffer = [SIMD[DType.float64, N](0.0) for _ in range(num_coeffs)]
+        self.buffer = [SIMD[DType.float64, num_chans](0.0) for _ in range(num_coeffs)]
         self.index = 0
 
     fn __repr__(self) -> String:
         return String("FIR")
 
     @always_inline
-    fn next(mut self: FIR, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: FIR, input: SIMD[DType.float64, self.num_chans], coeffs: List[SIMD[DType.float64, self.num_chans]]) -> SIMD[DType.float64, self.num_chans]:
         """Compute the next output sample of the FIR filter.
 
         Args:
@@ -898,84 +914,24 @@ struct FIR[N: Int = 1](Representable, Movable, Copyable):
             The next sample of the filtered output.
         """
         self.buffer[self.index] = input
-        var output = SIMD[DType.float64, self.N](0.0)
+        var output = SIMD[DType.float64, self.num_chans](0.0)
         for i in range(len(coeffs)):
             output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
         self.index = (self.index + 1) % len(self.buffer)
         return output
 
-
-# struct FIR[N: Int = 1](Representable, Movable, Copyable):
-#     """A translation of Julius Smith's Faust implementation of digital filters.
-#     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
-#     """
-
-#     var buffer: List[SIMD[DType.float64, N]]
-#     var index: Int
-#     var num_coeffs: Int
-
-#     fn __init__(out self, world: UnsafePointer[MMMWorld], num_coeffs: Int):
-#         self.buffer = [SIMD[DType.float64, self.N](0.0) for _ in range(num_coeffs)]
-#         self.index = 0
-#         self.num_coeffs = num_coeffs
-
-#     fn __repr__(self) -> String:
-#         return String("FIR")
-
-#     fn next[simd_width: Int = 4](mut self, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
-#         """SIMD-optimized FIR filter processing."""
-        
-#         # Update buffer
-#         self.buffer[self.index] = input
-        
-#         var output: Float64 = 0.0
-#         var num_chunks = self.num_coeffs // simd_width
-#         var remainder = self.num_coeffs % simd_width
-        
-#         # Process SIMD chunks
-#         for chunk in range(num_chunks):
-#             var coeff_start = chunk * simd_width
-            
-#             # Load coefficients into SIMD vector
-#             var coeffs_simd = SIMD[DType.float64, simd_width]()
-#             for i in range(simd_width):
-#                 coeffs_simd[i] = coeffs[coeff_start + i]
-            
-#             # Load buffer samples with circular indexing
-#             var samples_simd = SIMD[DType.float64, simd_width]()
-#             for i in range(simd_width):
-#                 var buf_idx = (self.index - coeff_start - i + len(self.buffer)) % len(self.buffer)
-#                 samples_simd[i] = self.buffer[buf_idx]
-            
-#             # SIMD multiply and accumulate
-#             var products = coeffs_simd * samples_simd
-            
-#             # Horizontal sum (reduce)
-#             for i in range(simd_width):
-#                 output += products[i]
-        
-#         # Handle remaining coefficients
-#         for i in range(remainder):
-#             var coeff_idx = num_chunks * simd_width + i
-#             var buf_idx = (self.index - coeff_idx + len(self.buffer)) % len(self.buffer)
-#             output += coeffs[coeff_idx] * self.buffer[buf_idx]
-        
-#         # Update index
-#         self.index = (self.index + 1) % len(self.buffer)
-#         return output
-
-struct IIR[N: Int = 1](Representable, Movable, Copyable):
+struct IIR[num_chans: Int = 1](Representable, Movable, Copyable):
     """Infinite Impulse Response (IIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
     Parameters:
-        N: The number of SIMD channels to process.
+        num_chans: The number of SIMD channels to process.
     """
-    var fir1: FIR[N]
-    var fir2: FIR[N]
-    var fb: SIMD[DType.float64, N]
+    var fir1: FIR[num_chans]
+    var fir2: FIR[num_chans]
+    var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the IIR.
@@ -983,17 +939,17 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.fir1 = FIR[N](world,2)
-        self.fir2 = FIR[N](world,3)
-        self.fir1 = FIR[N](world,2)
-        self.fir2 = FIR[N](world,3)
-        self.fb = SIMD[DType.float64, self.N](0.0)
+        self.fir1 = FIR[num_chans](world,2)
+        self.fir2 = FIR[num_chans](world,3)
+        self.fir1 = FIR[num_chans](world,2)
+        self.fir2 = FIR[num_chans](world,3)
+        self.fb = SIMD[DType.float64, self.num_chans](0.0)
 
     fn __repr__(self) -> String:
         return String("IIR")
 
     @always_inline
-    fn next(mut self: IIR, input: SIMD[DType.float64, self.N], coeffsbv: List[SIMD[DType.float64, self.N]], coeffsav: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: IIR, input: SIMD[DType.float64, self.num_chans], coeffsbv: List[SIMD[DType.float64, self.num_chans]], coeffsav: List[SIMD[DType.float64, self.num_chans]]) -> SIMD[DType.float64, self.num_chans]:
         """Compute the next output sample of the IIR filter.
         
         Args:
@@ -1008,16 +964,16 @@ struct IIR[N: Int = 1](Representable, Movable, Copyable):
         self.fb = output1
         return output2
 
-struct tf2[N: Int = 1](Representable, Movable, Copyable):
+struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
     """Second-order transfer function filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
 
     Parameters:
-        N: The number of SIMD channels to process.
+        num_chans: The number of SIMD channels to process.
     """
-    var iir: IIR[N]
+    var iir: IIR[num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the tf2 filter.
@@ -1025,13 +981,13 @@ struct tf2[N: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.iir = IIR[self.N](world)
+        self.iir = IIR[self.num_chans](world)
 
     fn __repr__(self) -> String:
         return String("tf2")
 
     @always_inline
-    fn next(mut self: tf2, input: SIMD[DType.float64, self.N], coeffs: List[SIMD[DType.float64, self.N]]) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: tf2, input: SIMD[DType.float64, self.num_chans], coeffs: List[SIMD[DType.float64, self.num_chans]]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the second-order transfer function filter.
 
         Args:
@@ -1044,14 +1000,13 @@ struct tf2[N: Int = 1](Representable, Movable, Copyable):
         return self.iir.next(input, coeffs[:3], coeffs[3:])
 
 @always_inline
-fn tf2s[N: Int = 1](coeffs: List[SIMD[DType.float64, N]], mut coeffs_out: List[SIMD[DType.float64, N]], sample_rate: Float64):
+fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut coeffs_out: List[SIMD[DType.float64, num_chans]], sample_rate: Float64):
     """
-
     A translation of Julius Smith's Faust implementation of digital filters.
-    Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>
+    Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>.
 
-    Parameters:
-        N: The number of SIMD channels to process.
+    Params:
+        num_chans: The number of SIMD channels to process.
 
     Args:
         coeffs: List containing analog coefficients [b2, b1, b0, a1, a0, w1] where
@@ -1060,8 +1015,7 @@ fn tf2s[N: Int = 1](coeffs: List[SIMD[DType.float64, N]], mut coeffs_out: List[S
         coeffs_out: Output list for digital coefficients [b0d, b1d, b2d, a1d, a2d].
         sample_rate: The sample rate in Hz.
 
-    Returns:
-        None. Results are stored in coeffs_out.
+    Results are stored in coeffs_out.
     """
     var b2 = coeffs[0]
     var b1 = coeffs[1]

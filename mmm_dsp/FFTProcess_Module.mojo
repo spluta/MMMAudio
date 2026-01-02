@@ -1,6 +1,6 @@
-from mmm_dsp.BufferedProcess import *
-from mmm_dsp.FFT import *
-from mmm_dsp.Buffer import *
+from mmm_dsp.BufferedProcess_Module import *
+from mmm_dsp.FFTs import *
+from mmm_dsp.Buffer_Module import *
 
 @doc_private
 struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):

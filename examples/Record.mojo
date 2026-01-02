@@ -1,16 +1,8 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-
-from mmm_dsp.Buffer import *
-from mmm_dsp.Recorder import Recorder
-from mmm_dsp.Play import Play
-from mmm_dsp.Env import min_env
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 import time
-from math import floor
-
-from mmm_dsp.Osc import Osc
 
 struct Record_Synth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]

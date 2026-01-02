@@ -1,8 +1,6 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Osc import Dust
-from mmm_utils.functions import *
-from mmm_dsp.Filters import *
-from mmm_dsp.Pan import splay
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 # THE SYNTH
 

@@ -3,8 +3,8 @@
 This module provides an envelope generator class that can create complex envelopes with multiple segments, curves, and looping capabilities.
 """
 
-from .Osc import Sweep
-from mmm_src.MMMWorld import *
+from .Oscillators import Sweep
+from mmm_src.MMMWorld_Module import *
 from mmm_utils.functions import *
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 

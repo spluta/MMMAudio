@@ -1,11 +1,11 @@
-"""use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import Messenger
+
+from mmm_src.MMMWorld_Module import *
+from mmm_utils.Messenger_Module import Messenger
 from mmm_utils.functions import *
 
 from mmm_dsp.Distortion import *
-from mmm_dsp.Osc import *
+from mmm_dsp.Oscillators import *
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want

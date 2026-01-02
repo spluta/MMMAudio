@@ -1,7 +1,35 @@
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import *
+from collections import Dict, Set
 
 struct Messenger(Copyable, Movable):
-    """Messenger is a struct to enable communication between Python and Mojo."""
+    """Messenger is a struct to enable communication between Python and Mojo.
+    
+    It works by checking for messages sent from Python at the start of each audio block, and updating
+    any parameters registered with it accordingly. Each data type has its own `update` function and `notify_update` which will return a Bool indicating whether the parameter was updated.
+
+    For example, to update a Float64 parameter from Python, first register it with the Messenger in Mojo:
+
+    ```mojo
+    # in the init function
+    self.messenger = Messenger(self.world)
+    self.freq = 440.0
+
+    # in the next function
+    messenger.update(self.freq, "freq")
+    ```
+    Then from Python, send a new value for 'freq' using the `send_float` function:
+
+    ```python
+    mmm_audio.send_float('freq', 880.0)
+    ```
+
+    If you want to know whether the parameter was updated, use `notify_update` instead:
+
+    ```mojo 
+    if messenger.notify_update(self.freq, "freq"):
+        print("Frequency updated to ", freq)
+    ```
+    """
 
     var namespace: Optional[String]
     var world: UnsafePointer[MMMWorld]

@@ -36,10 +36,23 @@ class Pseq:
     """
     def __init__(self, list: list[float]):
         """
-        Initialize a sequential pattern.
+        Sequential pattern that cycles through a list of values.
         
-        Args:
-            list: A list of values to cycle through sequentially
+        Pseq generates values by iterating through a list sequentially,
+        wrapping back to the beginning when it reaches the end.
+        
+        Attributes:
+            list: The list of values to cycle through
+            index: Current position in the list (starts at -1)
+            
+        Example:
+            ```python
+            pattern = Pseq([1, 2, 3])
+            print(pattern.next())  # 1
+            print(pattern.next())  # 2
+            print(pattern.next())  # 3
+            print(pattern.next())  # 1 (cycles back)
+            ```
         """
         self.list = list
         self.index = -1
@@ -90,10 +103,21 @@ class Prand:
     """
     def __init__(self, list: list[float]):
         """
-        Initialize a random pattern.
+        Random pattern that selects values randomly from a list.
         
-        Args:
-            list: A list of values to select from randomly
+        Prand generates values by randomly selecting from a list with
+        equal probability for each element. The same value can be
+        selected consecutively.
+        
+        Attributes:
+            list: The list of values to select from randomly
+            
+        Example:
+            ```python
+            pattern = Prand([1, 2, 3, 4])
+            print(pattern.next())  # Random selection: 1, 2, 3, or 4
+            print(pattern.next())  # Another random selection
+            ```
         """
         self.list = list
 
@@ -135,11 +159,27 @@ class Pxrand:
     """
     def __init__(self, list: list[float]):
         """
-        Initialize an exclusive random pattern.
+        Exclusive random pattern that avoids immediate repetition.
         
-        Args:
-            list: A list of values to select from (should have at least 
-                  2 elements for proper exclusive behavior)
+        Pxrand generates values by randomly selecting from a list while
+        ensuring that the same value is never selected twice in a row.
+        This is useful for creating varied sequences without consecutive
+        duplicates.
+        
+        Attributes:
+            list: The list of values to select from
+            last_index: Index of the previously selected value
+            
+        Note:
+            This pattern requires a list with at least 2 elements to
+            function properly and avoid repetition.
+            
+        Example:
+            ```python
+            pattern = Pxrand([1, 2, 3, 4])
+            print(pattern.next())  # Random selection: 1, 2, 3, or 4
+            print(pattern.next())  # Different from previous selection
+            ```
         """
         self.list = list
         self.last_index = -1

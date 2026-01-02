@@ -1,10 +1,10 @@
 """Spectral Centroid Unit Test"""
 
 from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
+from mmm_dsp.Buffer_Module import *
 from mmm_dsp.Play import *
-from mmm_dsp.FFT import *
-from mmm_src.MMMWorld import *
+from mmm_dsp.FFTs import *
+from mmm_src.MMMWorld_Module import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512

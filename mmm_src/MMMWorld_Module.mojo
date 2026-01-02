@@ -1,12 +1,12 @@
 from python import PythonObject
-from mmm_dsp.Osc import OscBuffers
-from mmm_dsp.Buffer import *
-from mmm_utils.Windows import *
+from mmm_dsp.Oscillators import OscBuffers
+from mmm_dsp import *
+from mmm_utils.Windows_Module import *
 from mmm_utils.Print import Print
 import time
 from collections import Set
 from mmm_dsp.SincInterpolator import SincInterpolator
-from mmm_utils.Messenger import MessengerManager
+from mmm_utils.Messenger_Module import MessengerManager
 
 struct MMMWorld(Representable, Movable, Copyable):
     var sample_rate: Float64
@@ -101,6 +101,21 @@ struct MMMWorld(Representable, Movable, Copyable):
 # once Mojo has enums, these will probably be converted to enums
 
 struct Interp:
+    """Interpolation types for Oscillator frequency modulation.
+
+    none: Int = 0
+
+    linear: Int = 1
+
+    quad: Int = 2
+
+    cubic: Int = 3
+
+    lagrange4: Int = 4
+
+    sinc: Int = 5 - (should only be used for oscillator interpolation)
+    
+    """
     alias none: Int = 0
     alias linear: Int = 1
     alias quad: Int = 2
@@ -109,6 +124,25 @@ struct Interp:
     alias sinc: Int = 5
 
 struct WindowType:
+    """Window types for predefined windows found in world[].windows.
+
+    rect: Int = 0
+
+    hann: Int = 1
+
+    hamming: Int = 2
+
+    blackman: Int = 3
+
+    kaiser: Int = 4
+
+    sine: Int = 5
+
+    tri: Int = 6
+
+    pan2: Int = 7
+    """
+
     alias rect: Int = 0
     alias hann: Int = 1
     alias hamming: Int = 2
@@ -119,6 +153,22 @@ struct WindowType:
     alias pan2: Int = 7
 
 struct OscType:
+    """Oscillator types for selecting waveform types.
+
+    sine: Int = 0
+
+    saw: Int = 1
+
+    square: Int = 2
+
+    triangle: Int = 3
+
+    bandlimited_triangle: Int = 4
+
+    bandlimited_saw: Int = 5
+
+    bandlimited_square: Int = 6
+    """
     alias sine: Int = 0
     alias saw: Int = 1
     alias square: Int = 2

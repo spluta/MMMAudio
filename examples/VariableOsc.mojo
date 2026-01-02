@@ -1,13 +1,6 @@
-"""use this as a template for your own graphs"""
-
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-
-
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Filters import Lag
-from mmm_utils.Messenger import Messenger
-from mmm_dsp.Env import ASREnv
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 struct VariableOsc(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  

@@ -1,12 +1,7 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.FFTProcess import *
-from mmm_utils.Messenger import Messenger
-from mmm_utils.Windows import WindowType
-from mmm_dsp.Play import Play
-from mmm_utils.functions import select
-from mmm_utils.functions import dbamp
-from complex import ComplexFloat64
-from mmm_dsp.Osc import LFSaw
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
+
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this

@@ -1,12 +1,6 @@
-"""use this as a template for your own graphs"""
-
-from mmm_src.MMMWorld import *
-from mmm_dsp.Analysis import SpectralCentroid, YIN, RMS
-from mmm_dsp.Osc import *
-from mmm_utils.Messenger import *
-from mmm_dsp.BufferedProcess import *
-from mmm_dsp.FFT import *
-from mmm_dsp.Play import *
+from mmm_src import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var world: UnsafePointer[MMMWorld]

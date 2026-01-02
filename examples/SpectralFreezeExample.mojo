@@ -1,11 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import Messenger
-from mmm_dsp.Play import Play
-from mmm_utils.functions import select
-from mmm_dsp.FFTProcess import *
-from mmm_utils.Windows import WindowType
-from mmm_dsp.Env import ASREnv
-from random import random_float64
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 alias two_pi = 2.0 * pi
 

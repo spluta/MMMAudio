@@ -1,6 +1,6 @@
-"""use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
+
+from mmm_src.MMMWorld_Module import MMMWorld
 from mmm_utils.functions import *
 
 
@@ -8,7 +8,7 @@ from mmm_dsp.Noise import WhiteNoise
 from mmm_dsp.Filters import VAMoogLadder
 
 from mmm_utils.functions import *
-from mmm_utils.Messenger import Messenger
+from mmm_utils.Messenger_Module import Messenger
 
 
 

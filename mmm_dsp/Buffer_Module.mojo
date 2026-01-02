@@ -1,12 +1,28 @@
 from python import PythonObject
 from python import Python
 from mmm_utils.functions import *
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import MMMWorld, Interp
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
 from mmm_utils.functions import linear_interp, quadratic_interp
 
 struct Buffer(Movable, Copyable):
+    """A multi-channel audio buffer for storing audio data.
+
+
+    Params:
+        data: A List[List[Float64]] representing the audio data for each channel.
+        sample_rate: The sample rate of the audio data.
+
+    Initialization Methods:
+
+        __init__(data, sample_rate): Initialize the Buffer with provided data and sample rate.
+
+        zeros(num_frames, num_chans, sample_rate): Initialize a Buffer with the specified number of frames filled with zeros.
+
+        load(filename, num_wavetables): Initialize a Buffer by loading data from a WAV file.
+
+    """
     var data: List[List[Float64]]
     var num_chans: Int64
     var num_frames: Int64
@@ -134,6 +150,20 @@ struct Buffer(Movable, Copyable):
             return Buffer.zeros(0,0,48000.0)
 
 struct ListInterpolator(Movable, Copyable):
+    """
+    A collection of static methods for interpolating values from a List[Float64]. ListInterpolator supports various interpolation methods including none, linear, quadratic, cubic, Lagrange 4-point, and sinc interpolation. The available interpolation methods are defined in the Interp enum.
+
+    Public Methods:
+
+        read[interp, bWrap, mask](world, data, f_idx, prev_f_idx): Read a value from a List[Float64] using the specified interpolation method.
+        read_none[bWrap, mask](data, f_idx): Read a value with no interpolation.
+        read_linear[bWrap, mask](data, f_idx): Read a value with linear interpolation.
+        read_quad[bWrap, mask](data, f_idx): Read a value with quadratic interpolation.
+        read_cubic[bWrap, mask](data, f_idx): Read a value with cubic interpolation.
+        read_lagrange4[bWrap, mask](data, f_idx): Read a value with Lagrange 4-point interpolation.
+        read_sinc[bWrap, mask](world, data, f_idx, prev_f_idx): Read a value with sinc interpolation.
+
+    """
 
     @always_inline
     @staticmethod
@@ -145,7 +175,19 @@ struct ListInterpolator(Movable, Copyable):
     @always_inline
     @staticmethod
     fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
-        """Read a value from a List[Float64] using provided index and interpolation method."""
+        """Read a value from a List[Float64] using provided index and interpolation method, which is determined at compile time.
+        
+        Params:
+            interp: Interpolation method to use (from Interp enum).
+            bWrap: Whether to wrap indices that go out of bounds.
+            mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths)
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+            data: The List[Float64] to read from.
+            f_idx: The floating-point index to read at.
+            prev_f_idx: The previous floating-point index (used for sinc interpolation).
+        """
         
         @parameter
         if interp == Interp.none:
@@ -167,7 +209,17 @@ struct ListInterpolator(Movable, Copyable):
     @always_inline
     @staticmethod
     fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a List[Float64] using provided index with no interpolation."""
+        """Read a value from a List[Float64] using provided index with no interpolation.
+        
+         Params:
+            interp: Interpolation method to use (from Interp enum).
+            bWrap: Whether to wrap indices that go out of bounds.
+            mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths)
+
+        Args:
+            data: The List[Float64] to read from.
+            f_idx: The floating-point index to read at.
+        """
 
         idx = Int64(f_idx)
             

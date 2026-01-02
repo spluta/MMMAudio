@@ -1,16 +1,16 @@
 from python import PythonObject
 from python import Python
 from memory import UnsafePointer
-from mmm_dsp.Buffer import *
-from mmm_src.MMMWorld import *
-from .Osc import Dust, Phasor
+from mmm_dsp.Buffer_Module import *
+from mmm_src.MMMWorld_Module import *
+from .Oscillators import Dust, Phasor
 from mmm_utils.functions import *
 from .Pan import pan2, pan_az
 from mmm_dsp.Filters import DCTrap
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 from time import time
 from utils import Variant
-from mmm_dsp.Recorder import Recorder
+from mmm_dsp.Recorder_Module import Recorder
 
 
 struct Play(Representable, Movable, Copyable):

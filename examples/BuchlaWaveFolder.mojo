@@ -1,11 +1,6 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.functions import *
-
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Filters import Lag
-from mmm_utils.Messenger import Messenger
-from mmm_dsp.Env import ASREnv
-from mmm_dsp.Distortion import buchla_wavefolder
+from mmm_src import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct BuchlaWaveFolder(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  

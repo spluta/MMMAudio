@@ -1,10 +1,10 @@
-"""use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import Messenger
+
+from mmm_src.MMMWorld_Module import MMMWorld
+from mmm_utils.Messenger_Module import Messenger
 from mmm_dsp.Delays import *
 from mmm_utils.functions import *
-from mmm_dsp.Osc import *
+from mmm_dsp.Oscillators import *
 
 
 # there can only be one graph in an MMMAudio instance

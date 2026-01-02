@@ -1,12 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-
-from mmm_dsp.Play import *
-from mmm_dsp.Filters import VAMoogLadder
-from mmm_utils.functions import linexp
-from random import random_float64
-from mmm_utils.Messenger import Messenger
-from mmm_dsp.Noise import WhiteNoise
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 # THE SYNTH
 
@@ -19,6 +13,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var grain_size: Float64
     var pitch_dispersion: Float64
     var time_dispersion: Float64
+    var in_chan: Int64
     var which_input: Float64
     var noise: WhiteNoise
      
@@ -30,14 +25,16 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.grain_size = 0.2
         self.pitch_dispersion = 0.0
         self.time_dispersion = 0.0
+        self.in_chan = 0
         self.which_input = 0.0
         self.noise = WhiteNoise()
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.which_input, "which_input")
-        # temp = self.noise.next()*0.1
-        temp = self.world[].sound_in[0]
+        self.messenger.update(self.in_chan, "in_chan")
+
+        temp = self.world[].sound_in[self.in_chan]
         input_sig = select(self.which_input, [SIMD[DType.float64, 2](temp, temp), SIMD[DType.float64, 2](temp, 0.0), SIMD[DType.float64, 2](0.0, temp)])
         
         self.messenger.update(self.shift,"pitch_shift")

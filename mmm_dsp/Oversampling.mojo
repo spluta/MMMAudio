@@ -1,5 +1,5 @@
 from .Filters import lpf_LR4
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import *
 
 struct Oversampling[N: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
 

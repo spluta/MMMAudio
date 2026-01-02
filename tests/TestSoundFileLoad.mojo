@@ -1,5 +1,5 @@
-from mmm_dsp.Buffer import Buffer
-from mmm_src.MMMWorld import MMMWorld
+from mmm_dsp.Buffer_Module import Buffer
+from mmm_src.MMMWorld_Module import MMMWorld
 from pathlib import Path
 
 def main():

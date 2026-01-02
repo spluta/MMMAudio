@@ -1,7 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.BufferedProcess import *
-from mmm_dsp.FFTProcess import *
-from mmm_dsp.FFT import RealFFT
+from mmm_src.MMMWorld_Module import MMMWorld
+from mmm_dsp.FFTProcess_Module import *
+from mmm_dsp.FFTs import RealFFT
 from math import ceil, floor, log2
 from mmm_utils.functions import cpsmidi, ampdb
 from math import sqrt

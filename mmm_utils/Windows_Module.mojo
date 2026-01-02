@@ -1,5 +1,5 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.Buffer import *
+from mmm_src.MMMWorld_Module import MMMWorld, Interp, WindowType
+from mmm_dsp.Buffer_Module import ListInterpolator
 from math import exp, sin, sqrt, cos, pi
 
 struct Windows(Movable, Copyable):

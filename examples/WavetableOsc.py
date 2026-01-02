@@ -2,9 +2,7 @@
 """
 
 from mmm_src.MMMAudio import MMMAudio
-
 mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
-
 mmm_audio.start_audio() 
 
 # load a different wavetable if you like - these are just example paths - change to your own files

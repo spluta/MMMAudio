@@ -1,11 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-
-
-from mmm_dsp.Osc import Osc
-from random import random_float64
-from mmm_dsp.Pan import pan2
+from mmm_src.MMMWorld_Module import *
+from mmm_dsp import *
+from mmm_utils import *
 
 # THE SYNTH
 

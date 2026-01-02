@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import *
 from complex import *
 import math as Math
 from random import random_float64

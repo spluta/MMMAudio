@@ -1,14 +1,7 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-from mmm_utils.Messenger import *
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
-from mmm_dsp.Osc import *
-from math import tanh
-from random import random_float64
-from mmm_dsp.Filters import *
-
-from mmm_dsp.MLP import MLP
-from mmm_dsp.Distortion import *
 from sys import simd_width_of
 
 alias simd_width = simd_width_of[DType.float64]() * 2

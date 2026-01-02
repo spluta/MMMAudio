@@ -1,12 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.Play import *
-from mmm_dsp.Delays import *
-from mmm_utils.functions import *
-from mmm_utils.Messenger import Messenger
-from mmm_utils.functions import dbamp
-from mmm_dsp.Filters import SVF
+from mmm_src import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct DelaySynth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]

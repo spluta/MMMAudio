@@ -1,10 +1,10 @@
-"""use this as a template for your own graphs"""
 
-from mmm_src.MMMWorld import *
+
+from mmm_src.MMMWorld_Module import *
 from mmm_utils.functions import *
 
 
-from mmm_dsp.Osc import Osc
+from mmm_dsp.Oscillators import Osc
 from mmm_utils.functions import *
 from algorithm import parallelize
 from mmm_dsp.Pan import splay

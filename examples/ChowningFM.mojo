@@ -1,10 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Env import *
-from collections import Dict
-from mmm_utils.Messenger import *
+from mmm_src import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct ChowningFM(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld] # pointer to the MMMWorld

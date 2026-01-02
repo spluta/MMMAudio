@@ -1,11 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-
-from mmm_dsp.Distortion import *
-from mmm_dsp.Osc import *
-from mmm_utils.Print import Print
-from mmm_utils.RisingBoolDetector import RisingBoolDetector
+from mmm_src.MMMWorld_Module import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct Tone(Movable,Copyable):
     var world: UnsafePointer[MMMWorld]

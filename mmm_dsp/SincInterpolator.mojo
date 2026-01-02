@@ -1,6 +1,6 @@
-from mmm_utils.Windows import kaiser_window
+from mmm_utils.Windows_Module import kaiser_window
 from mmm_utils.functions import quadratic_interp
-from mmm_dsp.Buffer import *
+from mmm_dsp.Buffer_Module import *
 from sys import simd_width_of
 from math import floor, log2, sin
 from mmm_utils.functions import wrap, clip

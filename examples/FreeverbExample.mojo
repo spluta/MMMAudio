@@ -1,13 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import Messenger
-
-from mmm_utils.functions import *
-from mmm_dsp.Delays import LP_Comb
-
-from mmm_dsp.Buffer import *
-from mmm_dsp.Play import *
-from mmm_dsp.Filters import VAMoogLadder
-from mmm_dsp.Reverb import Freeverb
+from mmm_src.MMMWorld_Module import *
+from mmm_dsp import *
+from mmm_utils import *
 
 struct FreeverbSynth(Copyable, Movable):
     var world: UnsafePointer[MMMWorld] 

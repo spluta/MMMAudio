@@ -1,7 +1,7 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.Buffer import Buffer
+from mmm_src.MMMWorld_Module import *
+from mmm_dsp.Buffer_Module import Buffer
 from mmm_dsp.Play import Play
-from mmm_utils.Messenger import Messenger
+from mmm_utils.Messenger_Module import Messenger
 
 struct TestBuffer(Copyable,Movable):
     var world: UnsafePointer[MMMWorld]

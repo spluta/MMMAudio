@@ -1,4 +1,4 @@
-from mmm_src.MMMWorld import *
+from mmm_src.MMMWorld_Module import *
 from mmm_utils.functions import *
 from math import tanh
 from mmm_dsp.Filters import *
@@ -7,28 +7,34 @@ from algorithm import vectorize
 from sys import simd_width_of
 
 
-struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
+struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
-    
-    ``Freeverb[N](world)``
 
-    Parameters:
-      N: size of the SIMD vector - defaults to 1
+    Params:
+      num_chans: size of the SIMD vector - defaults to 1
+
+    Args:
+      world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+
+      next(mut self, input: SIMD[DType.float64, num_chans], room_size: SIMD[DType.float64, num_chans] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, num_chans] = 1000.0, added_space: SIMD[DType.float64, num_chans] = 0.0) -> SIMD[DType.float64, num_chans]:
+        
+      Process one sample through the freeverb.
     """
     var world: UnsafePointer[MMMWorld]
-    # var lp_combs: List[LP_CombN[8]]
-    var lp_comb0: LP_Comb[N]
-    var lp_comb1: LP_Comb[N]
-    var lp_comb2: LP_Comb[N]
-    var lp_comb3: LP_Comb[N]
-    var lp_comb4: LP_Comb[N]
-    var lp_comb5: LP_Comb[N]
-    var lp_comb6: LP_Comb[N]
-    var lp_comb7: LP_Comb[N]
+    var lp_comb0: LP_Comb[num_chans]
+    var lp_comb1: LP_Comb[num_chans]
+    var lp_comb2: LP_Comb[num_chans]
+    var lp_comb3: LP_Comb[num_chans]
+    var lp_comb4: LP_Comb[num_chans]
+    var lp_comb5: LP_Comb[num_chans]
+    var lp_comb6: LP_Comb[num_chans]
+    var lp_comb7: LP_Comb[num_chans]
 
     var temp: List[Float64]
-    var allpass_combs: List[Allpass_Comb[N, 0]]
+    var allpass_combs: List[Allpass_Comb[num_chans]]
     var feedback: List[Float64]
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
@@ -38,24 +44,24 @@ struct Freeverb[N: Int = 1](Representable, Movable, Copyable):
         
         # I tried doing this with lists of LP_Comb[N] but avoiding lists seems to work better in Mojo currently
 
-        self.lp_comb0 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb1 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb2 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb3 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb4 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb5 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb6 = LP_Comb[N](self.world, 0.04)
-        self.lp_comb7 = LP_Comb[N](self.world, 0.04)
+        self.lp_comb0 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb1 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb2 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb3 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb4 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb5 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb6 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb7 = LP_Comb[num_chans](self.world, 0.04)
 
         self.temp = [0.0 for _ in range(8)]
-        self.allpass_combs = [Allpass_Comb[N, 0](self.world, 0.015) for _ in range(4)]
+        self.allpass_combs = [Allpass_Comb[num_chans](self.world, 0.015) for _ in range(4)]
         
         self.feedback = [0.0]
         self.lp_comb_lpfreq = [1000.0]
         self.in_list = [0.0]
 
     @always_inline
-    fn next(mut self, input: SIMD[DType.float64, self.N], room_size: SIMD[DType.float64, self.N] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.N] = 1000.0, added_space: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans], room_size: SIMD[DType.float64, self.num_chans] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.num_chans] = 1000.0, added_space: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the freeverb.
 
         Args:

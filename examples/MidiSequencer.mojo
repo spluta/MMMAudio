@@ -1,12 +1,6 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.Messenger import *
-
-from mmm_utils.functions import *
-from mmm_dsp.Osc import *
-from mmm_dsp.Filters import *
-from mmm_dsp.Env import *
-
-
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
@@ -51,11 +45,11 @@ struct TrigSynthVoice(Movable, Copyable):
             return 0.0
         else:
             bend_freq = self.note[0] * self.bend_mul
-            var mod_value = self.mod.next(bend_freq * 1.5)  # Modulator frequency is 3 times the carrier frequency
+            var mod_value = self.mod.next(bend_freq * 1.5, osc_type=OscType.sine)  # Modulator frequency is 3 times the carrier frequency
             var env = self.env.next(self.env_params, make_note)  # Trigger the envelope if trig is True
 
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
-            var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=2)  
+            var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=OscType.sine)  
 
             car_value += self.sub.next(bend_freq * 0.5) # Add a sub oscillator one octave below the carrier
             car_value = car_value * 0.1 * env * self.note[1]  # Scale the output by the envelope and note velocity
@@ -69,7 +63,7 @@ struct TrigSynth(Movable, Copyable):
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
 
-    # the following 5 variables are messengers (imported from mmm_utils.Messenger.mojo)
+    # the following 5 variables are messengers (imported from mmm_utils.Messenger_Module.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
     var messenger: Messenger
@@ -100,9 +94,8 @@ struct TrigSynth(Movable, Copyable):
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.filt_freq, "filt_freq")
-        self.messenger.update(self.bend_mul, "bend_mul")
-        # self.world[].print(self.filt_freq, self.bend_mul)
-        if self.world[].top_of_block:
+        if self.messenger.notify_update(self.bend_mul, "bend_mul"):
+            # if bend_mul changes, update all the voices
             for i in range(len(self.voices)):
                 self.voices[i].bend_mul = self.bend_mul
 

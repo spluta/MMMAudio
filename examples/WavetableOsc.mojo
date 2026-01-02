@@ -1,13 +1,6 @@
-"""use this as a template for your own graphs"""
-
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-
-
-from mmm_dsp.Osc import *
-from mmm_dsp.Env import ASREnv
-from mmm_dsp.Buffer import *
-from mmm_utils.Messenger import Messenger
+from mmm_src import *
+from mmm_utils import *
+from mmm_dsp import *
 
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,2,1]

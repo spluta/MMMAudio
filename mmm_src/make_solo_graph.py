@@ -1,7 +1,7 @@
 
 
 def make_solo_graph(graph_name: str, package_name: str) -> str:
-    string = """from mmm_src.MMMWorld import *
+    string = """from mmm_src.MMMWorld_Module import *
 
 
 from python import PythonObject

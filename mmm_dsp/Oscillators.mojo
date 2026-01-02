@@ -1,13 +1,13 @@
 from math import sin, floor
 from random import random_float64
 from mmm_utils.functions import *
-from mmm_src.MMMWorld import MMMWorld
-from .Buffer import *
+from mmm_src.MMMWorld_Module import MMMWorld, Interp
+from .Buffer_Module import *
 from .Filters import *
 from .Oversampling import Oversampling
 from mmm_utils.RisingBoolDetector import RisingBoolDetector
 
-struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
+struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A phasor oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio. 
     
@@ -17,34 +17,64 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
 
     Params:
 
-        N: Number of channels (default is 1).
+        num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
     Args:
+
         world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+
+        next(
+            mut self: Phasor[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=True)
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next phasor sample. This is the standard ramp waveform from 0.0 to 1.0.
+
+        next_bool(
+            mut self: Phasor[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=True)
+        ) -> SIMD[DType.bool, num_chans]: 
+        
+        Generate the next boolean impulse sample.
+
+        next_impulse(
+            mut self: Phasor[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=True)
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next impulse sample as a Float64.
     """
-    var phase: SIMD[DType.float64, N]
+    var phase: SIMD[DType.float64, num_chans]
     var freq_mul: Float64
-    var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
-    var rising_bool_detector_impulse: RisingBoolDetector[N]  # Track the last reset state
+    var rising_bool_detector: RisingBoolDetector[num_chans]  # Track the last reset state
+    var rising_bool_detector_impulse: RisingBoolDetector[num_chans]  # Track the last reset state
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.phase = SIMD[DType.float64, N](0.0)
+        self.phase = SIMD[DType.float64, num_chans](0.0)
         self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
-        self.rising_bool_detector = RisingBoolDetector[N]()
-        self.rising_bool_detector_impulse = RisingBoolDetector[N]()
+        self.rising_bool_detector = RisingBoolDetector[num_chans]()
+        self.rising_bool_detector_impulse = RisingBoolDetector[num_chans]()
 
     fn __repr__(self) -> String:
         return String("Phasor")
 
     @always_inline
-    fn _increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.N]):
+    fn _increment_phase(mut self: Phasor, freq: SIMD[DType.float64, self.num_chans]):
         self.phase += (freq * self.freq_mul)
         self.phase = self.phase - floor(self.phase)
 
     @always_inline
-    fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.N], phase_offset: SIMD[DType.float64, self.N] = 0.0) -> SIMD[DType.bool, N]:
+    fn _increment_phase_impulse(mut self, freq: SIMD[DType.float64, self.num_chans], phase_offset: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.bool, num_chans]:
         self.phase += (freq * self.freq_mul)
         fl = floor(self.phase)
         rbd = self.rising_bool_detector_impulse.next(abs(self.phase+phase_offset).gt(1.0))
@@ -52,7 +82,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         return rbd
 
     @always_inline
-    fn next(mut self: Phasor, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: Phasor, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill=True)) -> SIMD[DType.float64, self.num_chans]:
         self._increment_phase(freq)
         
         var resets = self.rising_bool_detector.next(trig)
@@ -61,7 +91,7 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         return (self.phase + phase_offset) % 1.0
 
     @always_inline
-    fn next_bool(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=True)) -> SIMD[DType.bool, self.N]:
+    fn next_bool(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill=True)) -> SIMD[DType.bool, self.num_chans]:
         tick = self._increment_phase_impulse(freq, phase_offset)
         rbd = self.rising_bool_detector.next(trig)
         self.phase = rbd.select(0.0, self.phase)
@@ -69,21 +99,42 @@ struct Phasor[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         return (tick or rbd)
 
     @always_inline
-    fn next_impulse(mut self, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill=   True)) -> SIMD[DType.float64, self.N]:
+    fn next_impulse(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill=   True)) -> SIMD[DType.float64, self.num_chans]:
         return self.next_bool(freq, phase_offset, trig).cast[DType.float64]()
 
 
 
 struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     """
-    An impulse oscillator.
+    An impulse oscillator. Impulse is essentially a wrapper around the Phasor oscillator that provides impulse-specific methods.
 
     Params:
 
-        N: Number of channels (default is 1).
+        num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+
     Args:
+
         world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next_bool(
+            mut self: Impulse[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=True)
+        ) -> SIMD[DType.bool, num_chans]: 
+        
+        Generate the next boolean impulse sample.
+
+        next(
+            mut self: Impulse[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=True)
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next impulse sample as a Float64.
     """
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
 
@@ -110,19 +161,54 @@ struct OscType:
     alias bandlimited_saw: Int64 = 5
     alias bandlimited_square: Int64 = 6
 
-struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable, Movable, Copyable):
+struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](Representable, Movable, Copyable):
     """
-    A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling. 
+    A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling.
     
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
     Params:
+
         num_chans: Number of channels (default is 1).
         interp: Interpolation method. See Interp struct for options (default is Interp.linear).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
 
     Args:
         world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+
+        next(
+            mut self: Osc[num_chans, interp, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0, 
+            trig: Bool = False, osc_type: SIMD[DType.int64, num_chans] = 0
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next oscillator sample on a single waveform type of type OscType
+
+        next_vwt(
+            mut self, 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
+            trig: Bool = False, 
+            osc_types: List[Int64] = [0,4,5,6], 
+            osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
+        ) -> SIMD[DType.float64, self.num_chans]::
+        
+        Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types from the built-in waveforms.
+
+        next_vwt(
+            mut self, 
+            ref buffer: Buffer, 
+            freq: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](100.0), 
+            phase_offset: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0), 
+            trig: Bool = False, 
+            osc_frac: SIMD[DType.float64, self.num_chans] = SIMD[DType.float64, self.num_chans](0.0)
+        ) -> SIMD[DType.float64, self.num_chans]:
+
+        Generate the next oscillator sample on a variable waveform where the output is interpolated between different waveform types from a user-loaded Buffer.
+
     """
 
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
@@ -146,7 +232,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
             osc_type: SIMD[DType.int64, self.num_chans] = SIMD[DType.int64, self.num_chans](0)
         ) -> SIMD[DType.float64, self.num_chans]:
         """
-        Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have N different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
+        Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have num_chans different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal.
 
         Args:
             freq: Frequency of the oscillator in Hz (default is 100.0).
@@ -216,7 +302,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
         
         Generate the next oscillator sample on a variable waveform where the output is interpolated between 
         different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This 
-        means that an oscillator can have N different instances, each with its own frequency, phase offset, 
+        means that an oscillator can have num_chans different instances, each with its own frequency, phase offset, 
         and waveform type, but they will all share the same trigger signal and the same list of waveform types 
         to interpolate between.
         
@@ -318,7 +404,7 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
         
         Generate the next oscillator sample on a variable waveform where the output is interpolated between 
         different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This 
-        means that an oscillator can have N different instances, each with its own frequency, phase offset, 
+        means that an oscillator can have num_chans different instances, each with its own frequency, phase offset, 
         and waveform type, but they will all share the same trigger signal and the same list of waveform types 
         to interpolate between.
         
@@ -402,118 +488,258 @@ struct Osc[num_chans: Int = 1, interp: Int = 0, os_index: Int = 0](Representable
             return self.oversampling.get_sample()
 
 
-struct SinOsc[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
+struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
     """A sine wave oscillator.
     
     This is a convenience struct as internally it uses Osc and indicates `osc_type = 0`
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next(
+            mut self: SinOsc[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: Bool = False, 
+            interp: Int64 = 0
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next sine wave sample.
     """
 
-    var osc: Osc[N, Interp.linear, os_index]  # Instance of the Oscillator
+    var osc: Osc[num_chans, Interp.linear, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.osc = Osc[self.N, Interp.linear, os_index](world)  # Initialize the Oscillator with the world instance
+        self.osc = Osc[self.num_chans, Interp.linear, os_index](world)  # Initialize the Oscillator with the world instance
 
     fn __repr__(self) -> String:
         return String("SinOsc")
 
     @always_inline
-    fn next(mut self: SinOsc, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: SinOsc, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.num_chans]:
         return self.osc.next(freq, phase_offset, trig, 0)
 
-struct LFSaw[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A low-frequency sawtooth oscillator."""
+struct LFSaw[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
+    """A low-frequency sawtooth oscillator.
 
-    var phasor: Phasor[N, os_index]  # Instance of the Oscillator
+    This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next(
+            mut self: LFSaw[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: Bool = False
+        ) -> SIMD[DType.float64, num_chans]:
+    """
+
+    var phasor: Phasor[num_chans, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world)  # Initialize the Phasor with the world instance
+        self.phasor = Phasor[self.num_chans, os_index](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSaw")
 
     @always_inline
-    fn next(mut self: LFSaw, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
-        # return self.osc.next(freq, phase_offset, trig, 2, interp, os_index)
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+    fn next(mut self: LFSaw, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False) -> SIMD[DType.float64, self.num_chans]:
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
         return (self.phasor.next(freq, phase_offset, trig_mask) * 2.0) - 1.0
 
-struct LFSquare[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A low-frequency square wave oscillator."""
+struct LFSquare[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
+    """A low-frequency square wave oscillator.
 
-    var phasor: Phasor[N, os_index]  # Instance of the Oscillator
+    Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next(
+            mut self: LFSquare[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: Bool = False
+        ) -> SIMD[DType.float64, num_chans]: 
+
+        Generate the next square wave sample.
+
+    """
+
+    var phasor: Phasor[num_chans, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world)  # Initialize the Phasor with the world instance
+        self.phasor = Phasor[self.num_chans, os_index](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFSquare")
 
     @always_inline
-    fn next(mut self: LFSquare, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+    fn next(mut self: LFSquare, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False) -> SIMD[DType.float64, self.num_chans]:
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
         return -1.0 if self.phasor.next(freq, phase_offset, trig_mask) < 0.5 else 1.0
 
-struct LFTri[N: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A low-frequency triangle wave oscillator."""
+struct LFTri[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
+    """A low-frequency triangle wave oscillator.
 
-    var phasor: Phasor[N, os_index]  # Instance of the Oscillator
+    This oscillator generates a triangle wave at audio rate. It is useful for 
+    modulation, but should be avoided for audio-rate synthesis due to aliasing.
+
+    The output range is [-1, 1].
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next(
+            mut self: LFSquare[num_chans, os_index], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            phase_offset: SIMD[DType.float64, num_chans] = 0.0, 
+            trig: Bool = False
+        ) -> SIMD[DType.float64, num_chans]: 
+
+        Generate the next square wave sample.
+
+    """
+
+    var phasor: Phasor[num_chans, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.phasor = Phasor[self.N, os_index](world)  # Initialize the Phasor with the world instance
+        self.phasor = Phasor[self.num_chans, os_index](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
         return String("LFTri")
 
     @always_inline
-    fn next(mut self: LFTri, freq: SIMD[DType.float64, self.N] = 100.0, phase_offset: SIMD[DType.float64, self.N] = 0.0, trig: Bool = False, interp: Int64 = 0) -> SIMD[DType.float64, self.N]:
-        var trig_mask = SIMD[DType.bool, self.N](fill=trig)
+    fn next(mut self: LFTri, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: Bool = False) -> SIMD[DType.float64, self.num_chans]:
+        var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
         return (abs((self.phasor.next(freq, phase_offset-0.25, trig_mask) * 4.0) - 2.0) - 1.0)
 
-struct Dust[N: Int = 1] (Representable, Movable, Copyable):
-    """A dust noise oscillator."""
-    var impulse: Phasor[N]
-    var freq: SIMD[DType.float64, N]
+struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
+    """A dust noise oscillator that generates random impulses at random intervals.
+    
+    Dust has a Phasor as its core, and the frequency of the Phasor is randomly changed each time an impulse is generated. This allows the Dust to be used in multiple ways. It can be used as a simple random impulse generator, or the user can use the get_phase() method to get the current phase of the internal Phasor and use that phase to drive other oscillators or processes. The user can also set the phase of the internal Phasor using the set_phase() method, allowing for more complex interactions.
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+
+    Public Methods:
+
+        next(
+            mut self: Dust[num_chans], 
+            low: SIMD[DType.float64, num_chans] = 100.0, 
+            high: SIMD[DType.float64, num_chans] = 2000.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill= False)
+        ) -> SIMD[DType.float64, num_chans]: 
+        
+        Generate the next dust noise sample.
+
+        next_bool(
+            mut self: Dust[num_chans], 
+            low: SIMD[DType.float64, num_chans] = 100.0, 
+            high: SIMD[DType.float64, num_chans] = 2000.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill= False)
+        ) -> SIMD[DType.bool, num_chans]: 
+        
+        Generate the next dust noise sample as a boolean impulse.
+
+        get_phase(self) -> SIMD[DType.float64, num_chans]:
+
+        Get the current phase of the internal Phasor.
+
+        set_phase(
+            mut self: Dust[num_chans], 
+            phase: SIMD[DType.float64, num_chans]
+        ):
+        
+        Set the phase of the internal Phasor.
+
+    """
+    var impulse: Phasor[num_chans]
+    var freq: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
-        self.impulse = Phasor[N](world)
+        self.impulse = Phasor[num_chans](world)
         # this will cause all Dusts to start at a different phase
-        for i in range(self.N):
+        for i in range(self.num_chans):
             self.impulse.phase[i] = random_float64(0.0, 1.0)
-        self.freq = SIMD[DType.float64, N](1.0)
+        self.freq = SIMD[DType.float64, num_chans](1.0)
 
     fn __repr__(self) -> String:
         return String("Dust")
 
-    fn next(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill= False)) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: Dust, low: SIMD[DType.float64, self.num_chans] = 100.0, high: SIMD[DType.float64, self.num_chans] = 2000.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill= False)) -> SIMD[DType.float64, self.num_chans]:
         return self.next_bool(low, high, trig).cast[DType.float64]()
 
     @always_inline
-    fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.N] = 100.0, high: SIMD[DType.float64, self.N] = 2000.0, trig: SIMD[DType.bool, self.N] = SIMD[DType.bool, self.N](fill= False)) -> SIMD[DType.bool, self.N]:
+    fn next_bool(mut self: Dust, low: SIMD[DType.float64, self.num_chans] = 100.0, high: SIMD[DType.float64, self.num_chans] = 2000.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill= False)) -> SIMD[DType.bool, self.num_chans]:
         """Generate the next dust noise sample."""
 
         var tick = self.impulse.next_bool(self.freq, 0, trig)  # Update the phase
 
         @parameter
-        for i in range(self.N):
+        for i in range(self.num_chans):
             if tick[i]:
                 self.freq[i] = random_float64(low[i], high[i])
 
         return tick
 
-    fn get_phase(self) -> SIMD[DType.float64, self.N]:
+    fn get_phase(self) -> SIMD[DType.float64, self.num_chans]:
         return self.impulse.phase
 
-    fn set_phase(mut self, phase: SIMD[DType.float64, self.N]):
+    fn set_phase(mut self, phase: SIMD[DType.float64, self.num_chans]):
         self.impulse.phase = phase
 
-struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
-    """Low-frequency noise oscillator."""
+struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Movable, Copyable):
+    """Low-frequency interpolating noise generator with stepped (none), linear, or cubic interpolation.
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+        interp: Interpolation method. Options are Interp.none (stepped), Interp.linear, Interp.cubic.
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+
+        next(
+            mut self: LFNoise[num_chans, interp], 
+            freq: SIMD[DType.float64, num_chans] = 100.0
+        ) -> SIMD[DType.float64, num_chans]:
+    
+    """
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
-    var impulse: Phasor[N]
+    var impulse: Phasor[num_chans]
 
     # Cubic inerpolation only needs 4 points, but it needs to know the true previous point so the history
     # needs an extra point: the 4 for interpolation, plus the point that is just changed
-    var history: List[SIMD[DType.float64, N]]# used for interpolation
+    var history: List[SIMD[DType.float64, num_chans]]# used for interpolation
 
     # history_index: the index of the history list that the impulse's phase is moving *away* from
     # phase is moving *towards* history_index + 1
@@ -521,10 +747,10 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.history_index = [0 for _ in range(self.N)]
-        self.impulse = Phasor[N](world)
-        self.history = [SIMD[DType.float64, self.N](0.0) for _ in range(5)]
-        for i in range(self.N):
+        self.history_index = [0 for _ in range(self.num_chans)]
+        self.impulse = Phasor[num_chans](world)
+        self.history = [SIMD[DType.float64, self.num_chans](0.0) for _ in range(5)]
+        for i in range(self.num_chans):
             for j in range(len(self.history)):
                 self.history[j][i] = random_float64(0.1, 1.0)
         # Initialize history with random values
@@ -533,13 +759,13 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
         return String("LFNoise1")
 
     @always_inline
-    fn next(mut self: LFNoise, freq: SIMD[DType.float64, self.N] = 100.0) -> SIMD[DType.float64, self.N]:
+    fn next(mut self: LFNoise, freq: SIMD[DType.float64, self.num_chans] = 100.0) -> SIMD[DType.float64, self.num_chans]:
         """Generate the next low-frequency noise sample."""
-        # var trig_mask = SIMD[DType.bool, self.N](fill=False)
+        # var trig_mask = SIMD[DType.bool, self.num_chans](fill=False)
         var tick = self.impulse.next_bool(freq)  # Update the phase
 
         @parameter
-        for i in range(self.N):
+        for i in range(self.num_chans):
             if tick[i]:  # If an impulse is detected
                 # advance the history index
                 self.history_index[i] = (self.history_index[i] + 1) % len(self.history)
@@ -550,29 +776,28 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
             self.history[(self.history_index[i] + (len(self.history) - 2)) % len(self.history)][i] = random_float64(-1.0, 1.0)
 
         @parameter
-        if interp == 0:
-            p0 = SIMD[DType.float64, self.N](0.0)
+        if interp == Interp.none:
+            p0 = SIMD[DType.float64, self.num_chans](0.0)
             @parameter
-            for i in range(self.N):
-                # return self.history[self.history_index + 1 % len(self.history)]
+            for i in range(self.num_chans):
                 p0[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
             return p0
-        elif interp == 1:
+        elif interp == Interp.linear:
             # Linear interpolation between last and next value
-            p0 = SIMD[DType.float64, self.N](0.0)
-            p1 = SIMD[DType.float64, self.N](0.0)
+            p0 = SIMD[DType.float64, self.num_chans](0.0)
+            p1 = SIMD[DType.float64, self.num_chans](0.0)
             @parameter
-            for i in range(self.N):
+            for i in range(self.num_chans):
                 p0[i] = self.history[self.history_index[i]][i]
                 p1[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
             return linear_interp(p0, p1, self.impulse.phase)
         else:
-            p0 = SIMD[DType.float64, self.N](0.0)
-            p1 = SIMD[DType.float64, self.N](0.0)
-            p2 = SIMD[DType.float64, self.N](0.0)
-            p3 = SIMD[DType.float64, self.N](0.0)
+            p0 = SIMD[DType.float64, self.num_chans](0.0)
+            p1 = SIMD[DType.float64, self.num_chans](0.0)
+            p2 = SIMD[DType.float64, self.num_chans](0.0)
+            p3 = SIMD[DType.float64, self.num_chans](0.0)
             @parameter
-            for i in range(self.N):
+            for i in range(self.num_chans):
                 p0[i] = self.history[(self.history_index[i] + (len(self.history) - 1)) % len(self.history)][i]
                 p1[i] = self.history[self.history_index[i]][i]
                 p2[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
@@ -580,23 +805,43 @@ struct LFNoise[N: Int = 1, interp: Int = 0](Representable, Movable, Copyable):
             # Cubic interpolation
             return cubic_interp(p0, p1, p2, p3, self.impulse.phase)
 
-struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
-    var phase: SIMD[DType.float64, N]
+struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
+    """A phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.
+
+    Params:
+
+        num_chans: Number of channels (default is 1).
+
+    Args:
+        world: Pointer to the MMMWorld instance.
+
+    Public Methods:
+        next(
+            mut self: Sweep[num_chans], 
+            freq: SIMD[DType.float64, num_chans] = 100.0, 
+            trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill= False)
+        ) -> SIMD[DType.float64, num_chans]:
+
+        Generate the next sweep sample.
+
+    """
+
+    var phase: SIMD[DType.float64, num_chans]
     var freq_mul: Float64
-    var rising_bool_detector: RisingBoolDetector[N]  # Track the last reset state
+    var rising_bool_detector: RisingBoolDetector[num_chans]  # Track the last reset state
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.phase = SIMD[DType.float64, N](0.0)
-        self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
-        self.rising_bool_detector = RisingBoolDetector[N]()
+        self.phase = SIMD[DType.float64, num_chans](0.0)
+        self.freq_mul = 1.0 / self.world[].sample_rate
+        self.rising_bool_detector = RisingBoolDetector[num_chans]()
 
     fn __repr__(self) -> String:
         return String("Sweep")
         
     @always_inline
-    fn next(mut self, freq: SIMD[DType.float64, self.N] = 100.0, trig: SIMD[DType.bool, self.N] = False) -> SIMD[DType.float64, self.N]:
+    fn next(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, trig: SIMD[DType.bool, self.num_chans] = False) -> SIMD[DType.float64, self.num_chans]:
         # Reset phase if trig has changed from 0 to positive value
 
         self.phase += (freq * self.freq_mul)
@@ -604,7 +849,7 @@ struct Sweep[N: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
         var resets = self.rising_bool_detector.next(trig)
 
         @parameter
-        for i in range(self.N):
+        for i in range(self.num_chans):
             if resets[i]:
                 self.phase[i] = 0.0
 

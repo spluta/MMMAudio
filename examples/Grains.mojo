@@ -1,16 +1,8 @@
-from mmm_src.MMMWorld import *
-from mmm_utils.functions import *
-
-
-from mmm_dsp.Buffer import *
-from mmm_dsp.Play import *
-from mmm_dsp.Osc import *
-from mmm_dsp.Filters import VAMoogLadder
-from mmm_utils.functions import linexp
-from random import random_float64
+from mmm_src.MMMWorld_Module import *
+from mmm_dsp import *
+from mmm_utils import *
 
 # THE SYNTH
-
 
 alias num_output_chans = 2
 alias num_simd_chans = next_power_of_two(num_output_chans)

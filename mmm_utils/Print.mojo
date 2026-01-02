@@ -1,5 +1,5 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Osc import Impulse
+from mmm_src.MMMWorld_Module import MMMWorld
+from mmm_dsp.Oscillators import Impulse
 
 struct Print(Representable, Copyable, Movable):
     """

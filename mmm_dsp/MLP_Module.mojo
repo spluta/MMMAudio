@@ -1,8 +1,8 @@
 from python import PythonObject
 from python import Python
-from mmm_dsp.Osc import Phasor
-from mmm_utils.Messenger import *
-from mmm_src.MMMWorld import *
+from mmm_dsp.Oscillators import Phasor
+from mmm_utils.Messenger_Module import *
+from mmm_src.MMMWorld_Module import *
 
 
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 

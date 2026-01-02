@@ -1,5 +1,4 @@
 from mmm_src.MMMWorld import MMMWorld
-from mmm_src.MMMTraits import *
 
 from python import PythonObject
 

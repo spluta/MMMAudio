@@ -1,9 +1,9 @@
 from memory import UnsafePointer
-from mmm_dsp.Buffer import *
-from mmm_src.MMMWorld import *
-from .Osc import Impulse
+from mmm_dsp.Buffer_Module import *
+from mmm_src.MMMWorld_Module import *
+from .Oscillators import Impulse
 from mmm_utils.functions import *
-from .Env import Env
+from .Envelopes import Env
 
 struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
