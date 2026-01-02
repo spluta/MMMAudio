@@ -3,7 +3,7 @@
 You can change the number of oscillators dynamically by sending a 'set_num_pairs' message.
 """
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 mmm_audio.start_audio()
 

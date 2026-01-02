@@ -1,5 +1,5 @@
 if True:
-    from mmm_src.MMMAudio import MMMAudio
+    from mmm_python.MMMAudio import MMMAudio
 
     # instantiate and load the graph - notice we are using the MidiSequencer graph here (the same as in the MidiSequencer example)
     mmm_audio = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
@@ -11,8 +11,8 @@ def midi_func():
     import threading
     import mido
     import time
-    from mmm_utils.functions import linexp, linlin, midicps, cpsmidi
-    from mmm_src.Patterns import Pseq, Pxrand
+    from mmm_python.functions import linexp, linlin, midicps, cpsmidi
+    from mmm_python.Patterns import Pseq, Pxrand
 
     # find your midi devices
     mido.get_input_names()

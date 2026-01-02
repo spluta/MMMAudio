@@ -1,5 +1,5 @@
 if True:
-    from mmm_src.MMMAudio import *
+    from mmm_python.MMMAudio import *
     list_audio_devices()
 
     in_device = "Fireface UCX II (24219339)"
@@ -24,7 +24,7 @@ if True:
     import mido
     import time
     import threading
-    from mmm_utils.functions import *
+    from mmm_python.functions import *
 
     # find your midi devices
     mido.get_input_names()

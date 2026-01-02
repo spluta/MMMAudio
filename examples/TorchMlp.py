@@ -5,7 +5,7 @@ you can also train the synth by creating any number of input/output pairs and ma
 """
 
 if True:
-    from mmm_src.MMMAudio import MMMAudio
+    from mmm_python.MMMAudio import MMMAudio
     from random import random
 
     mmm_audio = MMMAudio(128, graph_name="TorchMlp", package_name="examples")
@@ -79,7 +79,7 @@ def do_the_training():
 
     # train the network in a separate thread so the audio thread doesn't get interrupted
 
-    from mmm_utils.mlp_trainer import train_nn
+    from .mlp_trainer import train_nn
     import threading
 
     target_function = train_nn

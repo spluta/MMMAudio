@@ -6,9 +6,7 @@ https://scsynth.org/t/benjolin-inspired-instrument/1074/1
 Ported to MMMAudio by Ted Moore, October 2025
 """
 
-from mmm_src import *
-from mmm_dsp import *
-from mmm_utils import *
+from mmm_audio import *
 
 struct Benjolin(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  

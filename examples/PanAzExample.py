@@ -1,4 +1,4 @@
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 # instantiate and load the graph
 

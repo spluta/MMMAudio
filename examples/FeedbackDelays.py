@@ -1,6 +1,6 @@
 """use the mouse to control an overdriven feedback delay"""
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(128, graph_name="FeedbackDelays", package_name="examples")
 

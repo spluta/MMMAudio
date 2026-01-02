@@ -15,7 +15,7 @@
 * struct `Player` can play back anything that implements the `Playable` trait
     * `Player::next()`
     * `Player:: var prev_idx_f`
-* The interpolation `fn`s are not owned by anything. They will live in `mmm_utils.functions`. They get called as `fn`s in `Player`
+* The interpolation `fn`s are not owned by anything. They will live in `.functions`. They get called as `fn`s in `Player`
 * trait `Playable`
   * `fn __getitem__`
   * `fn at_phase[interp: Int = Interp.none]` for convenience re: windowing, etc.

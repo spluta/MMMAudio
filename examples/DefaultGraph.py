@@ -1,12 +1,11 @@
 
 
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="DefaultGraph", package_name="examples")
 mmm_audio.start_audio() 
-
 
 
 # set the frequency to a random value

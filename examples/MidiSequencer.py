@@ -1,16 +1,16 @@
 # Example of using the MidiSequencer with MMMAudio
 # start the MMMAudio engine with the MidiSequencer graph
 if True:
-    from mmm_src.MMMAudio import MMMAudio
+    from mmm_python.MMMAudio import MMMAudio
 
     # instantiate and load the graph
     mmm_audio = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
     mmm_audio.start_audio()
 
-    from mmm_src.Patterns import Pseq, Pxrand
+    from mmm_python.Patterns import Pseq, Pxrand
     import numpy as np
     import asyncio
-    from mmm_utils.functions import midicps, linexp
+    from mmm_python.functions import midicps, linexp
 
     global scheduler
     scheduler = mmm_audio.scheduler

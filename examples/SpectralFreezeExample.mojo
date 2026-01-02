@@ -1,6 +1,4 @@
-from mmm_src import *
-from mmm_utils import *
-from mmm_dsp import *
+from mmm_audio import *
 
 alias two_pi = 2.0 * pi
 

@@ -1,6 +1,4 @@
-from mmm_src import *
-from mmm_utils import *
-from mmm_dsp import *
+from mmm_audio import *
 
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,2,1]

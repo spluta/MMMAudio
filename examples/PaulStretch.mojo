@@ -1,6 +1,4 @@
-from mmm_src import *
-from mmm_utils import *
-from mmm_dsp import *
+from mmm_audio import *
 
 from random import random_float64
 

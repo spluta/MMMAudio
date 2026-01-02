@@ -1,7 +1,4 @@
-from mmm_src.MMMWorld_Module import *
-from mmm_dsp import *
-from mmm_utils import *
-
+from mmm_audio import *
 
 # this is the simplest possible
 struct In2Out(Representable, Movable, Copyable):

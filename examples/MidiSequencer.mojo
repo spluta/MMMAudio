@@ -1,6 +1,4 @@
-from mmm_src import *
-from mmm_utils import *
-from mmm_dsp import *
+from mmm_audio import *
 
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
@@ -63,7 +61,7 @@ struct TrigSynth(Movable, Copyable):
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
 
-    # the following 5 variables are messengers (imported from mmm_utils.Messenger_Module.mojo)
+    # the following 5 variables are messengers (imported from .Messenger_Module.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
     var messenger: Messenger

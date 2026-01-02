@@ -1,0 +1,48 @@
+
+from mmm_audio import *
+
+# there can only be one graph in an MMMAudio instance
+# a graph can have as many synths as you want
+struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
+    var world: UnsafePointer[MMMWorld]
+    var noise: WhiteNoise[N]
+    var filt0: VAMoogLadder[N, 0]
+    var filt2: VAMoogLadder[N, 2]
+    var filt4: VAMoogLadder[N, 4]
+    var m: Messenger
+    var which: Float64
+
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.noise = WhiteNoise[N]()
+        self.filt0 = VAMoogLadder[N, 0](world)
+        self.filt2 = VAMoogLadder[N, 2](world)
+        self.filt4 = VAMoogLadder[N, 4](world)
+        self.m = Messenger(world)
+        self.which = 0.0
+
+
+
+    fn __repr__(self) -> String:
+        return String("TestVAMoogLadder")
+
+
+
+    fn next(mut self) -> SIMD[DType.float64, self.N]:
+        sample = self.noise.next()  # Get the next white noise sample
+        freq = linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 24000.0)
+        q = linexp(self.world[].mouse_y, 0.0, 1.0, 0.01, 1.04)
+
+        self.m.update(self.which, "which")
+        
+        sample0 = self.filt0.next(sample, freq, q)  # Get the next sample from the filter
+        sample2 = self.filt2.next(sample, freq, q)  # Get the next sample from the filter
+        sample4 = self.filt4.next(sample, freq, q)  # Get the next sample from the filter
+
+        sample = select(self.which, [sample0, sample2, sample4])
+
+        return sample * 0.2
+
+
+        

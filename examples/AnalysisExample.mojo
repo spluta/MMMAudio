@@ -1,6 +1,4 @@
-from mmm_src import *
-from mmm_dsp import *
-from mmm_utils import *
+from mmm_audio import *
 
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var world: UnsafePointer[MMMWorld]

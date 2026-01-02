@@ -1,7 +1,7 @@
 """Example of a wavetable oscillator using custom wavetables loaded from files.
 """
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 mmm_audio.start_audio() 
 
@@ -17,8 +17,8 @@ def midi_func():
     import threading
     import mido
     import time
-    from mmm_utils.functions import linexp, linlin, midicps, cpsmidi
-    from mmm_src.Patterns import PVoiceAllocator
+    from mmm_python.functions import linexp, linlin, midicps, cpsmidi
+    from mmm_python.Patterns import PVoiceAllocator
 
     # find your midi devices
     print(mido.get_input_names())

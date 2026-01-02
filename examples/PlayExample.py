@@ -8,7 +8,7 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(128, graph_name="PlayExample", package_name="examples")
 
@@ -19,8 +19,8 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 # it is looking for /fader1 and /fader2 on port 5005; these can be adjusted
 # Start the OSC server on its own thread
 # this is a bug, but this thread has to start after audio or audio won't start
-from mmm_utils.osc_server import OSCServer
-from mmm_utils.functions import *
+from mmm_python.osc_server import OSCServer
+from mmm_python.functions import *
 
 # Usage:
 def osc_msg_handler(key, *args):

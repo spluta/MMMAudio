@@ -1,6 +1,6 @@
 # PaulStretch is an FFT – based extreme time, stretching algorithm invented by Paul Nasca in 2006
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 mmm_audio = MMMAudio(2048, graph_name="PaulStretch", package_name="examples")
 mmm_audio.start_audio()

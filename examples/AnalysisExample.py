@@ -1,4 +1,4 @@
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 ma = MMMAudio(128, graph_name="AnalysisExample", package_name="examples")
 ma.start_audio()
 
