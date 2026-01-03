@@ -1,5 +1,5 @@
 from .MMMWorld_Module import MMMWorld
-from math import tanh, floor, pi, exp
+from math import tanh, floor, pi, exp, log, cosh
 from .RisingBoolDetector_Module import RisingBoolDetector
 from .functions import clip, Li2
 from .Oversampling import *
@@ -10,51 +10,6 @@ fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int
     var out_samp = floor(in_samp / step + 0.5) * step
 
     return out_samp
-
-from math import sin, copysign, log, cosh
-
-fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], thresh: SIMD[DType.float64, num_chans], 
-               sig_mul1: SIMD[DType.float64, num_chans], sign_mul: SIMD[DType.float64, num_chans], sig_mul2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-    """Implements the Buchla cell function"""
-    var mask: SIMD[DType.bool, num_chans] = abs(sig).gt(thresh)
-
-    return mask.select((sig * sig_mul1 - (sign * sign_mul)) * sig_mul2, 0.0)
-
-fn sign[num_chans:Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-    """Returns the sign of x: -1, 0, or 1"""
-    pmask:SIMD[DType.bool, num_chans] = x.gt(0.0)
-    nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
-
-    return pmask.select(SIMD[DType.float64, num_chans](1.0), nmask.select(SIMD[DType.float64, num_chans](-1.0), SIMD[DType.float64, num_chans](0.0)))
-
-fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]:
-    """
-    Buchla waveshaper implementation
-    
-    Args:
-        input: Signal in - between 0 and +/-40.
-        amp: Amplitude/gain control (1 to 40).
-    
-    Returns:
-        Waveshaped output signal
-    """
-    # Generate sine wave at given phase
-    amp = clip(amp, 1.0, 40.0)
-    var sig = input * amp
-    var sig_sign = sign(sig)
-
-    # Apply Buchla cells
-    var v1 = buchla_cell(sig, sig_sign, 0.6, 0.8333, 0.5, -12.0)
-    var v2 = buchla_cell(sig, sig_sign, 2.994, 0.3768, 1.1281, -27.777)
-    var v3 = buchla_cell(sig, sig_sign, 5.46, 0.2829, 1.5446, -21.428)
-    var v4 = buchla_cell(sig, sig_sign, 1.8, 0.5743, 1.0338, 17.647)
-    var v5 = buchla_cell(sig, sig_sign, 4.08, 0.2673, 1.0907, 36.363)
-    var v6 = sig * 5.0
-    
-    out = (v1 + v2 + v3) + (v4 + v5 + v6)
-
-    # Scale output
-    return tanh(out / amp)
 
 struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
     """
@@ -92,7 +47,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
         self.last_trig = trig
         return self.samp
 
-# Anti-Derivative Anti-Aliasing functions are based on Jatin Chowdhury's python notebook: https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html
+# Anti-Derivative Anti-Aliasing functions are based on Jatin Chowdhury's python notebook: https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html and chowshapers: https://github.com/Chowdhury-DSP/chowdsp_utils/tree/master/modules/dsp/chowdsp_waveshapers/Waveshapers
 
 # the trait currently doesn't work, but it will once parameters are included in traits
 
@@ -364,3 +319,178 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
         out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
+
+
+fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], thresh: SIMD[DType.float64, num_chans], 
+               sig_mul1: SIMD[DType.float64, num_chans], sign_mul: SIMD[DType.float64, num_chans], sig_mul2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    """Implements the Buchla cell function"""
+    var mask: SIMD[DType.bool, num_chans] = abs(sig).gt(thresh)
+
+    return mask.select((sig * sig_mul1 - (sign * sign_mul)) * sig_mul2, 0.0)
+
+fn sign[num_chans:Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    """Returns the sign of x: -1, 0, or 1"""
+    pmask:SIMD[DType.bool, num_chans] = x.gt(0.0)
+    nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
+
+    return pmask.select(SIMD[DType.float64, num_chans](1.0), nmask.select(SIMD[DType.float64, num_chans](-1.0), SIMD[DType.float64, num_chans](0.0)))
+
+fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]:
+    """
+    Buchla waveshaper implementation as a function. See the BuchlaWavefolder struct for an ADAA version with oversampling.
+    
+    Args:
+        input: Signal in - between 0 and +/-40.
+        amp: Amplitude/gain control (1 to 40).
+    
+    Returns:
+        Waveshaped output signal
+    """
+    # Generate sine wave at given phase
+    amp = clip(amp, 1.0, 40.0)
+    var sig = input * amp
+    var sig_sign = sign(sig)
+
+    # Apply Buchla cells
+    var v1 = buchla_cell(sig, sig_sign, 0.6, 0.8333, 0.5, -12.0)
+    var v2 = buchla_cell(sig, sig_sign, 2.994, 0.3768, 1.1281, -27.777)
+    var v3 = buchla_cell(sig, sig_sign, 5.46, 0.2829, 1.5446, -21.428)
+    var v4 = buchla_cell(sig, sig_sign, 1.8, 0.5743, 1.0338, 17.647)
+    var v5 = buchla_cell(sig, sig_sign, 4.08, 0.2673, 1.0907, 36.363)
+    var v6 = sig * 5.0
+    
+    out = (v1 + v2 + v3) + (v4 + v5 + v6)
+
+    # Scale output
+    return tanh(out / amp)
+
+struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
+    var G: Float64       # folder cell "gain"
+    var B: Float64       # folder cell "bias"
+    var thresh: Float64  # folder cell "threshold"
+    var mix: Float64     # folder cell mixing factor
+    var Bp: Float64
+    var Bpp: Float64
+    alias one_sixth: Float64 = 1.0 / 6.0
+
+    fn __init__(out self, G: Float64, B: Float64, thresh: Float64, mix: Float64):
+        self.G = G
+        self.B = B
+        self.thresh = thresh
+        self.mix = mix
+        self.Bp = 0.5 * G * (thresh*thresh) - B * thresh
+        self.Bpp = Self.one_sixth * G * (thresh*thresh*thresh) - 0.5 * B * (thresh*thresh) - thresh * self.Bp
+
+    fn func(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        mask: SIMD[DType.bool, num_chans] = abs(x).gt(self.thresh)
+        return mask.select(self.G * x - self.B * sign(x), SIMD[DType.float64, num_chans](0.0))
+
+    fn func_AD(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        var mask: SIMD[DType.bool, num_chans] = abs(x).gt(self.thresh)
+        return mask.select(0.5 * self.G * (x * x) - self.B * x * sign(x) - self.Bp, SIMD[DType.float64, num_chans](0.0))
+
+    # fn func_AD2(self, x: Float64) -> Float64:
+    #     var sgn = sign(x)
+    #     if abs(x) > self.thresh:
+    #         return (Self.one_sixth * self.G * (x * x * x) 
+    #                 - 0.5 * self.B * (x * x) * sgn 
+    #                 - self.Bp * x 
+    #                 - self.Bpp * sgn)
+    #     return 0.0
+
+struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable):
+    """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling.
+    
+    Params:
+        num_chans: The number of channels for SIMD operations.
+        os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
+
+    Public Methods:
+        __init__(): Initializes the BuchlaWavefolder with predefined folder cells.
+        
+        next(x: Float64, amp: Float64) -> Float64:
+            Computes the first-order anti-aliased Buchla wavefolded output for input `x` and amplitude `amp`, using ADAA.
+
+    """
+    
+    alias x_mix: Float64 = 5.0
+    var cells: List[BuchlaCell[num_chans]]
+    alias TOL: Float64 = 1.0e-5
+    var x1: SIMD[DType.float64, num_chans]
+    var world: UnsafePointer[MMMWorld]
+    var oversampling: Oversampling[num_chans, 2 ** os_index]
+    var upsampler: Upsampler[num_chans, 2 ** os_index]
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.world = world
+        self.x1 = SIMD[DType.float64, num_chans](0.0)
+        # Initialize folder cells
+        self.cells = List[BuchlaCell[num_chans]]()
+        self.cells.append(BuchlaCell[num_chans](0.8333, 0.5, 0.6, -12.0))
+        self.cells.append(BuchlaCell[num_chans](0.3768, 1.1281, 2.994, -27.777))
+        self.cells.append(BuchlaCell[num_chans](0.2829, 1.5446, 5.46, -21.428))
+        self.cells.append(BuchlaCell[num_chans](0.5743, 1.0338, 1.8, 17.647))
+        self.cells.append(BuchlaCell[num_chans](0.2673, 1.0907, 4.08, 36.363))
+        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
+        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
+
+    fn _next_norm(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+        x2 = x * amp
+        var y: SIMD[DType.float64, num_chans] = Self.x_mix * x2
+        for i in range(len(self.cells)):
+            y += self.cells[i].mix * self.cells[i].func(x2)
+        return y / amp
+
+    fn _next_AD1(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+        x2 = x * amp
+        var y: SIMD[DType.float64, num_chans] = 0.5 * Self.x_mix * (x2 * x2)
+        for i in range(len(self.cells)):
+            y += self.cells[i].mix * self.cells[i].func_AD(x2)
+        return y / (amp * amp)
+
+    # fn _wave_func_AD2(self, x: Float64, amp: Float64) -> Float64:
+    #     x2 = x * amp
+    #     var y: Float64 = (Self.x_mix / 6.0) * (x2 * x2 * x2)
+    #     for i in range(len(self.cells)):
+    #         y += self.cells[i].mix * self.cells[i].func_AD2(x2)
+    #     return y
+
+    fn _next1(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+        """
+        Computes the first-order anti-aliased BuchlaWavefolder.
+
+        Args:
+            x: The input sample.
+            amp: The amplitude/gain control.
+
+        Returns:
+            The anti-aliased folded signal.
+        """
+        mask = abs(x - self.x1).lt(self.TOL)
+
+        out = mask.select(self._next_norm((x + self.x1) * 0.5, amp), (self._next_AD1(x, amp) - self._next_AD1(self.x1, amp)) / (x - self.x1))
+        self.x1 = x
+        return out
+
+    fn next(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+        """
+        Computes the first-order anti-aliased `hard_clip` of `x`.
+
+        Args:
+            x: The input sample.
+
+        Returns:
+            The anti-aliased `hard_clip` of `x`.
+        """
+        @parameter
+        if os_index == 0:
+            return self._next1(x, amp)
+        else:
+            alias times_oversampling = 2 ** os_index
+            @parameter
+            for i in range(times_oversampling):
+                # upsample the input
+                x2 = self.upsampler.next(x, i)
+                y = self._next1(x2, amp)
+                self.oversampling.add_sample(y)
+            return self.oversampling.get_sample()
