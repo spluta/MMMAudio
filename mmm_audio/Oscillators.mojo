@@ -152,15 +152,6 @@ struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     fn next(mut self, freq: SIMD[DType.float64, self.num_chans] = 100.0, phase_offset: SIMD[DType.float64, self.num_chans] = 0.0, trig: SIMD[DType.bool, self.num_chans] = SIMD[DType.bool, self.num_chans](fill= True)) -> SIMD[DType.float64, self.num_chans]:
         return self.phasor.next_impulse(freq, phase_offset, trig)
 
-struct OscType:
-    alias sine: Int64 = 0
-    alias saw: Int64 = 1
-    alias square: Int64 = 2
-    alias triangle: Int64 = 3
-    alias bandlimited_triangle: Int64 = 4
-    alias bandlimited_saw: Int64 = 5
-    alias bandlimited_square: Int64 = 6
-
 struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](Representable, Movable, Copyable):
     """
     A wavetable oscillator capable of all standard waveforms. using linear, quadratic, or sinc interpolation and can also be set to use oversampling.
@@ -902,10 +893,13 @@ struct OscBuffers(Movable, Copyable):
     fn init_lf_triangle(mut self):
         data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
-            if i < OscBuffersSize // 2:
-                data.append(2.0 * (Float64(i) / Float64(OscBuffersSize)) - 1.0)  # Ascending part
+            val = Float64(i) / Float64(OscBuffersSize) * 4.0
+            if val < 1.0:
+                data.append(linlin(val, 0.0, 1.0, 0.0, 1.0))  # Ascending part
+            elif val < 3.0:
+                data.append(linlin(val, 1.0, 3.0, 1.0, -1.0))  # Descending part
             else:
-                data.append(1.0 - 2.0 * (Float64(i) / Float64(OscBuffersSize)))  # Descending part
+                data.append(linlin(val, 3.0, 4.0, -1.0, 0.0))  # Ascending part
         self.buffers[1] = data.copy()
 
     @doc_private
@@ -935,14 +929,32 @@ struct OscBuffers(Movable, Copyable):
             var sample: Float64 = 0.0
             
             for n in range(1, 513):  # Using 512 harmonics
-                var harmonic = sin(Float64(n) * x) / (Float64(n) * Float64(n))
+                var harmonic = sin(Float64(2 * n - 1) * x) / (Float64(2 * n - 1) * Float64(2 * n - 1))
                 if n % 2 == 0:  # (-1)^(n+1) is -1 when n is even
                     harmonic = -harmonic
+
                 sample += harmonic
             
             # Scale by 8/π² for correct amplitude
             data.append(8.0 / (3.141592653589793 * 3.141592653589793) * sample)
         self.buffers[4] = data.copy()
+
+    @doc_private
+    fn init_square(mut self):
+        # Construct square wave from sine harmonics
+        # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
+        data = List[Float64](capacity=OscBuffersSize)
+        for i in range(OscBuffersSize):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
+            var sample: Float64 = 0.0
+            
+            for n in range(1, 513):  # Using 512 harmonics
+                var harmonic = sin(Float64(2 * n - 1) * x) / Float64(2 * n - 1)
+                sample += harmonic
+            
+            # Scale by 4/π for correct amplitude
+            data.append(4.0 / 3.141592653589793 * sample)
+        self.buffers[6] = data.copy()
 
     @doc_private
     fn init_sawtooth(mut self):
@@ -963,22 +975,7 @@ struct OscBuffers(Movable, Copyable):
             data.append(2.0 / 3.141592653589793 * sample)
         self.buffers[5] = data.copy()
 
-    @doc_private
-    fn init_square(mut self):
-        # Construct square wave from sine harmonics
-        # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
-        data = List[Float64](capacity=OscBuffersSize)
-        for i in range(OscBuffersSize):
-            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
-            var sample: Float64 = 0.0
-            
-            for n in range(1, 513):  # Using 512 harmonics
-                var harmonic = sin(Float64(2 * n - 1) * x) / Float64(2 * n - 1)
-                sample += harmonic
-            
-            # Scale by 4/π for correct amplitude
-            data.append(4.0 / 3.141592653589793 * sample)
-        self.buffers[6] = data.copy()
+    
 
     fn __repr__(self) -> String:
         return String("OscBuffers(size=" + String(OscBuffersSize) + ")")

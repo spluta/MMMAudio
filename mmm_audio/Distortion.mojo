@@ -64,7 +64,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 
 struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
     """
-    Anti-Derivative Anti-Aliasing hard-clipping function.
+    Anti-Derivative Anti-Aliasing soft-clipping function.
     
     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
     
@@ -74,18 +74,19 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     
     Methods:
 
-        next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the first order anti-aliased `hard_clip` of `x`.
-        next2(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the second order anti-aliased `hard_clip` of `x`.
-    
+        next(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+            Computes the first order anti-aliased `soft_clip` of `x` with optional oversampling.
+
     """
     alias times_oversampling = 2 ** os_index
     var x1: SIMD[DType.float64, num_chans]
     var oversampling: Oversampling[num_chans, Self.times_oversampling]
     var upsampler: Upsampler[num_chans, Self.times_oversampling]
-    var degree_use: Int
+    var D: Int
+    var norm_factor: Float64
+    var inv_norm_factor: Float64
     alias TOL = 1.0e-5
+    var G1: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
@@ -93,49 +94,56 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
         self.oversampling = Oversampling[num_chans, Self.times_oversampling](world)
         self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
-        self.degree_use = degree // 2 * 2 + 1  # ensure degree is odd
+        self.D = degree // 2 * 2 + 1  # ensure degree is odd
+        self.norm_factor = (self.D - 1) / self.D
+        self.inv_norm_factor = 1.0 / self.norm_factor
+        self.G1 = 1.0 / (2.0 * (self.norm_factor * self.norm_factor)) - 1.0 / ((self.norm_factor * self.norm_factor) * self.D * (self.D + 1))
 
     @doc_private
     @always_inline
-    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Transfer function: x - x^n/n"""
-        
-        x_norm = clip(x / thresh, -1.0, 1.0)
-        return (x_norm - pow(x_norm, self.degree_use) / self.degree_use) * thresh
+
+        mask: SIMD[DType.bool, num_chans] = abs(x*self.norm_factor).gt(1.0)
+
+        out = ((x * self.norm_factor) - pow(x * self.norm_factor, self.D) / self.D) * self.inv_norm_factor
+
+        out = mask.select(sign(x), out)
+
+        return out
 
     @doc_private
     @always_inline
-    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """First antiderivative: x²/2 - x^(n+1) / (n*(n+1))"""
-        x_norm = clip(x / thresh, -1.0, 1.0)
-        n = self.degree_use
-        result = x_norm**2 / 2 - pow(x_norm, n + 1) / (n * (n + 1))
-        return result * (thresh ** 2)
+        mask: SIMD[DType.bool, num_chans] = abs(x*self.norm_factor).gt(1.0)
+
+        outA = x * sign(x) + self.G1 - self.inv_norm_factor
+
+        out = ((self.norm_factor * (x * x) / 2.0) - (pow(self.norm_factor, self.D) * pow(x, self.D + 1) / (self.D * (self.D + 1.0)))) * self.inv_norm_factor
+
+        return mask.select(outA, out)
 
     @doc_private
     @always_inline
-    fn _next1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
-        diff = x - self.x1
-        abs_x = abs(x)
-        abs_x1 = abs(self.x1)
-        
-        mask = abs(diff).lt(self.TOL) | abs_x.gt(thresh) | abs_x1.gt(thresh) 
-        
-        fallback = self._next_norm(x, thresh)
-        
-        ad1_curr = self._next_AD1(x, thresh)
-        ad1_prev = self._next_AD1(self.x1, thresh)
-        # Avoid division by zero in lanes where diff is small
-        safe_diff = mask.select(SIMD[DType.float64, num_chans](1.0), diff)
-        normal = (ad1_curr - ad1_prev) / safe_diff
-        
-        out = mask.select(fallback, normal)
-        
+    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """
+        Computes the first-order anti-aliased SoftClip.
+
+        Args:
+            x: The input sample.
+
+        Returns:
+            The anti-aliased folded signal.
+        """
+        mask = abs(x - self.x1).lt(self.TOL)
+
+        out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
 
     @always_inline
-    fn next1(mut self, x: SIMD[DType.float64, num_chans], thresh: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `hard_clip` of `x`.
 
@@ -143,17 +151,17 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
             x: The input sample.
 
         Returns:
-            The anti-aliased `hard_clip` of `x`.
+            The anti-aliased `soft_clip` of `x`.
         """
         @parameter
         if os_index == 0:
-            return self._next1(x, thresh)
+            return self._next1(x)
         else:
             @parameter
             for i in range(self.times_oversampling):
                 # upsample the input
                 x2 = self.upsampler.next(x, i)
-                y = self._next1(x2, thresh)
+                y = self._next1(x2)
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 

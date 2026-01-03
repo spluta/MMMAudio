@@ -156,12 +156,12 @@ struct OscType:
 
     sine: Int = 0
 
-    saw: Int = 1
+    triangle: Int = 1
 
-    square: Int = 2
+    saw: Int = 2
 
-    triangle: Int = 3
-
+    square: Int = 3
+    
     bandlimited_triangle: Int = 4
 
     bandlimited_saw: Int = 5
@@ -169,9 +169,9 @@ struct OscType:
     bandlimited_square: Int = 6
     """
     alias sine: Int = 0
-    alias saw: Int = 1
-    alias square: Int = 2
-    alias triangle: Int = 3
+    alias triangle: Int = 1
+    alias saw: Int = 2
+    alias square: Int = 3
     alias bandlimited_triangle: Int = 4
     alias bandlimited_saw: Int = 5
     alias bandlimited_square: Int = 6

@@ -6,4 +6,4 @@ mmm_audio.start_audio()
 
 mmm_audio.stop_audio()
 
-mmm_audio.plot(48000//40)
+mmm_audio.plot(48000//8)
