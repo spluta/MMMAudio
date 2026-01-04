@@ -4,7 +4,7 @@ MMMAudio is a Mojo/Python environment for sound synthesis which uses Mojo for re
 
 MMMAudio is a highly efficient synthesis system that uses parallelized SIMD operations for maximum efficiency on CPUs. I was able to get over 6000 sine oscilators going in one instance on my M2 Mac, with no hickups or distortion. 
 
-Writing dsp code in Mojo is straight-forward and the feedback loop of being able to quickly compile the entire project in a few seconds to test is lightyears better than making externals is SC/max/pd. 
+Writing dsp code in Mojo is straight-forward and the feedback loop of being able to quickly compile the entire project in a few seconds to test is faster than making externals in SC/max/pd. 
 
 ## Getting Started
 
