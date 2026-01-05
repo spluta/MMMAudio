@@ -26,11 +26,6 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
-
-    Public Methods:
-
-        next(in_samp: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Processes the input sample and trigger, returning the latched output sample.
     """
     var samp: SIMD[DType.float64, num_chans]
     var last_trig: SIMD[DType.bool, num_chans]
