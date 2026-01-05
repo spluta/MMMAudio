@@ -12,16 +12,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
 
     Parameters:
-      num_chans: size of the SIMD vector - defaults to 1
-
-    Args:
-      world: Pointer to the MMMWorld instance.
-
-    Public Methods:
-
-      next(mut self, input: SIMD[DType.float64, num_chans], room_size: SIMD[DType.float64, num_chans] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, num_chans] = 1000.0, added_space: SIMD[DType.float64, num_chans] = 0.0) -> SIMD[DType.float64, num_chans]:
-        
-      Process one sample through the freeverb.
+      num_chans: Size of the SIMD vector - defaults to 1.
     """
     var world: UnsafePointer[MMMWorld]
     var lp_comb0: LP_Comb[num_chans]

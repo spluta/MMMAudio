@@ -243,7 +243,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         self.delay = Delay[num_chans, interp](self.world, max_delay)
 
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback_coef: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
-        """Process one sample through the all-pass comb filter
+        """Process one sample through the all-pass comb filter.
 
         Args:
           input: The input sample to process.
@@ -278,6 +278,8 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
 struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Representable, Movable, Copyable):
     """A feedback delay structured like a Comb filter, but with possible feedback coefficient above 1 due to an integrated tanh function.
     
+    By default, Anti-aliasing is disabled and no oversampling is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
+    
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
       interp: The interpolation method to use. See `struct Interp` for interpolation options.
@@ -308,7 +310,6 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
 
         Returns:
           The processed output sample or SIMD vector.
-
         """
         var out = self.delay.next(self.fb, delay_time)  # Get the delayed sample
 

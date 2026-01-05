@@ -6,6 +6,15 @@ from .Oversampling import *
 
 
 fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int64) -> SIMD[DType.float64, num_chans]:
+    """Simple bitcrusher function that reduces the bit depth of the input signal.
+    
+    Parameters:
+        num_chans: The number of channels for SIMD operations.
+
+    Args:
+        in_samp: The input sample to be bitcrushed.
+        bits: The number of bits to reduce the signal to.
+    """
     var step = 1.0 / SIMD[DType.float64, num_chans](1 << bits)
     var out_samp = floor(in_samp / step + 0.5) * step
 
@@ -172,19 +181,11 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing hard-clipping function.
     
-    This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
+    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA).
     
     Parameters:
-    
         num_chans: The number of channels for SIMD operations.
-    
-    Methods:
-
-        next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the first order anti-aliased `hard_clip` of `x`.
-        next2(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the second order anti-aliased `hard_clip` of `x`.
-    
+        os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).
     """
     var x1: SIMD[DType.float64, num_chans]
     var x2: SIMD[DType.float64, num_chans]
@@ -280,19 +281,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
-
-    Methods:
-        __init__(): Initializes the `TanhAD` struct.
-
-        next1(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the first-order anti-aliased `tanh` of `x`.
-            This method should be called iteratively for each sample.
-
-    Example:
-        var tanhad = TanhAD[1]()
-        var output = tanhad.next1(input_sample)
-
-    tanhad.next1(x: SIMD[DType.float64, num_chans]).
+        os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
     """
 
     var x1: SIMD[DType.float64, num_chans]
@@ -358,13 +347,13 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
 fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], thresh: SIMD[DType.float64, num_chans], 
                sig_mul1: SIMD[DType.float64, num_chans], sign_mul: SIMD[DType.float64, num_chans], sig_mul2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-    """Implements the Buchla cell function"""
+    """Implements the Buchla cell function."""
     var mask: SIMD[DType.bool, num_chans] = abs(sig).gt(thresh)
 
     return mask.select((sig * sig_mul1 - (sign * sign_mul)) * sig_mul2, 0.0)
 
 fn sign[num_chans:Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-    """Returns the sign of x: -1, 0, or 1"""
+    """Returns the sign of x: -1, 0, or 1."""
     pmask:SIMD[DType.bool, num_chans] = x.gt(0.0)
     nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
 
@@ -374,12 +363,15 @@ fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var 
     """
     Buchla waveshaper implementation as a function. See the BuchlaWavefolder struct for an ADAA version with oversampling.
     
+    Parameters:
+        num_chans: The number of channels for SIMD operations.
+
     Args:
         input: Signal in - between 0 and +/-40.
         amp: Amplitude/gain control (1 to 40).
     
     Returns:
-        Waveshaped output signal
+        Waveshaped output signal.
     """
     # Generate sine wave at given phase
     amp = clip(amp, 1.0, 40.0)
@@ -439,13 +431,6 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     Parameters:
         num_chans: The number of channels for SIMD operations.
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
-
-    Public Methods:
-        __init__(): Initializes the BuchlaWavefolder with predefined folder cells.
-        
-        next(x: Float64, amp: Float64) -> Float64:
-            Computes the first-order anti-aliased Buchla wavefolded output for input `x` and amplitude `amp`, using ADAA.
-
     """
     
     alias x_mix: Float64 = 5.0
@@ -469,6 +454,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
         self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
 
+    @doc_private
     fn _next_norm(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
         x2 = x * amp
         var y: SIMD[DType.float64, num_chans] = Self.x_mix * x2
@@ -476,6 +462,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
             y += self.cells[i].mix * self.cells[i].func(x2)
         return y / amp
 
+    @doc_private
     fn _next_AD1(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
         x2 = x * amp
         var y: SIMD[DType.float64, num_chans] = 0.5 * Self.x_mix * (x2 * x2)
@@ -489,7 +476,8 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     #     for i in range(len(self.cells)):
     #         y += self.cells[i].mix * self.cells[i].func_AD2(x2)
     #     return y
-
+    @doc_private
+    @always_inline
     fn _next1(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased BuchlaWavefolder.
@@ -507,12 +495,14 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         self.x1 = x
         return out
 
+    @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `hard_clip` of `x`.
 
         Args:
             x: The input sample.
+            amp: The amplitude/gain control.
 
         Returns:
             The anti-aliased `hard_clip` of `x`.

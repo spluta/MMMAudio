@@ -5,7 +5,6 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     """A simple oversampling buffer that collects multiple samples and then downsamples them using a low-pass filter.
 
     Parameters:
-
         num_chans: Number of channels for the oversampling buffer.
         times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
 
@@ -53,7 +52,6 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
     """A simple oversampler that upsamples the input signal by the specified factor using a low-pass filter.
 
     Parameters:
-
         num_chans: Number of channels for the upsampler.
         times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
 
@@ -151,6 +149,11 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
 
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Process one sample through the 2nd-order low-pass filter.
+        
+        Args:
+            x: The input signal to process.
+        """
         var y = self.b0 * x + self.z1
         self.z1 = self.b1 * x - self.a1 * y + self.z2
         self.z2 = self.b2 * x - self.a2 * y
@@ -158,10 +161,9 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
 
 struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
     """A 4th-order low-pass filter for oversampling applications, implemented as two cascaded 2nd-order sections.
-   
+    
     Parameters:
-
-        num_chans: Number of channels for the filter.
+        num_chans: Number of channels for the filter with fixed cutoff frequency.
 
     Public Methods:
 
@@ -186,6 +188,11 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
 
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Process one sample through the 4th-order low-pass filter with fixed cutoff frequency.
+        
+        Args:
+            x: The input signal to process.
+        """
         
         var y = self.os_lpf1.next(x)
         y = self.os_lpf2.next(y)
