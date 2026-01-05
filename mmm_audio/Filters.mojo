@@ -10,7 +10,7 @@ from .Oversampling import Oversampling, Upsampler
 struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
 
-    Params:
+    Parameters:
 
         num_chans: Number of SIMD channels to process in parallel.
 
@@ -1005,7 +1005,7 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
     A translation of Julius Smith's Faust implementation of digital filters.
     Copyright (C) 2003-2019 by Julius O. Smith III <jos@ccrma.stanford.edu>.
 
-    Params:
+    Parameters:
         num_chans: The number of SIMD channels to process.
 
     Args:

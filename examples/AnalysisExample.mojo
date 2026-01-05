@@ -16,7 +16,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.pitch = 0.0
         self.pitch_conf = 0.0
         self.rms = 0.0
-        self.yin = YIN[window_size, 50, 5000](self.world)
+        self.yin = YIN[window_size, 50, 5000](world)
 
     fn next_window(mut self, mut frame: List[Float64]):
         self.yin.next_window(frame)

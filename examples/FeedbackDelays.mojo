@@ -5,7 +5,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     var buf: Buffer
     var playBuf: Play
-    var delays: FB_Delay[2, Interp.lagrange4]  # FB_Delay for feedback delay effect
+    var delays: FB_Delay[2, Interp.lagrange4, True, 1]  # FB_Delay for feedback delay effect
     var lag: Lag[2]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -13,7 +13,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
         # FB_Delay is initialized as 2 channel
-        self.delays = FB_Delay[2, Interp.lagrange4](self.world, 1.0) 
+        self.delays = FB_Delay[2, Interp.lagrange4, True, 1](self.world, 1.0) 
 
         self.lag = Lag[2](self.world, 0.5)  # Initialize Lag with a default time constant
 

@@ -4,7 +4,7 @@ from .MMMWorld_Module import *
 struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
     """A simple oversampling buffer that collects multiple samples and then downsamples them using a low-pass filter.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels for the oversampling buffer.
         times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
@@ -52,7 +52,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
 struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable, Movable, Copyable):
     """A simple oversampler that upsamples the input signal by the specified factor using a low-pass filter.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels for the upsampler.
         times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
@@ -90,7 +90,7 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
 struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     """A simple 2nd-order low-pass filter for oversampling applications. Does not allow changing cutoff frequency on the fly to avoid that calculation each sample.
     
-    Params:
+    Parameters:
         num_chans: Number of channels for the filter.
 
     Public Methods:
@@ -159,7 +159,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
 struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
     """A 4th-order low-pass filter for oversampling applications, implemented as two cascaded 2nd-order sections.
    
-    Params:
+    Parameters:
 
         num_chans: Number of channels for the filter.
 

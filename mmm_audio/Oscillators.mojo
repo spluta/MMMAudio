@@ -15,7 +15,7 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     
     However, it can also be an impulse with next_impulse() and a boolean impulse with next_bool().
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0). This should not be adjusted directly, but rather through the use of the Oversampling struct when needed. If an oversampling oscillator is needed, use Osc.
@@ -108,7 +108,7 @@ struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     """
     An impulse oscillator. Impulse is essentially a wrapper around the Phasor oscillator that provides impulse-specific methods.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
@@ -158,7 +158,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
     
     While any combination is posible, best practice is with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         interp: Interpolation method. See Interp struct for options (default is Interp.linear).
@@ -484,7 +484,7 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
     
     This is a convenience struct as internally it uses Osc and indicates `osc_type = 0`
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
@@ -521,7 +521,7 @@ struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
 
     This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
@@ -556,7 +556,7 @@ struct LFSquare[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, 
 
     Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
@@ -597,7 +597,7 @@ struct LFTri[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Cop
 
     The output range is [-1, 1].
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         os_index: Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).
@@ -635,7 +635,7 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
     
     Dust has a Phasor as its core, and the frequency of the Phasor is randomly changed each time an impulse is generated. This allows the Dust to be used in multiple ways. It can be used as a simple random impulse generator, or the user can use the get_phase() method to get the current phase of the internal Phasor and use that phase to drive other oscillators or processes. The user can also set the phase of the internal Phasor using the set_phase() method, allowing for more complex interactions.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
 
@@ -709,7 +709,7 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
 struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Movable, Copyable):
     """Low-frequency interpolating noise generator with stepped (none), linear, or cubic interpolation.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
         interp: Interpolation method. Options are Interp.none (stepped), Interp.linear, Interp.cubic.
@@ -799,7 +799,7 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Mo
 struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
     """A phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.
 
-    Params:
+    Parameters:
 
         num_chans: Number of channels (default is 1).
 

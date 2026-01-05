@@ -15,7 +15,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
     """
     A simple latch that holds the last input sample when a trigger is received.
 
-    Params:
+    Parameters:
         num_chans: The number of channels for SIMD operations.
 
     Public Methods:
@@ -68,7 +68,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     
     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
     
-    Params:
+    Parameters:
     
         num_chans: The number of channels for SIMD operations.
     
@@ -174,7 +174,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     
     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
     
-    Params:
+    Parameters:
     
         num_chans: The number of channels for SIMD operations.
     
@@ -272,7 +272,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
     
-struct TanhAD[num_chans: Int = 1](Copyable, Movable):
+struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing first order tanh function.
     This struct provides anti-aliased versions of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method.
@@ -298,10 +298,13 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
     var x1: SIMD[DType.float64, num_chans]
     # var x2: SIMD[DType.float64, num_chans]
     alias TOL = 1.0e-5
+    var oversampling: Oversampling[num_chans, 2 ** os_index]
+    var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
-        # self.x2 = SIMD[DType.float64, num_chans](0.0)
+        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
+        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
 
     @doc_private
     fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
@@ -311,7 +314,7 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
     fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         return log (cosh (x))
 
-    fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `tanh` of `x`.
         This method should be called iteratively for each sample.
@@ -327,6 +330,30 @@ struct TanhAD[num_chans: Int = 1](Copyable, Movable):
         out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
+    
+    @always_inline
+    fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """
+        Computes the first-order anti-aliased `hard_clip` of `x`.
+
+        Args:
+            x: The input sample.
+
+        Returns:
+            The anti-aliased `hard_clip` of `x`.
+        """
+        @parameter
+        if os_index == 0:
+            return self._next1(x)
+        else:
+            alias times_oversampling = 2 ** os_index
+            @parameter
+            for i in range(times_oversampling):
+                # upsample the input
+                x2 = self.upsampler.next(x, i)
+                y = self._next1(x2)
+                self.oversampling.add_sample(y)
+            return self.oversampling.get_sample()
 
 
 fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], thresh: SIMD[DType.float64, num_chans], 
@@ -409,7 +436,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
 struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable):
     """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling.
     
-    Params:
+    Parameters:
         num_chans: The number of channels for SIMD operations.
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
 

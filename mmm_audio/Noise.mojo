@@ -4,7 +4,7 @@ from .functions import *
 struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate white noise samples.
     
-    Params:
+    Parameters:
         num_chans: Number of SIMD channels.
 
     Public Methods:
@@ -26,7 +26,7 @@ struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
 struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate pink noise samples (SIMD version).
 
-    Params:
+    Parameters:
         num_chans: Number of SIMD channels.
 
     Public Methods:
@@ -79,7 +79,7 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
 struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate brown noise samples (SIMD version).
 
-    Params:
+    Parameters:
         num_chans: Number of SIMD channels.
 
     Public Methods:
@@ -110,7 +110,7 @@ struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
 struct TExpRand[num_simd: Int = 1](Copyable, Movable):
     """Generate exponentially distributed random samples upon receiving a trigger (SIMD version).
 
-    Params:
+    Parameters:
 
         num_simd: Number of SIMD channels.
 
@@ -140,7 +140,7 @@ struct TExpRand[num_simd: Int = 1](Copyable, Movable):
 struct TRand[num_simd: Int = 1](Copyable, Movable):
      """Generate linearly distributed random samples upon receiving a trigger (SIMD version).
 
-    Params:
+    Parameters:
 
         num_simd: Number of SIMD channels.
 
