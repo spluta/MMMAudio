@@ -202,7 +202,22 @@ fn calc_feedback[N: Int = 1](delaytime: SIMD[DType.float64, N], decaytime: SIMD[
 struct Comb[N: Int = 1, interp: Int = 2](Movable, Copyable):
     """
     A simple comb filter using a delay line with feedback.
+
+    Params:
+
+      num_chans: Size of the SIMD vector - defaults to 1.
+
+      interp: The interpolation method to use (0 = no interpolation, 1 = linear, 2 = cubic, 3 = Lagrange). See `struct Interp` for how you can specify the desired interpolation method with words rather than integers.
     
+    Args:
+
+      world: Pointer to the MMMWorld instance.
+
+      max_delay: The maximum delay time in seconds.
+
+    Public Methods:
+
+      next - Generate the next sample through the comb filter.
     """
 
     var world: UnsafePointer[MMMWorld]

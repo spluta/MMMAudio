@@ -54,6 +54,6 @@ For information on the documentation generation see [Documentation Generation](d
 
 ## Credits
 
-Created by Sam Pluta and authored by Sam Pluta and Ted Moore.
+Created by Sam Pluta and Ted Moore.
 
 This repository includes a recording of "Shiverer" by Eric Wubbels as the default sample. This was performed by Eric Wubbels and Erin Lesser and recorded by Jeff Snyder.
