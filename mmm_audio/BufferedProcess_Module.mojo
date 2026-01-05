@@ -132,6 +132,14 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in .Windows. If None, no window is applied. The default is None.
         output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in .Windows. If None, no window is applied. The default is None.
+    
+    Public Methods:
+    
+        next(self, input: Float64) -> Float64 - Process the next input sample and return the next output sample.
+        next_stereo(self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2] - Process the next input stereo sample and return the next output stereo sample.
+        next_from_buffer(self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64 - Process samples from a buffer for non-real-time processing.
+        next_from_stereo_buffer(self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2] - Process stereo samples from a buffer for non-real-time processing.
+    
     """
     var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]

@@ -9,11 +9,6 @@ from .functions import linear_interp, quadratic_interp
 struct Buffer(Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.
 
-
-    Params:
-        data: A List[List[Float64]] representing the audio data for each channel.
-        sample_rate: The sample rate of the audio data.
-
     Initialization Methods:
 
         __init__(data, sample_rate): Initialize the Buffer with provided data and sample rate.
@@ -24,7 +19,7 @@ struct Buffer(Movable, Copyable):
 
     """
     var data: List[List[Float64]]
-    var num_chans: Int64
+    var num_chans: Int64 
     var num_frames: Int64
     var num_frames_f64: Float64
     var sample_rate: Float64

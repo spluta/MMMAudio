@@ -2,6 +2,18 @@ from .Filters import lpf_LR4
 from .MMMWorld_Module import *
 
 struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
+    """A simple oversampling buffer that collects multiple samples and then downsamples them using a low-pass filter.
+
+    Params:
+
+        num_chans: Number of channels for the oversampling buffer.
+        times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
+
+    Public Methods:
+
+        add_sample(self, sample: SIMD[DType.float64, num_chans]) - Add a sample to the oversampling buffer.
+        get_sample(self) -> SIMD[DType.float64, num_chans] - Get the next sample from the filled oversampling buffer.
+    """
 
     var buffer: InlineArray[SIMD[DType.float64, num_chans], times_oversampling]  # Buffer for oversampled values
     var counter: Int64
@@ -19,11 +31,13 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     fn __repr__(self) -> String:
         return String("Oversampling")
 
+    @always_inline
     fn add_sample(mut self, sample: SIMD[DType.float64, self.num_chans]):
         """Add a sample to the oversampling buffer."""
         self.buffer[self.counter] = sample
         self.counter += 1
 
+    @always_inline
     fn get_sample(mut self) -> SIMD[DType.float64, self.num_chans]:
         """get the next sample from a filled oversampling buffer."""
         out = SIMD[DType.float64, self.num_chans](0.0)
@@ -36,6 +50,17 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
         return out
         
 struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable, Movable, Copyable):
+    """A simple oversampler that upsamples the input signal by the specified factor using a low-pass filter.
+
+    Params:
+
+        num_chans: Number of channels for the upsampler.
+        times_oversampling: The oversampling factor (e.g., 2 for 2x oversampling).
+
+    Public Methods:
+
+        next(self, input: SIMD[DType.float64, num_chans], i: Int) -> SIMD[DType.float64, num_chans] - Process one sample through the upsampler.
+    """
     var lpf: OS_LPF4[num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -46,12 +71,13 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
     fn __repr__(self) -> String:
         return String("Upsampler")  
 
+    @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], i: Int) -> SIMD[DType.float64, self.num_chans]:
-        """Process one sample through the upsampler.
+        """Process one sample through the upsampler. Pass in the same sample multiple times, once for each oversampling iteration. The algorithm will use the first sample and zeroes for the rest.
 
         Args:
             input: The input signal to process.
-            i: The iterator for the oversampling loop.
+            i: The iterator for the oversampling loop. Should range from 0 to times_oversampling - 1.
 
         Returns:
             The next sample of the upsampled output.
@@ -62,6 +88,17 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
             return self.lpf.next(SIMD[DType.float64, self.num_chans](0.0)) * times_oversampling
 
 struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
+    """A simple 2nd-order low-pass filter for oversampling applications. Does not allow changing cutoff frequency on the fly to avoid that calculation each sample.
+    
+    Params:
+        num_chans: Number of channels for the filter.
+
+    Public Methods:
+
+        set_sample_rate(self, sr: Float64) - Set the sample rate for the filter
+        set_cutoff(self, fc: Float64) - Set the cutoff frequency for the filter
+        next(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans] - Process one sample through the 2nd-order low-pass filter.
+    """
     var sample_rate: Float64
     var b0: Float64
     var b1: Float64
@@ -112,6 +149,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         self.a1 = a1
         self.a2 = a2
 
+    @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         var y = self.b0 * x + self.z1
         self.z1 = self.b1 * x - self.a1 * y + self.z2
@@ -119,6 +157,18 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         return y
 
 struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
+    """A 4th-order low-pass filter for oversampling applications, implemented as two cascaded 2nd-order sections.
+   
+    Params:
+
+        num_chans: Number of channels for the filter.
+
+    Public Methods:
+
+        set_sample_rate(self, sr: Float64) - Set the sample rate for the filter
+        set_cutoff(self, fc: Float64) - Set the cutoff frequency for the filter
+        next(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans] - Process one sample through the 4th-order low-pass filter.
+    """
     var os_lpf1: OS_LPF[num_chans]
     var os_lpf2: OS_LPF[num_chans]
 
@@ -134,6 +184,7 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
         self.os_lpf1.set_cutoff(fc)
         self.os_lpf2.set_cutoff(fc)
 
+    @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         
         var y = self.os_lpf1.next(x)

@@ -17,10 +17,15 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Flo
 struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](BufferedProcessable):
     """Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version).
 
-    Parameters:
+    Params:
+
         window_size: The size of the analysis window in samples.
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
+
+    Public Methods:
+
+        next_window(self, frame: List(Float64)) - Compute the YIN pitch estimate for the given frame of audio samples.
     """
     var world: UnsafePointer[MMMWorld]
     var pitch: Float64
@@ -167,10 +172,16 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
 struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False](FFTProcessable):
     """Spectral Centroid analysis.
 
-    Parameters:
+    Params:
+
         min_freq: The minimum frequency (in Hz) to consider when computing the centroid.
         max_freq: The maximum frequency (in Hz) to consider when computing the centroid.
         power_mag: If True, use power magnitudes (squared) for the centroid calculation.
+
+    Public Methods:
+
+        next_frame(self, mags: List[Float64], phases: List[Float64]) - Compute the spectral centroid for a given FFT analysis.
+        from_mags(mags: List[Float64], sample_rate: Float64) -> Float64 - Static method to compute spectral centroid from magnitudes.
     """
 
     var world: UnsafePointer[MMMWorld]
@@ -238,7 +249,13 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         return centroid
 
 struct RMS(BufferedProcessable):
-    """Root Mean Square (RMS) amplitude analysis."""
+    """Root Mean Square (RMS) amplitude analysis.
+    
+    Public Methods:
+
+        next_window(self, frame: List[Float64])
+        from_window(frame: List[Float64]) -> Float64
+    """
     var rms: Float64
 
     fn __init__(out self):
