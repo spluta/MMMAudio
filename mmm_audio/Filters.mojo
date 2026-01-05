@@ -127,7 +127,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     they are all declared and initialized in the same way. Use the
     "convenience" functions for calling the different filter types. For example to 
     create a lowpass filter:
-    
+
     Parameters:
         num_chans: Number of SIMD channels to process in parallel.
     """

@@ -15,7 +15,7 @@ struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
         self.world = world
         self.osc = Osc(world)
         self.clip = SoftClipAD[1,4](world)
-        self.overdrive = TanhAD[num_chans]()
+        self.overdrive = TanhAD[num_chans](world)
         self.lag = Lag(world)
 
     fn next(mut self) -> SIMD[DType.float64, self.num_chans]:
@@ -23,7 +23,7 @@ struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
         gain = self.lag.next(self.world[].mouse_x * (20.0)) + 1.0
 
         sample2 = self.clip.next(sample*gain) 
-        # sample = self.overdrive.next1(sample*gain)
+        # sample = self.overdrive.next(sample*gain)
         return SIMD[DType.float64, self.num_chans](sample, sample2)*0.5
 
 

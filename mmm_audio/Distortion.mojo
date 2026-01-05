@@ -71,6 +71,9 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 #     fn next_AD2[num_chans: Int](mut self, input: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
 #         ...
 
+# [TODO] implement 2nd order ADAA versions of hard clip, soft clip, tanh
+# [TODO] implement a parameter in the .next functions to choose between none, and 1st and 2nd order ADAA
+
 struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing soft-clipping function.
@@ -78,14 +81,9 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
     
     Parameters:
-    
         num_chans: The number of channels for SIMD operations.
-    
-    Methods:
-
-        next(x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-            Computes the first order anti-aliased `soft_clip` of `x` with optional oversampling.
-
+        os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).
+        degree: The degree of the soft clipping polynomial (must be odd).
     """
     alias times_oversampling = 2 ** os_index
     var x1: SIMD[DType.float64, num_chans]
@@ -250,7 +248,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         return out
 
     @always_inline
-    fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `hard_clip` of `x`.
 
@@ -277,7 +275,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing first order tanh function.
     This struct provides anti-aliased versions of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method.
-    It currently implements the first-order ADAA function `next1`.
+    It currently implements the first-order ADAA function `next`.
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -321,7 +319,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         return out
     
     @always_inline
-    fn next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
         Computes the first-order anti-aliased `hard_clip` of `x`.
 

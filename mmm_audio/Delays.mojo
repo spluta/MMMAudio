@@ -315,7 +315,7 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
 
         @parameter
         if ADAA_dist:
-            self.fb = self.dc.next(self.tanh_ad.next1((input + out) * feedback))
+            self.fb = self.dc.next(self.tanh_ad.next((input + out) * feedback))
         else:
           self.fb = self.dc.next(tanh((input + out) * feedback))
 
