@@ -11,6 +11,9 @@ struct Print(Representable, Copyable, Movable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """
         Initialize the Print struct.
+
+        Args:
+            world: A pointer to the MMMWorld instance.
         """
         self.world = world
         self.impulse = Impulse(world)

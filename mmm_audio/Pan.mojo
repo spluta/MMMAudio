@@ -104,7 +104,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
     Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
 
     Parameters:
-        simd_out_size: Number of output channels (speakers).
+        simd_out_size: Number of output channels (speakers). Must be a power of two that is at least as large as num_speakers.
 
     Args:
         sample: Mono input sample.
@@ -165,6 +165,12 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     var mul_list: List[SIMD[DType.float64, num_channels]]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+        Initialize the SplayN instance.
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
         self.world = world
 

@@ -14,6 +14,11 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     var lpf: OS_LPF4[num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.lpf = OS_LPF4[self.num_chans](world)
         self.buffer = InlineArray[SIMD[DType.float64, num_chans], times_oversampling](fill=SIMD[DType.float64, num_chans](0.0))
 
@@ -57,6 +62,11 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
     var lpf: OS_LPF4[num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.lpf = OS_LPF4[self.num_chans](world)
         self.lpf.set_sample_rate(world[].sample_rate * times_oversampling)
         self.lpf.set_cutoff(0.5 * world[].sample_rate)
@@ -97,6 +107,11 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     alias INV_SQRT2 = 0.7071067811865475
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.sample_rate = world[].sample_rate
         self.b0 = 1.0
         self.b1 = 0.0
@@ -168,6 +183,11 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
     var os_lpf2: OS_LPF[num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.os_lpf1 = OS_LPF[num_chans](world)
         self.os_lpf2 = OS_LPF[num_chans](world)
 

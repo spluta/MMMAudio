@@ -6,6 +6,14 @@ from math import floor, log2, sin
 from .functions import wrap, clip
 
 struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable):
+    """
+    Struct for high-quality audio resampling using sinc interpolation. This struct precomputes a sinc table and provides methods for performing sinc interpolation
+    on audio data with adjustable ripples and table size. It is used in Osc for resampling oscillator signals.
+
+    Attributes:
+        ripples (Int64): Number of ripples in the sinc function, affecting interpolation quality.
+        power (Int64): Power of two determining the size of the sinc table (table_size = 2^power).
+    """
     var table: List[Float64]  # Sinc table for interpolation
     var table_size: Int64  # Size of the sinc table
     var mask: Int64  # Mask for wrapping indices
@@ -34,7 +42,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
     @doc_private
     @always_inline
     fn interp_points(self: SincInterpolator, sp: Int64, sinc_offset: Int64, sinc_mult: Int64, frac: Float64) -> Float64:
-        """Interpolate sinc points for given parameters. This is a helper function for spaced_sinc."""
+        """Helper function to perform quadratic interpolation on sinc table points."""
         sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
         
         idxA = sinc_indexA & self.mask
@@ -105,6 +113,17 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @always_inline
     fn sinc_interp[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], current_index: Float64, prev_index: Float64) -> Float64:
+        """Perform sinc interpolation on the given data at the specified current index.
+        
+        Parameters:
+            bWrap: Whether to wrap around at the end of the buffer when an index exceeds the buffer length.
+            mask: Mask for wrapping indices if bWrap is True.
+        
+        Args:
+            data: The audio data (Buffer channel) to interpolate.
+            current_index: The current fractional index for interpolation.
+            prev_index: The previous index. Needed to calculate the slope.
+        """
         size_f64: Float64 = Float64(len(data))
         index_diff = current_index - prev_index
         half_window = size_f64 * 0.5

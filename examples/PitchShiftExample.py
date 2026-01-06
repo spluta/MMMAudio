@@ -5,8 +5,8 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 
 
 mmm_audio.send_float("which_input", 0)
-mmm_audio.send_float("pitch_shift", 0.5)
-mmm_audio.send_float("grain_size", 0.4)
+mmm_audio.send_float("pitch_shift", 1.5)
+mmm_audio.send_float("grain_dur", 0.4)
 
 mmm_audio.send_float("pitch_dispersion", 0.4)
 

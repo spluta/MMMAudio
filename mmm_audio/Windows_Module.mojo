@@ -3,6 +3,7 @@ from .Buffer_Module import ListInterpolator
 from math import exp, sin, sqrt, cos, pi
 
 struct Windows(Movable, Copyable):
+    """Stores various window functions used in audio processing. This struct precomputes several common window types."""
     var hann: List[Float64]
     var hamming: List[Float64]
     var blackman: List[Float64]
@@ -45,12 +46,11 @@ struct Windows(Movable, Copyable):
 
 fn bessel_i0(x: Float64) -> Float64:
     """
-    Calculate the modified Bessel function of the first kind, order 0 (I₀).
-    Uses polynomial approximation for accurate results.
+    Calculate the modified Bessel function of the first kind, order 0 (I₀). Uses polynomial approximation for accurate results.
     
     Args:
-        x: Input value
-        
+        x: Input value.
+    
     Returns:
         I₀(x)
     """
@@ -76,7 +76,7 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
     Create a Kaiser window of length n with shape parameter beta.
     
     Args:
-        n: Length of the window
+        size: Length of the window
         beta: Shape parameter that controls the trade-off between main lobe width and side lobe level
               - beta = 0: rectangular window
               - beta = 5: similar to Hamming window
@@ -107,74 +107,83 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
 
     return window.copy()
 
-fn hann_window(n: Int64) -> List[Float64]:
+fn hann_window(size: Int64) -> List[Float64]:
     """
-    Generate a Hann window of length n.
+    Generate a Hann window of length size.
     
     Args:
-        n: Length of the window
-        
+        size: Length of the window.
+    
     Returns:
-        List containing the Hann window values
+        List containing the Hann window values.
     """
     var window = List[Float64]()
     
-    for i in range(n):
-        var value = 0.5 * (1.0 - cos(2.0 * pi * Float64(i) / Float64(n - 1)))
+    for i in range(size):
+        var value = 0.5 * (1.0 - cos(2.0 * pi * Float64(i) / Float64(size - 1)))
         window.append(value)
     
     return window.copy()
 
-fn hamming_window(n: Int64) -> List[Float64]:
+fn hamming_window(size: Int64) -> List[Float64]:
     """
-    Generate a Hamming window of length n.
+    Generate a Hamming window of length size.
+
+    Args:
+        size: Length of the window.
+
+    Returns:
+        List containing the Hamming window values.
     """
     var window = List[Float64]()
-    for i in range(n):
-        var value = 0.54 - 0.46 * cos(2.0 * pi * Float64(i) / Float64(n - 1))
+    for i in range(size):
+        var value = 0.54 - 0.46 * cos(2.0 * pi * Float64(i) / Float64(size - 1))
         window.append(value)
 
     return window.copy()
 
-fn blackman_window(n: Int64) -> List[Float64]:
-    """Generate a Blackman window of length n.
+fn blackman_window(size: Int64) -> List[Float64]:
+    """Generate a Blackman window of length size.
+
     Args:
-        n: Length of the window
+        size: Length of the window.
+
     Returns:
-        List containing the Blackman window values
+        List containing the Blackman window values.
     """
     var window = List[Float64]()
-    for i in range(n):
-        var value = 0.42 - 0.5 * cos(2.0 * pi * Float64(i) / Float64(n - 1)) + \
-                    0.08 * cos(4.0 * pi * Float64(i) / Float64(n - 1))
+    for i in range(size):
+        var value = 0.42 - 0.5 * cos(2.0 * pi * Float64(i) / Float64(size - 1)) + \
+                    0.08 * cos(4.0 * pi * Float64(i) / Float64(size - 1))
         window.append(value)
     return window.copy()
 
-fn sine_window(n: Int64) -> List[Float64]:
+fn sine_window(size: Int64) -> List[Float64]:
     """
-    Generate a Sine window of length n.
+    Generate a Sine window of length size.
+
     Args:
-        n: Length of the window
+        size: Length of the window.
+
     Returns:
-        List containing the Sine window values
+        List containing the Sine window values.
     """
     var window = List[Float64]()
-    for i in range(n):
-        var value = sin(pi * Float64(i) / Float64(n - 1))
+    for i in range(size):
+        var value = sin(pi * Float64(i) / Float64(size - 1))
         window.append(value)
     return window.copy()
 
 # Create a compile-time function to generate values
 fn pan2_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
     """
-    Generate a SIMD[DType.float64, 2] quarter cosine window for panning. value 0 is for the left channel, value 1 is for the right channel.
-    0 = cos(0) = 1.0 (full left)
-    1 = cos(pi/2) = 0.0 (no left)
+    Generate a SIMD[DType.float64, 2] quarter cosine window for panning. The first element of the SIMD vector is the multiplier for the left channel, and the second element is for the right channel. This allows any sample to be panned at one of `size` positions between left and right channels smoothly.
     
     Args:
-        size: Length of the window
+        size: Length of the window.
+
     Returns:
-        List containing the quarter cosine window values
+        List containing the quarter cosine window values.
     """
     var table = List[SIMD[DType.float64, 2]]()
 

@@ -31,6 +31,13 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     var in_list: List[Float64]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+      """
+      Initialize the Freeverb struct.
+
+      Args:
+          world: A pointer to the MMMWorld instance.
+      """
+      
         self.world = world
         
         # I tried doing this with lists of LP_Comb[N] but avoiding lists seems to work better in Mojo currently

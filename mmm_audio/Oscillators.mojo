@@ -26,6 +26,11 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.world = world
         self.phase = SIMD[DType.float64, num_chans](0.0)
         self.freq_mul = self.world[].os_multiplier[os_index] / self.world[].sample_rate
@@ -117,6 +122,11 @@ struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.phasor = Phasor[self.num_chans, os_index](world)
 
     fn __repr__(self) -> String:
@@ -171,6 +181,11 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
     var oversampling: Oversampling[num_chans, 2**os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.world = world
         self.phasor = Phasor[self.num_chans, os_index](self.world)
         self.oversampling = Oversampling[self.num_chans, 2**os_index](self.world)
@@ -458,6 +473,11 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
     var osc: Osc[num_chans, Interp.linear, os_index]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.osc = Osc[self.num_chans, Interp.linear, os_index](world)  # Initialize the Oscillator with the world instance
 
     fn __repr__(self) -> String:
@@ -477,6 +497,11 @@ struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.phasor = Phasor[self.num_chans](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
@@ -506,6 +531,11 @@ struct LFSquare[num_chans: Int = 1] (Representable, Movable, Copyable):
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.phasor = Phasor[self.num_chans](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
@@ -534,6 +564,11 @@ struct LFTri[num_chans: Int = 1] (Representable, Movable, Copyable):
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.phasor = Phasor[self.num_chans](world)  # Initialize the Phasor with the world instance
 
     fn __repr__(self) -> String:
@@ -564,6 +599,11 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
     var freq: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.impulse = Phasor[num_chans](world)
         # this will cause all Dusts to start at a different phase
         for i in range(self.num_chans):
@@ -633,6 +673,11 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Mo
     var history_index: List[Int8]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.world = world
         self.history_index = [0 for _ in range(self.num_chans)]
         self.impulse = Phasor[num_chans](world)
@@ -712,6 +757,11 @@ struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
         self.world = world
         self.phase = SIMD[DType.float64, num_chans](0.0)
         self.freq_mul = 1.0 / self.world[].sample_rate

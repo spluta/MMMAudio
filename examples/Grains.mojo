@@ -37,9 +37,13 @@ struct Grains(Movable, Copyable):
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
         @parameter
         if num_output_chans == 2:
-            out = self.tgrains.next[2](self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
+            out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0)
+
             return SIMD[DType.float64, num_simd_chans](out[0], out[1]) # because pan2 outputs a SIMD vector size 2, and we require a SIMD vector of size num_simd_chans, you have to manually make the SIMD vector in this case (the compiler does not agree that num_simd_chans == 2, even though it does)
         else:
-            out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 0, impulse, 1, start_frame, 0.4, num_output_chans, random_float64(0.0, 1.0), 1.0)
-            out1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, 1, start_frame, 0.4, num_output_chans, random_float64(0.0, 1.0), 1.0)
+            # pan each channel separately to num_output_chans speakers
+            out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0, num_output_chans)
+
+            out1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 1, random_float64(-1.0, 1.0), 1.0, num_output_chans)
+
             return out0 + out1
