@@ -31,6 +31,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
     var last_trig: SIMD[DType.bool, num_chans]
 
     fn __init__(out self):
+        """Initialize the Latch."""
         self.samp = SIMD[DType.float64, num_chans](0)
         self.last_trig = SIMD[DType.bool, num_chans](False)
 
@@ -71,9 +72,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 
 struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
     """
-    Anti-Derivative Anti-Aliasing soft-clipping function.
-    
-    This struct provides first and second order anti-aliased versions of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA)
+    Anti-Derivative Anti-Aliasing soft-clipping function. This struct provides first order anti-aliased `soft clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -147,7 +146,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
-        Computes the first-order anti-aliased `hard_clip` of `x`.
+        Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
@@ -174,7 +173,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing hard-clipping function.
     
-    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA).
+    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -187,6 +186,11 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     alias TOL = 1.0e-5
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """Initialize the HardClipAD.
+        
+        Args:
+            world: A pointer to the MMMWorld.
+        """
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         self.x2 = SIMD[DType.float64, num_chans](0.0)
         self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
@@ -245,7 +249,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
-        Computes the first-order anti-aliased `hard_clip` of `x`.
+        Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
@@ -269,8 +273,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing first order tanh function.
-    This struct provides anti-aliased versions of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method.
-    It currently implements the first-order ADAA function `next`.
+    This struct provides a first order anti-aliased version of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method with optional Oversampling.
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -284,6 +287,11 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """Initialize the TanhAD.
+
+        Args:
+            world: A pointer to the MMMWorld.
+        """
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
         self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
@@ -316,7 +324,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """
-        Computes the first-order anti-aliased `hard_clip` of `x`.
+        Computes the first-order anti-aliased `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
@@ -337,20 +345,13 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 
-
+@doc_private
 fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[DType.float64, num_chans], thresh: SIMD[DType.float64, num_chans], 
                sig_mul1: SIMD[DType.float64, num_chans], sign_mul: SIMD[DType.float64, num_chans], sig_mul2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
     """Implements the Buchla cell function."""
     var mask: SIMD[DType.bool, num_chans] = abs(sig).gt(thresh)
 
     return mask.select((sig * sig_mul1 - (sign * sign_mul)) * sig_mul2, 0.0)
-
-fn sign[num_chans:Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-    """Returns the sign of x: -1, 0, or 1."""
-    pmask:SIMD[DType.bool, num_chans] = x.gt(0.0)
-    nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
-
-    return pmask.select(SIMD[DType.float64, num_chans](1.0), nmask.select(SIMD[DType.float64, num_chans](-1.0), SIMD[DType.float64, num_chans](0.0)))
 
 fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]:
     """
@@ -384,6 +385,7 @@ fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var 
     # Scale output
     return tanh(out / amp)
 
+@doc_private
 struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     var G: Float64       # folder cell "gain"
     var B: Float64       # folder cell "bias"
@@ -435,6 +437,11 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        """Initialize the BuchlaWavefolder.
+
+        Args:
+            world: A pointer to the MMMWorld.
+        """
         self.world = world
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         # Initialize folder cells
@@ -491,7 +498,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     @always_inline
     fn next(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
         """
-        Computes the first-order anti-aliased `hard_clip` of `x`.
+        Computes the first-order anti-aliased BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.

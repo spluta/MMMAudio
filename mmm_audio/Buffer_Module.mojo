@@ -19,6 +19,12 @@ struct Buffer(Movable, Copyable):
     var duration: Float64
 
     fn __init__(out self, data: List[List[Float64]], sample_rate: Float64):
+        """Initialize a Buffer with the given audio data and sample rate.
+
+        Args:
+            data: A List of List of Float64 representing the audio data for each channel.
+            sample_rate: The sample rate of the audio data.
+        """
 
         if len(data) > 1:
             for chan in range(1,len(data)):

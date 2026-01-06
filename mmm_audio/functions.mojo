@@ -629,3 +629,20 @@ fn Li2[num_chans: Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64,
     var q = horner[num_chans](z, Q)
 
     return r + s * y * p / q
+
+fn sign[num_chans:Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    """Returns the sign of x: -1, 0, or 1.
+    
+    Parameters:
+        num_chans: Number of channels in the SIMD vector.
+
+    Args:
+        x: The input SIMD vector.
+
+    Returns:
+        A SIMD vector containing the sign of each element in x. -1.0 for negative values, 1.0 for positive values, and 0.0 for zero.
+    """
+    pmask:SIMD[DType.bool, num_chans] = x.gt(0.0)
+    nmask:SIMD[DType.bool, num_chans] = x.lt(0.0)
+
+    return pmask.select(SIMD[DType.float64, num_chans](1.0), nmask.select(SIMD[DType.float64, num_chans](-1.0), SIMD[DType.float64, num_chans](0.0)))

@@ -23,6 +23,12 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     var prev_f_idx: List[Float64]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
+      """Initialize the Delay line.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay_time: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+      """
         self.world = world
         self.max_delay_time = max_delay_time
         self.max_delay_samples = Int64(max_delay_time * self.world[].sample_rate)
@@ -105,6 +111,15 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
     @always_inline
     fn get_f_idx(self, delay_time: Float64) -> Float64:
+        """Calculate the fractional index in the delay buffer for the given delay time.
+
+        Args:
+          delay_time: The delay time in seconds.
+
+        Returns:
+          The fractional index in the delay buffer.
+        """
+
         delay_samps = delay_time * self.world[].sample_rate
         # Because the ListInterpolator functions always "read" forward,
         # we're writing into the delay line buffer backwards, so therefore,
@@ -146,6 +161,12 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+      """Initialize the Comb filter.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+      """
         self.world = world
         self.delay = Delay[num_chans, interp](self.world, max_delay)
         self.fb = SIMD[DType.float64, num_chans](0.0)
@@ -176,7 +197,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
         Args:
           input: The input sample to process.
           delay_time: The amount of delay to apply (in seconds).
-          decay_time: The desired decay time (time to -60dB).
+          decay_time: The desired decay time (time to -60dB). Feedback is calculated internally.
 
         Returns:
           The delayed output sample.
@@ -198,6 +219,13 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+      """Initialize the LP_Comb filter.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+      """ 
+
         self.world = world
         self.delay = Delay[num_chans, interp](self.world, max_delay)
         self.one_pole = VAOnePole[num_chans](self.world)
@@ -229,7 +257,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
 
 struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyable):
     """
-    A simple all-pass comb filter using a delay line with feedback.
+    A simple allpass comb filter using a delay line with feedback.
     
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
@@ -239,11 +267,18 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
     var delay: Delay[num_chans, interp]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+      """Initialize the Allpass Comb filter.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+      """
+
         self.world = world
         self.delay = Delay[num_chans, interp](self.world, max_delay)
 
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback_coef: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
-        """Process one sample through the all-pass comb filter.
+        """Process one sample through the allpass comb filter.
 
         Args:
           input: The input sample to process.
@@ -263,7 +298,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         return output
 
     fn next_decaytime(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], decay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
-        """Process one sample through the all-pass comb filter with decay time calculation.
+        """Process one sample through the allpass comb filter with decay time calculation.
         
         Args:
           input: The input sample to process.
@@ -294,6 +329,13 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
     var tanh_ad: TanhAD[num_chans, os_index]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+      """Initialize the FB_Delay.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+      """
+
         self.world = world
         self.delay = Delay[num_chans, interp](self.world, max_delay)
         self.dc = DCTrap[num_chans](self.world)
