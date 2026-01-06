@@ -47,7 +47,7 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: Unsaf
     """
     Splay multiple input channels into stereo output.
 
-    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single SIMD vector. In the case of a list of SIMD vectors, each vector represents multiple channels, and each channel within the vector is treated separately for panning.
+    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
 
     Args:
         input: List of input samples from multiple channels.
@@ -77,7 +77,7 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
     """
     Splay multiple input channels into stereo output.
 
-    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single SIMD vector. In the case of a list of SIMD vectors, each vector represents multiple channels, and each channel within the vector is panned individually.
+    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
 
     Args:
         input: List of input samples from multiple channels. List of Float64 or List of SIMD vectors.
@@ -114,7 +114,6 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
         orientation: Orientation offset of the speaker array (default is 0.5).
 
     Returns:
-
         SIMD[DType.float64, simd_out_size]: The panned output sample for each speaker.
     """
 
@@ -153,62 +152,66 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
 
 alias pi_over_2 = pi / 2.0
 
-struct SplayN[num_output_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
+struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     """
-    SplayN - Splays multiple input channels into N output channels. Different from splay which only outputs stereo, SplayN can output to any number of channels.
-
-    Args:
-
-        num_output_channels: Number of output channels to splay to.
-        pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
+    SplayN - Splays multiple input channels into N output channels. Different from `splay` which only outputs stereo, SplayN can output to any number of channels.
     
-    Returns:
-
-        SIMD[DType.float64, num_output_channels]: The splayed output sample.
-   
+    Parameters:
+        num_channels: Number of output channels to splay to.
+        pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
     """
     var output: List[Float64]  # Output list for stereo output
     var world: UnsafePointer[MMMWorld]
-    var mul_list: List[SIMD[DType.float64, num_output_channels]]
+    var mul_list: List[SIMD[DType.float64, num_channels]]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
         self.world = world
 
-        js = SIMD[DType.float64, self.num_output_channels](0.0, 1.0)
+        js = SIMD[DType.float64, self.num_channels](0.0, 1.0)
         @parameter
-        if self.num_output_channels > 2:
-            for j in range(self.num_output_channels):
+        if self.num_channels > 2:
+            for j in range(self.num_channels):
                 js[j] = Float64(j)
 
-        self.mul_list = [SIMD[DType.float64, self.num_output_channels](0.0) for _ in range(self.pan_points)]
+        self.mul_list = [SIMD[DType.float64, self.num_channels](0.0) for _ in range(self.pan_points)]
         for i in range(self.pan_points):
-            pan = Float64(i) * Float64(self.num_output_channels - 1) / Float64(self.pan_points - 1)
+            pan = Float64(i) * Float64(self.num_channels - 1) / Float64(self.pan_points - 1)
 
             d = abs(pan - js)
             @parameter
-            if self.num_output_channels > 2:
-                for j in range(self.num_output_channels):
+            if self.num_channels > 2:
+                for j in range(self.num_channels):
                     if d[j] < 1.0:
                         d[j] = d[j]
                     else:
                         d[j] = 1.0
             
-            for j in range(self.num_output_channels):
+            for j in range(self.num_channels):
                 self.mul_list[i][j] = cos(d[j] * pi_over_2)
 
     @always_inline
-    fn next(mut self, input: List[Float64]) -> SIMD[DType.float64, self.num_output_channels]:
-        out = SIMD[DType.float64, self.num_output_channels](0.0)
+    fn next[num_simd: Int](mut self, input: List[SIMD[DType.float64, num_simd]]) -> SIMD[DType.float64, self.num_channels]:
+        """Evenly distributes multiple input channels to num_channels of output channels.
 
-        in_len = len(input)
+        Args:
+            input: List of input samples from multiple channels.
+
+        Returns:
+            SIMD[DType.float64, self.num_channels]: The panned output sample for each output channel.
+        """
+        out = SIMD[DType.float64, self.num_channels](0.0)
+
+        in_len = len(input) * num_simd
         if in_len == 0:
             return out
         elif in_len == 1:
-            out = input[0] * self.mul_list[0]
+            out = input[0][0] * self.mul_list[0]
             return out
         for i in range(in_len):
-            out += input[i] * self.mul_list[Int(Float64(i) / Float64(in_len - 1) * Float64(self.pan_points - 1))]
+            index0 = i // num_simd
+            index1 = i % num_simd
+
+            out += input[index0][index1] * self.mul_list[Int(Float64(i) / Float64(in_len - 1) * Float64(self.pan_points - 1))]
             
         return out
-
