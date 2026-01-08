@@ -4,7 +4,17 @@ from pythonosc.dispatcher import Dispatcher
 from pythonosc.osc_server import AsyncIOOSCUDPServer
 
 class OSCServer:
+    """A threaded OSC server using python-osc library. With a given message handler function, will call that function on incoming messages."""
+
     def __init__(self, ip="0.0.0.0", port=5005, osc_msg_handler=None):
+        """Initialize the OSC server with IP, port, and message handler.
+        
+        Args:
+            ip (str): IP address to bind the server to. If "0.0.0.0", listens on all interfaces. This is the default.
+            port (int): Port number to listen on.
+            osc_msg_handler (function): Function to handle incoming OSC messages.
+        """
+
         self.ip = ip
         self.port = port
         self.thread = None
@@ -17,7 +27,11 @@ class OSCServer:
         print(f"Default Function: Received OSC message: {address} with arguments: {args}")
 
     def set_osc_msg_handler(self, handler):
-        """Set a custom OSC message handler"""
+        """Set a custom OSC message handler.
+        
+        Args:
+            handler (function): Function to handle incoming OSC messages.
+        """
         self.osc_msg_handler = handler
         self.dispatcher.set_default_handler(self.osc_msg_handler)
 

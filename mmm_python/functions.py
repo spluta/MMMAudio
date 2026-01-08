@@ -82,15 +82,40 @@ def lincurve(value: float, in_min: float, in_max: float, out_min: float, out_max
     return result
 
 def midicps(midi_note: float) -> float:
-    """Convert MIDI note number to frequency in Hz"""
+    """Convert MIDI note number to frequency in Hz
+    
+    Args:
+        midi_note: MIDI note number
+
+    Returns:
+        Frequency in Hz
+    """
     return 440.0 * (2.0 ** ((midi_note - 69.0) / 12.0))
 
 def cpsmidi(frequency: float) -> float:
-    """Convert frequency in Hz to MIDI note number"""
+    """Convert frequency in Hz to MIDI note number
+    
+    Args:
+        frequency: Frequency in Hz
+
+    Returns:
+        MIDI note number
+    """
     return 69.0 + 12 * math.log2(frequency / 440.0)
 
 def scale(val: float = 0, in_min: float = 0, in_max: float = 1, out_min: float = 0, out_max: float = 1) -> float:
-    """Scale a value from one range to another."""
+    """Scale a value from one range to another.
+    
+    Args:
+        val: The value to scale.
+        in_min: The minimum of the input range.
+        in_max: The maximum of the input range.
+        out_min: The minimum of the output range.
+        out_max: The maximum of the output range.
+
+    Returns:
+        The scaled value.
+    """
     in_range = in_max - in_min
     norm_val = (val - in_min) / in_range if in_range != 0 else 0
     out_range = out_max - out_min
@@ -98,11 +123,27 @@ def scale(val: float = 0, in_min: float = 0, in_max: float = 1, out_min: float =
     return scaled_val
 
 def clip(val: float, min_val: float, max_val: float) -> float:
-    """Clip a value to be within a specified range."""
+    """Clip a value to be within a specified range.
+    
+    Args:
+        val: The value to clip.
+        min_val: The minimum allowable value.
+        max_val: The maximum allowable value.
+    
+    Returns:
+        The clipped value.
+    """
     return max(min_val, min(max_val, val))
 
 def ampdb(amp: float) -> float:
-    """Convert amplitude to decibels."""
+    """Convert amplitude to decibels.
+    
+    Args:
+        amp: Amplitude value.
+
+    Returns:    
+        Decibel value.
+    """
     if amp <= 0:
         return -float('inf')  # Return negative infinity for zero or negative amplitude
     return 20.0 * np.log10(amp)

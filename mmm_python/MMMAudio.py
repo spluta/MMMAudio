@@ -22,6 +22,13 @@ sys.path.insert(0, "mmm_src")
 class MMMAudio:
     
     def get_device_info(self, p_temp, device_name, is_input=True):
+        """Look for the audio device by name, or return default device info if not found.
+        
+        Args:
+            p_temp: An instance of pyaudio.PyAudio
+            device_name: Name of the desired audio device
+            is_input: Boolean indicating if the device is for input (True) or output (False). Default is True.
+        """
 
         print(f"Looking for audio device: {device_name}")
         
@@ -50,6 +57,18 @@ class MMMAudio:
 
 
     def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
+        """Initialize the MMMAudio class.
+        
+        Args:
+            blocksize: Audio block size.
+            num_input_channels: Number of input audio channels. (default: 2)
+            num_output_channels: Number of output audio channels. (default: 2)
+            in_device: Name of the input audio device. (will use default if not found)
+            out_device: Name of the output audio device. (will use default if not found)
+            graph_name: Name of the Mojo graph to use.
+            package_name: Name of the package containing the Mojo graph.
+
+        """
         self.device_index = None
         # this makes the graph file that should work
         from mmm_python.make_solo_graph import make_solo_graph
@@ -121,6 +140,8 @@ class MMMAudio:
             output=True,
             output_device_index=self.out_device_index,
             frames_per_buffer=self.blocksize)
+        
+        self.returned_samples = []
 
 
     async def get_mouse_position(self, delay: float = 0.01):
@@ -134,6 +155,15 @@ class MMMAudio:
             await asyncio.sleep(delay)
 
     def get_samples(self, samples):
+        """Get a specified number of audio samples from MMMAudio. This should be called when audio is stopped. It will push the audio graph forward `samples` samples.
+        
+        Args:
+            samples: Number of samples to get.
+
+        Returns:
+            Numpy array of shape (samples, num_output_channels) containing the audio samples.
+
+        """
         blocks = ceil(samples / self.blocksize)
         # Create empty array to store the waveform data
         waveform = np.zeros(samples*self.num_output_channels, dtype=np.float64).reshape(samples, self.num_output_channels)
@@ -148,12 +178,19 @@ class MMMAudio:
         return waveform
     
     def plot(self, samples, clear=True):
-        a = self.get_samples(samples)
+        """Plot the specified number of audio samples from MMMAudio. This should be called when audio is stopped. It will push the audio graph forward `samples` samples and plot the output. The samples will be stored in `self.returned_samples`.
+
+        Args:
+            samples: Number of samples to plot.
+            clear: Whether to clear the previous plot before plotting. Default is True.
+        """
+
+        self.returned_samples = self.get_samples(samples)
         # if clear:
         #     plt.clf()
         
         # Plot each channel on its own subplot
-        num_channels = a.shape[1] if len(a.shape) > 1 else 1
+        num_channels = self.returned_samples.shape[1] if len(self.returned_samples.shape) > 1 else 1
         
         fig, axes = plt.subplots(num_channels, 1, figsize=(10, 3 * num_channels))
         if num_channels == 1:
@@ -162,9 +199,9 @@ class MMMAudio:
         for ch in range(num_channels):
             ax = axes[ch]
             if num_channels > 1:
-                ax.plot(a[:, ch])
+                ax.plot(self.returned_samples[:, ch])
             else:
-                ax.plot(a)
+                ax.plot(self.returned_samples)
             
             ax.set_ylim(-1, 1)
             ax.set_title(f'Channel {ch}')
@@ -188,7 +225,8 @@ class MMMAudio:
             self.output_stream.write(chunk)
 
     def start_audio(self):
-        # Instantiate PyAudio
+        """Start or restart the audio processing loop."""
+
         print("Starting audio...")
         if not self.running:
             self.running = True
@@ -198,6 +236,7 @@ class MMMAudio:
             self.audio_thread.start()
     
     def stop_audio(self):
+        """Stop the audio processing loop."""
         if self.running:
             self.running = False
             print("Stopping audio...")
@@ -333,24 +372,6 @@ class MMMAudio:
         key_vals.extend(args)
 
         self.mmm_audio_bridge.update_strings_msg(key_vals)
-        
-    def osc_received(self, address, *args):
-        print(f'OSC message received: {address} {args} (passing along not yet implemented)')
-
-    async def start_osc_server(self, ip = "127.0.0.1", port=5000):
-
-        # Create a dispatcher to handle incoming messages
-        dispatcher = Dispatcher()
-        dispatcher.set_default_handler(self.osc_received)
-
-        # Create and start the server
-        server = AsyncIOOSCUDPServer((ip, port), dispatcher, asyncio.get_event_loop())
-        transport, protocol = await server.create_serve_endpoint()
-
-        print(f"OSC Server listening on {ip}:{port}")
-        print("Press Ctrl+C to stop the server")
-
-        await asyncio.Future()  # Run forever
  
 
 def list_audio_devices():

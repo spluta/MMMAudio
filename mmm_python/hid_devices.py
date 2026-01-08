@@ -3,7 +3,7 @@ import hid
 import time
 
 class Joystick:
-    """Connect a Joystick to control parameters.
+    """Connect a Joystick to control parameters. This class supports Logitech Extreme 3D Pro and Thrustmaster joysticks, whose HID reports were parse manually. See the `parse_report` method for the report format for these joysticks. Yours will probably be something like that!
     """
     def __init__(self, name: str, vendor_id=0x046d, product_id=0xc215):
         """Initialize connection with a Joystick.

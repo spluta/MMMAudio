@@ -19,7 +19,7 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 # it is looking for /fader1 and /fader2 on port 5005; these can be adjusted
 # Start the OSC server on its own thread
 # this is a bug, but this thread has to start after audio or audio won't start
-from mmm_python.osc_server import OSCServer
+from mmm_python.OSCServer import OSCServer
 from mmm_python.functions import *
 
 # Usage:

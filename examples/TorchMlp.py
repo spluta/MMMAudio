@@ -79,7 +79,7 @@ def do_the_training():
 
     # train the network in a separate thread so the audio thread doesn't get interrupted
 
-    from .mlp_trainer import train_nn
+    from mmm_audio.MLP import train_nn
     import threading
 
     target_function = train_nn
