@@ -11,7 +11,6 @@
 {% endif %}
 
 {% if struct.guide %}
-## Guide
 {{ struct.guide }}
 {% endif %}
 

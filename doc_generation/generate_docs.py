@@ -186,6 +186,17 @@ def add_guide_text(data: Dict[str, Any]) -> Dict[str, Any]:
             except Exception:
                 # If a guide cannot be read, skip adding it so generation continues.
                 continue
+
+    for trait in decl.get('traits', []):
+        name = trait.get('name')
+        if not name:
+            continue
+        guide_path = guides_dir / f"{name}.md"
+        if guide_path.exists() and guide_path.is_file():
+            try:
+                trait['guide'] = guide_path.read_text(encoding='utf-8')
+            except Exception:
+                continue
     return data
 
 def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
