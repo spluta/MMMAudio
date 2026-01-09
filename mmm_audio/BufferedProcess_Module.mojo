@@ -12,9 +12,11 @@ trait BufferedProcessable(Movable, Copyable):
     """Trait that user structs must implement to be used with a BufferedProcess.
     
     Requires two functions:
+
     - next_window(buffer: List[Float64]) -> None: This function is called when enough samples have been buffered.
       The user can process the input buffer in place meaning that the samples you want to return to the output need
       to replace the samples that you receive in the input list.
+    
     - get_messages() -> None: This function is called at the top of each audio block to allow the user to retrieve any messages
       they may have sent to this process. Put your message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
@@ -29,13 +31,6 @@ trait BufferedProcessable(Movable, Copyable):
 
 struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
-    
-    BufferedInput struct handles buffering of input samples and handing them as "windows" 
-    to a user defined struct for processing (The user defined struct must implement the 
-    BufferedProcessable trait). The user defined struct's `next_window()` function is called every
-    `hop_size` samples. BufferedInput passes the user defined struct a List of `window_size` samples. 
-    The user can process can do whatever they want with the samples in the List and then must replace the 
-    values in the List with the values.
 
     Parameters:
         T: A user defined struct that implements the BufferedProcessable trait.
@@ -118,13 +113,6 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
 
 struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Optional[Int] = None, output_window_shape: Optional[Int] = None](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
-    
-    BufferedProcess struct handles buffering of input samples and handing them as "windows" 
-    to a user defined struct for processing (The user defined struct must implement the 
-    BufferedProcessable trait). The user defined struct's `next_window()` function is called every
-    `hop_size` samples. BufferedProcess passes the user defined struct a List of `window_size` samples. 
-    The user can process can do whatever they want with the samples in the List and then must replace the 
-    values in the List with the values.
 
     Parameters:
         T: A user defined struct that implements the BufferedProcessable trait.
@@ -132,14 +120,6 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
         input_window_shape: Optional window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in .Windows. If None, no window is applied. The default is None.
         output_window_shape: Optional window shape to apply to the output samples after processing by the user defined struct. Use alias variables from WindowType struct (e.g. WindowType.hann) found in .Windows. If None, no window is applied. The default is None.
-    
-    Public Methods:
-    
-        next(self, input: Float64) -> Float64 - Process the next input sample and return the next output sample.
-        next_stereo(self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2] - Process the next input stereo sample and return the next output stereo sample.
-        next_from_buffer(self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64 - Process samples from a buffer for non-real-time processing.
-        next_from_stereo_buffer(self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2] - Process stereo samples from a buffer for non-real-time processing.
-    
     """
     var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]

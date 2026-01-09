@@ -10,6 +10,11 @@
 {{ struct.description }}
 {% endif %}
 
+{% if struct.guide %}
+## Guide
+{{ struct.guide }}
+{% endif %}
+
 <!-- PARENT TRAITS -->
 {% if struct.parentTraits %}
 *Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}

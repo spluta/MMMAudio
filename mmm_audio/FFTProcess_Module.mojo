@@ -4,7 +4,7 @@ from .Buffer_Module import *
 
 @doc_private
 struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):
-    """This is a private struct that the user doesn't *need* to see. This is the
+    """This is a private struct that the user doesn't *need* to see or use. This is the
     connective tissue between FFTProcess (which the user *does* see and uses to
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
     works to create spectral processes, see the `FFTProcessable` trait.

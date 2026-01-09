@@ -31,9 +31,8 @@ except Exception:  # pragma: no cover - optional import
 # These are relative to the repository root (one level above this script's dir).
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HARDCODED_SOURCE_DIRS = [
-    "mmm_utils",
-    "mmm_dsp",
-    "mmm_src",
+    "mmm_audio",
+    "mmm_python"
     # Add/remove directory names here as needed
 ]
 
@@ -53,6 +52,7 @@ def process_python_sources(output_dir: Path):
             module_path = py.relative_to(REPO_ROOT).with_suffix('')
             dotted = '.'.join(module_path.parts)
             md_path = py_out / module_path.parts[0] / (py.stem + '.md')
+            md_path.parent.mkdir(parents=True, exist_ok=True)
             md_path.write_text(f"# {py.stem}\n\n::: {dotted}\n", encoding='utf-8')
             
 def get_jinja_env() -> Environment:
@@ -169,6 +169,25 @@ def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     return data
 
+def add_guide_text(data: Dict[str, Any]) -> Dict[str, Any]:
+    guides_dir = REPO_ROOT / 'doc_generation' / 'static_docs' / 'guides'
+    if not guides_dir.exists() or not guides_dir.is_dir():
+        return data
+
+    decl = data.get('decl', {})
+    for struct in decl.get('structs', []):
+        name = struct.get('name')
+        if not name:
+            continue
+        guide_path = guides_dir / f"{name}.md"
+        if guide_path.exists() and guide_path.is_file():
+            try:
+                struct['guide'] = guide_path.read_text(encoding='utf-8')
+            except Exception:
+                # If a guide cannot be read, skip adding it so generation continues.
+                continue
+    return data
+
 def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
     """Process all Mojo source files under input_dir and emit markdown into output_dir.
 
@@ -206,6 +225,7 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
         try:
             data = run_mojo_doc(src_file, json_output_dir)
             data = clean_mojo_doc_data(data)
+            data = add_guide_text(data)
             rendered = render_template('mojo_doc_template_jinja.md', data)
             out_file.write_text(rendered, encoding='utf-8')
             processed += 1
@@ -429,9 +449,9 @@ def main(config=None):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s -i ./mmm_utils -o ./docs/api/mojo
+  %(prog)s -i ./mmm_audio -o ./docs/api/mojo
   %(prog)s --input-dir ./ --output-dir ./docs/api/mojo --template doc_generation/templates/mojo_doc_template_jinja.md
-  %(prog)s -i mmm_src -o docs/api/mojo -b /opt/mojo/bin/mojo -v
+  %(prog)s -i mmm_audio -o docs/api/mojo -b /opt/mojo/bin/mojo -v
         """
     )
 
