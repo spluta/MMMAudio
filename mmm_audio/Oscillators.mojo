@@ -814,7 +814,7 @@ struct OscBuffers(Movable, Copyable):
 
     @doc_private
     fn __init__(out self):
-        self.buffers = InlineArray[List[Float64],7](uninitialized=True)
+        self.buffers = InlineArray[List[Float64],7](fill=List[Float64](length=OscBuffersSize, fill=0.0))
         
         self.init_sine()  # Initialize sine wave buffer
 
@@ -830,47 +830,38 @@ struct OscBuffers(Movable, Copyable):
     # =================
     @doc_private
     fn init_sine(mut self):
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
-            v = (sin(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)))
-            data.append(v)
-        self.buffers[0] = data.copy()
+            v = sin(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize))
+            self.buffers[0][i] = v
 
     @doc_private
     fn init_lf_triangle(mut self):
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
             val = Float64(i) / Float64(OscBuffersSize) * 4.0
             if val < 1.0:
-                data.append(linlin(val, 0.0, 1.0, 0.0, 1.0))  # Ascending part
+                self.buffers[1][i] = linlin(val, 0.0, 1.0, 0.0, 1.0)  # Ascending part
             elif val < 3.0:
-                data.append(linlin(val, 1.0, 3.0, 1.0, -1.0))  # Descending part
+                self.buffers[1][i] = linlin(val, 1.0, 3.0, 1.0, -1.0)  # Descending part
             else:
-                data.append(linlin(val, 3.0, 4.0, -1.0, 0.0))  # Ascending part
-        self.buffers[1] = data.copy()
+                self.buffers[1][i] = linlin(val, 3.0, 4.0, -1.0, 0.0)  # Ascending part
 
     @doc_private
     fn init_lf_sawtooth(mut self):
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
-            data.append(2.0 * (Float64(i) / Float64(OscBuffersSize)) - 1.0)  # Linear ramp from -1 to 1
-        self.buffers[2] = data.copy()
+            self.buffers[2][i] = 2.0 * (Float64(i) / Float64(OscBuffersSize)) - 1.0  # Linear ramp from -1 to 1
 
     @doc_private
     fn init_lf_square(mut self):
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
             if i < OscBuffersSize // 2:
-                data.append(1.0)  # First half is 1
+                self.buffers[3][i] = 1.0  # First half is 1
             else:
-                data.append(-1.0)  # Second half is -1
-        self.buffers[3] = data.copy()
+                self.buffers[3][i] = -1.0  # Second half is -1
 
     @doc_private
     fn init_triangle(mut self):
         # Construct triangle wave from sine harmonics
         # Triangle formula: 8/pi^2 * sum((-1)^(n+1) * sin(n*x) / n^2) for n=1 to 512
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
             var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
@@ -883,14 +874,12 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 8/π² for correct amplitude
-            data.append(8.0 / (3.141592653589793 * 3.141592653589793) * sample)
-        self.buffers[4] = data.copy()
+            self.buffers[4][i] = 8.0 / (3.141592653589793 * 3.141592653589793) * sample
 
     @doc_private
     fn init_square(mut self):
         # Construct square wave from sine harmonics
         # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
             var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
@@ -900,14 +889,12 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 4/π for correct amplitude
-            data.append(4.0 / 3.141592653589793 * sample)
-        self.buffers[6] = data.copy()
+            self.buffers[6][i] = 4.0 / 3.141592653589793 * sample
 
     @doc_private
     fn init_sawtooth(mut self):
         # Construct sawtooth wave from sine harmonics
         # Sawtooth formula: 2/pi * sum((-1)^(n+1) * sin(n*x) / n) for n=1 to 512
-        data = List[Float64](capacity=OscBuffersSize)
         for i in range(OscBuffersSize):
             var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
             var sample: Float64 = 0.0
@@ -919,10 +906,7 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 2/π for correct amplitude
-            data.append(2.0 / 3.141592653589793 * sample)
-        self.buffers[5] = data.copy()
-
-    
+            self.buffers[5][i] = 2.0 / 3.141592653589793 * sample
 
     fn __repr__(self) -> String:
         return String("OscBuffers(size=" + String(OscBuffersSize) + ")")
