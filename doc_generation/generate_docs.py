@@ -111,7 +111,7 @@ def run_mojo_doc(file_path: Path, json_output_dir: Path, timeout: int = 30) -> D
     try:
         completed = subprocess.run(
             cmd,
-            capture_output=True,
+            # capture_output=True,
             text=True,
             timeout=timeout,
             check=False,

@@ -16,8 +16,8 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     However, it can also be an impulse with next_impulse() and a boolean impulse with next_bool().
 
     Parameters:
-        num_chans: Number of channels (default is 1).
-        os_index: Oversampling index (0 = no oversampling, 1 = 2x, up to 4 = 16x; default is 0). Phasor does not downsample its output, so oversampling is only useful when used as part of other oversampled oscillators.
+        num_chans: Number of channels.
+        os_index: Oversampling index (0 = no oversampling, 1 = 2x, up to 4 = 16x). Phasor does not downsample its output, so oversampling is only useful when used as part of other oversampled oscillators.
     """
     var phase: SIMD[DType.float64, num_chans]
     var freq_mul: Float64
@@ -60,9 +60,9 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
         """Creates the next sample of the phasor output based on the inputs.
 
         Args:
-          freq: Frequency of the phasor in Hz (default is 100.0).
-          phase_offset: Offsets the phase of the oscillator (default is 0.0).
-          trig: Trigger signal to reset the phase when switching from False to True (default is all True, which resets the phasor on the first sample).
+          freq: Frequency of the phasor in Hz.
+          phase_offset: Offsets the phase of the oscillator.
+          trig: Trigger signal to reset the phase when switching from False to True.
 
         Returns:
             The next sample of the phasor output.

@@ -6,7 +6,7 @@ from math import floor, log2, sin
 from .functions import wrap, clip
 
 struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable):
-    """Sinc Interpolation of `List[Float64]`s
+    """Sinc Interpolation of `List[Float64]`s.
 
     Struct for high-quality audio resampling using sinc interpolation. This struct precomputes a sinc table and provides methods for performing sinc interpolation
     on audio data with adjustable ripples and table size. It is used in Osc for resampling oscillator signals.

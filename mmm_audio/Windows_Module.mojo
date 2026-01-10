@@ -52,7 +52,7 @@ fn bessel_i0(x: Float64) -> Float64:
         x: Input value.
     
     Returns:
-        I₀(x)
+        I₀(x).
     """
     var abs_x = abs(x)
     
@@ -74,17 +74,18 @@ fn bessel_i0(x: Float64) -> Float64:
 fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
     """
     Create a Kaiser window of length n with shape parameter beta.
+
+    - beta = 0: rectangular window.
+    - beta = 5: similar to Hamming window.
+    - beta = 6: similar to Hanning window.
+    - beta = 8.6: similar to Blackman window.
     
     Args:
-        size: Length of the window
-        beta: Shape parameter that controls the trade-off between main lobe width and side lobe level
-              - beta = 0: rectangular window
-              - beta = 5: similar to Hamming window
-              - beta = 6: similar to Hanning window
-              - beta = 8.6: similar to Blackman window
+        size: Length of the window.
+        beta: Shape parameter that controls the trade-off between main lobe width and side lobe level. See description for details.
     
     Returns:
-        List[Float64] containing the Kaiser window coefficients
+        List[Float64] containing the Kaiser window coefficients.
     """
     var window = List[Float64]()
 
