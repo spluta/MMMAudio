@@ -114,11 +114,13 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
 
     var stored_output: SIMD[DType.float64, num_chans]
     var last_trig: SIMD[DType.bool, num_chans]
+    var is_initialized: Bool
 
     fn __init__(out self):
         """Initialize the TExpRand struct."""
         self.stored_output = SIMD[DType.float64, num_chans](0.0)
         self.last_trig = SIMD[DType.bool, num_chans](fill=False)
+        self.is_initialized = False
 
     fn next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Output the exponentially distributed random value.
@@ -134,6 +136,13 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
         Returns:
             The exponentially distributed random value.
         """
+        
+        if not self.is_initialized: 
+            @parameter
+            for i in range(num_chans):
+                self.stored_output[i] = random_exp_float64(min[i], max[i])
+            self.is_initialized = True
+            return self.stored_output
         
         rising_edge: SIMD[DType.bool, self.num_chans] = trig & ~self.last_trig
         @parameter
@@ -152,11 +161,13 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
 
     var stored_output: SIMD[DType.float64, num_chans]
     var last_trig: SIMD[DType.bool, num_chans]
+    var is_initialized: Bool
 
     fn __init__(out self):
         """Initialize the TRand struct."""
         self.stored_output = SIMD[DType.float64, num_chans](0.0)
         self.last_trig = SIMD[DType.bool, num_chans](fill=False)
+        self.is_initialized = False
 
     fn next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Output uniformly distributed random value.
@@ -172,6 +183,13 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
         Returns:
             The uniformly distributed random value.
         """
+
+        if not self.is_initialized: 
+            @parameter
+            for i in range(num_chans):
+                self.stored_output[i] = random_float64(min[i], max[i])
+            self.is_initialized = True
+            return self.stored_output
 
         rising_edge: SIMD[DType.bool, self.num_chans] = trig & ~self.last_trig
         @parameter
