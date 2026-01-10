@@ -24,7 +24,7 @@ if True:
     import mido
     import time
     import threading
-    from mmm_python.functions import *
+    from mmm_python.python_utils import *
 
     # find your midi devices
     mido.get_input_names()

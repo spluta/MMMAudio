@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_python.MMMAudio import MMMAudio
-from mmm_python.functions import *
+from mmm_python.python_utils import *
 
 from mmm_python.GUI import Handle, ControlSpec
 from mmm_python.MMMAudio import MMMAudio
