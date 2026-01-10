@@ -3,6 +3,7 @@ from complex import *
 import math as Math
 from random import random_float64
 
+@doc_private
 fn log2_int(n: Int) -> Int:
     """Compute log base 2 of an integer (assuming n is power of 2)."""
     var result = 0
@@ -45,6 +46,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         """Initialize the RealFFT struct.
         
         All internal buffers and lookup tables are set up here based on the Parameters.
+
         """
         self.result = List[ComplexSIMD[DType.float64, num_chans]](capacity=size // 2)
         self.reversed = List[ComplexSIMD[DType.float64, num_chans]](capacity=size)
