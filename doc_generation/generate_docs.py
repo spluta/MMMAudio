@@ -51,7 +51,7 @@ def process_python_sources(output_dir: Path):
             # Module import path relative to repo root
             module_path = py.relative_to(REPO_ROOT).with_suffix('')
             dotted = '.'.join(module_path.parts)
-            md_path = py_out / module_path.parts[0] / (py.stem + '.md')
+            md_path = py_out / (py.stem + '.md')
             md_path.parent.mkdir(parents=True, exist_ok=True)
             md_path.write_text(f"# {py.stem}\n\n::: {dotted}\n", encoding='utf-8')
             
@@ -229,7 +229,8 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     for src_file in mojo_files:
         if src_file.stem == '__init__' or src_file.stem == 'MMMGraph_solo':
             continue
-        rel_path = src_file.relative_to(input_dir)
+        rel_path = Path(src_file.name)
+        rel_path = rel_path.with_name(rel_path.stem.replace("_Module", ""))  # Clean up module suffixes
         # Mirror directory and replace suffix
         out_file = output_dir / rel_path.with_suffix('.md')
         out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -363,14 +364,37 @@ def update_examples_nav(config: MkDocsConfig):  # type: ignore
     print(f"[MkDocs Hook] Examples nav updated with {len(new_examples)-1} example pages.")
 
 def copy_static_docs(output_dir: Path, args):
+    # Hardcode the static doc entries to copy. Use paths relative to
+    # doc_generation/static_docs (e.g., "guides", "index.md", "examples/foo.md").
+    ALLOWED_STATIC_DOCS: list[str] = [
+        "api",
+        "contributing",
+        "examples",
+        "getting-started.md",
+        "index.md"
+    ]
+
     static_docs_src = Path('doc_generation/static_docs')
     if static_docs_src.exists() and static_docs_src.is_dir():
         try:
-            for item in static_docs_src.iterdir():
-                dest = output_dir / item.name
+            if ALLOWED_STATIC_DOCS:
+                iterable = []
+                for rel in ALLOWED_STATIC_DOCS:
+                    src_item = static_docs_src / rel
+                    if not src_item.exists():
+                        if args.verbose:
+                            print(f"Warning: static doc path '{rel}' not found under {static_docs_src}, skipping.")
+                        continue
+                    iterable.append(src_item)
+            else:
+                iterable = list(static_docs_src.iterdir())
+
+            for item in iterable:
+                dest = output_dir / item.relative_to(static_docs_src)
                 if item.is_dir():
                     shutil.copytree(item, dest, dirs_exist_ok=True)
                 else:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(item, dest)
         except Exception as e:
             print(f"Error copying static docs contents: {e}")
