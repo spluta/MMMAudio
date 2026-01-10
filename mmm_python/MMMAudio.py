@@ -61,13 +61,12 @@ class MMMAudio:
         
         Args:
             blocksize: Audio block size.
-            num_input_channels: Number of input audio channels. (default: 2)
-            num_output_channels: Number of output audio channels. (default: 2)
-            in_device: Name of the input audio device. (will use default if not found)
-            out_device: Name of the output audio device. (will use default if not found)
+            num_input_channels: Number of input audio channels.
+            num_output_channels: Number of output audio channels.
+            in_device: Name of the input audio device (will use operating system default if not found).
+            out_device: Name of the output audio device (will use operating system default if not found).
             graph_name: Name of the Mojo graph to use.
-            package_name: Name of the package containing the Mojo graph.
-
+            package_name: Name of the package containing the Mojo graph. This is the folder in which the .mojo file is located.
         """
         self.device_index = None
         # this makes the graph file that should work
@@ -114,6 +113,10 @@ class MMMAudio:
         # Initialize the Mojo module AudioEngine
 
         self.mmm_audio_bridge = MMMAudioBridge.MMMAudioBridge(self.sample_rate, self.blocksize)
+        # Even though MMMAudioBridge can be passed the arguments for channel count, if one tries
+        # to access that data on the Mojo side, things get weird, so we're breaking up the process
+        # of getting all the parameters over to Mojo into multiple steps. That's why .set_channel_count 
+        # is called here.
         self.mmm_audio_bridge.set_channel_count((self.num_input_channels, self.num_output_channels))
 
         # Get screen size
@@ -121,7 +124,7 @@ class MMMAudio:
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
         # the mouse thread will always be running
-        threading.Thread(target=asyncio.run, args=(self.get_mouse_position(0.01),)).start()
+        threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),)).start()
         self.p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
 
@@ -143,8 +146,7 @@ class MMMAudio:
         
         self.returned_samples = []
 
-
-    async def get_mouse_position(self, delay: float = 0.01):
+    async def _get_mouse_position(self, delay: float = 0.01):
         while True:
             x, y = pyautogui.position()
             x = x / pyautogui.size().width

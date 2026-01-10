@@ -20,7 +20,7 @@ mmm_audio.start_audio() # start the audio thread - or restart it where it left o
 # Start the OSC server on its own thread
 # this is a bug, but this thread has to start after audio or audio won't start
 from mmm_python.OSCServer import OSCServer
-from mmm_python.functions import *
+from mmm_python.python_utils import *
 
 # Usage:
 def osc_msg_handler(key, *args):

@@ -8,6 +8,10 @@ from .SincInterpolator import SincInterpolator
 from .Messenger_Module import MessengerManager
 
 struct MMMWorld(Representable, Movable, Copyable):
+    """The MMMWorld struct holds global audio processing parameters and state.
+
+    In pretty much all usage, don't edit this struct.
+    """
     var sample_rate: Float64
     var block_size: Int64
     var osc_buffers: OscBuffers
@@ -41,6 +45,15 @@ struct MMMWorld(Representable, Movable, Copyable):
     var print_counter: UInt16
 
     fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
+        """Initializes the MMMWorld struct.
+
+        Args:
+            sample_rate: The audio sample rate.
+            block_size: The audio block size.
+            num_in_chans: The number of input channels.
+            num_out_chans: The number of output channels.
+        """
+        
         self.sample_rate = sample_rate
         self.block_size = block_size
         self.top_of_block = False
@@ -77,6 +90,12 @@ struct MMMWorld(Representable, Movable, Copyable):
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
     fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
+        """Sets the number of input and output channels.
+
+        Args:
+            num_in_chans: The number of input channels.
+            num_out_chans: The number of output channels.
+        """
         self.num_in_chans = num_in_chans
         self.num_out_chans = num_out_chans
         self.sound_in = List[Float64]()
@@ -88,11 +107,23 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     @always_inline
     fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+        """Print values to the console at the top of the audio block every n_blocks.
+
+        Parameters:
+            Ts: Types of the values to print. Can be of any type that implements Mojo's `Writable` trait. This parameter is inferred by the values passed to the function. The user doesn't need to specify it.
+
+        Args:
+            values: Values to print. Can be of any type that implements Mojo's `Writable` trait. This is a "variadic" argument meaning that the user can pass in any number of values (not as a list, just as comma separated arguments).
+            n_blocks: Number of audio blocks between prints. Must be specified using the keyword argument.
+            sep: Separator string between values. Must be specified using the keyword argument.
+            end: End string to print after all values. Must be specified using the keyword argument.
+        """
+        
         if self.top_of_block:
             if self.print_counter % n_blocks == 0:
                 @parameter
                 for i in range(values.__len__()):
-                    print(values[i], end=" ")
+                    print(values[i], end=" ")   
                 print("")
 
 # Enum-like structs for selecting settings
@@ -100,19 +131,20 @@ struct MMMWorld(Representable, Movable, Copyable):
 # once Mojo has enums, these will probably be converted to enums
 
 struct Interp:
-    """Interpolation types for Oscillator frequency modulation.
+    """Interpolation types for use in various UGens.
 
-    none: Int = 0
+    Specify an interpolation type by typing it explicitly.
+    For example, to specify linear interpolation, one could use the number `1`, 
+    but it is clearer to type `Interp.linear`.
 
-    linear: Int = 1
-
-    quad: Int = 2
-
-    cubic: Int = 3
-
-    lagrange4: Int = 4
-
-    sinc: Int = 5 - (should only be used for oscillator interpolation)
+    | Interpolation Type | Value | Notes                                        |
+    | ------------------ | ----- | -------------------------------------------- |
+    | Interp.none        | 0     |                                              |
+    | Interp.linear      | 1     |                                              |
+    | Interp.quad        | 2     |                                              |
+    | Interp.cubic       | 3     |                                              |
+    | Interp.lagrange4   | 4     |                                              |
+    | Interp.sinc        | 5     | Should only be used with oscillators         |
     
     """
     alias none: Int = 0
@@ -125,21 +157,20 @@ struct Interp:
 struct WindowType:
     """Window types for predefined windows found in world[].windows.
 
-    rect: Int = 0
+    Specify a window type by typing it explicitly.
+    For example, to specify a hann window, one could use the number `1`, 
+    but it is clearer to type `WindowType.hann`.
 
-    hann: Int = 1
-
-    hamming: Int = 2
-
-    blackman: Int = 3
-
-    kaiser: Int = 4
-
-    sine: Int = 5
-
-    tri: Int = 6
-
-    pan2: Int = 7
+    | Window Type         | Value |
+    | ------------------- | ----- |
+    | WindowType.rect     | 0     |
+    | WindowType.hann     | 1     |
+    | WindowType.hamming  | 2     |
+    | WindowType.blackman | 3     |
+    | WindowType.kaiser   | 4     |
+    | WindowType.sine     | 5     |
+    | WindowType.tri      | 6     |
+    | WindowType.pan2     | 7     |
     """
 
     alias rect: Int = 0
@@ -154,19 +185,19 @@ struct WindowType:
 struct OscType:
     """Oscillator types for selecting waveform types.
 
-    sine: Int = 0
+    Specify an oscillator type by typing it explicitly.
+    For example, to specify a sine, one could use the number `0`, 
+    but it is clearer to type `OscType.sine`.
 
-    triangle: Int = 1
-
-    saw: Int = 2
-
-    square: Int = 3
-    
-    bandlimited_triangle: Int = 4
-
-    bandlimited_saw: Int = 5
-
-    bandlimited_square: Int = 6
+    | Oscillator Type              | Value |
+    | ---------------------------- | ----- |
+    | OscType.sine                 | 0     |
+    | OscType.triangle             | 1     |
+    | OscType.saw                  | 2     |
+    | OscType.square               | 3     |
+    | OscType.bandlimited_triangle | 4     |
+    | OscType.bandlimited_saw      | 5     |
+    | OscType.bandlimited_square.  | 6     |
     """
     alias sine: Int = 0
     alias triangle: Int = 1

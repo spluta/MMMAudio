@@ -9,6 +9,10 @@
 {{ trait.description }}
 {% endif %}
 
+{% if trait.guide %}
+{{ trait.guide }}
+{% endif %}
+
 {% if trait.parameters %}
 ## {{ badges.trait_badge(trait.name) }} Parameters
 

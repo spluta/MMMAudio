@@ -1,5 +1,5 @@
 from mmm_python.MMMAudio import MMMAudio
-from mmm_python.functions import midicps
+from mmm_python.python_utils import midicps
 
 a = MMMAudio(128, graph_name="MessengerExample", package_name="examples")
 
