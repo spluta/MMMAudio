@@ -131,7 +131,7 @@ struct MMMWorld(Representable, Movable, Copyable):
 # once Mojo has enums, these will probably be converted to enums
 
 struct Interp:
-    """Interpolation types for Oscillator frequency modulation.
+    """Interpolation types for use in various UGens.
 
     Specify an interpolation type by typing it explicitly.
     For example, to specify linear interpolation, one could use the number `1`, 
