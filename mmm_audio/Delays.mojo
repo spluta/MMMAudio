@@ -75,11 +75,11 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
           delay_time = max(delay_time, 0.0)
           out[chan] = ListInterpolator.read_lagrange4[bWrap=True](self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]))
         elif self.interp == Interp.sinc:
-          # [TODO] How many minimum samples do we need for sinc interpolation?
-          delay_time = max(delay_time, 0.0)
-          f_idx = self.get_f_idx(delay_time[chan])
-          out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
-          self.prev_f_idx[chan] = f_idx
+          # delay_time = max(delay_time, 0.0)
+          # f_idx = self.get_f_idx(delay_time[chan])
+          # out[chan] = ListInterpolator.read_sinc[bWrap=True](self.world, self.delay_line.buf.data[chan], self.get_f_idx(delay_time[chan]), self.prev_f_idx[chan])
+          # self.prev_f_idx[chan] = f_idx
+          print("Sinc interpolation not recommended for Delays.")
           
       return out
 
