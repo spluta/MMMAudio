@@ -7,7 +7,7 @@ import torch.optim as optim
 
 class MLP(nn.Module):
     """The Multi-Layer Perceptron (MLP) class."""
-    def __init__(self, input_size, layers_data: list):
+    def __init__(self, input_size: int, layers_data: list):
         """
         Initialize the MLP.
 
@@ -28,7 +28,7 @@ class MLP(nn.Module):
                     "Each tuples should contain a size (int) and a torch.nn.modules.Module."
                 self.layers.append(activation)
        
-    def forward(self, input_data):
+    def forward(self, input_data: list[list[float]]):
         """
         Forward pass through the MLP.
 
@@ -47,7 +47,7 @@ class MLP(nn.Module):
         """Get the output size of the MLP."""
         return self.output_size
     
-def train_nn(X_train_list, y_train_list, layers, learn_rate, epochs, file_name):
+def train_nn(X_train_list: list[list[float]], y_train_list: list[list[float]], layers: list[tuple[int, str | None]], learn_rate: float, epochs: int, file_name: str):
     """Train the MLP and save the trained model.
 
     Args:

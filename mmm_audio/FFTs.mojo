@@ -95,6 +95,13 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         return result
 
     fn fft(mut self, input: List[SIMD[DType.float64, num_chans]]):
+        """Compute the FFT of the input real-valued samples.
+        
+        The resulting magnitudes and phases are stored in the internal `mags` and `phases` lists.
+        
+        Args:
+            input: The input real-valued samples to transform. This can be a List of SIMD vectors for multi-channel processing or a List of Float64 for single-channel processing.
+        """
         self._compute_fft(input)
         # Compute magnitudes and phases
         for i in range(size // 2 + 1):
@@ -102,6 +109,15 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
     fn fft(mut self, input: List[SIMD[DType.float64, num_chans]], mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]):
+        """Compute the FFT of the input real-valued samples.
+        
+        The resulting magnitudes and phases are stored in the provided lists.
+        
+        Args:
+            input: The input real-valued samples to transform. This can be a List of SIMD vectors for multi-channel processing or a List of Float64 for single-channel processing.
+            mags: A mutable list to store the magnitudes of the FFT result.
+            phases: A mutable list to store the phases of the FFT result.
+        """
         self._compute_fft(input)
         # Compute magnitudes and phases
         for i in range(size // 2 + 1):
@@ -166,7 +182,13 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             self.result[i] = self.unpacked[i]
 
     fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
-        # full inverse FFT using internal mags and phases
+        """Compute the inverse FFT using the internal magnitudes and phases.
+        
+        The output real-valued samples are written to the provided output list.
+
+        Args:
+            output: A mutable list to store the output real-valued samples.
+        """
         
         for k in range(size // 2 + 1):
             if k < len(self.mags):
@@ -181,7 +203,15 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         self._compute_inverse_fft(output)
 
     fn ifft(mut self, mags: List[SIMD[DType.float64, num_chans]], phases: List[SIMD[DType.float64, num_chans]], mut output: List[SIMD[DType.float64, num_chans]]):
-        # full inverse FFT using provided mags and phases
+        """Compute the inverse FFT using the provided magnitudes and phases.
+        
+        The output real-valued samples are written to the provided output list.
+
+        Args:
+            mags: A list of magnitudes for the inverse FFT.
+            phases: A list of phases for the inverse FFT.
+            output: A mutable list to store the output real-valued samples.
+        """
         
         for k in range(size // 2 + 1):
             if k < len(mags):

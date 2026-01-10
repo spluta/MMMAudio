@@ -12,8 +12,6 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     var world: UnsafePointer[MMMWorld]
     var process: T
 
-    # this is a bit gross. In order to get this to work the FFT has to have the data structure of both single channel FFT and a two channel FFT.
-    # once Mojo allows parameters and traits. We should get rid of this as soon as possible.
     var fft: RealFFT[window_size, 1]
     var fft2: RealFFT[window_size, 2]
     var mags: List[Float64]
@@ -101,10 +99,10 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         """Processes the next stereo input sample and returns the next output sample.
         
         Args:
-            input: The next input sample to process.
+            input: The next input samples to process.
         
         Returns:
-            The next output sample.
+            The next output samples.
         """
         return self.buffered_process.next_stereo(input)
 
@@ -113,11 +111,11 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
 
         Args:
             buffer: The input buffer to read samples from.
-            phase: The current phase to read from the buffer.
-            start_chan: The firstchannel to read from the buffer.
+            phase: The current phase to read from the buffer. Between 0 (beginning) and 1 (end).
+            start_chan: The first channel to read from the buffer.
         
         Returns:
-            The next output sample from the internal buffer.
+            The next output sample.
         """
         return self.buffered_process.next_from_buffer(buffer, phase, start_chan)
 
@@ -126,10 +124,10 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
 
         Args:
             buffer: The input buffer to read samples from.
-            phase: The current phase to read from the buffer.
-            start_chan: The firstchannel to read from the buffer.
+            phase: The current phase to read from the buffer. Between 0 (beginning) and 1 (end).
+            start_chan: The first channel to read from the buffer.
 
         Returns:
-            The next stereo output sample from the internal buffer.
+            The next stereo output sample.
         """
         return self.buffered_process.next_from_stereo_buffer(buffer, phase, start_chan)
