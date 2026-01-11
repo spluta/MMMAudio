@@ -31,7 +31,7 @@ struct BufferedMultiply(BufferedProcessable):
 # User's Synth
 struct TestBufferedProcess(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
-    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024]
+    var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024,input_window_shape=WindowType.rect,output_window_shape=WindowType.rect]
     var input: Float64
     var m: Messenger
     var ps: List[Print]
@@ -40,7 +40,7 @@ struct TestBufferedProcess(Movable, Copyable):
         self.world = world
         self.input = 0.1
         var multiply_process = BufferedMultiply(self.world)
-        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024](self.world,process=multiply_process^)
+        self.my_buffered_mul = BufferedProcess[BufferedMultiply,1024,1024,input_window_shape=WindowType.rect,output_window_shape=WindowType.rect](self.world,process=multiply_process^)
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
 

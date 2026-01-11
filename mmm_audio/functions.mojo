@@ -85,6 +85,25 @@ fn select[num_chans: Int, //](index: Float64, vals: SIMD[DType.float64, num_chan
     return linear_interp(v0, v1, index_mix)
 
 @always_inline
+fn select[num_chans: Int](index: Float64, list: List[SIMD[DType.float64, num_chans]]) -> SIMD[DType.float64, num_chans]:
+    """Selects a SIMD vector from a List of SIMD vectors based on a floating-point index using linear interpolation.
+
+    Parameters:
+        num_chans: Size of the SIMD vector. This parameter is inferred by the values passed to the function.
+
+    Args:
+        index: The floating-point index to select.
+        list: The List of SIMD vectors containing the values.
+    
+    Returns:
+        The selected value.
+    """
+    index_int = Int(index) % len(list)
+    index_mix: Float64 = index - index_int
+    val: SIMD[DType.float64, num_chans] = SIMD[DType.float64](list[index_int]) * (1.0 - index_mix) + list[(index_int + 1) % len(list)] * index_mix
+    return val
+    
+@always_inline
 fn linlin[
     dtype: DType, num_chans: Int, //
 ](input: SIMD[dtype, num_chans], in_min: SIMD[dtype, num_chans] = 0, in_max: SIMD[dtype, num_chans] = 1, out_min: SIMD[dtype, num_chans] = 0, out_max: SIMD[dtype, num_chans] = 1) -> SIMD[dtype, num_chans]:
