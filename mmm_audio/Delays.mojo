@@ -11,7 +11,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
-      interp: The interpolation method to use. See `struct Interp` for interpolation options.
+      interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
 
     var world: UnsafePointer[MMMWorld]
@@ -152,7 +152,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
 
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
-      interp: The interpolation method to use. See `struct Interp` for interpolation options.
+      interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
 
     """
 
@@ -210,7 +210,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
-      interp: The interpolation method to use. See `struct Interp` for interpolation options.
+      interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
     var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp] # Delay line without automatic feedback
@@ -259,7 +259,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
     
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
-      interp: The interpolation method to use. See `struct Interp` for interpolation options.
+      interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
     var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
@@ -315,7 +315,7 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
     
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
-      interp: The interpolation method to use. See `struct Interp` for interpolation options.
+      interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
       ADAA_dist: Whether to apply ADAA distortion to the feedback signal instead of standard tanh.
       os_index: The oversampling index for ADAA distortion. 0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x.
     """

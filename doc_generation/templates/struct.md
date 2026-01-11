@@ -10,6 +10,10 @@
 {{ struct.description }}
 {% endif %}
 
+{% if struct.guide %}
+{{ struct.guide }}
+{% endif %}
+
 <!-- PARENT TRAITS -->
 {% if struct.parentTraits %}
 *Traits:* {% for trait in struct.parentTraits -%}`{{ trait.name }}`{% if not loop.last %}, {% endif %}{%- endfor %}
@@ -19,10 +23,10 @@
 {% if struct.parameters %}
 {{ badges.struct_badge(struct.name) }} **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
 {% for param in struct.parameters %}
-| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
+| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.default %}`{{ param.default }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 
@@ -53,10 +57,10 @@
 {% if overload.parameters %}
 `fn` {{ badges.fn_badge(function.name) }} **Parameters**
 
-| Name | Type | Description |
-|------|------|-------------|
+| Name | Type | Default | Description |
+|------|------|---------|-------------|
 {% for param in overload.parameters %}
-| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
+| **{{ param.name }}** | {% if param.type %}`{{ param.type }}`{% else %}—{% endif %} | {% if param.default %}`{{ param.default }}`{% else %}—{% endif %} | {% if param.description %}{{ param.description }}{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 

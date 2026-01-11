@@ -10,7 +10,7 @@ if True:
     from mmm_python.Patterns import Pseq, Pxrand
     import numpy as np
     import asyncio
-    from mmm_python.functions import midicps, linexp
+    from mmm_python.python_utils import midicps, linexp
 
     global scheduler
     scheduler = mmm_audio.scheduler

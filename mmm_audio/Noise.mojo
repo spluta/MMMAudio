@@ -6,31 +6,30 @@ struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
     
     Parameters:
         num_chans: Number of SIMD channels.
-
-    Public Methods:
-        next(gain): Generate the next white noise sample.
-    
     """
     fn __init__(out self):
+        """Initialize the WhiteNoise struct."""
         pass  # No initialization needed for white noise
 
     fn next(self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
         """Generate the next white noise sample.
+
+        Args:
+            gain: Amplitude scaling factor.
         
         Returns:
             A random value between -gain and gain.
         """
         # Generate random value between -1 and 1, then scale by gain
-        return random_lin_float64[num_chans](-1.0, 1.0) * gain
+        return random_uni_float64[num_chans](-1.0, 1.0) * gain
 
 struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
-    """Generate pink noise samples (SIMD version).
+    """Generate pink noise samples.
+
+    Uses the [Voss-McCartney algorithm](https://www.firstpr.com.au/dsp/pink-noise/#Voss-McCartney).
 
     Parameters:
         num_chans: Number of SIMD channels.
-
-    Public Methods:
-        next(gain): Generate the next white noise sample.
     """
 
     var b0: SIMD[DType.float64, num_chans]
@@ -42,6 +41,7 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
     var b6: SIMD[DType.float64, num_chans]
 
     fn __init__(out self):
+        """Initialize the PinkNoise struct."""
         self.b0 = SIMD[DType.float64, num_chans](0.0)
         self.b1 = SIMD[DType.float64, num_chans](0.0)
         self.b2 = SIMD[DType.float64, num_chans](0.0)
@@ -51,16 +51,16 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
         self.b6 = SIMD[DType.float64, num_chans](0.0)
 
     fn next(mut self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
-        """Generate the next pink noise sample (SIMD) using the Voss-McCartney algorithm (https://www.firstpr.com.au/dsp/pink-noise/#Voss-McCartney).
+        """Generate the next pink noise sample.
 
         Args:
             gain: Amplitude scaling factor.
 
         Returns:
-            A SIMD pink noise sample scaled by gain.
+            The next pink noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_lin_float64[num_chans](-1.0, 1.0)
+        var white = random_uni_float64[num_chans](-1.0, 1.0)
 
         # Filter white noise to get pink noise (Voss-McCartney algorithm)
         self.b0 = self.b0 * 0.99886 + white * 0.0555179
@@ -77,91 +77,105 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
         return pink * (gain * 0.125)
 
 struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
-    """Generate brown noise samples (SIMD version).
+    """Generate brown noise samples.
 
     Parameters:
         num_chans: Number of SIMD channels.
-
-    Public Methods:
-        next(gain): Generate the next brown noise sample.
     """
 
     var last_output: SIMD[DType.float64, num_chans]
 
     fn __init__(out self):
+        """Initialize the BrownNoise struct."""
         self.last_output = SIMD[DType.float64, num_chans](0.0)
 
     fn next(mut self, gain: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](1.0)) -> SIMD[DType.float64, num_chans]:
-        """Generate the next brown noise sample (SIMD).
+        """Generate the next brown noise sample.
 
         Args:
             gain: Amplitude scaling factor.
 
         Returns:
-            A SIMD brown noise sample scaled by gain.
+            The next brown noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_lin_float64[num_chans](-1.0, 1.0)
+        var white = random_uni_float64[num_chans](-1.0, 1.0)
 
         # Integrate white noise to get brown noise
-        self.last_output += (white - self.last_output) * SIMD[DType.float64, num_chans](0.02)
+        self.last_output += (white - self.last_output) * 0.02
         return self.last_output * gain
 
-struct TExpRand[num_simd: Int = 1](Copyable, Movable):
-    """Generate exponentially distributed random samples upon receiving a trigger (SIMD version).
+struct TExpRand[num_chans: Int = 1](Copyable, Movable):
+    """Generate exponentially distributed random value upon receiving a trigger.
 
     Parameters:
-
-        num_simd: Number of SIMD channels.
-
-    Public Methods:
-
-        next(min, max, trig): Generate the next exponentially distributed random sample.
+        num_chans: Number of SIMD channels.
     """
 
-    var stored_output: SIMD[DType.float64, num_simd]
-    var last_trig: SIMD[DType.bool, num_simd]
+    var stored_output: SIMD[DType.float64, num_chans]
+    var last_trig: SIMD[DType.bool, num_chans]
 
     fn __init__(out self):
-        self.stored_output = SIMD[DType.float64, num_simd](0.0)
-        self.last_trig = SIMD[DType.bool, num_simd](fill=False)
+        """Initialize the TExpRand struct."""
+        self.stored_output = SIMD[DType.float64, num_chans](0.0)
+        self.last_trig = SIMD[DType.bool, num_chans](fill=False)
 
-    fn next(mut self, min: SIMD[DType.float64, num_simd], max: SIMD[DType.float64, num_simd], trig: SIMD[DType.bool, num_simd]) -> SIMD[DType.float64, num_simd]:
-        """Generate the next exponentially distributed random sample when triggered."""
+    fn next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Output the exponentially distributed random value.
+
+        The value is repeated until a new trigger is received, at which point a new value is generated.
+        And that new value is repeated until the next trigger, and so on.
         
-        rising_edge: SIMD[DType.bool, self.num_simd] = trig & ~self.last_trig
+        Args:
+            min: Minimum value for the random value.
+            max: Maximum value for the random value.
+            trig: Trigger to generate a new value.
+
+        Returns:
+            The exponentially distributed random value.
+        """
+        
+        rising_edge: SIMD[DType.bool, self.num_chans] = trig & ~self.last_trig
         @parameter
-        for i in range(num_simd):
+        for i in range(num_chans):
             if rising_edge[i]:
                 self.stored_output[i] = random_exp_float64(min[i], max[i])
         self.last_trig = trig
         return self.stored_output
 
-struct TRand[num_simd: Int = 1](Copyable, Movable):
-     """Generate linearly distributed random samples upon receiving a trigger (SIMD version).
+struct TRand[num_chans: Int = 1](Copyable, Movable):
+     """Generate uniformly distributed random value upon receiving a trigger.
 
     Parameters:
-
-        num_simd: Number of SIMD channels.
-
-    Public Methods:
-
-        next(min, max, trig): Generate the next linearly distributed random sample.
+        num_chans: Number of SIMD channels.
     """
 
-    var stored_output: SIMD[DType.float64, num_simd]
-    var last_trig: SIMD[DType.bool, num_simd]
+    var stored_output: SIMD[DType.float64, num_chans]
+    var last_trig: SIMD[DType.bool, num_chans]
 
     fn __init__(out self):
-        self.stored_output = SIMD[DType.float64, num_simd](0.0)
-        self.last_trig = SIMD[DType.bool, num_simd](fill=False)
+        """Initialize the TRand struct."""
+        self.stored_output = SIMD[DType.float64, num_chans](0.0)
+        self.last_trig = SIMD[DType.bool, num_chans](fill=False)
 
-    fn next(mut self, min: SIMD[DType.float64, num_simd], max: SIMD[DType.float64, num_simd], trig: SIMD[DType.bool, num_simd]) -> SIMD[DType.float64, num_simd]:
-        """Generate the next linearly distributed random sample when triggered."""
+    fn next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Output uniformly distributed random value.
 
-        rising_edge: SIMD[DType.bool, self.num_simd] = trig & ~self.last_trig
+        The value is repeated until a new trigger is received, at which point a new value is generated.
+        And that new value is repeated until the next trigger, and so on.
+
+        Args:
+            min: Minimum value for the random value.
+            max: Maximum value for the random value.
+            trig: Trigger to generate a new value.
+
+        Returns:
+            The uniformly distributed random value.
+        """
+
+        rising_edge: SIMD[DType.bool, self.num_chans] = trig & ~self.last_trig
         @parameter
-        for i in range(num_simd):
+        for i in range(num_chans):
             if rising_edge[i]:
                 self.stored_output[i] = random_float64(min[i], max[i])
         self.last_trig = trig

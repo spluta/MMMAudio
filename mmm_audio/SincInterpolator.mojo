@@ -6,13 +6,16 @@ from math import floor, log2, sin
 from .functions import wrap, clip
 
 struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable):
-    """
+    """Sinc Interpolation of `List[Float64]`s.
+
     Struct for high-quality audio resampling using sinc interpolation. This struct precomputes a sinc table and provides methods for performing sinc interpolation
     on audio data with adjustable ripples and table size. It is used in Osc for resampling oscillator signals.
 
-    Attributes:
-        ripples (Int64): Number of ripples in the sinc function, affecting interpolation quality.
-        power (Int64): Power of two determining the size of the sinc table (table_size = 2^power).
+    As a user, you won't need to interact with this struct directly. Instead use the [ListInterpolator](Buffer.md#struct-listinterpolator) struct.
+
+    Parameters:
+        ripples: Number of ripples in the sinc function, affecting interpolation quality.
+        power: Power of two determining the size of the sinc table (table_size = 2^power).
     """
     var table: List[Float64]  # Sinc table for interpolation
     var table_size: Int64  # Size of the sinc table

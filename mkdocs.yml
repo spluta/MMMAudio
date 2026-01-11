@@ -44,39 +44,43 @@ nav:
   - API Reference:
     - Overview: api/index.md
     - Core DSP: 
-      - Analysis: api/mmm_dsp/Analysis.md
-      - Buffer: api/mmm_dsp/Buffer.md
-      - BufferedProcess: api/mmm_dsp/BufferedProcess.md
-      - Delays: api/mmm_dsp/Delays.md
-      - Distortion: api/mmm_dsp/Distortion.md
-      - Env: api/mmm_dsp/Env.md
-      - FFT: api/mmm_dsp/FFT.md
-      - FFTProcess: api/mmm_dsp/FFTProcess.md
-      - Filters: api/mmm_dsp/Filters.md
-      - MLP: api/mmm_dsp/MLP.md
-      - Noise: api/mmm_dsp/Noise.md
-      - Osc: api/mmm_dsp/Osc.md
-      - OscBuffers: api/mmm_dsp/OscBuffers.md
-      - Oversampling: api/mmm_dsp/Oversampling.md
-      - Pan: api/mmm_dsp/Pan.md
-      - Play: api/mmm_dsp/Play.md
-      - RecordBuf: api/mmm_dsp/RecordBuf.md
-      - Reverb: api/mmm_dsp/Reverb.md
-      - Utilities: api/mmm_utils/functions.md
+      - Analysis: api/Analysis.md
+      - Buffer: api/Buffer.md
+      - BufferedProcess: api/BufferedProcess.md
+      - Delays: api/Delays.md
+      - Distortion: api/Distortion.md
+      - Env: api/Envelopes.md
+      - FFT: api/FFTs.md
+      - FFTProcess: api/FFTProcess.md
+      - Filters: api/Filters.md
+      - MLP Mojo: api/MLP.md
+      - MLP PyTorch: api/MLP.md
+      - Noise: api/Noise.md
+      - Osc: api/Oscillators.md
+      - Oversampling: api/Oversampling.md
+      - Pan: api/Pan.md
+      - Play: api/Player.md
+      - Recorder: api/Recorder.md
+      - Reverb: api/Reverbs.md
+      - Utilities: api/functions.md
+      - Sinc Interpolation: api/SincInterpolator.md
     - Core Framework:
-      - World: api/mmm_src/MMMWorld.md
-      - Audio Engine: api/mmm_src/MMMAudio.md
-      - Messenger: api/mmm_utils/Messengers.md
-      - Traits: api/mmm_src/MMMTraits.md
-      - Patterns: api/mmm_src/Patterns.md
-      - Scheduler: api/mmm_src/Scheduler.md
-      - HID Devices: api/mmm_utils/hid_devices.md
+      - World: api/MMMWorld.md
+      - Python Class: api/MMMAudio.md
+      - Python Mojo Interop: api/MMMAudioBridge.md
+      - Messenger: api/Messenger.md
+      - Patterns: api/Patterns.md
+      - Scheduler: api/Scheduler.md
+      - HID Devices: api/hid_devices.md
     - Utilities:
-      - Windows: api/mmm_utils/Windows.md
-      - Print: api/mmm_utils/Print.md
-      - ML Training: api/mmm_utils/mlp_trainer.md
-      - GUIs: api/mmm_utils/GUI.md
-      - RisingBoolDetector: api/mmm_utils/RisingBoolDetector.md
+      - Windows: api/Windows.md
+      - Print: api/Print.md
+      - GUIs: api/GUI.md
+      - RisingBoolDetector: api/RisingBoolDetector.md
+      - OSC Messaging: api/OSCServer.md
+      - Python Functions: api/python_utils.md
+      - Python FFT: api/fft.md
+      - Mojo Functions: api/functions.md
   # - Examples nav tree is built dynamically from the examples directory
   - Contributing:
     - Overview: contributing/index.md
@@ -119,13 +123,13 @@ plugins:
   - mkdocs-simple-hooks:
       hooks:
         on_config: "doc_generation.generate_docs:configure_and_generate"
-  - with-pdf:
-      output_path: ./MMMAudio.pdf
-      cover_title: MMMAudio Documentation
-      cover_subtitle: DSP library for Python and Mojo
-      author: Sam Pluta
-      toc_title: Table of Contents
-      copyright: "© 2025 Sam Pluta"
+  # - with-pdf:
+  #     output_path: ./MMMAudio.pdf
+  #     cover_title: MMMAudio Documentation
+  #     cover_subtitle: DSP library for Python and Mojo
+  #     author: Sam Pluta
+  #     toc_title: Table of Contents
+  #     copyright: "© 2025 Sam Pluta"
 
 extra:
   social:

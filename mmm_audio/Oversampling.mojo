@@ -42,7 +42,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
 
     @always_inline
     fn get_sample(mut self) -> SIMD[DType.float64, self.num_chans]:
-        """get the next sample from a filled oversampling buffer."""
+        """Get the next sample from a filled oversampling buffer."""
         out = SIMD[DType.float64, self.num_chans](0.0)
         if self.counter > 1:
             for i in range(times_oversampling):

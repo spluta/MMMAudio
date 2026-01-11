@@ -5,14 +5,13 @@ from .Messenger_Module import *
 from .MMMWorld_Module import *
 
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
-    """
-    A Mojo wrapper for a PyTorch MLP model using Python interop.
+    """A Mojo wrapper for a PyTorch MLP model using Python interop.
 
-    ``MLP[input_size, output_size](world,file_name)``
+    For example usage, see `TorchMlp.mojo` in the 'Examples' folder.
 
     Parameters:
-      input_size: The size of the input vector - defaults to 2.
-      output_size: The size of the output vector - defaults to 16.
+      input_size: The size of the input vector.
+      output_size: The size of the output vector.
     """
     var world: UnsafePointer[MMMWorld]
     var py_input: PythonObject  
@@ -30,6 +29,14 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var file_name: String
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
+        """Initialize the MLP struct.
+        
+        Args:
+          world: Pointer to the MMMWorld.
+          file_name: The path to the model file.
+          namespace: Optional namespace for the Messenger.
+          trig_rate: The rate in Hz at which to trigger inference.
+        """
         self.world = world
         self.py_input = PythonObject(None) 
         self.py_output = PythonObject(None) 
@@ -58,10 +65,8 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
         self.reload_model(file_name)
 
-
     fn reload_model(mut self: MLP, var file_name: String):
-        """
-        Reload the MLP model from a specified file.
+        """Reload the MLP model from a specified file.
 
         Args:
           file_name: The path to the model file.
@@ -80,10 +85,14 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
     @always_inline
     fn next(mut self: MLP):
+        """Function for Audio Thread.
+
+        Call this function every sample in the audio thread. The MLP will only
+        perform inference at the rate specified by `trig_rate` (and if `inference_gate` is True).
+
+        The model input is taken from `model_input`, and the output is written to `model_output`.
         """
-        Process the input through the MLP model.
-            
-        """
+
         self.messenger.update(self.inference_gate, "toggle_inference")
         
         if self.messenger.notify_update(self.file_name, "load_mlp_training"):

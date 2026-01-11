@@ -147,7 +147,16 @@ struct ListInterpolator(Movable, Copyable):
     """
     A collection of static methods for interpolating values from a List[Float64].
     
-    ListInterpolator supports various interpolation methods including read_none, read_linear, read_quad, read_cubic, read_lagrange4, and read_sinc interpolation. The available interpolation methods are defined in the Interp enum.
+    `ListInterpolator` supports various interpolation methods including
+    
+    * no interpolation (none)
+    * linear interpolation
+    * quadratic interpolation
+    * cubic interpolation
+    * lagrange interpolation (4th order)
+    * sinc interpolation
+
+    The available interpolation methods are defined in the struct [Interp](MMMWorld.md#struct-interp).
     """
 
     @always_inline

@@ -8,10 +8,7 @@ from os import abort
 from memory import *
 
 from mmm_audio.MMMWorld_Module import *
-
 from mmm_audio.functions import *
-
-
 from examples.FeedbackDelays import FeedbackDelays
 
 struct MMMAudioBridge(Representable, Movable):
