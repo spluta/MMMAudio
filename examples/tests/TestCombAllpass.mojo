@@ -12,6 +12,7 @@ struct TestCombAllpass(Movable, Copyable):
     var allpass: Allpass_Comb[1, Interp.lagrange4]
     var comb2: Comb[1, Interp.lagrange4]
     var allpass2: Allpass_Comb[1, Interp.lagrange4]
+    var LP_Comb: LP_Comb[1, Interp.lagrange4]
     var delay_time: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
@@ -23,6 +24,7 @@ struct TestCombAllpass(Movable, Copyable):
         self.allpass = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
         self.comb2 = Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
         self.allpass2 = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
+        self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
         self.delay_time = 0.1
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -35,7 +37,8 @@ struct TestCombAllpass(Movable, Copyable):
         allpass0 = self.allpass.next(sample, self.delay_time, 0.9)
         comb1 = self.comb2.next_decaytime(sample, self.delay_time, 1)
         allpass1 = self.allpass2.next_decaytime(sample, self.delay_time, 1)
+        lp_comb = self.LP_Comb.next(sample, self.delay_time, 0.9, 10000.0)
 
-        filt = select(self.which, [comb0, allpass0, comb1, allpass1])
+        filt = select(self.which, [comb0, allpass0, comb1, allpass1, lp_comb])
 
         return SIMD[DType.float64, 2](sample, filt)

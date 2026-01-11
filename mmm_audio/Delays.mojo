@@ -177,17 +177,16 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
         Args:
           input: The input sample to process.
           delay_time: The amount of delay to apply (in seconds).
-          feedback: The amount of feedback to apply (0.0 to 1.0).
+          feedback: The amount of feedback to apply (-1.0 to 1.0).
 
         Returns:
           The delayed output sample.
         """
         # Get the delayed sample
-        # does not write to the buffer
-        var out = self.delay.next(self.fb, delay_time)  
-        temp = input + out * clip(feedback, 0.0, 1.0)  # Apply feedback
+        fb_in = input + self.fb * clip(feedback, -1.0, 1.0)
+        var out = self.delay.next(fb_in, delay_time)  
 
-        self.fb = temp
+        self.fb = out
 
         return out  # Return the delayed sample
 
@@ -207,7 +206,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
 
 struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyable):
     """
-    A simple comb filter with an integrated virtual analog one-pole low-pass filter.
+    A simple comb filter with an integrated one-pole low-pass filter.
     
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
@@ -215,7 +214,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     """
     var world: UnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp] # Delay line without automatic feedback
-    var one_pole: VAOnePole[num_chans]
+    var one_pole: OnePole[num_chans]
     var fb: SIMD[DType.float64, num_chans]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
@@ -228,7 +227,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
 
         self.world = world
         self.delay = Delay[num_chans, interp](self.world, max_delay)
-        self.one_pole = VAOnePole[num_chans](self.world)
+        self.one_pole = OnePole[num_chans](self.world)
         self.fb = SIMD[DType.float64, num_chans](0.0)
 
     @always_inline
@@ -238,19 +237,18 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
         Args:
           input: The input sample to process.
           delay_time: The amount of delay to apply (in seconds).
-          feedback: The amount of feedback to apply (0.0 to 1.0).
-          lp_freq: The cutoff frequency of the VAOnePole filter in the feedback loop.
+          feedback: The amount of feedback to apply (-1.0 to 1.0).
+          lp_freq: The cutoff frequency of the OnePole filter in the feedback loop.
 
         Returns:
           The processed output sample.
         """
-        var out = self.delay.next(self.fb, delay_time)  # Get the delayed sample
+        fb_in = input + self.fb * clip(feedback, -1.0, 1.0)
+        var out = self.delay.next(fb_in, delay_time)
 
-        self.fb = self.one_pole.lpf(out * clip(feedback, 0.0, 1.0), lp_freq)  # Low-pass filter the feedback
+        self.fb = self.one_pole.lpf(out, lp_freq)  # Low-pass filter the feedback
 
-        self.fb += input
-
-        return out  # Return the delayed sample
+        return out
 
     fn __repr__(self) -> String:
         return "LP_Comb"

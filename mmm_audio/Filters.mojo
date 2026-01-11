@@ -443,11 +443,13 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: Number of channels to process in parallel.
     """
     var last_samp: SIMD[DType.float64, num_chans]  # Previous output
+    var world: UnsafePointer[MMMWorld]
     
-    fn __init__(out self):
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """Initialize the one-pole filter."""
 
         self.last_samp = SIMD[DType.float64, num_chans](0.0)
+        self.world = world
     
     fn __repr__(self) -> String:
         return String("OnePoleFilter")
@@ -466,6 +468,36 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         var output = (1 - abs(coef2)) * input + coef2 * self.last_samp
         self.last_samp = output
         return output
+
+    fn lpf(mut self, input: SIMD[DType.float64, num_chans], cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Process one sample through the one-pole lowpass filter with a given cutoff frequency.
+
+        Args:
+            input: The input signal to process.
+            cutoff_hz: The cutoff frequency of the lowpass filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        var coef = self.coeff(cutoff_hz)
+        return self.next(input, coef)
+
+    fn hpf(mut self, input: SIMD[DType.float64, num_chans], cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Process one sample through the one-pole highpass filter with a given cutoff frequency.
+
+        Args:
+            input: The input signal to process.
+            cutoff_hz: The cutoff frequency of the highpass filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        var coef = self.coeff(cutoff_hz)
+        return self.next(input, -coef)
+
+    fn coeff(self, cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+        """Calculate feedback coefficient from cutoff frequency."""
+        return exp(-2.0 * pi * cutoff_hz / self.world[].sample_rate)
 
 
 # struct Integrator(Representable, Movable, Copyable):
