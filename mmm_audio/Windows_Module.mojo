@@ -49,7 +49,7 @@ struct Windows(Movable, Copyable):
         """Generate a window of specified type and size.
         
         Parameters:
-            window_type: Type of window to generate. Use alias variables from WindowType struct (e.g. WindowType.hann).
+            window_type: Type of window to generate. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
         
         Args:
             size: Length of the window.
