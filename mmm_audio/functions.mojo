@@ -66,7 +66,7 @@ fn ampdb[width: Int, //](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64,
 
 @always_inline
 fn select[num_chans: Int, //](index: Float64, vals: SIMD[DType.float64, num_chans]) -> Float64:
-    """Selects a value from a SIMD vector based on a floating-point index using linear interpolation.
+    """Selects a value from a SIMD vector based on a floating-point index and using linear interpolation.
 
     Parameters:
         num_chans: Size of the SIMD vector. This parameter is inferred by the values passed to the function.
@@ -74,6 +74,23 @@ fn select[num_chans: Int, //](index: Float64, vals: SIMD[DType.float64, num_chan
     Args:
         index: The floating-point index to select.
         vals: The SIMD vector containing the values.
+    
+    Returns:
+        The selected value.
+    """
+    index_int = Int(index) % len(vals)
+    index_mix: Float64 = index - index_int
+    v0 = vals[index_int]
+    v1 = vals[(index_int + 1) % len(vals)]
+    return linear_interp(v0, v1, index_mix)
+
+@always_inline
+fn select[num_chans: Int, //](index: Float64, vals: List[SIMD[DType.float64, num_chans]]) -> SIMD[DType.float64, num_chans]:
+    """Selects a value from a List[Float64] based on a floating-point index and using linear interpolation.
+
+    Args:
+        index: The floating-point index to select.
+        vals: The List[Float64] containing the values.
     
     Returns:
         The selected value.

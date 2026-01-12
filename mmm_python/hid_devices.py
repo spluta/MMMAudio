@@ -26,6 +26,35 @@ class Joystick:
         self.throttle = 0
         self.joystick_button = 0
         self.buttons = [0] * 16  # 16 buttons
+        self.joystick_fn_dict = {
+            "logi_3Dpro": lambda data, combined: self.logi_pro_parse(data, combined),
+            "thrustmaster": lambda data, combined: self.thrustmaster_parse(data, combined),
+        }
+
+    def logi_pro_parse(self, data, combined):
+        self.x_axis = (((combined >> 16) & 0xFFFF) - 32768) / 32768.0  # X-axis (16 bits, centered around 0)
+        self.y_axis = 1.0-(((combined >> 32) & 0xFFFF) - 32768) / 32768.0  # Y-axis (16 bits, centered around 0)
+        self.z_axis = (((combined >> 48) & 0xFFFF) - 32768) / 32768.0  # Z-axis (16 bits, centered around 0)
+
+        self.joystick_button = (combined >> 8) & 0x01
+        self.throttle = (((combined >> 40) & 0xFFFF)) / 65535.0
+        buttons = (combined >> 0) & 0xFF                             # Button states (8-bit)
+        for i in range(8):
+            self.buttons[i] = int(buttons & (1 << i) > 0)
+
+    def thrustmaster_parse(self, data, combined):
+        self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
+        self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
+        self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
+
+        self.joystick_button = (combined >> 16) & 0x0F
+        self.throttle = data[8] / 255.0
+        buttons0 = data[0]                             # Button states (8-bit)
+        buttons1 = data[1]                             # Button states (8-bit)
+        for i in range(8):
+            self.buttons[i] = int(buttons0 & (1 << i) > 0)
+        for i in range(8):
+            self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
 
     def connect(self):
         """Connect to the joystick"""
@@ -54,33 +83,10 @@ class Joystick:
         # print(f"Combined data: {combined:032b}")  # Debug print of the combined data
         # print(f"Combined data: {combined>>40:032b}")  # Debug print of the combined data
 
-        if self.name=="logi_3Dpro":
-            self.x_axis = (((combined >> 0) & 0x3FF)) / 1023.0  # X-axis (10 bits, centered around 0)
-            self.y_axis = 1.0-(((combined >> 10) & 0x3FF)) / 1023.0  # Y-axis (10 bits, centered around 0)
-            self.z_axis = (((combined >> 24) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
-
-            self.joystick_button = (combined >> 20) & 0x0F  # Joystick button state (4 bits)
-            self.throttle = data[5] / 255.0
-            buttons0 = data[4]                             # Button states (8-bit)
-            buttons1 = data[6]                             # Button states (8-bit)
-            for i in range(8):
-                self.buttons[i] = int(buttons0 & (1 << i) > 0)
-            for i in range(4):
-                self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
-                
-        elif self.name=="thrustmaster":
-            self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
-            self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
-            self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
-
-            self.joystick_button = (combined >> 16) & 0x0F
-            self.throttle = data[8] / 255.0
-            buttons0 = data[0]                             # Button states (8-bit)
-            buttons1 = data[1]                             # Button states (8-bit)
-            for i in range(8):
-                self.buttons[i] = int(buttons0 & (1 << i) > 0)
-            for i in range(8):
-                self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
+        if self.name.lower() in self.joystick_fn_dict:
+            self.joystick_fn_dict[self.name.lower()](data, combined)
+        else:
+            print(f"Joystick parsing not implemented for: {self.name}")
 
 
     def read_continuous(self, name: str, function: Callable[..., None], duration: Optional[float] = None):

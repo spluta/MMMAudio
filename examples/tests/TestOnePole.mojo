@@ -11,7 +11,7 @@ struct TestOnePole[N: Int = 2](Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.noise = WhiteNoise[N]()
-        self.filt = OnePole[N]()
+        self.filt = OnePole[N](world)
 
     fn next(mut self) -> SIMD[DType.float64, self.N]:
         sample = self.noise.next()  # Get the next white noise sample

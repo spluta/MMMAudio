@@ -95,4 +95,4 @@ struct MessengerExample(Copyable, Movable):
         for i in range(2):
             out[i] = self.tones[i].next()
 
-        return out * dbamp(-20)
+        return out * dbamp(-20.0)

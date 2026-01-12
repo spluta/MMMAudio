@@ -6,7 +6,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     # so here we have sinc interpolation with 2x oversampling
     # var osc: Osc[1,2,1]
     # var lag: Lag[1]
-    var osc: Osc[2,Interp.lagrange4,os_index=3]
+    var osc: Osc[2,Interp.sinc,os_index=1]
     var lag: Lag[2]
     var m: Messenger
     var x: Float64
@@ -17,7 +17,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
-        self.osc = Osc[2,Interp.lagrange4,os_index=3](self.world)
+        self.osc = Osc[2,Interp.sinc,os_index=1](self.world)
         self.lag = Lag[2](self.world, 0.1)
         self.m = Messenger(self.world)
         self.x = 0.0
