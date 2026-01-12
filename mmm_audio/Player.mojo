@@ -235,7 +235,7 @@ struct Grain(Representable, Movable, Copyable):
 
         Parameters:
             num_simd_chans: Number of output channels (speakers). Must be a power of two that is at least as large as num_speakers.
-            win_type: Type of window to apply to the grain (default is Hann window (WinType.hann)).
+            win_type: Type of window to apply to the grain (default is Hann window (WindowType.hann) See [WindowType](MMMWorld.md/#struct-windowtype) for all options.).
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
         Args:
