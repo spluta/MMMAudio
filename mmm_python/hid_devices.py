@@ -1,6 +1,9 @@
 from typing import Optional, Callable
 import hid
 import time
+from .hid_parse_defs import *
+from . import hid_parse_defs as _hid_parse_defs
+import inspect
 
 class Joystick:
     """Connect a Joystick to control parameters. This class supports Logitech Extreme 3D Pro and Thrustmaster joysticks, whose HID reports were parse manually. See the `parse_report` method for the report format for these joysticks. Yours will probably be something like that!
@@ -9,7 +12,7 @@ class Joystick:
         """Initialize connection with a Joystick.
         
         Args:
-            name: Joystick name.
+            name: Joystick name. Will be used to look up the correct parser function found in `hid_parse_defs.py`.
             vendor_id: Identification number of the vendor.
             product_id: Identification number of the product.
         """
@@ -26,35 +29,13 @@ class Joystick:
         self.throttle = 0
         self.joystick_button = 0
         self.buttons = [0] * 16  # 16 buttons
-        self.joystick_fn_dict = {
-            "logi_3Dpro": lambda data, combined: self.logi_pro_parse(data, combined),
-            "thrustmaster": lambda data, combined: self.thrustmaster_parse(data, combined),
-        }
 
-    def logi_pro_parse(self, data, combined):
-        self.x_axis = (((combined >> 16) & 0xFFFF) - 32768) / 32768.0  # X-axis (16 bits, centered around 0)
-        self.y_axis = 1.0-(((combined >> 32) & 0xFFFF) - 32768) / 32768.0  # Y-axis (16 bits, centered around 0)
-        self.z_axis = (((combined >> 48) & 0xFFFF) - 32768) / 32768.0  # Z-axis (16 bits, centered around 0)
-
-        self.joystick_button = (combined >> 8) & 0x01
-        self.throttle = (((combined >> 40) & 0xFFFF)) / 65535.0
-        buttons = (combined >> 0) & 0xFF                             # Button states (8-bit)
-        for i in range(8):
-            self.buttons[i] = int(buttons & (1 << i) > 0)
-
-    def thrustmaster_parse(self, data, combined):
-        self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
-        self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
-        self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
-
-        self.joystick_button = (combined >> 16) & 0x0F
-        self.throttle = data[8] / 255.0
-        buttons0 = data[0]                             # Button states (8-bit)
-        buttons1 = data[1]                             # Button states (8-bit)
-        for i in range(8):
-            self.buttons[i] = int(buttons0 & (1 << i) > 0)
-        for i in range(8):
-            self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
+        # auto-discover parser functions in hid_parse_defs.py and map name -> callable(self, data, combined)
+        self.joystick_fn_dict = {}
+        for name, func in inspect.getmembers(_hid_parse_defs, inspect.isfunction):
+            if name.startswith("_") or func.__module__ != _hid_parse_defs.__name__:
+                continue
+            self.joystick_fn_dict[name] = (lambda data, combined, f=func: f(self, data, combined))
 
     def connect(self):
         """Connect to the joystick"""

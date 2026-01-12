@@ -1,5 +1,5 @@
 """
-The Joystick example shows how to connect a joystick and print its values. Normally you would use these values to control parameters in your MMMAudio synths or effects.
+The Joystick example shows how to connect a joystick or other hid device and print its values. Normally you would use these values to control parameters in your MMMAudio synths or effects.
 
 Right now, it only supports Logitech Extreme 3D Pro and Thrustmaster joysticks, but you can modify the `parse_report` method in `mmm_python/hid_devices.py` to support your own joystick by examining its HID report format. If you do so, please consider contributing the code back to the repository!
 """
@@ -22,6 +22,7 @@ if True:
             f"Joystick {name}: X={x_axis:.2f}, Y={y_axis:.2f}, Z={z_axis:.2f}, Throttle={throttle:.2f}, Joy_Button={joystick_button}, Buttons={buttons}"
         )
         if buttons[0] == 1:
+            # example action when button 0 is pressed - replace with your own action, like turning on a synth 
             print("Button 0 pressed!")
 
     if joystick.connect():
@@ -72,8 +73,10 @@ if True:
     )  # this is the vendor_id and product_id for a Thrustmaster joystick, but we are going to make our own parser
 
     # my custom parser for the joystick
-    def custom_parser(data, combined):
-        print(bin(combined))
+    def custom_parser(joystick, data, combined):
+
+        print(bin(combined)) # the hid data comes in as a readable binary string
+
         joystick.x_axis = (
             (combined >> 24) & 0xFFFF
         ) / 16383.0  # X-axis (10 bits, centered around 0)
@@ -84,6 +87,8 @@ if True:
 
         joystick.joystick_button = (combined >> 16) & 0x0F
         joystick.throttle = data[8] / 255.0
+
+        # the buttons of the thrustmaster are the first 16 bits
         buttons0 = data[0]
         buttons1 = data[1]
         for i in range(8):
@@ -92,7 +97,7 @@ if True:
             joystick.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
 
     joystick.joystick_fn_dict["my_joystick"] = lambda data, combined: custom_parser(
-        data, combined
+        joystick, data, combined
     )
 
     # this function will be called whenever new joystick data is read
