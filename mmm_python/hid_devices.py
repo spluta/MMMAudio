@@ -1,6 +1,9 @@
 from typing import Optional, Callable
 import hid
 import time
+from .hid_parse_defs import *
+from . import hid_parse_defs as _hid_parse_defs
+import inspect
 
 class Joystick:
     """Connect a Joystick to control parameters. This class supports Logitech Extreme 3D Pro and Thrustmaster joysticks, whose HID reports were parse manually. See the `parse_report` method for the report format for these joysticks. Yours will probably be something like that!
@@ -9,7 +12,7 @@ class Joystick:
         """Initialize connection with a Joystick.
         
         Args:
-            name: Joystick name.
+            name: Joystick name. Will be used to look up the correct parser function found in `hid_parse_defs.py`.
             vendor_id: Identification number of the vendor.
             product_id: Identification number of the product.
         """
@@ -26,6 +29,13 @@ class Joystick:
         self.throttle = 0
         self.joystick_button = 0
         self.buttons = [0] * 16  # 16 buttons
+
+        # auto-discover parser functions in hid_parse_defs.py and map name -> callable(self, data, combined)
+        self.joystick_fn_dict = {}
+        for name, func in inspect.getmembers(_hid_parse_defs, inspect.isfunction):
+            if name.startswith("_") or func.__module__ != _hid_parse_defs.__name__:
+                continue
+            self.joystick_fn_dict[name] = (lambda data, combined, f=func: f(self, data, combined))
 
     def connect(self):
         """Connect to the joystick"""
@@ -54,33 +64,10 @@ class Joystick:
         # print(f"Combined data: {combined:032b}")  # Debug print of the combined data
         # print(f"Combined data: {combined>>40:032b}")  # Debug print of the combined data
 
-        if self.name=="logi_3Dpro":
-            self.x_axis = (((combined >> 0) & 0x3FF)) / 1023.0  # X-axis (10 bits, centered around 0)
-            self.y_axis = 1.0-(((combined >> 10) & 0x3FF)) / 1023.0  # Y-axis (10 bits, centered around 0)
-            self.z_axis = (((combined >> 24) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
-
-            self.joystick_button = (combined >> 20) & 0x0F  # Joystick button state (4 bits)
-            self.throttle = data[5] / 255.0
-            buttons0 = data[4]                             # Button states (8-bit)
-            buttons1 = data[6]                             # Button states (8-bit)
-            for i in range(8):
-                self.buttons[i] = int(buttons0 & (1 << i) > 0)
-            for i in range(4):
-                self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
-                
-        elif self.name=="thrustmaster":
-            self.x_axis = (((combined >> 24) & 0xFFFF)) / 16383.0  # X-axis (10 bits, centered around 0)
-            self.y_axis = 1.0-(((combined >> 40) & 0xFFFF)) / 16384.0  # Y-axis (16 bits, centered around 0)
-            self.z_axis = (((combined >> 56) & 0xFF)/ 255.0)  # Z-axis (8 bits, 0-255)
-
-            self.joystick_button = (combined >> 16) & 0x0F
-            self.throttle = data[8] / 255.0
-            buttons0 = data[0]                             # Button states (8-bit)
-            buttons1 = data[1]                             # Button states (8-bit)
-            for i in range(8):
-                self.buttons[i] = int(buttons0 & (1 << i) > 0)
-            for i in range(8):
-                self.buttons[i + 8] = int(buttons1 & (1 << i) > 0)
+        if self.name.lower() in self.joystick_fn_dict:
+            self.joystick_fn_dict[self.name.lower()](data, combined)
+        else:
+            print(f"Joystick parsing not implemented for: {self.name}")
 
 
     def read_continuous(self, name: str, function: Callable[..., None], duration: Optional[float] = None):

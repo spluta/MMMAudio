@@ -6,10 +6,11 @@ mmm_audio.send_float("which_fx", 0.0)
 mmm_audio.send_float("which_fx", 1.0)
 mmm_audio.send_float("which_fx", 2.0)
 mmm_audio.send_float("which_fx", 3.0)
+mmm_audio.send_float("which_fx", 4.0)
 
 mmm_audio.send_float("delay_time", 0.005)
 
 mmm_audio.stop_audio()
-mmm_audio.plot(11000)
+mmm_audio.plot(48000)
 
 1/0.4*48000

@@ -4,7 +4,7 @@ mmm_audio.send_int("in_chan", 0) # set input channel to your input source
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
 
-mmm_audio.send_float("which_input", 0)
+mmm_audio.send_float("which_input", 2)
 mmm_audio.send_float("pitch_shift", 1.5)
 mmm_audio.send_float("grain_dur", 0.4)
 

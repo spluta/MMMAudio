@@ -44,6 +44,68 @@ struct Windows(Movable, Copyable):
             print("Windows.at_phase: Unsupported window type")
             return 0.0
 
+    @staticmethod
+    fn make_window[window_type: Int](size: Int64, beta: Float64 = 5.0) -> List[Float64]:
+        """Generate a window of specified type and size.
+        
+        Parameters:
+            window_type: Type of window to generate. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+        
+        Args:
+            size: Length of the window.
+            beta: Shape parameter only used for Kaiser window. See kaiser_window() for details.
+        """
+        @parameter
+        if window_type == WindowType.rect:
+            return rect_window(size)
+        elif window_type == WindowType.hann:
+            return hann_window(size)
+        elif window_type == WindowType.hamming:
+            return hamming_window(size)
+        elif window_type == WindowType.blackman:
+            return blackman_window(size)
+        elif window_type == WindowType.sine:
+            return sine_window(size)
+        elif window_type == WindowType.kaiser:
+            return kaiser_window(size, beta)
+        elif window_type == WindowType.tri:
+            return tri_window(size)
+        elif window_type == WindowType.pan2:
+            print("Windows.make_window: pan2 window requires SIMD[DType.float64, 2] output, use pan2_window() function instead.")
+            return List[Float64]()
+        else:
+            print("Windows.make_window: Unsupported window type")
+            return List[Float64]()
+
+fn rect_window(size: Int64) -> List[Float64]:
+    """
+    Generate a rectangular window of length size.
+
+    Args:
+        size: Length of the window.
+
+    Returns:
+        List containing the rectangular window values (all ones).
+    """
+    var window = List[Float64]()
+    for i in range(size):
+        window.append(1.0)
+    return window.copy()
+
+fn tri_window(size: Int64) -> List[Float64]:
+    """
+    Generate a triangular window of length size.
+    Args:
+        size: Length of the window.
+    Returns:
+        List containing the triangular window values.
+    """
+    var window = List[Float64]()
+    for i in range(size):
+        var value = 1 - 2 * abs((Float64(i) / Float64(size - 1)) - 0.5)
+        window.append(value)
+    return window.copy()
+
 fn bessel_i0(x: Float64) -> Float64:
     """
     Calculate the modified Bessel function of the first kind, order 0 (I₀). Uses polynomial approximation for accurate results.

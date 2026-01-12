@@ -60,7 +60,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         delays = self.delays.next(sample * self.gate_lag.next(1 if self.delay_input else 0), deltime, fb)
         delays = self.svf.lpf(delays, self.ffreq, self.q)
         output = (self.mix * delays) + ((1.0 - self.mix) * sample)
-        output *= dbamp(-12)
+        output *= dbamp(-12.0)
         output *= self.main_lag.next(1 if self.main else 0)
         return output
 
