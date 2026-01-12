@@ -93,7 +93,7 @@ fn select[num_chans: Int](index: Float64, vals: List[SIMD[DType.float64, num_cha
 
     Args:
         index: The floating-point index to select.
-        list: The List of SIMD vectors containing the values.
+        vals: The List of SIMD vectors containing the values.
     
     Returns:
         The selected value.
