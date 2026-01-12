@@ -68,7 +68,7 @@ struct TestFFTProcess(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
-    var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,None,WindowType.hann]
+    var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,WindowType.hann,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -77,7 +77,7 @@ struct TestFFTProcess(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,None,WindowType.hann](self.world,process=ScrambleAndLowPass(self.world))
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass(self.world))
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
