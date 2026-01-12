@@ -1,16 +1,20 @@
-"""
-this example shows how to use the variable wavetable oscillator. 
-it shows how the oscillator can be made using linear, quadratic, or sinc interpolation and can also be set to use oversampling. with sinc interpolation, use an oversampling index of 0 (no oversampling), 1 (2x). with linear or quadratic interpolation, use an oversampling index of 0 (no oversampling), 1 (2x), 2 (4x), 3 (8x), or 4 (16x).
-"""
-from mmm_src.MMMAudio import MMMAudio
+"""Buchla Wavefolder example."""
+
+from mmm_python.MMMAudio import MMMAudio
 
 # instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="BuchlaWaveFolder", package_name="examples")
+mmm_audio = MMMAudio(128, graph_name="BuchlaWaveFolder_AD", package_name="examples")
+
+# to hear the version without Anti-Aliasing, use:
+# mmm_audio = MMMAudio(128, graph_name="BuchlaWaveFolder", package_name="examples")
 mmm_audio.start_audio() 
 
 mmm_audio.stop_audio()
-
 mmm_audio.plot(4000)
 
-
-xq
+# plot the spectrum of the the plotted output
+from numpy import fft
+from matplotlib import pyplot as plt
+spectrum = fft.rfft(mmm_audio.returned_samples[:, 0])
+plt.plot(spectrum)
+plt.show()

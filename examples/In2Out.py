@@ -3,14 +3,14 @@ This is the simplest MMMAudio example. It routes input channels directly to outp
 It also demonstrates how to send a message to the graph to print the current input values to the REPL.
 """
 
-from mmm_src.MMMAudio import *
+from mmm_python.MMMAudio import *
 
 # this will list available audio devices
 list_audio_devices()
 
 # set your own input and output devices here
-in_device = "Fireface UFX+ (24059506)"
-out_device = "Fireface UFX+ (24059506)"
+in_device = "Fireface UCX II (24219339)"
+out_device = "Fireface UCX II (24219339)"
 
 # or get some feedback
 in_device = "MacBook Pro Microphone"

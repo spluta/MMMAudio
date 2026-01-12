@@ -1,5 +1,6 @@
 .DS_Store
-mmm_src/MMMGraph_solo.mojo
+
+user_files/
 
 kgen.trace.json.time-events.txt
 kgen.trace.json.time-trace

@@ -31,9 +31,8 @@ except Exception:  # pragma: no cover - optional import
 # These are relative to the repository root (one level above this script's dir).
 REPO_ROOT = Path(__file__).resolve().parent.parent
 HARDCODED_SOURCE_DIRS = [
-    "mmm_utils",
-    "mmm_dsp",
-    "mmm_src",
+    "mmm_audio",
+    "mmm_python"
     # Add/remove directory names here as needed
 ]
 
@@ -52,7 +51,8 @@ def process_python_sources(output_dir: Path):
             # Module import path relative to repo root
             module_path = py.relative_to(REPO_ROOT).with_suffix('')
             dotted = '.'.join(module_path.parts)
-            md_path = py_out / module_path.parts[0] / (py.stem + '.md')
+            md_path = py_out / (py.stem + '.md')
+            md_path.parent.mkdir(parents=True, exist_ok=True)
             md_path.write_text(f"# {py.stem}\n\n::: {dotted}\n", encoding='utf-8')
             
 def get_jinja_env() -> Environment:
@@ -111,7 +111,7 @@ def run_mojo_doc(file_path: Path, json_output_dir: Path, timeout: int = 30) -> D
     try:
         completed = subprocess.run(
             cmd,
-            capture_output=True,
+            # capture_output=True,
             text=True,
             timeout=timeout,
             check=False,
@@ -169,6 +169,36 @@ def clean_mojo_doc_data(data: Dict[str, Any]) -> Dict[str, Any]:
 
     return data
 
+def add_guide_text(data: Dict[str, Any]) -> Dict[str, Any]:
+    guides_dir = REPO_ROOT / 'doc_generation' / 'static_docs' / 'guides'
+    if not guides_dir.exists() or not guides_dir.is_dir():
+        return data
+
+    decl = data.get('decl', {})
+    for struct in decl.get('structs', []):
+        name = struct.get('name')
+        if not name:
+            continue
+        guide_path = guides_dir / f"{name}.md"
+        if guide_path.exists() and guide_path.is_file():
+            try:
+                struct['guide'] = guide_path.read_text(encoding='utf-8')
+            except Exception:
+                # If a guide cannot be read, skip adding it so generation continues.
+                continue
+
+    for trait in decl.get('traits', []):
+        name = trait.get('name')
+        if not name:
+            continue
+        guide_path = guides_dir / f"{name}.md"
+        if guide_path.exists() and guide_path.is_file():
+            try:
+                trait['guide'] = guide_path.read_text(encoding='utf-8')
+            except Exception:
+                continue
+    return data
+
 def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False) -> bool:
     """Process all Mojo source files under input_dir and emit markdown into output_dir.
 
@@ -199,13 +229,15 @@ def process_mojo_sources(input_dir: Path, output_dir: Path, verbose: bool=False)
     for src_file in mojo_files:
         if src_file.stem == '__init__' or src_file.stem == 'MMMGraph_solo':
             continue
-        rel_path = src_file.relative_to(input_dir)
+        rel_path = Path(src_file.name)
+        rel_path = rel_path.with_name(rel_path.stem.replace("_Module", ""))  # Clean up module suffixes
         # Mirror directory and replace suffix
         out_file = output_dir / rel_path.with_suffix('.md')
         out_file.parent.mkdir(parents=True, exist_ok=True)
         try:
             data = run_mojo_doc(src_file, json_output_dir)
             data = clean_mojo_doc_data(data)
+            data = add_guide_text(data)
             rendered = render_template('mojo_doc_template_jinja.md', data)
             out_file.write_text(rendered, encoding='utf-8')
             processed += 1
@@ -332,14 +364,37 @@ def update_examples_nav(config: MkDocsConfig):  # type: ignore
     print(f"[MkDocs Hook] Examples nav updated with {len(new_examples)-1} example pages.")
 
 def copy_static_docs(output_dir: Path, args):
+    # Hardcode the static doc entries to copy. Use paths relative to
+    # doc_generation/static_docs (e.g., "guides", "index.md", "examples/foo.md").
+    ALLOWED_STATIC_DOCS: list[str] = [
+        "api",
+        "contributing",
+        "examples",
+        "getting-started.md",
+        "index.md"
+    ]
+
     static_docs_src = Path('doc_generation/static_docs')
     if static_docs_src.exists() and static_docs_src.is_dir():
         try:
-            for item in static_docs_src.iterdir():
-                dest = output_dir / item.name
+            if ALLOWED_STATIC_DOCS:
+                iterable = []
+                for rel in ALLOWED_STATIC_DOCS:
+                    src_item = static_docs_src / rel
+                    if not src_item.exists():
+                        if args.verbose:
+                            print(f"Warning: static doc path '{rel}' not found under {static_docs_src}, skipping.")
+                        continue
+                    iterable.append(src_item)
+            else:
+                iterable = list(static_docs_src.iterdir())
+
+            for item in iterable:
+                dest = output_dir / item.relative_to(static_docs_src)
                 if item.is_dir():
                     shutil.copytree(item, dest, dirs_exist_ok=True)
                 else:
+                    dest.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(item, dest)
         except Exception as e:
             print(f"Error copying static docs contents: {e}")
@@ -429,9 +484,9 @@ def main(config=None):
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  %(prog)s -i ./mmm_utils -o ./docs/api/mojo
+  %(prog)s -i ./mmm_audio -o ./docs/api/mojo
   %(prog)s --input-dir ./ --output-dir ./docs/api/mojo --template doc_generation/templates/mojo_doc_template_jinja.md
-  %(prog)s -i mmm_src -o docs/api/mojo -b /opt/mojo/bin/mojo -v
+  %(prog)s -i mmm_audio -o docs/api/mojo -b /opt/mojo/bin/mojo -v
         """
     )
 

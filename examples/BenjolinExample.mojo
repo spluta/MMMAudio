@@ -6,17 +6,7 @@ https://scsynth.org/t/benjolin-inspired-instrument/1074/1
 Ported to MMMAudio by Ted Moore, October 2025
 """
 
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-from mmm_dsp.Delays import Delay
-from math import tanh
-from mmm_dsp.Distortion import Latch
-from mmm_utils.functions import linlin, midicps
-from mmm_dsp.Osc import Osc
-from mmm_dsp.Filters import *
-from mmm_utils.Print import Print
+from mmm_audio import *
 
 struct Benjolin(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  
@@ -82,7 +72,7 @@ struct Benjolin(Representable, Movable, Copyable):
 
         for _ in range(8):
             self.delays.append(Delay[1,3](self.world, max_delay_time=0.1))
-            self.latches.append(Latch(self.world))
+            self.latches.append(Latch())
 
         for _ in range(9):
             self.filters.append(SVF(self.world))
@@ -149,7 +139,7 @@ struct Benjolin(Representable, Movable, Copyable):
         self.filter_outputs[7] = self.filters[7].highshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         
-        filter_output = select(self.filterType,self.filter_outputs) * dbamp(-12)
+        filter_output = select(self.filterType,self.filter_outputs) * dbamp(-12.0)
         filter_output = sanitize(filter_output)
 
         output = SIMD[DType.float64, 2](0.0, 0.0)

@@ -1,34 +1,27 @@
-"""
-Example of a wavetable oscillator using custom wavetables loaded from files.
-
+"""Example of a wavetable oscillator using custom wavetables loaded from files.
 """
 
-
-from mmm_src.MMMAudio import MMMAudio
-
-
-# instantiate and load the graph
+from mmm_python.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
-
 mmm_audio.start_audio() 
 
 # load a different wavetable if you like - these are just example paths - change to your own files
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 10.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 11.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 12.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 13.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 14.wav")
-mmm_audio.send_string("load_file", "/Users/sam/Downloads/BVKER - Custom Wavetables/Growl/Growl 15.wav")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 11.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 12.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 13.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 14.wav'")
+mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 15.wav'")
 
 def midi_func():
     import threading
     import mido
     import time
-    from mmm_utils.functions import linexp, linlin, midicps, cpsmidi
-    from mmm_src.Patterns import PVoiceAllocator
+    from mmm_python.python_utils import linexp, linlin, midicps, cpsmidi
+    from mmm_python.Patterns import PVoiceAllocator
 
     # find your midi devices
-    mido.get_input_names()
+    print(mido.get_input_names())
 
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
@@ -45,6 +38,7 @@ def midi_func():
                     return
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
+                    print(msg)
                     if msg.type == "note_on":
                         voice = voice_allocator.get_free_voice(msg.note)
                         if voice == -1:
@@ -79,4 +73,5 @@ def midi_func():
     midi_thread = threading.Thread(target=start_midi, daemon=True)
     midi_thread.start()
 
+# you will need to run this function to start receiving midi
 midi_func()

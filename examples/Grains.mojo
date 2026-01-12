@@ -1,16 +1,6 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_dsp.Osc import *
-from mmm_dsp.Filters import VAMoogLadder
-from mmm_utils.functions import linexp
-from random import random_float64
+from mmm_audio import *
 
 # THE SYNTH
-
 
 alias num_output_chans = 2
 alias num_simd_chans = next_power_of_two(num_output_chans)
@@ -20,17 +10,17 @@ struct Grains(Movable, Copyable):
     var buffer: Buffer
     
     var tgrains: TGrains[10]
-    var impulse: Impulse  
+    var impulse: Phasor  
     var start_frame: Float64
      
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world  
 
         # buffer uses numpy to load a buffer into an N channel array
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
 
         self.tgrains = TGrains[10](self.world)  
-        self.impulse = Impulse(self.world)
+        self.impulse = Phasor(self.world)
 
 
         self.start_frame = 0.0 
@@ -39,18 +29,21 @@ struct Grains(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, num_simd_chans]:
 
         imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, 20.0)
-        var impulse = self.impulse.next_bool(imp_freq, True)  # Get the next impulse sample
+        var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
 
-        start_frame = linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, self.buffer.num_frames - 1.0)
-
+        start_frame = Int64(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, Float64(self.buffer.num_frames) - 1.0))
 
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
         @parameter
         if num_output_chans == 2:
-            out = self.tgrains.next[2](self.buffer, 0, impulse, 1, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
+            out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0)
+
             return SIMD[DType.float64, num_simd_chans](out[0], out[1]) # because pan2 outputs a SIMD vector size 2, and we require a SIMD vector of size num_simd_chans, you have to manually make the SIMD vector in this case (the compiler does not agree that num_simd_chans == 2, even though it does)
         else:
-            out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 0, impulse, 1, start_frame, 0.4, num_output_chans, random_float64(0.0, 1.0), 1.0)
-            out1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, 1, start_frame, 0.4, num_output_chans, random_float64(0.0, 1.0), 1.0)
+            # pan each channel separately to num_output_chans speakers
+            out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0, num_output_chans)
+
+            out1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 1, random_float64(-1.0, 1.0), 1.0, num_output_chans)
+
             return out0 + out1

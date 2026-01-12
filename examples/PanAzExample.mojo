@@ -1,10 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import Messenger
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-
-from mmm_dsp.Osc import Phasor, Osc
-from mmm_dsp.Pan import pan_az
+from mmm_audio import *
 
 struct PanAz_Synth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  

@@ -1,13 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import Messenger
-from mmm_src.MMMTraits import *
-from mmm_utils.functions import *
-from mmm_dsp.Delays import LP_Comb
-
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_dsp.Filters import VAMoogLadder
-from mmm_dsp.Reverb import Freeverb
+from mmm_audio import *
 
 struct FreeverbSynth(Copyable, Movable):
     var world: UnsafePointer[MMMWorld] 
@@ -15,7 +6,7 @@ struct FreeverbSynth(Copyable, Movable):
 
     var num_chans: Int64
 
-    var play_buf: PlayBuf
+    var play_buf: Play
 
     var freeverb: Freeverb[2]
     var m: Messenger
@@ -29,13 +20,13 @@ struct FreeverbSynth(Copyable, Movable):
         self.world = world 
 
         # load the audio buffer 
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
 
-        self.play_buf = PlayBuf(self.world)
+        self.play_buf = Play(self.world)
         self.freeverb = Freeverb[2](self.world)
 
         self.room_size = 0.9
@@ -54,7 +45,7 @@ struct FreeverbSynth(Copyable, Movable):
         self.m.update(self.mix,"mix")
 
         added_space_simd = SIMD[DType.float64, 2](self.added_space, self.added_space * 0.99)
-        out = self.play_buf.next[N=2](self.buffer, 0, 1.0, True)
+        out = self.play_buf.next[num_chans=2](self.buffer, 1.0, True)
         out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.2 * self.mix + out * (1.0 - self.mix)
         return out
 
@@ -66,7 +57,7 @@ struct FreeverbExample(Representable, Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.freeverb_synth = FreeverbSynth(world)
+        self.freeverb_synth = FreeverbSynth(self.world)
 
     fn __repr__(self) -> String:
         return String("Freeverb_Graph")

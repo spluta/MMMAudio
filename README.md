@@ -48,6 +48,18 @@ There is a user_files directory/Mojo package where users can make their own grap
 For more information on running examples see [Examples Index](doc_generation/static_docs/examples/index.md).
 ``.
 
+## User Directory
+
+An ideal place to put your own projects is a directory called user_files in the root of MMMAudio project. Git will not track this directory. 
+
+This directory will need an empty __init__.mojo file in it, so that the mojo compiler can see it as a package.
+
+Then loading MMMAudio in your project's python file, use the following syntax:
+
+mmm_audio = MMMAudio(128, graph_name="MyProject", package_name="user_files")
+
+MMMAudio will look in the 'user_file's' directory for the necessary files to execute your script.
+
 ## Documentation Generation
 
 For information on the documentation generation see [Documentation Generation](doc_generation/static_docs/contributing/documentation.md).

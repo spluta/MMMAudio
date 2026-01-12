@@ -1,10 +1,10 @@
 """Spectral Centroid Unit Test"""
 
-from mmm_dsp.Analysis import *
-from mmm_dsp.Buffer import *
-from mmm_dsp.PlayBuf import *
-from mmm_dsp.FFT import *
-from mmm_src.MMMWorld import MMMWorld
+.Analysis import *
+.Buffer_Module import *
+.Play import *
+.FFTs import *
+from .MMMWorld_Module import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512
@@ -32,11 +32,11 @@ struct Analyzer(BufferedProcessable):
 fn main():
     world = MMMWorld()
     world.sample_rate = 44100.0
-    world = UnsafePointer(to=world)
+    w = UnsafePointer(to=world)
 
-    buffer = Buffer("resources/Shiverer.wav")
-    playBuf = PlayBuf(world)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowTypes.hann](world, Analyzer(world,world.sample_rate))
+    buffer = Buffer.load("resources/Shiverer.wav")
+    playBuf = Play(self.world)
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](self.world, Analyzer(self.world,world.sample_rate))
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer, 0, 1)

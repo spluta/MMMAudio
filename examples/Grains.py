@@ -2,9 +2,10 @@
 left and right moves around in the buffer. up and down controls rate of triggers.
 """
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, num_output_channels = 8, graph_name="Grains", package_name="examples")
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
-
 mmm_audio.stop_audio() # stop/pause the audio thread
+
+mmm_audio.plot(20000)

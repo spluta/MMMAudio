@@ -1,11 +1,4 @@
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-
-from mmm_dsp.Osc import Osc
-from random import random_float64
-from mmm_dsp.Pan import pan2
+from mmm_audio import *
 
 # THE SYNTH
 
@@ -17,8 +10,8 @@ from mmm_dsp.Pan import pan2
 
 struct StereoBeatingSines(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld] # pointer to the MMMWorld
-    var osc1: Osc
-    var osc2: Osc
+    var osc1: Osc[interp=Interp.linear] # first oscillator
+    var osc2: Osc[interp=Interp.linear] # second oscillator
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
     var pan2_osc: Osc # LFO for panning
     var pan2_freq: Float64 # frequency for the panning LFO
@@ -36,13 +29,13 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         # create some nice beating patterns. The output is stereo because later
         # the pan2 function positions the summed oscillators in the stereo field
 
-        self.osc1 = Osc(world)
-        self.osc2 = Osc(world)
+        self.osc1 = Osc[interp=Interp.linear](self.world)
+        self.osc2 = Osc[interp=Interp.linear](self.world)
         
-        self.pan2_osc = Osc(world)
+        self.pan2_osc = Osc(self.world)
         self.pan2_freq = random_float64(0.03, 0.1)
 
-        self.vol_osc = Osc(world)
+        self.vol_osc = Osc(self.world)
         self.vol_osc_freq = random_float64(0.05, 0.2)
         self.osc_freqs = SIMD[DType.float64, 2](
             center_freq + random_float64(1.0, 5.0),

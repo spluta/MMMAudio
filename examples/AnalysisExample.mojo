@@ -1,12 +1,4 @@
-"""use this as a template for your own graphs"""
-
-from mmm_src.MMMWorld import MMMWorld
-from mmm_dsp.Analysis import SpectralCentroid, YIN, RMS
-from mmm_dsp.Osc import *
-from mmm_utils.Messenger import *
-from mmm_dsp.BufferedProcess import *
-from mmm_dsp.FFT import *
-from mmm_dsp.PlayBuf import *
+from mmm_audio import *
 
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var world: UnsafePointer[MMMWorld]
@@ -41,7 +33,7 @@ struct AnalysisExample(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var osc: Osc[2]
     var buffer: Buffer
-    var playBuf: PlayBuf
+    var playBuf: Play
     var freq: Float64
     var analyzer: BufferedInput[CustomAnalysis[1024],1024,512]
     var m: Messenger
@@ -49,12 +41,12 @@ struct AnalysisExample(Movable, Copyable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = Osc[2](world)
-        self.buffer = Buffer("resources/Shiverer.wav")
-        self.playBuf = PlayBuf(self.world)
-        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](world, CustomAnalysis[1024](world))
+        self.osc = Osc[2](self.world)
+        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.playBuf = Play(self.world)
+        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](self.world, CustomAnalysis[1024](self.world))
         self.freq = 440.0
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
         self.which = 0.0
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -63,7 +55,7 @@ struct AnalysisExample(Movable, Copyable):
         self.m.update(self.which,"which")
 
         oscs = self.osc.next(self.freq,0,False,[OscType.sine, OscType.saw])
-        flute = self.playBuf.next(self.buffer,0,1.0,True)
+        flute = self.playBuf.next(self.buffer)
 
         sig = select(self.which,[oscs[0], oscs[1], flute])
         

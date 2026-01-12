@@ -1,12 +1,5 @@
-from mmm_src.MMMWorld import *
-from mmm_dsp.FFTProcess import *
-from mmm_utils.Messenger import Messenger
-from mmm_utils.Windows import WindowTypes
-from mmm_dsp.PlayBuf import PlayBuf
-from mmm_utils.functions import select
-from mmm_utils.functions import dbamp
-from complex import ComplexFloat64
-from mmm_dsp.Osc import LFSaw
+from mmm_audio import *
+
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
@@ -19,7 +12,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
 
     fn get_messages(mut self) -> None:
         pass
@@ -33,24 +26,24 @@ struct PaulStretch(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
-    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowTypes.sine,WindowTypes.sine]
+    var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.buffer = Buffer("resources/Shiverer.wav")
+        self.buffer = Buffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world)
 
         self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
                 window_size,
                 hop_size,
-                WindowTypes.sine,
-                WindowTypes.sine
+                WindowType.sine,
+                WindowType.sine
             ](self.world,process=PaulStretchWindow[window_size](self.world))
 
-        self.m = Messenger(world)
+        self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
     fn next(mut self) -> SIMD[DType.float64,2]:

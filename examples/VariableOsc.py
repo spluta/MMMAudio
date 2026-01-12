@@ -13,16 +13,14 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.MMMAudio import MMMAudio
 
 # instantiate and load the graph
 mmm_audio = MMMAudio(128, graph_name="VariableOsc", package_name="examples")
 mmm_audio.start_audio() 
 
-
-
-from mmm_utils.GUI import Slider2D
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.GUI import Slider2D
+from mmm_python.MMMAudio import MMMAudio
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 app = QApplication([])

@@ -1,23 +1,15 @@
-"""use this as a template for your own graphs"""
-
-from mmm_src.MMMWorld import MMMWorld
-from mmm_utils.Messenger import *
-from mmm_utils.functions import *
-from mmm_src.MMMTraits import *
-
-from mmm_dsp.Osc import *
-from mmm_dsp.Filters import SVF, SVFModes
+from mmm_audio import *
 
 struct Default_Synth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  
-    var osc: Osc[1,2,1]
+    var osc: Osc[1,Interp.sinc,1]
     var filt: SVF
     var messenger: Messenger
     var freq: Float64
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
-        self.osc = Osc[1,2,1](self.world)
+        self.osc = Osc[1,Interp.sinc,1](self.world)
         self.filt = SVF(self.world)
         self.messenger = Messenger(self.world)
         self.freq = 440.0

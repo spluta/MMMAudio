@@ -8,8 +8,8 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_utils.GUI import Handle, ControlSpec
-from mmm_src.MMMAudio import MMMAudio
+from mmm_python.GUI import Handle, ControlSpec
+from mmm_python.MMMAudio import MMMAudio
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 mmm_audio = MMMAudio(128, graph_name="FeedbackDelaysGUI", package_name="examples")
