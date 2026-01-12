@@ -4,6 +4,7 @@ if True:
     from mmm_python.MMMAudio import *
     list_audio_devices()
 
+    # set your audio input and output devices here:
     in_device = "Fireface UCX II (24219339)"
     out_device = "Fireface UCX II (24219339)"
 

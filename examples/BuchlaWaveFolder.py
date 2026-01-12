@@ -1,4 +1,4 @@
-"""This example demonstrates the Buchla Wavefolder graph in MMM-Audio.
+"""This example demonstrates the Buchla 259-style wavefolder distortion on a sine wave.
 
 The Buchla Wavefolder is a classic wave-shaping synthesis technique that adds harmonic complexity to audio signals by folding the waveform back on itself when it exceeds certain thresholds. This results in a rich, complex sound often used in electronic music synthesis. Derived from "Virual Analog Buchla 259e Wavefolder" by Esqueda, etc.
 

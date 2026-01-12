@@ -4,7 +4,7 @@ to play the synth, just execute the top "if" statement and play the synth with t
 positions control two input parameters to the MLP, which then outputs 16 parameters to control the
 synth.
 
-you can also train the synth by creating any number of input/output pairs and making a new training. When training the synth, temporarily disable the MLP inference so you can set the synth parameters directly.
+You can also train the Multi-Layer Perceptron by creating any number of input/output pairs and making a new training. When training the MLP, temporarily disable the MLP inference so you can set the synth parameters directly.
 """
 
 if True:

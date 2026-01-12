@@ -1,5 +1,5 @@
 """
-Shows how to use the Play UGen to play back audio files with variable speed control.
+Shows how to load and audio buffer from a sound file and play it using the Play UGen. 
 
 This example uses open sound control to control Play's playback speed and VAMoogFilter's cutoff frequency. These can be sent from a simple touchosc patch or any other OSC controller. A touchosc patch is provided for control.
 

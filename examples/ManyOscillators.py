@@ -1,4 +1,4 @@
-"""Example showing how to create a variable number of oscillator pairs in MMM-Audio. In the ManyOscillators.mojo file, the ManyOscillators struct holds a List of OscillatorPair structs. Each OscillatorPair contains two oscillators (sine wave generators) that can be detuned from each other. We can dynamically change the number of oscillator pairs by sending an integer message to the "num_pairs" parameter.
+"""Example showing how to create a variable number of UGens in MMM-Audio. In the ManyOscillators.mojo file, the ManyOscillators struct holds a List of OscillatorPair structs. Each OscillatorPair contains two oscillators (sine wave generators) that can be detuned from each other. We can dynamically change the number of oscillator pairs by sending an integer message to the "num_pairs" parameter.
 
 """
 

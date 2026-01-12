@@ -1,4 +1,4 @@
-"""Benjolin-inspired Synthesizer
+"""Rob Hordijk's Benjolin-inspired Synthesizer
 
 Based on the [SuperCollider implementation by Hyppasus](https://scsynth.org/t/benjolin-inspired-instrument/1074/1).
 

@@ -1,5 +1,7 @@
 
-
+"""
+A simple default graph example that can be used as a starting point for creating your own graphs.
+"""
 
 from mmm_python.MMMAudio import MMMAudio
 

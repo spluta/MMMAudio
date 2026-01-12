@@ -1,7 +1,6 @@
 """
 Demonstrates granular synthesis using TGrains, using a mouse to control granular playback.
 
-
 Left and right moves around in the buffer. Up and down controls rate of triggers.
 """
 

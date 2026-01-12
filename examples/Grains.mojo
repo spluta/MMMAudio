@@ -9,7 +9,7 @@ struct Grains(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var buffer: Buffer
     
-    var tgrains: TGrains[10]
+    var tgrains: TGrains[10] # set the number of simultaneous grains by setting the max_grains parameter here
     var impulse: Phasor  
     var start_frame: Float64
      

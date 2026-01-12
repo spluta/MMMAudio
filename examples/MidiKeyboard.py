@@ -3,7 +3,7 @@ A polyphonic synthesizer controlled via a MIDI keyboard.
 
 This example demonstrates a couple differnt concepts:
 - How to connect to a MIDI keyboard using the mido library
-- How to use a MIDI keyboard to control send messages to MMM-Audio to control a polyphonic synthesizer graph.
+- How to use a MIDI keyboard to send note and control change messages to MMMAudio.
 - How to use Pseq from mmm_python.Patterns to cycle through voices for polyphonic note allocation.
 - How to create a thread to handle incoming MIDI messages in the background.
 

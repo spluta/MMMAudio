@@ -1,5 +1,5 @@
 """
-A fun synthesis example that sends Dust, single sample triggers to a Julius Smith-style resonant filter.
+A synthesis example that sends Dust, single sample triggers to a resonant band-pass filter.
 
 Rates of the Dusts and frequencies of the filters are modulated by the mouse X and Y positions.
 """

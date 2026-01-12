@@ -12,6 +12,10 @@ mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 mmm_audio.start_audio() 
 
 # load a different wavetable if you like - these are just example paths - change to your own files
+
+# if the number of instances of the wave found in the wavetable file is different than the default 256, you may need to change the "wavetables_per_channel" parameter
+mmm_audio.send_int("wavetables_per_channel", 128) # set this to the number of waveforms in your wavetable file
+
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 10.wav'")
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 11.wav'")
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 12.wav'")

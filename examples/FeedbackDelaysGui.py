@@ -1,3 +1,9 @@
+"""
+A GUI for controlling a feedback delay audio graph.
+
+The GUI is made using PySide6 and provides sliders and checkboxes to control various parameters of the feedback delay effect.
+"""
+
 import sys
 from pathlib import Path
 
