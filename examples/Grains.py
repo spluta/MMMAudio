@@ -1,5 +1,8 @@
-"""this uses the mouse to control granular playback of the buffer
-left and right moves around in the buffer. up and down controls rate of triggers.
+"""
+Demonstrates granular synthesis using TGrains, using a mouse to control granular playback.
+
+
+Left and right moves around in the buffer. Up and down controls rate of triggers.
 """
 
 from mmm_python.MMMAudio import MMMAudio

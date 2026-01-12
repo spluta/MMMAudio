@@ -1,4 +1,4 @@
-"""use the mouse to control an overdriven feedback delay"""
+"""A simple but awesome sounding feedback delay effect using the FB_Delay UGen."""
 
 from mmm_python.MMMAudio import MMMAudio
 

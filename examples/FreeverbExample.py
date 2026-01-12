@@ -1,3 +1,10 @@
+"""
+A classic reverb effect using the Freeverb UGen.
+
+This example demonstrates how to use the Freeverb graph in MMM-Audio and how to control its parameters via a simple GUI built with PySide6.
+"""
+
+
 import sys
 from pathlib import Path
 

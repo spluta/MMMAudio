@@ -1,3 +1,9 @@
+"""
+An example showing how to use the SpectralFreeze UGen in combination with the FFT UGen to create a simple spectral freeze effect controlled by a GUI button.
+
+This example is able to run by pressing the "play" button in VSCode or compiling and running the whole file on the command line.
+"""
+
 import sys
 from pathlib import Path
 

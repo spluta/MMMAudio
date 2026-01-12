@@ -1,7 +1,10 @@
-"""this examples uses a Torch MLP model to control a 16 parameter synth
-to play the synth, just hang out in the top 4 lines of code and play with the mouse
+"""
+This examples uses a PyTorch MLP model to control a 16 parameter synth
+to play the synth, just execute the top "if" statement and play the synth with the mouse. The X and Y
+positions control two input parameters to the MLP, which then outputs 16 parameters to control the
+synth.
 
-you can also train the synth by creating any number of input/output pairs and making a new training
+you can also train the synth by creating any number of input/output pairs and making a new training. When training the synth, temporarily disable the MLP inference so you can set the synth parameters directly.
 """
 
 if True:
@@ -13,7 +16,7 @@ if True:
     # this one is a bit intense, so maybe start with a low volume
     mmm_audio.start_audio()
 
-mmm_audio.stop_audio()
+
 
 # below is the code to make a new training --------------------------------
 

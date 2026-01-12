@@ -1,8 +1,21 @@
+"""
+A polyphonic synthesizer controlled via a MIDI keyboard.
+
+This example demonstrates a couple differnt concepts:
+- How to connect to a MIDI keyboard using the mido library
+- How to use a MIDI keyboard to control send messages to MMM-Audio to control a polyphonic synthesizer graph.
+- How to use Pseq from mmm_python.Patterns to cycle through voices for polyphonic note allocation.
+- How to create a thread to handle incoming MIDI messages in the background.
+
+This example is able to run by pressing the "play" button in VSCode or compiling and running the whole file on the command line.
+
+This uses the same MidiSequencer.mojo graph as the MidiSequencer example, but instead of using a sequencer to trigger notes, it uses a MIDI keyboard.
+"""
+
+
 import sys
 from pathlib import Path
 
-# This example is able to run by pressing the "play" button in VSCode
-# that executes the whole file.
 # In order to do this, it needs to add the parent directory to the path
 # (the next line here) so that it can find the mmm_src and mmm_utils packages.
 # If you want to run it line by line in a REPL, skip this line!

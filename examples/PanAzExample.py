@@ -1,3 +1,12 @@
+"""
+Shows how to use PanAz to pan audio between multiple speakers arranged in a circle.
+You can set the number of speakers between 2 and 8 using the "num_speakers" parameter.
+You can set the width of the panning using the "width" parameter.
+You can set the frequency of the input tone using the "freq" parameter.
+
+PanAz outputs a SIMD array with one channel per speaker. Since SIMD arrays must be a power of 2 in size, the `num_speakers` parameter must be set to a value below or equal to the size of the SIMD array (8 in this case). Any unused channels will be silent.
+"""
+
 from mmm_python.MMMAudio import MMMAudio
 
 # instantiate and load the graph

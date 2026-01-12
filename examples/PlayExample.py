@@ -1,3 +1,11 @@
+"""
+Shows how to use the Play UGen to play back audio files with variable speed control.
+
+This example uses open sound control to control Play's playback speed and VAMoogFilter's cutoff frequency. These can be sent from a simple touchosc patch or any other OSC controller. A touchosc patch is provided for control.
+
+This example is able to run by pressing the "play" button in VSCode or compiling and running the whole file on the command line.
+"""
+
 import sys
 from pathlib import Path
 

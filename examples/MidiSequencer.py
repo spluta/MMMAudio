@@ -1,5 +1,12 @@
-# Example of using the MidiSequencer with MMMAudio
-# start the MMMAudio engine with the MidiSequencer graph
+"""
+A sequenced polyphonic synthesizer controlled via a MIDI keyboard.
+
+This example demonstrates a couple differnt concepts:
+- How to Pseq and Pxrand from mmm_python.Patterns to create sequences of notes and other parameters.
+- How to create a coroutine to schedule note triggers using the MMMAudio scheduler.
+
+"""
+
 if True:
     from mmm_python.MMMAudio import MMMAudio
 

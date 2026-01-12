@@ -355,7 +355,7 @@ fn buchla_cell[num_chans: Int](sig: SIMD[DType.float64, num_chans], sign: SIMD[D
 
 fn buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]:
     """
-    Buchla waveshaper implementation as a function. See the BuchlaWavefolder struct for an ADAA version with oversampling.
+    Buchla waveshaper implementation as a function. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. See the BuchlaWavefolder struct for an ADAA version with oversampling.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -421,7 +421,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     #     return 0.0
 
 struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable):
-    """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling.
+    """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on Jatin Chowdhury's chow_dsp waveshapers.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.

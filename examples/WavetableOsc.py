@@ -1,4 +1,10 @@
 """Example of a wavetable oscillator using custom wavetables loaded from files.
+
+You can load your own wavetable files by sending a string message to the "load_file" parameter with the full path to the wavetable file.
+
+MMM_Audio can load commercial .wav files, designed for Vital or Serum, as wavetables. The wavetable should be a single channel audio file made up of one or more cycles of a waveform, each a power of 2 in length. The wavetable will be looped to create the oscillator waveform.
+
+Also demonstrates how to use the PVoiceAllocator class to manage multiple voices for polyphonic MIDI input.
 """
 
 from mmm_python.MMMAudio import MMMAudio

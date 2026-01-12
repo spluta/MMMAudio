@@ -1,3 +1,18 @@
+"""
+This example demonstrates the Messenger functionality in MMM-Audio, and the many kinds of messages that can be sent to control parameters in the audio graph.
+
+We are able to send:
+- Boolean values - .send_bool()
+- Float values - .send_float()
+- Lists of floats - .send_floats()
+- Integer values - .send_int()
+- Lists of integers - .send_ints()
+- String values - .send_string() 
+- Lists of strings - .send_strings()
+- Trigger messages - .send_trig()
+
+"""
+
 from mmm_python.MMMAudio import MMMAudio
 from mmm_python.python_utils import midicps
 

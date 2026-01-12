@@ -5,7 +5,7 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     var buf: Buffer
     var playBuf: Play
-    var delays: FB_Delay[2, Interp.lagrange4, True, 1]  # FB_Delay for feedback delay effect
+    var delays: FB_Delay[2, Interp.lagrange4, True, 1]  # FB_Delay for feedback delay effect - notice we are using ADAA and Oversampling in the internal Tanh funciton.
     var lag: Lag[2]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):

@@ -1,3 +1,5 @@
+"""An example showing how to record audio input from a microphone to a buffer and play it back using MIDI note messages."""
+
 if True:
     from mmm_python.MMMAudio import *
     list_audio_devices()

@@ -1,3 +1,8 @@
+"""
+A fun synthesis example that sends Dust, single sample triggers to a Moog-style ladder filter. The ladder filter uses oversampling that allows for more extreme resonance settings without aliasing artifacts.
+"""
+
+
 from mmm_python.MMMAudio import MMMAudio
 mmm_audio = MMMAudio(128, graph_name="MoogPops", package_name="examples")
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off
