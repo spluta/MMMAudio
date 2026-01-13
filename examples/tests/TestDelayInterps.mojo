@@ -10,7 +10,6 @@ struct TestDelayInterps(Movable, Copyable):
     var delay_quadratic: Delay[interp=Interp.quad]
     var delay_cubic: Delay[interp=Interp.cubic]
     var delay_lagrange: Delay[interp=Interp.lagrange4]
-    var delay_sinc: Delay[interp=Interp.sinc]
     var lag: Lag
     var lfo: Osc
     var m: Messenger
@@ -30,7 +29,6 @@ struct TestDelayInterps(Movable, Copyable):
         self.delay_quadratic = Delay[interp=Interp.quad](self.world,1.0)
         self.delay_cubic = Delay[interp=Interp.cubic](self.world,1.0)
         self.delay_lagrange = Delay[interp=Interp.lagrange4](self.world,1.0)
-        self.delay_sinc = Delay[interp=Interp.sinc](self.world,1.0)
         self.lag = Lag(self.world, 0.2)
         self.lfo = Osc[interp=Interp.linear](self.world)
         self.m = Messenger(world)
@@ -60,9 +58,8 @@ struct TestDelayInterps(Movable, Copyable):
         quadratic = self.delay_quadratic.next(input, delay_time)
         cubic = self.delay_cubic.next(input, delay_time)
         lagrange4 = self.delay_lagrange.next(input, delay_time)
-        sinc = self.delay_sinc.next(input, delay_time)
 
-        one_delay = select(self.which_delay,[none,linear,quadratic,cubic,lagrange4,sinc])
+        one_delay = select(self.which_delay,[none,linear,quadratic,cubic,lagrange4])
         sig = input * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
 
         return SIMD[DType.float64, 2](sig, sig)
