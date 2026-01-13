@@ -93,15 +93,12 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], var delay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it.
 
-        next(input, delay_time)
-        
         Args:
           input: The input sample to process.
           delay_time: The amount of delay to apply (in seconds).
 
         Returns:
           The processed output sample.
-
         """
         
         out = self.read(delay_time)
@@ -151,7 +148,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     A simple comb filter using a delay line with feedback.
 
     Parameters:
-      num_chans: Size of the SIMD vector - defaults to 1.
+      num_chans: Size of the SIMD vector.
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
 
     """
@@ -258,7 +255,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
     A simple allpass comb filter using a delay line with feedback.
     
     Parameters:
-      num_chans: Size of the SIMD vector - defaults to 1.
+      num_chans: Size of the SIMD vector.
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
     var world: UnsafePointer[MMMWorld]
@@ -311,13 +308,13 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
 struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Representable, Movable, Copyable):
     """A feedback delay structured like a Comb filter, but with possible feedback coefficient above 1 due to an integrated tanh function.
     
-    By default, Anti-aliasing is disabled and no oversampling is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
+    By default, Anti-aliasing is disabled and no [oversampling](Oversampling.md) is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
     
     Parameters:
-      num_chans: Size of the SIMD vector - defaults to 1.
+      num_chans: Size of the SIMD vector.
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
       ADAA_dist: Whether to apply ADAA distortion to the feedback signal instead of standard tanh.
-      os_index: The oversampling index for ADAA distortion. 0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x.
+      os_index: The [oversampling](Oversampling.md) index for ADAA distortion. 0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x.
     """
 
     var world: UnsafePointer[MMMWorld]
