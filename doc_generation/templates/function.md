@@ -1,7 +1,7 @@
 {% import '_badges.jinja' as badges %}
 {% for overload in function.overloads %}
 
-# `fn` {{ badges.fn_badge(function.name) }}
+## `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 

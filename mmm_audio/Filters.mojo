@@ -86,6 +86,7 @@ struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
     @always_inline
     fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
         """Process one sample through the LagN processor.
+
         Args:
             in_list: List of input values for each channel.
             out_list: List to store output values for each channel.
@@ -684,11 +685,11 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
     Implementation based on the Virtual Analog design by Vadim Zavalishin in 
     "The Art of VA Filter Design"
 
-    This implementation supports 4-pole lowpass filtering with optional oversampling.
+    This implementation supports 4-pole lowpass filtering with optional [oversampling](Oversampling.md).
 
     Parameters:
         num_chans: Number of channels to process in parallel.
-        os_index: Oversampling factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc).
+        os_index: [oversampling](Oversampling.md) factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc).
     """
     var nyquist: Float64
     var step_val: Float64

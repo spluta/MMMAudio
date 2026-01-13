@@ -16,12 +16,12 @@ fn log2_int(n: Int) -> Int:
 struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
     """Real-valued FFT implementation using Cooley-Tukey algorithm.
 
-    If you're looking to create an FFT-based FX, look to the FFTProcessable
-    trait used in conjunction with FFTProcess instead. This struct is a 
+    If you're looking to create an FFT-based FX, look to the [FFTProcessable](FFTProcess.md/#trait-fftprocessable)
+    trait used in conjunction with [FFTProcess](FFTProcess.md/#struct-fftprocess) instead. This struct is a 
     lower-level implementation that provides
-    FFT and inverse FFT on fixed windows of real values. FFTProcessable structs will enable you to 
+    FFT and inverse FFT on fixed windows of real values. [FFTProcessable](FFTProcess.md/#trait-fftprocessable) structs will enable you to 
     send audio samples (such as in a custom struct's `.next()` `fn`) *into* and *out of* 
-    an FFT, doing some manipulation of the magnitudes and phases in between. (FFTProcessable
+    an FFT, doing some manipulation of the magnitudes and phases in between. ([FFTProcess](FFTProcess.md/#struct-fftprocess)
     has this RealFFT struct inside of it.)
 
     Parameters:

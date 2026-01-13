@@ -7,7 +7,7 @@ struct Messenger(Copyable, Movable):
     It works by checking for messages sent from Python at the start of each audio block, and updating
     any parameters registered with it accordingly. Each data type has its own `update` function and `notify_update` which will return a Bool indicating whether the parameter was updated.
 
-    For example usage, see the MessengerExample.mojo file in the 'Examples' folder.
+    For example usage, see the MessengerExample.mojo file in the [Examples](../examples/index.md) folder.
     """
 
     var namespace: Optional[String]

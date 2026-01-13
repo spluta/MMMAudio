@@ -8,7 +8,8 @@ from .Oversampling import Oversampling
 from .RisingBoolDetector_Module import RisingBoolDetector
 
 struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
-    """
+    """Phasor Oscillator.
+
     An oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio.
     
     The Phasor can act as a simple phasor with the .next() function. 
@@ -110,7 +111,8 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
 
 
 struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
-    """
+    """Impulse Oscillator.
+
     An oscillator that outputs a 1.0 or True for one sample when the phase wraps around from 1.0 to 0.0.
     
     Impulse is essentially a wrapper around the Phasor oscillator that provides impulse-specific methods.
@@ -163,8 +165,9 @@ struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         return self.phasor.next_impulse(freq, phase_offset, trig)
 
 struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](Representable, Movable, Copyable):
-    """
-    A wavetable oscillator capable of all standard waveforms and also able to load custom wavetables. Capable of linear, cubic, quadratic, lagrange, or sinc interpolation. Also capable of Oversampling.
+    """Wavetable Oscillator Core.
+
+    A wavetable oscillator capable of all standard waveforms and also able to load custom wavetables. Capable of linear, cubic, quadratic, lagrange, or sinc interpolation. Also capable of [Oversampling](Oversampling.md).
     
     - Pure tones can be generated without oversampling or sinc interpolation.
     - When doing extreme modulation, best practice is to use sinc interpolation and an oversampling index of 1 (2x).
@@ -172,8 +175,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
 
     Parameters:
         num_chans: Number of channels (default is 1).
-        interp: Interpolation method. See Interp struct for options (default is Interp.linear).
-        os_index: Oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
+        interp: Interpolation method. See [Interp](MMMWorld.md/#struct-interp) struct for options (default is Interp.linear).
+        os_index: [Oversampling](Oversampling.md) index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).
     """
 
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
@@ -282,7 +285,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             freq: Frequency of the oscillator in Hz.
             phase_offset: Offsets the phase of the oscillator (default is 0.0).
             trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
-            osc_types: List of waveform types to interpolate between (default is [OscType.sine,OscType.bandlimited_triangle,OscType.bandlimited_saw,OscType.bandlimited_square].
+            osc_types: List of waveform types ([OscType](MMMWorld.md/#struct-osctype)) to interpolate between (default is [OscType.sine,OscType.bandlimited_triangle,OscType.bandlimited_saw,OscType.bandlimited_square].
             osc_frac: Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list.
         
         Returns:
@@ -460,7 +463,9 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
 
 
 struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Copyable):
-    """A sine wave oscillator. This is a convenience struct as internally it uses Osc and indicates `osc_type = OscType.sine`.
+    """A sine wave oscillator.
+    
+    This is a convenience struct as internally it uses [Osc](Oscillators.md/#struct-osc) and indicates `osc_type = OscType.sine`.
 
     Parameters:
         num_chans: Number of channels (default is 1).
@@ -488,7 +493,11 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
         return self.osc.next(freq, phase_offset, trig, 0)
 
 struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
-    """A low-frequency sawtooth oscillator. This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+    """A low-frequency sawtooth oscillator.
+    
+    This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+
+    Outputs values between 0.0 and 1.0.
 
     Parameters:
         num_chans: Number of channels (default is 1).
@@ -522,7 +531,9 @@ struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
         return (self.phasor.next(freq, phase_offset, trig_mask) * 2.0) - 1.0
 
 struct LFSquare[num_chans: Int = 1] (Representable, Movable, Copyable):
-    """A low-frequency square wave oscillator. Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+    """A low-frequency square wave oscillator.
+    
+    Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
 
     Parameters:
         num_chans: Number of channels (default is 1).
@@ -554,7 +565,9 @@ struct LFSquare[num_chans: Int = 1] (Representable, Movable, Copyable):
         return -1.0 if self.phasor.next(freq, phase_offset, trig_mask) < 0.5 else 1.0
 
 struct LFTri[num_chans: Int = 1] (Representable, Movable, Copyable):
-    """A low-frequency triangle wave oscillator. This oscillator generates a triangle wave at audio rate. It is useful for 
+    """A low-frequency triangle wave oscillator.
+    
+    This oscillator generates a triangle wave at audio rate. It is useful for 
     modulation, but should be avoided for audio-rate synthesis due to aliasing.
 
     Parameters:
@@ -580,8 +593,8 @@ struct LFTri[num_chans: Int = 1] (Representable, Movable, Copyable):
 
         Args:
             freq: Frequency of the triangle wave in Hz.
-            phase_offset: Offsets the phase of the oscillator (default is 0.0).
-            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+            phase_offset: Offsets the phase of the oscillator.
+            trig: Trigger signal to reset the phase when switching from False to True.
         """
 
         var trig_mask = SIMD[DType.bool, self.num_chans](fill=trig)
@@ -593,7 +606,7 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
     Dust has a Phasor as its core, and the frequency of the Phasor is randomly changed each time an impulse is generated. This allows the Dust to be used in multiple ways. It can be used as a simple random impulse generator, or the user can use the get_phase() method to get the current phase of the internal Phasor and use that phase to drive other oscillators or processes. The user can also set the phase of the internal Phasor using the set_phase() method, allowing for more complex interactions.
 
     Parameters:
-        num_chans: Number of channels (default is 1).
+        num_chans: Number of channels.
     """
     var impulse: Phasor[num_chans]
     var freq: SIMD[DType.float64, num_chans]
@@ -617,9 +630,9 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
         """Generate the next dust noise sample.
         
         Args:
-            low: Lower bound for the random frequency range (default is 100.0 Hz).
-            high: Upper bound for the random frequency range (default is 2000.0 Hz).
-            trig: Trigger signal to reset the phase when switching from False to True (default is all False).
+            low: Lower bound for the random frequency range.
+            high: Upper bound for the random frequency range.
+            trig: Trigger signal to reset the phase when switching from False to True.
 
         Returns:
             The next dust noise sample as a Float64. Will be 1.0 when an impulse occurs, 0.0 otherwise.
@@ -631,9 +644,9 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
         """Generate the next dust noise sample as a boolean impulse.
         
         Args:
-            low: Lower bound for the random frequency range (default is 100.0 Hz).
-            high: Upper bound for the random frequency range (default is 2000.0 Hz).
-            trig: Trigger signal to reset the phase when switching from False to True (default is all False).
+            low: Lower bound for the random frequency range.
+            high: Upper bound for the random frequency range.
+            trig: Trigger signal to reset the phase when switching from False to True.
 
         Returns:
             The next dust noise sample as a boolean SIMD. Will be True when an impulse occurs, False otherwise.
@@ -655,10 +668,12 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
         self.impulse.phase = phase
 
 struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Movable, Copyable):
-    """Low-frequency interpolating noise generator with stepped (none), linear, or cubic interpolation.
+    """Low-frequency interpolating noise generator.
+    
+    With stepped (none), linear, or cubic interpolation.
 
     Parameters:
-        num_chans: Number of channels (default is 1).
+        num_chans: Number of channels.
         interp: Interpolation method. Options are Interp.none (stepped), Interp.linear, Interp.cubic.
     """
     var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
@@ -745,10 +760,12 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Mo
             return cubic_interp(p0, p1, p2, p3, self.impulse.phase)
 
 struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
-    """A phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.
+    """A phase accumulator.
+    
+    Phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.
 
     Parameters:
-        num_chans: Number of channels (default is 1).
+        num_chans: Number of channels.
     """
 
     var phase: SIMD[DType.float64, num_chans]

@@ -59,7 +59,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         """Compute the YIN pitch estimate for the given frame of audio samples.
 
         Args:
-            frame: The input audio frame of size `window_size`. This List gets passed from BufferedProcess.
+            frame: The input audio frame of size `window_size`. This List gets passed from [BufferedProcess](BufferedProcess.md).
         """
 
         # 1. Prepare input for FFT (Zero padding)
@@ -167,6 +167,8 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
 struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False](FFTProcessable):
     """Spectral Centroid analysis.
 
+    Based on the [Peeters (2003)](http://recherche.ircam.fr/anasyn/peeters/ARTICLES/Peeters_2003_cuidadoaudiofeatures.pdf)
+
     Parameters:
         min_freq: The minimum frequency (in Hz) to consider when computing the centroid.
         max_freq: The maximum frequency (in Hz) to consider when computing the centroid.
@@ -197,7 +199,7 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         """Compute the spectral centroid for the given magnitudes of an FFT frame.
 
         This static method is useful when there is an FFT already computed, perhaps as 
-        part of a custom struct that implements the FFTProcessable trait.
+        part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
 
         Args:
             mags: The input magnitudes as a List of Float64.
@@ -250,10 +252,10 @@ struct RMS(BufferedProcessable):
     fn next_window(mut self, mut input: List[Float64]):
         """Compute the RMS for the given window of audio samples.
 
-        This function is to be used with a BufferedProcess.
+        This function is to be used with a [BufferedProcess](BufferedProcess.md/#struct-bufferedprocess).
 
         Args:
-            input: The input audio frame of samples. This List gets passed from BufferedProcess.
+            input: The input audio frame of samples. This List gets passed from [BufferedProcess](BufferedProcess.md/#struct-bufferedprocess).
         
         The computed RMS value is stored in self.rms.
         """
@@ -264,7 +266,7 @@ struct RMS(BufferedProcessable):
         """Compute the RMS for the given window of audio samples.
 
         This static method is useful when there is an audio frame already available, perhaps
-        as part of a custom struct that implements the BufferedProcessable trait.
+        as part of a custom struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
 
         Args:
             frame: The input audio frame of samples.

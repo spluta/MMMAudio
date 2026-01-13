@@ -11,12 +11,12 @@ trait BufferedProcessable(Movable, Copyable):
     
     Requires two functions:
 
-    - next_window(buffer: List[Float64]) -> None: This function is called when enough samples have been buffered.
+    - `next_window(buffer: List[Float64]) -> None`: This function is called when enough samples have been buffered.
       The user can process the input buffer in place meaning that the samples you want to return to the output need
       to replace the samples that you receive in the input list.
     
-    - get_messages() -> None: This function is called at the top of each audio block to allow the user to retrieve any messages
-      they may have sent to this process. Put your message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
+    - `get_messages() -> None`: This function is called at the top of each audio block to allow the user to retrieve any messages
+      they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
     fn next_window(mut self, mut buffer: List[Float64]) -> None:
         return None
@@ -31,9 +31,9 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
     """Buffers input samples and hands them over to be processed in 'windows'.
 
     Parameters:
-        T: A user defined struct that implements the BufferedProcessable trait.
-        window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
-        hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
+        T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
+        window_size: The size of the window that is passed to the user defined struct for processing.
+        hop_size: The number of samples between each call to the user defined struct's `next_window()` function.
         input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
     var world: UnsafePointer[MMMWorld]
@@ -49,11 +49,11 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
 
         Args:
             world: A pointer to the MMMWorld.
-            process: A user defined struct that implements the BufferedProcessable trait.
-            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate BufferedProcesses, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
+            process: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
+            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate `BufferedInput`s, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
 
         Returns:
-            An initialized BufferedInput struct.
+            An initialized `BufferedInput` struct.
         """
         
         self.world = world
@@ -95,9 +95,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     """Buffers input samples and hands them over to be processed in 'windows'.
 
     Parameters:
-        T: A user defined struct that implements the BufferedProcessable trait.
-        window_size: The size of the window that is passed to the user defined struct for processing. The default is 1024 samples.
-        hop_size: The number of samples between each call to the user defined struct's `next_window()` function. The default is 512 samples.
+        T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
+        window_size: The size of the window that is passed to the user defined struct for processing.
+        hop_size: The number of samples between each call to the user defined struct's `next_window()` function.
         input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
         output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
@@ -264,7 +264,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer.
-            start_chan: The firstchannel to read from the buffer.
+            start_chan: The first channel to read from the buffer.
         
         Returns:
             The next output sample.
