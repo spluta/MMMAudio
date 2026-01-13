@@ -2,7 +2,7 @@ from .Filters import lpf_LR4
 from .MMMWorld_Module import *
 
 struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
-    """A simple oversampling buffer that collects multiple samples and then downsamples them using a low-pass filter. Add a sample for each oversampling iteration with `add_sample()`, then get the downsampled output with `get_sample()`.
+    """A struct that collects ` times_oversampling` samples and then downsamples them using a low-pass filter. Add a sample for each oversampling iteration with `add_sample()`, then get the downsampled output with `get_sample()`.
 
     Parameters:
         num_chans: Number of channels for the oversampling buffer.
@@ -53,7 +53,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
         return out
         
 struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable, Movable, Copyable):
-    """A simple oversampler that upsamples the input signal by the specified factor using a low-pass filter.
+    """A struct that upsamples the input signal by the specified factor using a low-pass filter.
 
     Parameters:
         num_chans: Number of channels for the upsampler.
@@ -76,7 +76,7 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
 
     @always_inline
     fn next(mut self, input: SIMD[DType.float64, self.num_chans], i: Int) -> SIMD[DType.float64, self.num_chans]:
-        """Process one sample through the upsampler. Pass in the same sample multiple times, once for each oversampling iteration. The algorithm will use the first sample and fill the buffer with zeroes for the subsequent samples.
+        """Process one sample through the upsampler. Pass in the same sample `times_oversampling` times, once for each oversampling iteration. The algorithm will use the first sample given and fill the buffer with zeroes for the subsequent samples.
 
         Args:
             input: The input signal to process.

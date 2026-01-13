@@ -72,7 +72,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
 
 struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
     """
-    Anti-Derivative Anti-Aliasing soft-clipping function. This struct provides first order anti-aliased `soft clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling.
+    Anti-Derivative Anti-Aliasing soft-clipping function. This struct provides first order anti-aliased `soft clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-Aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -173,7 +173,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
     Anti-Derivative Anti-Aliasing hard-clipping function.
     
-    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling.
+    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-Aliasing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-Aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -272,8 +272,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     
 struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
-    Anti-Derivative Anti-Aliasing first order tanh function.
-    This struct provides a first order anti-aliased version of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method with optional Oversampling.
+    Anti-Derivative Anti-Aliasing first order tanh function. This struct provides a first order anti-aliased version of the `tanh` function using the Anti-Derivative Anti-Aliasing (ADAA) method with optional Oversampling. See [Practical Considerations for Antiderivative Anti-Aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -421,7 +420,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     #     return 0.0
 
 struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable):
-    """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on Jatin Chowdhury's chow_dsp waveshapers.
+    """Buchla 259 style wavefolder implementation with Anti-Derivative Anti-Aliasing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on [Practical Considerations for Antiderivative Anti-Aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html).
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
