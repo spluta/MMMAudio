@@ -180,7 +180,7 @@ struct ListInterpolator(Movable, Copyable):
             world: Pointer to the MMMWorld instance.
             data: The `List[Float64]` to read from.
             f_idx: The floating-point index to read at.
-            prev_f_idx: The previous floating-point index (used for [SincInterpolation](SincInterpolation.md)).
+            prev_f_idx: The previous floating-point index (used for [SincInterpolation](SincInterpolator.md)).
         """
         
         @parameter
@@ -409,7 +409,7 @@ struct ListInterpolator(Movable, Copyable):
     @always_inline
     @staticmethod
     fn read_sinc[bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld], data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with [SincInterpolation](SincInterpolation.md).
+        """Read a value from a `List[Float64]` using provided index with [SincInterpolation](SincInterpolator.md).
         
         Parameters:
             bWrap: Whether to wrap indices that go out of bounds.
