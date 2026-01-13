@@ -4,15 +4,15 @@ Welcome to the MMMAudio documentation. MMMAudio is an audio processing library t
 
 On the left side of this webpage, you should see the help topics. If you don't see it, just click on the "hamburger" menu on the top left of the page to pull up the menue. 
 
-You are in the `Overview`.
+You are in the [Overview](index.md).
 
-`Getting Started` outlines how to install MMMAudio and run your first examples. 
+[Getting Started](getting-started.md) outlines how to install MMMAudio and run your first examples. 
 
-The `API Reference` outlines all of the Mojo structs and Python classes included as MMMAudio. It gives a brief description of each, and shows the methods available in each struct/class. 
+The [API Reference](api/index.md) outlines all of the Mojo structs and Python classes included as MMMAudio. It gives a brief description of each, and shows the methods available in each struct/class. 
 
-`Contributing` outlines the guidelines for contributing to the project. This is an open source project. All the code for the project is right there in the Python/Mojo project you downloaded. We have worked so hard on MMMAudio, but I am sure we have missed something. We would love you to file bug reports and submit killer new dsp algorithms. Expanding MMMAudio is very easy. This is by design. We want this to be a community-drive project, and we want you to contribute.
+[Contributing](contributing/index.md) outlines the guidelines for contributing to the project. This is an open source project. All the code for the project is right there in the Python/Mojo project you downloaded. We have worked so hard on MMMAudio, but I am sure we have missed something. We would love you to file bug reports and submit killer new dsp algorithms. Expanding MMMAudio is very easy. This is by design. We want this to be a community-driven project, and we want you to contribute.
 
-`Examples` is the meat of the documentation. This gives a description for and shows the code for the many incredible examples found in the MMMAudio repository. Answers to most questions of how MMMAudio works can be found in this code. All the examples that are documented are provided in the examples folder in your MMMAudio repository, so you can run them on your computer. There are two files per example. One .mojo file and one .py file. The .py file is used to execute the graph and communicate with the audio engine. The .mojo file outlines the audio graph used for the example.
+[Examples](examples/index.md) is the meat of the documentation. This gives a description for and shows the code for the many incredible examples found in the MMMAudio repository. Answers to most questions of how MMMAudio works can be found in this code. All the examples that are documented are provided in the examples folder in your MMMAudio repository, so you can run them on your computer. There are two files per example. One .mojo file and one .py file. The .py file is used to execute the graph and communicate with the audio engine. The .mojo file outlines the audio graph used for the example.
 
 If you are looking for something, but you don't know what, use the Search on the top right of this page!
 

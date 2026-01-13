@@ -1,14 +1,16 @@
 # Getting Started with MMMAudio
 
-[Mojo's Python interop](https://docs.modular.com/mojo/manual/python/) is still getting smoothed out so things will likely change.
+MMMAudio uses [Mojo's Python interop](https://docs.modular.com/mojo/manual/python/) to compile audio graphs directly in your Python programming environment.
 
-Here is what works now. The instructions are aimed at and have been tested on MacOS (currently Mojo's compiler is MacOS & Linux only).
+Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. Windows users can use WSL2 as described below. 
 
 ## 1. Clone the Repository
 
 ```
 git clone https://github.com/spluta/MMMAudio.git
 ```
+
+or [grab the latest release](https://github.com/spluta/MMMAudio/releases).
 
 ## 2. Setup the Environment
 
@@ -24,7 +26,7 @@ pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi ma
 ```
 
 install modular's max/mojo library
-the main branch is tied to Mojo 0.25.6.1
+the main branch is tied to Mojo 0.25.6.1 - we will move to 0.26 soon.
 
 ```shell
 pip install mojo==0.25.6.1
@@ -120,6 +122,8 @@ The best way to run MMMAudio is in REPL mode in your editor.
 to set up the python REPL correctly in VSCode: with the entire directory loaded into a workspace, go to View->Command Palette->Select Python Interpreter. Make sure to select the version of python that is in your venv directory, not the system-wide version. Then it should just work. 
 
 Before you run the code in a new REPL, make sure to close all terminal instances in the current workspace. This will ensure that a fresh REPL environment is created.
+
+Some examples are designed to run a complete scripts. These are all marked. In these cases, the script can be run by pressing the "play" button on the top right of VSCode or just running the script `python example.py` from inside your virtual environment.
 
 Go to the [Examples](examples/index.md) page to run an example!
 
