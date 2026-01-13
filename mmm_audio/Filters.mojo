@@ -487,6 +487,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("OnePoleFilter")
 
+    @doc_private
     fn next(mut self, input: SIMD[DType.float64, num_chans], coef: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Process one sample through the filter.
 
@@ -528,6 +529,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         var coef = self.coeff(cutoff_hz)
         return self.next(input, -coef)
 
+    @doc_private
     fn coeff(self, cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
         """Calculate feedback coefficient from cutoff frequency."""
         return exp(-2.0 * pi * cutoff_hz / self.world[].sample_rate)
