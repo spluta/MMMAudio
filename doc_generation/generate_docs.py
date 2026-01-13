@@ -370,7 +370,7 @@ def copy_static_docs(output_dir: Path, args):
         "api",
         "contributing",
         "examples",
-        "getting-started.md",
+        "getting_started",
         "index.md"
     ]
 

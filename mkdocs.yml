@@ -39,11 +39,12 @@ theme:
 nav:
   - Home: 
     - Overview: index.md
-    - Getting Started: getting-started.md
+    - Getting Started: getting_started/index.md
     - API Reference: api/index.md
     - Contributing: contributing/index.md
     - Examples: examples/index.md
-  - Getting Started: getting-started.md
+  - Getting Started:
+    - Getting Started: getting_started/index.md
   - API Reference:
     - Overview: api/index.md
     - Core DSP: 

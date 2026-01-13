@@ -6,7 +6,7 @@ On the left side of this webpage, you should see the help topics. If you don't s
 
 You are in the [Overview](index.md).
 
-[Getting Started](getting-started.md) outlines how to install MMMAudio and run your first examples. 
+[Getting Started](getting_started/index.md) outlines how to install MMMAudio and run your first examples. 
 
 The [API Reference](api/index.md) outlines all of the Mojo structs and Python classes included as MMMAudio. It gives a brief description of each, and shows the methods available in each struct/class. 
 
@@ -20,7 +20,7 @@ There is a lot of information here. However, if you do have a question, please p
 
 ## How to Use the Documentation
 
-If you're brand new to MMMAudio, check out the [Getting Started](getting-started.md) page.
+If you're brand new to MMMAudio, check out the [Getting Started](getting_started/index.md) page.
 
 The search function will be good for jumping to any specific struct or function in the API Reference you want to learn more about.
 

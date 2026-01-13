@@ -123,7 +123,6 @@ to set up the python REPL correctly in VSCode: with the entire directory loaded 
 
 Before you run the code in a new REPL, make sure to close all terminal instances in the current workspace. This will ensure that a fresh REPL environment is created.
 
-Some examples are designed to run a complete scripts. These are all marked. In these cases, the script can be run by pressing the "play" button on the top right of VSCode or just running the script `python example.py` from inside your virtual environment.
+Some examples are designed to run a complete script. These are all marked. In these cases, the script can be run by pressing the "play" button on the top right of VSCode or just running the script `python example.py` from inside your virtual environment.
 
-Go to the [Examples](examples/index.md) page to run an example!
-
+Go to the [Examples](../examples/index.md) page to run an example!
