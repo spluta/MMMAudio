@@ -25,13 +25,16 @@ theme:
         name: Switch to light mode
   features:
     - navigation.tabs
-    - navigation.sections
-    - navigation.expand
+    - navigation.tabs.sticky
+    - navigation.tracking
+    - navigation.path
     - navigation.top
     - search.highlight
     - search.share
     - content.code.copy
     - content.code.annotate
+    - toc.follow
+    - navigation.indexes
 
 nav:
   - Home: 
@@ -54,7 +57,7 @@ nav:
       - FFTProcess: api/FFTProcess.md
       - Filters: api/Filters.md
       - MLP Mojo: api/MLP.md
-      - MLP PyTorch: api/MLP.md
+      - MLP PyTorch: api/MLP_Python.md
       - Noise: api/Noise.md
       - Osc: api/Oscillators.md
       - Oversampling: api/Oversampling.md
@@ -80,7 +83,6 @@ nav:
       - OSC Messaging: api/OSCServer.md
       - Python Functions: api/python_utils.md
       - Python FFT: api/fft.md
-      - Mojo Functions: api/functions.md
   # - Examples nav tree is built dynamically from the examples directory
   - Contributing:
     - Overview: contributing/index.md
@@ -99,7 +101,7 @@ markdown_extensions:
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
-      toc_depth: 1
+      toc_depth: 2
       permalink: true
   - attr_list
   - md_in_html
@@ -117,7 +119,7 @@ plugins:
         python:
           options:
             docstring_style: google
-            show_source: true
+            show_source: false
             show_bases: true
             show_inheritance_diagram: true
   - mkdocs-simple-hooks:

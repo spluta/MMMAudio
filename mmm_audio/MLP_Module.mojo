@@ -7,7 +7,7 @@ from .MMMWorld_Module import *
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
     """A Mojo wrapper for a PyTorch MLP model using Python interop.
 
-    For example usage, see `TorchMlp.mojo` in the 'Examples' folder.
+    For example usage, see `TorchMlp.mojo` in the [Examples](../examples/index.md) folder.
 
     Parameters:
       input_size: The size of the input vector.

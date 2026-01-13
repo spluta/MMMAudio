@@ -1,5 +1,5 @@
 {% import '_badges.jinja' as badges %}
-### `trait` {{ badges.trait_badge(trait.name) }} . `fn` {{ badges.fn_badge(function.name) }}
+#### `trait` {{ badges.trait_badge(trait.name) }} . `fn` {{ badges.fn_badge(function.name) }}
 
 {% for overload in function.overloads %}
 {% if overload.summary %}
@@ -10,14 +10,14 @@
 {{ overload.description }}
 {% endif %}
 
-## Signature
+**Signature**
 
 ```mojo
 {{ overload.signature }}
 ```
 
 {% if overload.parameters %}
-## Parameters
+**Parameters**
 
 {% for param in overload.parameters %}
 - **{{ param.name }}**{% if param.type %}: `{{ param.type }}`{% endif %}{% if param.description %} - {{ param.description }}{% endif %}
@@ -25,7 +25,7 @@
 {% endif %}
 
 {% if overload.args %}
-## Arguments
+**Arguments**
 
 {% for arg in overload.args %}
 - **{{ arg.name }}**{% if arg.type %}: `{{ arg.type }}`{% endif %}{% if arg.default %} = `{{ arg.default }}`{% endif %}{% if arg.description %} - {{ arg.description }}{% endif %}
@@ -33,7 +33,7 @@
 {% endif %}
 
 {% if overload.returns %}
-## Returns
+**Returns**
 
 {% if overload.returns.type %}**Type**: `{{ overload.returns.type }}`{% endif %}
 {% if overload.returns.doc %}
