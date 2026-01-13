@@ -17,13 +17,13 @@ class ControlSpec:
     
     def normalize(self, val: float) -> float:
         """Normalize a value to the range [0.0, 1.0] based on the control spec."""
-        norm_val = scale(val, self.min, self.max, 0.0, 1.0)
+        norm_val = linlin(val, self.min, self.max, 0.0, 1.0)
         return clip(norm_val ** self.exp, 0.0, 1.0)
 
     def unnormalize(self, norm_val: float) -> float:
         """Convert a normalized value [0.0, 1.0] back to the control spec range."""
         norm_val = clip(norm_val, 0.0, 1.0) ** (1.0 / self.exp)
-        return scale(norm_val, 0.0, 1.0, self.min, self.max)
+        return linlin(norm_val, 0.0, 1.0, self.min, self.max)
 
 class Handle(QWidget):
     def __init__(self, label: str, spec: ControlSpec, default: float, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
