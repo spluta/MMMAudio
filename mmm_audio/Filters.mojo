@@ -807,7 +807,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
 struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
 
-    A translation of Julius Smith's Faust implementation of digital filters.
+    A translation of Julius Smith's Faust implementation of [tf2s (virtual analog) resonant filters](https://github.com/grame-cncm/faustlibraries/blob/6061da8bf2279ae4281333861a3dc6254e9076f9/filters.lib#L2054).
     Copyright (C) 2003-2019 by Julius O. Smith III
 
     Parameters:
