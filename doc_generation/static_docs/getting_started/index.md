@@ -143,18 +143,18 @@ To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` a
     line has important information that must be correct for compilation 
     (notice this pattern in the examples):
     
-    1) The `graph_name` corresponds to:
-       - The name of the `.mojo` file to search for the audio graph
-       - AND the name of the struct within that file serving as the main audio graph
+    1) The `graph_name` corresponds to:  
+       - The name of the `.mojo` file to search for the audio graph  
+       - AND the name of the struct within that file serving as the main audio graph  
        
        In the example below, the file "MyMojoFile.mojo" contains struct `MyMojoFile`. 
        This struct must have a `.next` function with no input arguments that outputs 
        a `SIMD[DType.float64, N]` vector of any size (typically N=2) or just a Float64.
 
-    2) The `package_name` corresponds to the folder containing your files:
-       - Files in `MMMAudio/mine` use `package_name="mine"`
-       - Files in `MMMAudio/user_files` use `package_name="user_files"`
-       - Your folder must be inside the MMMAudio directory and must contain the `__init__.mojo` file as explained above
+    2) The `package_name` corresponds to the folder containing your files:  
+       - Files in `MMMAudio/mine` use `package_name="mine"`  
+       - Files in `MMMAudio/user_files` use `package_name="user_files"`  
+       - Your folder must be inside the MMMAudio directory and must contain the `__init__.mojo` file as explained above  
 
 
 ```python
