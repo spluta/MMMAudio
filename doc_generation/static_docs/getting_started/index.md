@@ -129,18 +129,33 @@ Go to the [Examples](../examples/index.md) page to run an example!
 
 ## 4. Make Your Own Sounds
 
-Similar to how running an example considers the `examples` directory a "module" you can create your own "module" to run your code from. The `.gitignore` file already ignores two directories, one called "mine" and one called "user_files", so if you make a directory called `mine` or `user_files` next to the `examples` directory you can put all the `.mojo` and corresponding `.py` files in there you want. Be sure to put an empty `__init__.py` and `__init__.mojo` file in your "mine" directory for it to operate as a "module".
+When running an example, the Mojo compilser considers the `examples` directory a "module". This is important because when you make your own directory of files and projects, that directory also needs to be a module. 
 
-To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` and `.py` file pair from the examples directory to get you started. Them modify them!
+For your directory to be considered a "module" by the mojo compiler, in addition to your `.mojo` and `.py` files, there also needs to be empty `__init__.py` and `__init__.mojo` files in that directory. (See how the examples folder has these files and they are empty. These are there because you need them.)
+
+The `.gitignore` file already ignores two directories, one called "mine" and one called "user_files", so if you make a directory called `mine` or `user_files` next to the `examples` directory, you can put all the `.mojo` and corresponding `.py` files in there you want (plus the 2 `__init__.py` and `__init__.mojo` files) and git will never accidentally overwrite them.
+
+To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` and `.py` file pair from the examples directory to get you started. Then modify them!
 
 !!! Note
 
-    When running a MMMAudio program in your `.py` file, the `MMMAudio(128, etc)` line has some important information that must be correct for the program to compile (notice this pattern in the examples):
+    When running a MMMAudio program in your `.py` file, the `MMMAudio(128, etc)` 
+    line has important information that must be correct for compilation 
+    (notice this pattern in the examples):
     
-    1) The `graph_name` corresponds to both the name of the `.mojo` file to look for the audio graph AND the name of the struct within that file that will serve as the main audio graph. In the example below, there is a file "MyMojoFile.mojo" that contains a struct, `MyMojoFile`. This struct must have a `.next` function that has no input arguments and outputs a SIMD[DType.float64, N] vector of any size, though most likely N is 2. 
+    1) The `graph_name` corresponds to:
+       - The name of the `.mojo` file to search for the audio graph
+       - AND the name of the struct within that file serving as the main audio graph
+       
+       In the example below, the file "MyMojoFile.mojo" contains struct `MyMojoFile`. 
+       This struct must have a `.next` function with no input arguments that outputs 
+       a `SIMD[DType.float64, N]` vector of any size (typically N=2) or just a Float64.
 
-    2) The package name corresponds to the folder that your files are in. So, if you put your files in the `MMMAudio/mine`, use `package_name="mine"`. If you put your program in the "user_files" folder, use `package_name="user_files"`. As of now, that your folder has to be inside the MMMAudio directory.
-    
+    2) The `package_name` corresponds to the folder containing your files:
+       - Files in `MMMAudio/mine` → use `package_name="mine"`
+       - Files in `MMMAudio/user_files` → use `package_name="user_files"`
+       - Your folder must be inside the MMMAudio directory and must contain the `__init__.mojo` file as explained above
+
 
 ```python
 mmm_audio = MMMAudio(128, graph_name="MyMojoFile", package_name="mine")
