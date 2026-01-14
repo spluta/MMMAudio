@@ -126,3 +126,17 @@ Before you run the code in a new REPL, make sure to close all terminal instances
 Some examples are designed to run a complete script. These are all marked. In these cases, the script can be run by pressing the "play" button on the top right of VSCode or just running the script `python example.py` from inside your virtual environment.
 
 Go to the [Examples](../examples/index.md) page to run an example!
+
+## 4. Make Your Own Sounds
+
+Similar to how running an example considers the `examples` directory a "module" you can create your own "module" to run your code from. The `.gitignore` file already ignores a directory called "mine", so if you make a directory called `mine` next to the `examples` directory you can put all the `.mojo` and corresponding `.py` files in there you want. Be sure to put an empty `__init__.py` and `__init__.mojo` file in your "mine" directory for it to operate as a "module".
+
+To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` and `.py` file pair from the examples directory to get you started. Them modify them!
+
+!!! Note
+
+    Remember that you'll need to change this line of code in the `.py` file to point to your `.mojo` file and the directory it is in. Also, your main `struct` that should run as the audio graph **needs to have the same name as the `.mojo` file**. Notice this pattern in the examples.
+
+```python
+mmm_audio = MMMAudio(128, graph_name="MyMojoFile", package_name="mine")
+```
