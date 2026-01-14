@@ -129,14 +129,21 @@ Go to the [Examples](../examples/index.md) page to run an example!
 
 ## 4. Make Your Own Sounds
 
-Similar to how running an example considers the `examples` directory a "module" you can create your own "module" to run your code from. The `.gitignore` file already ignores a directory called "mine", so if you make a directory called `mine` next to the `examples` directory you can put all the `.mojo` and corresponding `.py` files in there you want. Be sure to put an empty `__init__.py` and `__init__.mojo` file in your "mine" directory for it to operate as a "module".
+Similar to how running an example considers the `examples` directory a "module" you can create your own "module" to run your code from. The `.gitignore` file already ignores two directories, one called "mine" and one called "user_files", so if you make a directory called `mine` or `user_files` next to the `examples` directory you can put all the `.mojo` and corresponding `.py` files in there you want. Be sure to put an empty `__init__.py` and `__init__.mojo` file in your "mine" directory for it to operate as a "module".
 
 To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` and `.py` file pair from the examples directory to get you started. Them modify them!
 
 !!! Note
 
-    Remember that you'll need to change this line of code in the `.py` file to point to your `.mojo` file and the directory it is in. Also, your main `struct` that should run as the audio graph **needs to have the same name as the `.mojo` file**. Notice this pattern in the examples.
+    When running a MMMAudio program in your `.py` file, the `MMMAudio(128, etc)` line has some important information that must be correct for the program to compile (notice this pattern in the examples):
+    
+    1) The `graph_name` corresponds to both the name of the `.mojo` file to look for the audio graph AND the name of the struct within that file that will serve as the main audio graph. In the example below, there is a file "MyMojoFile.mojo" that contains a struct, `MyMojoFile`. This struct must have a `.next` function that has no input arguments and outputs a SIMD[DType.float64, N] vector of any size, though most likely N is 2. 
+
+    2) The package name corresponds to the folder that your files are in. So, if you put your files in the `MMMAudio/mine`, use `package_name="mine"`. If you put your program in the "user_files" folder, use `package_name="user_files"`. As of now, that your folder has to be inside the MMMAudio directory.
+    
 
 ```python
 mmm_audio = MMMAudio(128, graph_name="MyMojoFile", package_name="mine")
 ```
+
+This is how all the examples look, so just look at those for "inspiration."
