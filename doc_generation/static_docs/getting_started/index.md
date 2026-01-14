@@ -129,11 +129,11 @@ Go to the [Examples](../examples/index.md) page to run an example!
 
 ## 4. Make Your Own Sounds
 
-When running an example, the Mojo compilser considers the `examples` directory a "module". This is important because when you make your own directory of files and projects, that directory also needs to be a module. 
+When running an example, the Mojo compiler considers the `examples` directory a "module". This is important because when you make your own directory of files and projects, that directory also needs to be a module. 
 
-For your directory to be considered a "module" by the mojo compiler, in addition to your `.mojo` and `.py` files, there also needs to be empty `__init__.py` and `__init__.mojo` files in that directory. (See how the examples folder has these files and they are empty. These are there because you need them.)
+For your directory to be considered a "module" by the mojo compiler, in addition to your `.mojo` and `.py` files, there also needs to be an empty `__init__.mojo` file in that directory. (See how the examples folder has this file and it is empty. It is there because it needs to be!)
 
-The `.gitignore` file already ignores two directories, one called "mine" and one called "user_files", so if you make a directory called `mine` or `user_files` next to the `examples` directory, you can put all the `.mojo` and corresponding `.py` files in there you want (plus the 2 `__init__.py` and `__init__.mojo` files) and git will never accidentally overwrite them.
+The `.gitignore` file already ignores two directories, one called "mine" and one called "user_files", so if you make a directory called `mine` or `user_files` next to the `examples` directory, you can put all the `.mojo` and corresponding `.py` files in there you want (plus the `__init__.mojo` file) and git will never accidentally overwrite these directories.
 
 To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` and `.py` file pair from the examples directory to get you started. Then modify them!
 
@@ -152,8 +152,8 @@ To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` a
        a `SIMD[DType.float64, N]` vector of any size (typically N=2) or just a Float64.
 
     2) The `package_name` corresponds to the folder containing your files:
-       - Files in `MMMAudio/mine` → use `package_name="mine"`
-       - Files in `MMMAudio/user_files` → use `package_name="user_files"`
+       - Files in `MMMAudio/mine` use `package_name="mine"`
+       - Files in `MMMAudio/user_files` use `package_name="user_files"`
        - Your folder must be inside the MMMAudio directory and must contain the `__init__.mojo` file as explained above
 
 
