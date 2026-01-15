@@ -60,6 +60,10 @@ mmm_audio = MMMAudio(128, graph_name="MyProject", package_name="user_files")
 
 MMMAudio will look in the 'user_file's' directory for the necessary files to execute your script.
 
+## Roadmap
+
+See the [Roadmap](doc_generation/static_docs/getting_started/Roadmap.md) to see where MMMAudio is headed next.
+
 ## Documentation Generation
 
 For information on the documentation generation see [Documentation Generation](doc_generation/static_docs/contributing/documentation.md).
