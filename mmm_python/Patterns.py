@@ -1,9 +1,7 @@
 """
 Pattern classes for generating sequences of values.
 
-This module provides pattern classes inspired by SuperCollider's pattern system
-for generating sequences, random selections, and non-repeating random selections
-from lists of values.
+This module provides pattern classes inspired by SuperCollider's pattern system for generating sequences, random selections, and non-repeating random selections from lists of values.
 
 Classes:
     Pseq: Sequential pattern that cycles through a list
@@ -62,8 +60,7 @@ class Pseq:
         Get the next value in the sequence.
         
         Returns:
-            The next value in the list, cycling back to the beginning
-            when reaching the end. Returns None if the list is empty.
+            The next value in the list, cycling back to the beginning when reaching the end. Returns None if the list is empty.
         """
         if not self.list:
             return None
@@ -126,8 +123,7 @@ class Prand:
         Get a random value from the list.
         
         Returns:
-            A randomly selected value from the list. Returns None
-            if the list is empty.
+            A randomly selected value from the list. Returns None if the list is empty.
         """
         if not self.list:
             return None
@@ -189,9 +185,7 @@ class Pxrand:
         Get a random value that differs from the previous selection.
         
         Returns:
-            A randomly selected value from the list that is guaranteed
-            to be different from the previous selection. Returns None
-            if the list is empty.
+            A randomly selected value from the list that is guaranteed to be different from the previous selection. Returns None if the list is empty.
         """
         if not self.list:
             return None
