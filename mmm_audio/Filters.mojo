@@ -1,5 +1,5 @@
 from .MMMWorld_Module import *
-from math import exp, sqrt, tan, pi, tanh, ceil, floor
+from math import exp, sqrt, tan, pi, tanh, ceil, floor, sin, cos
 from bit import next_power_of_two
 from .functions import *
 
@@ -1069,3 +1069,105 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
     coeffs_out[2] = b2d
     coeffs_out[3] = a1d
     coeffs_out[4] = a2d
+
+@doc_private
+@always_inline
+fn biquad_rbj_lowpass[num_chans: Int = 1](
+    freq: SIMD[DType.float64, num_chans],
+    q: SIMD[DType.float64, num_chans],
+    sample_rate: Float64
+) -> List[SIMD[DType.float64, num_chans]]:
+    var nyq = sample_rate * 0.5
+    var cf = clip(freq, 1.0, nyq * 0.49)
+
+    var w0 = 2.0 * pi * cf / sample_rate
+    var c = cos(w0)
+    var s = sin(w0)
+
+    var q2 = clip(q, 1e-6, 1e6)
+    var alpha = s / (2.0 * q2)
+
+    var b0 = (1.0 - c) * 0.5
+    var b1 = (1.0 - c)
+    var b2 = (1.0 - c) * 0.5
+    var a0 = 1.0 + alpha
+    var a1 = -2.0 * c
+    var a2 = 1.0 - alpha
+
+    b0 /= a0
+    b1 /= a0
+    b2 /= a0
+    a1 /= a0
+    a2 /= a0
+
+    return [b0, b1, b2, a1, a2]
+
+
+struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
+    """Second-order IIR (biquad) filter.
+
+    Digital coefficients are stored as:
+    [b0, b1, b2, a1, a2] with a0 assumed to be 1.0.
+    """
+    var tf2: tf2[num_chans]
+    var coeffs: List[SIMD[DType.float64, num_chans]]
+    var world: UnsafePointer[MMMWorld]
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.tf2 = tf2[num_chans](world)
+        self.coeffs = [SIMD[DType.float64, self.num_chans](0.0) for _ in range(5)]
+        self.world = world
+
+        # Identity passthrough
+        self.coeffs[0] = SIMD[DType.float64, self.num_chans](1.0)
+
+    fn __repr__(self) -> String:
+        return String("Biquad")
+
+    @always_inline
+    fn set_coeffs(mut self, coeffs: List[SIMD[DType.float64, self.num_chans]]):
+        self.coeffs[0] = coeffs[0]
+        self.coeffs[1] = coeffs[1]
+        self.coeffs[2] = coeffs[2]
+        self.coeffs[3] = coeffs[3]
+        self.coeffs[4] = coeffs[4]
+
+    @always_inline
+    fn set_lowpass(mut self, freq: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]):
+        self.set_coeffs(biquad_rbj_lowpass[self.num_chans](freq, q, self.world[].sample_rate))
+
+    @always_inline
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+        return sanitize(self.tf2.next(input, self.coeffs))
+
+
+struct ButterworthLP6[num_chans: Int = 1](Representable, Movable, Copyable):
+    """6th-order Butterworth lowpass implemented as 3 cascaded biquads."""
+    var s1: Biquad[num_chans]
+    var s2: Biquad[num_chans]
+    var s3: Biquad[num_chans]
+
+    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+        self.s1 = Biquad[num_chans](world)
+        self.s2 = Biquad[num_chans](world)
+        self.s3 = Biquad[num_chans](world)
+
+    fn __repr__(self) -> String:
+        return String("ButterworthLP6")
+
+    @always_inline
+    fn set_cutoff(mut self, freq: SIMD[DType.float64, self.num_chans]):
+        let q1 = SIMD[DType.float64, self.num_chans](1.9318516525781366)
+        let q2 = SIMD[DType.float64, self.num_chans](0.7071067811865476)
+        let q3 = SIMD[DType.float64, self.num_chans](0.5176380902050415)
+
+        self.s1.set_lowpass(freq, q1)
+        self.s2.set_lowpass(freq, q2)
+        self.s3.set_lowpass(freq, q3)
+
+    @always_inline
+    fn next(mut self, input: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+        var y = self.s1.next(input)
+        y = self.s2.next(y)
+        y = self.s3.next(y)
+        return y

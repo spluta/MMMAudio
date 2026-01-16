@@ -12,6 +12,8 @@ Writing dsp code in Mojo is straight-forward and the feedback loop of being able
 
 A link to the online documentation is found here: [https://spluta.github.io/MMMAudio/](https://spluta.github.io/MMMAudio/)
 
+Note for macOS (Apple Silicon): if you encounter PyAudio / PortAudio import errors, see the troubleshooting note and install script: [docs/PORTAUDIO.md](docs/PORTAUDIO.md).
+
 See "Documentation Generation" on how to build this locally.
 
 ## Program structure
