@@ -88,6 +88,8 @@ nav:
   - Contributing:
     - Overview: contributing/index.md
     - Documentation Guide: contributing/documentation.md
+    - Roadmap: contributing/Roadmap.md
+
 
 markdown_extensions:
   - admonition

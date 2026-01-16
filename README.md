@@ -45,7 +45,7 @@ There is a user_files directory/Mojo package where users can make their own grap
 
 ## Running Examples
 
-For more information on running examples see [Examples Index](doc_generation/static_docs/examples/index.md).
+For more information on running examples see [Examples Index](https://spluta.github.io/MMMAudio/examples/).
 ``.
 
 ## User Directory
@@ -62,11 +62,11 @@ MMMAudio will look in the 'user_file's' directory for the necessary files to exe
 
 ## Roadmap
 
-See the [Roadmap](doc_generation/static_docs/getting_started/Roadmap.md) to see where MMMAudio is headed next.
+See the [Roadmap](https://spluta.github.io/MMMAudio/contributing/Roadmap) to see where MMMAudio is headed next.
 
 ## Documentation Generation
 
-For information on the documentation generation see [Documentation Generation](doc_generation/static_docs/contributing/documentation.md).
+For information on the documentation generation see [Documentation Generation](https://spluta.github.io/MMMAudio/contributing/documentation/).
 
 ## Credits
 
