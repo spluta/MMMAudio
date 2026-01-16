@@ -225,13 +225,13 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         self.read_head = (self.read_head + 1) % window_size
         return outval
 
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
         """Used for non-real-time, buffer-based, processing. At the onset of the next window, reads a block of window_size samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase tries to read samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to start reading from the buffer.
-            start_chan: The first channel to read from the buffer.
+            chan: The channel to read from the buffer.
         
         Returns:
             The next output sample.
@@ -241,7 +241,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
 
             for i in range(window_size):
                 index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
-                self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
+                self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
 
@@ -264,7 +264,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer.
-            start_chan: The first channel to read from the buffer.
+            start_chan: The first channel to read from the buffer. The second channel will be start_chan + 1.
         
         Returns:
             The next output sample.
@@ -274,7 +274,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
            
             for i in range(window_size):
                 index = floor(phase * buffer.num_frames_f64) + i
-                self.st_passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
+                self.st_passing_buffer[i][0] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
+                self.st_passing_buffer[i][1] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
