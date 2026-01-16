@@ -12,7 +12,7 @@ git clone https://github.com/spluta/MMMAudio.git
 
 or [grab the latest release](https://github.com/spluta/MMMAudio/releases).
 
-## 2. Setup the Environment (On Windows, follow the instructions under 2b. first, then come back here to get Python correctly configured)
+## 2. Setup the Python Virtual Environment (On Windows, follow the instructions under 2b. first, then come back here to get Python correctly configured)
 
 `cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and 3.13.  If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
 
@@ -32,7 +32,7 @@ the main branch is tied to Mojo 0.25.6.1 - we will move to 0.26 soon.
 pip install mojo==0.25.6.1
 ```
 
-### 2a. Setup the Environment on MacOS (Apple Silicon Only - Mojo Does not and will not work on Intel Macs)
+### 2a. Further Setup of the Environment on MacOS (Apple Silicon Only - Mojo Does not and will not work on Intel Macs)
 
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
 
@@ -58,7 +58,7 @@ if you have trouble installing/running `pyaudio`, try this:
 Here are some hints to get the audio samples running under Windows/WSL2. 
 I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
 
-First, you need to install WSL2. Follow online guides to get this installed.
+First, you need to install WSL2. Follow online guides to get this installed. This involves and install and a restart of your computer.
 
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On Ubuntu this is:
 
