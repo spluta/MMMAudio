@@ -53,7 +53,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.file_name = String()
 
         try:
-            self.MLP = Python.import_module("mmm_audio.MLP")
+            self.MLP = Python.import_module("mmm_audio.MLP_Python")
             self.torch = Python.import_module("torch")
             self.py_input = self.torch.zeros(1, input_size)  # Create a tensor with shape [1, 2] filled with zeros
 
@@ -61,7 +61,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
             print("Torch model loaded successfully")
 
         except ImportError:
-            print("Error importing MLP_py or torch module")
+            print("Error importing MLP_Python or torch module")
 
         self.reload_model(file_name)
 

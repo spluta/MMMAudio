@@ -3,7 +3,7 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QPainter, QPen, QBrush
 from PySide6.QtCore import QPointF
 
-from .python_utils import clip, scale
+from .python_utils import clip, linlin
 
 class ControlSpec:
     def __init__(self, min: float, max: float, exp: float = 1.0):
