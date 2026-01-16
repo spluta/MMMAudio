@@ -33,4 +33,4 @@ Currently we have a robust messaging system to send messages from Python to Mojo
 
 ## 8. SIMDBuffer
 
-Currently all Buffers are stored as a List[List[Float64]]. This is inefficient. Our goal is to have a second struct, SIMDBuffer that is stored as a List[SIMD[DType.float64, num_chans]], which will have more efficient lookup for multichannel signals, especially those that are powers of two in numbers of channels.
+Currently all Buffers are stored as a List[List[Float64]]. This is inefficient. Our goal is to have a second struct, SIMDBuffer that is stored as a List[SIMD[DType.float64, num_chans]], which will have more efficient lookup for multichannel signals, especially those that are powers of two in numbers of channels. Both structs will be supported going forward.
