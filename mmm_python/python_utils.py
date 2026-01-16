@@ -128,3 +128,17 @@ def ampdb(amp: float) -> float:
     if amp <= 0:
         return -float('inf')  # Return negative infinity for zero or negative amplitude
     return 20.0 * np.log10(amp)
+
+def polar_to_complex(mags: np.ndarray, phases: np.ndarray) -> np.ndarray:
+    """
+    Convert polar coordinates (magnitude and phase) to complex numbers.
+    
+    Args:
+        mags: Magnitude spectrum (numpy array)
+        phases: Phase spectrum (numpy array)
+    
+    Returns:
+        complex_signal: Complex representation (numpy array)
+    """
+    complex_signal = mags * np.exp(1j * phases)
+    return complex_signal
