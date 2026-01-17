@@ -103,25 +103,6 @@ def cpsmidi(frequency: float) -> float:
     """
     return 69.0 + 12 * math.log2(frequency / 440.0)
 
-def scale(val: float = 0, in_min: float = 0, in_max: float = 1, out_min: float = 0, out_max: float = 1) -> float:
-    """Scale a value from one range to another.
-    
-    Args:
-        val: The value to scale.
-        in_min: The minimum of the input range.
-        in_max: The maximum of the input range.
-        out_min: The minimum of the output range.
-        out_max: The maximum of the output range.
-
-    Returns:
-        The scaled value.
-    """
-    in_range = in_max - in_min
-    norm_val = (val - in_min) / in_range if in_range != 0 else 0
-    out_range = out_max - out_min
-    scaled_val = (norm_val * out_range) + out_min
-    return scaled_val
-
 def clip(val: float, min_val: float, max_val: float) -> float:
     """Clip a value to be within a specified range.
     
@@ -147,3 +128,17 @@ def ampdb(amp: float) -> float:
     if amp <= 0:
         return -float('inf')  # Return negative infinity for zero or negative amplitude
     return 20.0 * np.log10(amp)
+
+def polar_to_complex(mags: np.ndarray, phases: np.ndarray) -> np.ndarray:
+    """
+    Convert polar coordinates (magnitude and phase) to complex numbers.
+    
+    Args:
+        mags: Magnitude spectrum (numpy array)
+        phases: Phase spectrum (numpy array)
+    
+    Returns:
+        complex_signal: Complex representation (numpy array)
+    """
+    complex_signal = mags * np.exp(1j * phases)
+    return complex_signal

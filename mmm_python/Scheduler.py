@@ -4,7 +4,10 @@ import threading
 import time
 
 class Scheduler:
+    """The main Scheduler class for the Python side of MMMAudio. Can be used to run asyncio coroutines in a separate scheduling thread. This has the advantage of not blocking the main thread, but also allows for each schedule to be cancelled individually."""
+
     def __init__(self):
+        """Initialize the Scheduler. Also starts the asyncio event loop in its own unique thread."""
         self.loop = None
         self.thread = None
         self.running = False
@@ -20,7 +23,13 @@ class Scheduler:
         self.stop_routs()
 
     async def tc_sleep(self, delay, result=None):
-        """Coroutine that completes after a given time (in seconds)."""
+        """Coroutine that completes after a given time (in seconds).
+        
+        Args:
+            delay: Time in seconds to wait before completing the coroutine.
+            result: Optional result to return when the coroutine completes.
+
+        """
         if delay <= 0:
             await asyncio.tasks.__sleep0()
             return result
@@ -37,7 +46,7 @@ class Scheduler:
             h.cancel()
 
     def start_thread(self):
-        """Start the asyncio event loop in a separate thread"""
+        """Create a new asyncio event loop and run it in a separate scheduling thread."""
         def run_event_loop():
             self.loop = asyncio.new_event_loop()
             asyncio.set_event_loop(self.loop)
@@ -65,7 +74,14 @@ class Scheduler:
         return self.thread
     
     def sched(self, coro):
-        """Add a coroutine to the running event loop"""
+        """Add a coroutine to the running event loop.
+
+        Args:
+            coro: The coroutine to be scheduled.
+        
+        Returns:
+            The Future object representing the scheduled coroutine. This returned object can be used to check the status of the coroutine, retrieve its result, or stop the coroutine when needed.
+        """
 
         # any time a new event is scheduled, clear the routs list of finished coroutines
 
@@ -82,17 +98,17 @@ class Scheduler:
         return rout
 
     def stop_routs(self):
-        """Stop all running routines"""
+        """Stop all running routines."""
         for rout in self.routines:
             rout.cancel()
         self.routines.clear()
 
     def get_routs(self):
-        """Get all running routines"""
+        """Get all running routine."""
         return self.routines
 
     def stop_thread(self):
-        """Stop the asyncio event loop and thread and start a new one"""
+        """Stop the asyncio event loop and thread and start a new one."""
         if self.loop and self.running:
             self.loop.call_soon_threadsafe(self.loop.stop)
             if self.thread:

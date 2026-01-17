@@ -1,6 +1,6 @@
 
 {% import '_badges.jinja' as badges %}
-# struct {{ badges.struct_badge(struct.name) }}
+## struct {{ badges.struct_badge(struct.name) }}
 {% if struct.summary %}
 **{{ struct.summary }}**
 {% endif %}
@@ -34,13 +34,13 @@
 
 <!-- FUNCTIONS -->
 {% if struct.functions %}
-## {{ badges.struct_badge(struct.name) }} **Functions**
+### {{ badges.struct_badge(struct.name) }} **Functions**
 
 {% for function in struct.functions %}
 
 {% for overload in function.overloads %}
 
-### `struct` {{ badges.struct_badge(struct.name) }} . `fn` {{ badges.fn_badge(function.name) }}
+#### `struct` {{ badges.struct_badge(struct.name) }} . `fn` {{ badges.fn_badge(function.name) }}
 
 <div style="margin-left:3em;" markdown="1">
 
@@ -112,7 +112,7 @@
 {% endif %}
 
 {% if struct.constraints %}
-## Constraints
+### Constraints
 {{ struct.constraints }}
 {% endif %} <!-- endif struct.constraints -->
 

@@ -8,7 +8,7 @@ Writing dsp code in Mojo is straight-forward and the feedback loop of being able
 
 ## Getting Started
 
-[See the Getting Started guide](doc_generation/static_docs/getting-started.md).
+[See the Getting Started guide](https://spluta.github.io/MMMAudio/getting_started/).
 
 A link to the online documentation is found here: [https://spluta.github.io/MMMAudio/](https://spluta.github.io/MMMAudio/)
 
@@ -45,7 +45,7 @@ There is a user_files directory/Mojo package where users can make their own grap
 
 ## Running Examples
 
-For more information on running examples see [Examples Index](doc_generation/static_docs/examples/index.md).
+For more information on running examples see [Examples Index](https://spluta.github.io/MMMAudio/examples/).
 ``.
 
 ## User Directory
@@ -60,9 +60,13 @@ mmm_audio = MMMAudio(128, graph_name="MyProject", package_name="user_files")
 
 MMMAudio will look in the 'user_file's' directory for the necessary files to execute your script.
 
+## Roadmap
+
+See the [Roadmap](https://spluta.github.io/MMMAudio/contributing/Roadmap) to see where MMMAudio is headed next.
+
 ## Documentation Generation
 
-For information on the documentation generation see [Documentation Generation](doc_generation/static_docs/contributing/documentation.md).
+For information on the documentation generation see [Documentation Generation](https://spluta.github.io/MMMAudio/contributing/documentation/).
 
 ## Credits
 

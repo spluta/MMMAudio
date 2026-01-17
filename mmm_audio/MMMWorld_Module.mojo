@@ -123,8 +123,7 @@ struct MMMWorld(Representable, Movable, Copyable):
             if self.print_counter % n_blocks == 0:
                 @parameter
                 for i in range(values.__len__()):
-                    print(values[i], end=" ")   
-                print("")
+                    print(values[i], end=sep if i < values.__len__() - 1 else end)
 
 # Enum-like structs for selecting settings
 # ========================================

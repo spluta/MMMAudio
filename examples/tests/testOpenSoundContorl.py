@@ -6,3 +6,5 @@ def osc_msg_handler(key, *args):
 # Start server
 osc_server = OSCServer("0.0.0.0", 5005, osc_msg_handler)
 osc_server.start()
+osc_server.stop()
+

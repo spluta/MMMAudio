@@ -6,7 +6,7 @@ mmm_audio.start_audio()
 
 mmm_audio.send_float("which", 0.0)
 mmm_audio.send_float("which", 1.0)
-mmm_audio.send_float("which", 2.0)
+mmm_audio.send_float("which", 2.0) # 16x oversampling self oscillates much better
 
 
 mmm_audio.stop_audio()

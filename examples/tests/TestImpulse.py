@@ -11,9 +11,13 @@ mmm_audio.send_ints("trig", [1, 0])
 mmm_audio.send_ints("trig", [1, 1])
 mmm_audio.send_ints("trig", [0, 1])
 
+mmm_audio.send_floats("phase_offsets", [0.0,0.0])
+
 mmm_audio.stop_audio()
 
 mmm_audio.send_floats("freqs", [24000.0, 3000])
 mmm_audio.send_ints("trig", [1, 1])
 
-mmm_audio.plot(48000)
+mmm_audio.send_floats("freqs", [100, 300])
+
+mmm_audio.plot(500)

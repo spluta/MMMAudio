@@ -62,9 +62,9 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
     """Create an FFTProcess for audio manipulation in the frequency domain.
 
     Parameters:
-        T: A user defined struct that implements the FFTProcessable trait.
-        window_size: The size of the FFT window. The default is 1024 samples.
-        hop_size: The number of samples between each processed spectral frame. The default is 512.
+        T: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
+        window_size: The size of the FFT window.
+        hop_size: The number of samples between each processed spectral frame.
         input_window_shape: Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
@@ -72,14 +72,14 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
     var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T):
-        """Initializes a FFTProcess struct.
+        """Initializes a `FFTProcess` struct.
 
         Args:
             world: A pointer to the MMMWorld.
-            process: A user defined struct that implements the FFTProcessable trait.
+            process: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
 
         Returns:
-            An initialized FFTProcess struct.
+            An initialized `FFTProcess` struct.
         """
         self.world = world
         self.buffered_process = BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size,input_window_shape, output_window_shape](self.world, process=FFTProcessor[T, window_size](self.world, process=process^))
@@ -106,18 +106,18 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         """
         return self.buffered_process.next_stereo(input)
 
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> Float64:
+    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
         """Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer. Between 0 (beginning) and 1 (end).
-            start_chan: The first channel to read from the buffer.
+            chan: The channel to read from the buffer.
         
         Returns:
             The next output sample.
         """
-        return self.buffered_process.next_from_buffer(buffer, phase, start_chan)
+        return self.buffered_process.next_from_buffer(buffer, phase, chan)
 
     fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64, 2]:
         """Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.

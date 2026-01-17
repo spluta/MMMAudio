@@ -17,6 +17,8 @@ struct Dusty(Representable, Movable, Copyable):
 
         out = self.dust.next(freq*0.125, freq*8, SIMD[DType.bool, 1](fill=False)) * 0.5
 
+        self.world[].print("dusty", freq*0.125, freq*8, out[0], out[1])
+
         # uncomment below for use the phase of the Dust oscillator instead of the impulse
         # out = self.dust.get_phase()
 

@@ -12,6 +12,7 @@ struct TestOscOversampling(Movable, Copyable):
     var osc4: Osc[1,1,4]
     var which: Float64
     var messenger: Messenger
+    var lag: Lag
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
@@ -22,16 +23,18 @@ struct TestOscOversampling(Movable, Copyable):
         self.osc4 = Osc[1,1,4](world)
         self.which = 0.0
         self.messenger = Messenger(world)
+        self.lag = Lag(world, 0.1)
 
     fn next(mut self) -> Float64:
         self.messenger.update(self.which, "which")
+        freq = self.lag.next(linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 20000.0))
 
         sample = select(self.which, [
-            self.osc.next(self.world[].mouse_y * 200.0 + 20.0),
-            self.osc1.next(self.world[].mouse_y * 200.0 + 20.0)[0],
-            self.osc2.next(self.world[].mouse_y * 200.0 + 20.0)[0],
-            self.osc3.next(self.world[].mouse_y * 200.0 + 20.0)[0],
-            self.osc4.next(self.world[].mouse_y * 200.0 + 20.0)[0],
+            self.osc.next(freq, osc_type=OscType.bandlimited_saw)[0],
+            self.osc1.next(freq, osc_type=OscType.bandlimited_saw)[0],
+            self.osc2.next(freq, osc_type=OscType.bandlimited_saw)[0],
+            self.osc3.next(freq, osc_type=OscType.bandlimited_saw)[0],
+            self.osc4.next(freq, osc_type=OscType.bandlimited_saw)[0],
         ])
 
         return sample * 0.2
