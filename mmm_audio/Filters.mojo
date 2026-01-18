@@ -1316,7 +1316,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Lowpass biquad (a0 normalized to 1)."""
+        """Lowpass biquad"""
         return self.next[BiquadModes.lowpass](input, frequency, q)
 
     @always_inline
@@ -1326,7 +1326,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Highpass biquad (a0 normalized to 1)."""
+        """Highpass biquad"""
         return self.next[BiquadModes.highpass](input, frequency, q)
 
     @always_inline
@@ -1336,7 +1336,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Bandpass (constant‑skirt gain; peak gain = Q)."""
+        """Bandpass (constant‑skirt gain; peak gain = Q)"""
         return self.next[BiquadModes.bandpass](input, frequency, q)
 
     @always_inline
@@ -1346,7 +1346,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Bandpass (constant‑peak gain = 0 dB; not a peaking EQ)."""
+        """Bandpass (constant‑peak gain = 0 dB; not a peaking EQ)"""
         return self.next[BiquadModes.peak](input, frequency, q)
 
     @always_inline
@@ -1356,7 +1356,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Notch (band‑reject) biquad."""
+        """Notch (band‑reject) biquad"""
         return self.next[BiquadModes.notch](input, frequency, q)
 
     @always_inline
@@ -1366,7 +1366,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Allpass (flat magnitude; phase‑only)."""
+        """Allpass (flat magnitude; phase‑only)"""
         return self.next[BiquadModes.allpass](input, frequency, q)
 
     @always_inline
@@ -1377,7 +1377,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Peaking EQ (uses gain_db; A = 10^(gain/40))."""
+        """Peaking EQ (uses gain_db)"""
         return self.next[BiquadModes.bell](input, frequency, q, gain_db)
 
     @always_inline
@@ -1388,7 +1388,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Low‑shelf (uses gain_db; shelf transition set by Q/S)."""
+        """Low‑shelf (uses gain_db; shelf transition set by Q/S)"""
         return self.next[BiquadModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
@@ -1399,5 +1399,5 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """High‑shelf (uses gain_db; shelf transition set by Q/S)."""
+        """High‑shelf (uses gain_db; shelf transition set by Q/S)"""
         return self.next[BiquadModes.highshelf](input, frequency, q, gain_db)
