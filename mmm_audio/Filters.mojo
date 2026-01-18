@@ -1071,8 +1071,6 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
     coeffs_out[4] = a2d
 
 
-# BIQUAD - copied SVF for API consistency
-
 @doc_private
 struct BiquadModes:
     """Enumeration of different Biquad Filter modes.
