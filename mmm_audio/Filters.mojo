@@ -1076,10 +1076,9 @@ fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut co
 @doc_private
 struct BiquadModes:
     """Enumeration of different Biquad Filter modes.
-    NOTE: enums mirror SVF modes for API consistency
-    
-    Switching modes changes the filter's recurrence relation.
-    ```
+
+    This makes specifying a filter type more readable. For example,
+    to specify a lowpass filter, use `BiquadModes.lowpass`.
 
     | Mode     | Value |
     |----------|-------|
@@ -1092,7 +1091,6 @@ struct BiquadModes:
     | bell     | 6     |
     | lowshelf | 7     |
     | highshelf| 8     |
-    ```
     """
     alias lowpass: Int64 = 0
     alias bandpass: Int64 = 1
