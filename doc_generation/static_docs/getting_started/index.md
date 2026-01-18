@@ -4,6 +4,8 @@ MMMAudio uses [Mojo's Python interop](https://docs.modular.com/mojo/manual/pytho
 
 Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. Windows users can use WSL2 as described below. 
 
+Please see the [MMMAudio YouTube Playlist](https://www.youtube.com/playlist?list=PLeOjmNO6F-TQ6p9pEYT3zt1dEfFaUWezr) to view the available video tutorials about MMMAudio!
+
 ## 1. Clone the Repository
 
 ```
