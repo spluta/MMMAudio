@@ -1332,7 +1332,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Bandpass (constant‑skirt gain; peak gain = Q)"""
+        """Bandpass (constant‑skirt gain; q sets peak gain)"""
         return self.next[BiquadModes.bandpass](input, frequency, q)
 
     @always_inline
@@ -1373,7 +1373,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Peaking EQ (uses gain_db)"""
+        """Peaking EQ"""
         return self.next[BiquadModes.bell](input, frequency, q, gain_db)
 
     @always_inline
@@ -1384,7 +1384,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Low‑shelf (shelf transition set by Q/S)"""
+        """Low‑shelf (q sets shelf transition)"""
         return self.next[BiquadModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
@@ -1395,5 +1395,5 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """High‑shelf (shelf transition set by Q/S)"""
+        """High‑shelf (q sets shelf transition)"""
         return self.next[BiquadModes.highshelf](input, frequency, q, gain_db)
