@@ -179,6 +179,15 @@ class MMMAudio:
 
         return waveform
     
+    def get_last_plot(self):
+        """Get the last plotted audio samples from MMMAudio.
+        
+        Returns:
+            Numpy array of shape (samples, num_output_channels) containing the last plotted audio samples.
+
+        """
+        return self.returned_samples
+    
     def plot(self, samples, clear=True):
         """Plot the specified number of audio samples from MMMAudio. This should be called when audio is stopped. It will push the audio graph forward `samples` samples and plot the output. The samples will be stored in `self.returned_samples`.
 

@@ -115,7 +115,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         return out
 
     @always_inline
-    fn sinc_interp[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], current_index: Float64, prev_index: Float64) -> Float64:
+    fn sinc_interp[bWrap: Bool = True, mask: Int = 0](self, data: List[Float64], current_index: Float64, prev_index: Float64) -> Float64:
         """Perform sinc interpolation on the given data at the specified current index.
         
         Parameters:

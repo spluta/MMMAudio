@@ -2,9 +2,9 @@ from mmm_python.MMMAudio import MMMAudio
 
 
 # instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="TestPM", package_name="examples.tests")
+mmm_audio = MMMAudio(128, num_output_channels=3, graph_name="TestPM", package_name="examples.tests")
 mmm_audio.start_audio()
 
 mmm_audio.stop_audio()
 
-mmm_audio.plot(5000)
+mmm_audio.plot(256)

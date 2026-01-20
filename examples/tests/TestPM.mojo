@@ -6,18 +6,23 @@ from mmm_audio import *
 struct TestPM(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var mod: Osc
-    var carrier: Osc
+    var carrier: Osc[1, Interp.lagrange4]
+    var c2: Osc[1, Interp.sinc, 1]
     var lag: Lag[1]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.mod = Osc(self.world)
-        self.carrier = Osc(self.world)
+        self.carrier = Osc[1, Interp.lagrange4](self.world)
+        self.c2 = Osc[1, Interp.sinc, 1](self.world)
         self.lag = Lag[1](self.world, 0.2)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         freq = linexp(self.world[].mouse_x, 0.0, 1.0, 100.0, 1000.0)
         mod_mul = linexp(self.world[].mouse_y, 0.0, 1.0, 0.0001, 32.0)
         mod_signal = self.mod.next(50)
-        sample = self.carrier.next(100, mod_signal * self.lag.next(mod_mul))
-        return sample * 0.1
+        mod_mul = self.lag.next(mod_mul)
+        sample = self.carrier.next(100, mod_signal * mod_mul)
+        sample2 = self.c2.next(100, mod_signal * mod_mul)
+        # return (sample-sample2)
+        return SIMD[DType.float64, 2](sample * 0.1, sample2 * 0.1)

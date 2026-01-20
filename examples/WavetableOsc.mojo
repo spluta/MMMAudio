@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct OscVoice(Movable, Copyable):
-    var osc: Osc[1,2,1]
+    var osc: Osc[1,Interp.quad,1]
     var tri: LFTri
     var world: UnsafePointer[MMMWorld]
     var env: ASREnv
@@ -11,7 +11,7 @@ struct OscVoice(Movable, Copyable):
     var messenger: Messenger
 
     fn __init__(out self, world: UnsafePointer[MMMWorld], name_space: String = ""):
-        self.osc = Osc[1,2,1](world)
+        self.osc = Osc[1,Interp.quad,1](world)
         self.tri = LFTri(world)
         self.env = ASREnv(world)
         self.gate = False
