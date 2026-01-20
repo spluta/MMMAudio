@@ -30,7 +30,7 @@ struct EnvParams(Representable, Movable, Copyable):
     var loop: Bool
     var time_warp: Float64
 
-    fn __init__(out self, values: List[Float64] = List[Float64](0,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
+    fn __init__(out self, values: List[Float64] = List[Float64](0,1,0), times: List[Float64] = List[Float64](1,1), curves: List[Float64] = List[Float64](1), loop: Bool = False, time_warp: Float64 = 1.0):
         """Initialize EnvParams.
 
         For information on the arguments, see the documentation of the `Env::next()` method that takes each parameter individually.
