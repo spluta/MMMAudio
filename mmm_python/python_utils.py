@@ -142,3 +142,24 @@ def polar_to_complex(mags: np.ndarray, phases: np.ndarray) -> np.ndarray:
     """
     complex_signal = mags * np.exp(1j * phases)
     return complex_signal
+
+def rrand(min_val: float, max_val: float) -> float:
+    """Generate a random float between min_val and max_val.
+    
+    Args:
+        min_val: Minimum value.
+        max_val: Maximum value.
+    Returns:
+        Random float between min_val and max_val.
+    """
+    return random.uniform(min_val, max_val)
+
+def exprand(min_val: float, max_val: float) -> float:
+    """Generate a random float from an exponential distribution with given lambda.
+    
+    Args:
+        min_val: Minimum value.
+        max_val: Maximum value.
+
+    """
+    return random.expovariate(1/(max_val - min_val)) + min_val

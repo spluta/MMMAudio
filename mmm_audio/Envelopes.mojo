@@ -13,6 +13,15 @@ struct EnvParams(Representable, Movable, Copyable):
 
     This struct holds the parameters for the envelope generator. It
     is not required to use the `Env` struct, but it might be convenient.
+
+
+    Elements:
+    
+    values: List of envelope values at each breakpoint.  
+    times: List of durations (in seconds) for each segment between adjacent breakpoints. This List should be one element shorter than the `values` List.  
+    curves: List of curve shapes for each segment. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves. (if the output of the envelope is negative, the curve will be inverted).  
+    loop: Bool to indicate if the envelope should loop.  
+    time_warp: Time warp factor to speed up or slow down the envelope. Default is 1.0 meaning no warp. A value of 2.0 will make the envelop take twice as long to complete. A value of 0.5 will make the envelope take half as long to complete.
     """
 
     var values: List[Float64]

@@ -7,14 +7,14 @@ struct TestPM(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var mod: Osc
     var carrier: Osc[1, Interp.lagrange4]
-    var c2: Osc[1, Interp.sinc, 1]
+    var c2: Osc[1, Interp.sinc]
     var lag: Lag[1]
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         self.world = world
         self.mod = Osc(self.world)
         self.carrier = Osc[1, Interp.lagrange4](self.world)
-        self.c2 = Osc[1, Interp.sinc, 1](self.world)
+        self.c2 = Osc[1, Interp.sinc](self.world)
         self.lag = Lag[1](self.world, 0.2)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
