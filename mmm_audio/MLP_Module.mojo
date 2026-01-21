@@ -13,7 +13,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
       input_size: The size of the input vector.
       output_size: The size of the output vector.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var py_input: PythonObject  
     var py_output: PythonObject  
     var model: PythonObject  
@@ -28,7 +28,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var messenger: Messenger
     var file_name: String
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
         """Initialize the MLP struct.
         
         Args:

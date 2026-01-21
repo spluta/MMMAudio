@@ -5,14 +5,14 @@
 .Play import *
 from .MMMWorld_Module import *
 
-alias windowsize: Int = 1024
-alias hopsize: Int = 512
+comptime windowsize: Int = 1024
+comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var rms_values: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.rms_values = List[Float64]()
 
@@ -23,7 +23,7 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     world = MMMWorld()
-    w = UnsafePointer(to=world)
+    w = LegacyUnsafePointer(to=world)
     world.sample_rate = 44100.0
 
     buffer = Buffer.load("resources/Shiverer.wav")

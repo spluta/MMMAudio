@@ -2,13 +2,13 @@
 from mmm_audio import *
 
 struct TestSelect(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var messenger: Messenger
     var vs: List[Float64]
     var printers: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.messenger = Messenger(self.world)
         self.vs = List[Float64](capacity=8)

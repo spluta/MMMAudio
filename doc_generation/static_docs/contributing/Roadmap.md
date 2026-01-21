@@ -2,7 +2,7 @@
 
 ## 1. Move to 26.1 or Mojo 1.0
 
-This year Mojo should have a 1.0 release, probably some time in the summer. MMMAudio is currently stuck on Mojo 25.6 because of the changes made to UnsafePointer, which is the principle struct of MMMWorld. We could use LegacyUnsafePointer without changing anything else, but who wants to type that all over the place? So a big goal is to move to the new UnsafPointer, then move toward Mojo 1.0 compliance.
+This year Mojo should have a 1.0 release, probably some time in the summer. MMMAudio is currently pinned to Mojo 25.7.
 
 ## 2. Test Suite
 

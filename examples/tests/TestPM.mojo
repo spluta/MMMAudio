@@ -4,13 +4,13 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestPM(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var mod: Osc
     var carrier: Osc[1, Interp.lagrange4]
     var c2: Osc[1, Interp.sinc]
     var lag: Lag[1]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.mod = Osc(self.world)
         self.carrier = Osc[1, Interp.lagrange4](self.world)

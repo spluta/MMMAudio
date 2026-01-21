@@ -43,7 +43,7 @@ fn pan_stereo(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: LegacyUnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -73,7 +73,7 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: Unsaf
     return out
 
 @always_inline
-fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: UnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: LegacyUnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -127,7 +127,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
 
     out = SIMD[DType.float64, simd_out_size](0.0)
 
-    alias simd_width: Int = simd_width_of[DType.float64]() * 2
+    comptime simd_width: Int = simd_width_of[DType.float64]() * 2
 
     @parameter
     fn process_speakers[simd_width: Int](i: Int) -> None:
@@ -150,7 +150,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
 
     return out
 
-alias pi_over_2 = pi / 2.0
+comptime pi_over_2 = pi / 2.0
 
 struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     """
@@ -161,10 +161,10 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
         pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
     """
     var output: List[Float64]  # Output list for stereo output
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var mul_list: List[SIMD[DType.float64, num_channels]]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
         Initialize the SplayN instance.
 

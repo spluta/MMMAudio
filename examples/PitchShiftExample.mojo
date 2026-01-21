@@ -3,7 +3,7 @@ from mmm_audio import *
 # THE SYNTH
 
 struct PitchShiftExample(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
     var pitch_shift: PitchShift[num_chans=2, overlaps=4]
     var messenger: Messenger
@@ -15,7 +15,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var which_input: Float64
     var noise: WhiteNoise
      
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.pitch_shift = PitchShift[num_chans=2, overlaps=4](self.world, 1.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
         self.messenger = Messenger(self.world)

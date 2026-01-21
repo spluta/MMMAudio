@@ -1,14 +1,14 @@
 
 from mmm_audio import *
 
-alias times_oversample = 16
+comptime times_oversample = 16
 struct TestUpsample(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var osc: Osc
     var upsampler: Upsampler[1, times_oversample]
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc(world)
         self.upsampler = Upsampler[1, times_oversample](world)

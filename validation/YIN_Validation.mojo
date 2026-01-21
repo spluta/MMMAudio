@@ -13,18 +13,18 @@ such as librosa in Python.
 .Play import *
 from .MMMWorld_Module import *
 
-alias minfreq: Float64 = 100.0
-alias maxfreq: Float64 = 5000.0
-alias windowsize: Int = 1024
-alias hopsize: Int = 512
+comptime minfreq: Float64 = 100.0
+comptime maxfreq: Float64 = 5000.0
+comptime windowsize: Int = 1024
+comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var yin: YIN[windowsize, minfreq, maxfreq]
     var freqs: List[Float64]
     var confs: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.yin = YIN[windowsize, minfreq, maxfreq](self.world)
         self.freqs = List[Float64]()
@@ -38,7 +38,7 @@ struct Analyzer(BufferedProcessable):
 
 fn main():
     w = MMMWorld()
-    world = UnsafePointer(to=w)
+    world = LegacyUnsafePointer(to=w)
 
     buffer = Buffer.load("resources/Shiverer.wav")
     world[].sample_rate = buffer.sample_rate

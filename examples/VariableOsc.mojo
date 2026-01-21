@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct VariableOsc(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     # for efficiency we set the interpolation and oversampling in the constructor
     # so here we have sinc interpolation with 2x oversampling
     # var osc: Osc[1,2,1]
@@ -14,7 +14,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     var is_down: Bool
     var asr: ASREnv
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
         self.osc = Osc[2,Interp.sinc,os_index=1](self.world)

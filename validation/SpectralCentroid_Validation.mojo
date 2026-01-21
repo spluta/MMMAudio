@@ -6,16 +6,16 @@
 .FFTs import *
 from .MMMWorld_Module import *
 
-alias windowsize: Int = 1024
-alias hopsize: Int = 512
+comptime windowsize: Int = 1024
+comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var fft: RealFFT[windowsize]
     var centroids: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], sample_rate: Float64):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], sample_rate: Float64):
         self.world = world
         self.fft = RealFFT[windowsize]()
         self.centroids = List[Float64]()
@@ -32,7 +32,7 @@ struct Analyzer(BufferedProcessable):
 fn main():
     world = MMMWorld()
     world.sample_rate = 44100.0
-    w = UnsafePointer(to=world)
+    w = LegacyUnsafePointer(to=world)
 
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(self.world)

@@ -13,7 +13,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     var counter: Int64
     var lpf: OS_LPF4[num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -61,7 +61,7 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
     """
     var lpf: OS_LPF4[num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -104,9 +104,9 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     var a2: Float64
     var z1: SIMD[DType.float64, num_chans]
     var z2: SIMD[DType.float64, num_chans]
-    alias INV_SQRT2 = 0.7071067811865475
+    comptime INV_SQRT2 = 0.7071067811865475
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -182,7 +182,7 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
     var os_lpf1: OS_LPF[num_chans]
     var os_lpf2: OS_LPF[num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:

@@ -1,6 +1,6 @@
 from python import PythonObject
 from python import Python
-from memory import UnsafePointer
+from memory import LegacyUnsafePointer
 from .Buffer_Module import *
 from .MMMWorld_Module import *
 from .Oscillators import Dust, Phasor
@@ -19,13 +19,13 @@ struct Play(Representable, Movable, Copyable):
     """
     var impulse: Phasor  # Current phase of the buf
     var done: Bool
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     var rising_bool_detector: RisingBoolDetector
     var start_frame: Int64 
     var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """ 
         
         Args:
@@ -148,7 +148,7 @@ struct Grain(Representable, Movable, Copyable):
 
     Used as part of the TGrains struct for triggered granular synthesis.
     """
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var start_frame: Int64
     var num_frames: Int64  
@@ -159,7 +159,7 @@ struct Grain(Representable, Movable, Copyable):
     var play_buf: Play
     var win_phase: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -323,7 +323,7 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     var rising_bool_detector: RisingBoolDetector 
     var trig: Bool
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -444,7 +444,7 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         buf_dur: Duration of the internal buffer in seconds.
     """
     var grains: List[Grain]  
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var counter: Int 
     var rising_bool_detector: RisingBoolDetector
     var trig: Bool
@@ -452,7 +452,7 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
     var impulse: Dust
     var pitch_ratio: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
         """ 
 
         Args:
@@ -488,7 +488,7 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         """
 
         self.recorder.write_next(in_sig)  # Write the input signal into the buffer
-        alias overlaps_plus_2 = overlaps + 2
+        comptime overlaps_plus_2 = overlaps + 2
 
         trig_rate = overlaps / grain_dur
         trig = self.rising_bool_detector.next(

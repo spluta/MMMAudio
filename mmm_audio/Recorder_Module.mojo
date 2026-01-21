@@ -1,4 +1,4 @@
-from memory import UnsafePointer
+from memory import LegacyUnsafePointer
 from .Buffer_Module import *
 from .MMMWorld_Module import *
 from .Oscillators import Impulse
@@ -13,11 +13,11 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: The number of channels in the buffer. Default is 1 (mono).
     """
 
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var write_head: Int64
     var buf: Buffer
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], num_frames: Int64, sample_rate: Float64):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], num_frames: Int64, sample_rate: Float64):
         """
         Initialize the Recorder struct.
 

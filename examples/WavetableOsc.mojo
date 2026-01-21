@@ -3,14 +3,14 @@ from mmm_audio import *
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,Interp.quad,1]
     var tri: LFTri
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var env: ASREnv
     var gate: Bool
     var freq: Float64
     var wubb_rate: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], name_space: String = ""):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], name_space: String = ""):
         self.osc = Osc[1,Interp.quad,1](world)
         self.tri = LFTri(world)
         self.env = ASREnv(world)
@@ -28,7 +28,7 @@ struct OscVoice(Movable, Copyable):
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
 
 struct WavetableOsc(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     var osc_voices: List[OscVoice]
     var wavetables_per_channel: Int64
     var buffer: Buffer
@@ -39,7 +39,7 @@ struct WavetableOsc(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.file_name = "resources/Growl 15.wav"
         self.wavetables_per_channel = 256

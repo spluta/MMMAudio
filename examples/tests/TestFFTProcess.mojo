@@ -40,12 +40,12 @@ struct BinScramble(Copyable,Movable):
 
 # User defined struct that implements FFTProcessable
 struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var bin_scramble: BinScramble
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.bin = (window_size // 2) + 1
         self.m = Messenger(self.world)
@@ -65,7 +65,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 
 # User's Main Synth
 struct TestFFTProcess(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
     var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,WindowType.hann,WindowType.hann]
@@ -73,7 +73,7 @@ struct TestFFTProcess(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 

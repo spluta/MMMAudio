@@ -81,17 +81,17 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).
         degree: The degree of the soft clipping polynomial (must be odd).
     """
-    alias times_oversampling = 2 ** os_index
+    comptime times_oversampling = 2 ** os_index
     var x1: SIMD[DType.float64, num_chans]
     var oversampling: Oversampling[num_chans, Self.times_oversampling]
     var upsampler: Upsampler[num_chans, Self.times_oversampling]
     var D: Int
     var norm_factor: Float64
     var inv_norm_factor: Float64
-    alias TOL = 1.0e-5
+    comptime TOL = 1.0e-5
     var G1: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         if os_index > 1:
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
@@ -186,9 +186,9 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var x2: SIMD[DType.float64, num_chans]
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
-    alias TOL = 1.0e-5
+    comptime TOL = 1.0e-5
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the HardClipAD.
         
         Args:
@@ -265,7 +265,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         if os_index == 0:
             return self._next1(x)
         else:
-            alias times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input
@@ -286,11 +286,11 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     var x1: SIMD[DType.float64, num_chans]
     # var x2: SIMD[DType.float64, num_chans]
-    alias TOL = 1.0e-5
+    comptime TOL = 1.0e-5
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the TanhAD.
 
         Args:
@@ -342,7 +342,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         if os_index == 0:
             return self._next1(x)
         else:
-            alias times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input
@@ -400,7 +400,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     var mix: Float64     # folder cell mixing factor
     var Bp: Float64
     var Bpp: Float64
-    alias one_sixth: Float64 = 1.0 / 6.0
+    comptime one_sixth: Float64 = 1.0 / 6.0
 
     fn __init__(out self, G: Float64, B: Float64, thresh: Float64, mix: Float64):
         self.G = G
@@ -437,15 +437,15 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
     """
     
-    alias x_mix: Float64 = 5.0
+    comptime x_mix: Float64 = 5.0
     var cells: List[BuchlaCell[num_chans]]
-    alias TOL: Float64 = 1.0e-5
+    comptime TOL: Float64 = 1.0e-5
     var x1: SIMD[DType.float64, num_chans]
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the BuchlaWavefolder.
 
         Args:
@@ -521,7 +521,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         if os_index == 0:
             return self._next1(x, amp)
         else:
-            alias times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input

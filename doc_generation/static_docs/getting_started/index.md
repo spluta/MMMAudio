@@ -28,10 +28,10 @@ pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi ma
 ```
 
 install modular's max/mojo library
-the main branch is tied to Mojo 0.25.6.1 - we will move to 0.26 soon.
+the main branch is tied to Mojo 0.25.7.
 
 ```shell
-pip install mojo==0.25.6.1
+pip install mojo==0.25.7
 ```
 
 ### 2a. Further Setup of the Environment on MacOS (Apple Silicon Only - Mojo Does not and will not work on Intel Macs)

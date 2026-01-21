@@ -2,13 +2,13 @@ from mmm_audio import *
 
 from sys import simd_width_of
 
-alias simd_width = simd_width_of[DType.float64]() * 2
-alias model_out_size = 16  # Define the output size of the model
-alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
+comptime simd_width = simd_width_of[DType.float64]() * 2
+comptime model_out_size = 16  # Define the output size of the model
+comptime num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
 
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
 struct TorchSynth(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var osc1: Osc[1, 2, 1]
     var osc2: Osc[1, 2, 1]
 
@@ -29,7 +29,7 @@ struct TorchSynth(Movable, Copyable):
     var dc1: DCTrap
     var dc2: DCTrap
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc1 = Osc[1, 2, 1](self.world)
         self.osc2 = Osc[1, 2, 1](self.world)
@@ -121,10 +121,10 @@ struct TorchSynth(Movable, Copyable):
 # THE GRAPH
 
 struct TorchMlp(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
 
         self.torch_synth = TorchSynth(self.world)  # Initialize the TorchSynth with the world instance

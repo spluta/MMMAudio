@@ -9,7 +9,7 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
     works to create spectral processes, see the `FFTProcessable` trait.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var process: T
 
     var fft: RealFFT[window_size, 1]
@@ -20,7 +20,7 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     var st_phases: List[SIMD[DType.float64,2]]
 
     @doc_private
-    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], var process: T):
         self.world = world
         self.process = process^
         self.fft = RealFFT[window_size, 1]()
@@ -68,10 +68,10 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         input_window_shape: Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buffered_process: BufferedProcess[FFTProcessor[T, window_size], window_size, hop_size, input_window_shape, output_window_shape]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], var process: T):
         """Initializes a `FFTProcess` struct.
 
         Args:
