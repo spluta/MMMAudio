@@ -6,7 +6,7 @@ from .functions import cpsmidi, ampdb
 from math import sqrt
 
 @doc_private
-fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> (Float64, Float64):
+fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64, Float64]:
     denom = prev - 2.0 * cur + next
     if abs(denom) < 1e-12:
         return (0.0, cur)

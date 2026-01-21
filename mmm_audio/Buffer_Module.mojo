@@ -88,21 +88,21 @@ struct Buffer(Movable, Copyable):
 
                 print(py_data)  # Print the loaded data for debugging
 
-                self_sample_rate = Float64(py_data[0])  # Sample rate is the first element of the tuple
+                self_sample_rate = Float64(Int(py_data[0]))  # Sample rate is the first element of the tuple
 
                 if num_wavetables > 1:
                     # If num_wavetables is specified, calculate num_chans accordingly
                     total_samples = py_data[1].shape[0]
                     self_num_chans = num_wavetables
-                    self_num_frames = Int64(Float64(total_samples) / Float64(num_wavetables))
+                    self_num_frames = Int(Float64(Int(total_samples)) / Float64(num_wavetables))
                 else:
-                    self_num_frames = Int64(len(py_data[1]))  # num_frames is the length of the data array
+                    self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
                     if len(py_data[1].shape) == 1:
                         # Mono file
                         self_num_chans = 1
                     else:
                         # Multi-channel file
-                        self_num_chans = Int64(Float64(py_data[1].shape[1]))  # Number of num_chans is the second dimension of the data array
+                        self_num_chans = Int(py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
 
                 self_num_frames_f64 = Float64(self_num_frames)
                 print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
