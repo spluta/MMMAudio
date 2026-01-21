@@ -1,6 +1,6 @@
 from sys import simd_width_of
 
-alias simd_width = simd_width_of[DType.float64]()*2
+comptime simd_width = simd_width_of[DType.float64]()*2
 
 fn main():
 

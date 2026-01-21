@@ -29,7 +29,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
     fn __init__(out self):
         self.table_size = 1 << self.power  # Size of the sinc table, e.g., 16384 for power 14 (using bit shift instead of exponentiation)
         self.mask = self.table_size - 1  # Mask for wrapping indices
-        self.table = SincInterpolator.build_sinc_table(self.table_size, self.ripples)
+        self.table = SincInterpolator.build_sinc_table(self.table_size)
         self.max_sinc_offset = self.table_size // (self.ripples * 2)  # Calculate maximum sinc offset based on spacing
 
         self.sinc_points = List[Int64]()
@@ -64,11 +64,10 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
     fn spaced_sinc[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], index: Int64, frac: Float64, spacing: Int64) -> Float64:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
         sinc_mult = self.max_sinc_offset / spacing
-        ripples = self.ripples
         loop_count = ripples * 2
         
         # Try to process in SIMD chunks if the loop is large enough
-        alias simd_width = simd_width_of[DType.float64]()
+        comptime simd_width = simd_width_of[DType.float64]()
         var out: Float64 = 0.0
         data_len: Int64 = len(data)
         
@@ -167,7 +166,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
 
     @doc_private
     @staticmethod
-    fn build_sinc_table(table_size: Int64, ripples: Int64) -> List[Float64]:
+    fn build_sinc_table(table_size: Int64) -> List[Float64]:
         
         # Create evenly spaced points - the width is determined by ripples
         var width = Float64(ripples)

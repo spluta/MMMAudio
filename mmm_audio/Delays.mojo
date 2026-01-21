@@ -14,7 +14,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
 
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var max_delay_time: Float64
     var max_delay_samples: Int64
     var delay_line: Recorder[num_chans]
@@ -22,7 +22,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     var sample_duration: Float64
     var prev_f_idx: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], max_delay_time: Float64 = 1.0):
       """Initialize the Delay line.
 
       Args:
@@ -134,7 +134,7 @@ fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], 
         delaytime: The delay time in seconds.
         decaytime: The decay time in seconds (time to -60dB)."""
       
-      alias log001: Float64 = log(0.001)
+      comptime log001: Float64 = log(0.001)
 
       zero: SIMD[DType.bool, num_chans] = delaytime.eq(0) or decaytime.eq(0)
       dec_pos: SIMD[DType.bool, num_chans] = decaytime.ge(0)
@@ -153,11 +153,11 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
 
     """
 
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
     var fb: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
       """Initialize the Comb filter.
 
       Args:
@@ -209,12 +209,12 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
       num_chans: Size of the SIMD vector - defaults to 1.
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp] # Delay line without automatic feedback
     var one_pole: OnePole[num_chans]
     var fb: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
       """Initialize the LP_Comb filter.
 
       Args:
@@ -258,10 +258,10 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
       num_chans: Size of the SIMD vector.
       interp: The interpolation method to use. See the struct [Interp](MMMWorld.md#struct-interp) for interpolation options.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
       """Initialize the Allpass Comb filter.
 
       Args:
@@ -317,13 +317,13 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
       os_index: The [oversampling](Oversampling.md) index for ADAA distortion. 0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x.
     """
 
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var delay: Delay[num_chans, interp]
     var dc: DCTrap[num_chans]
     var fb: SIMD[DType.float64, num_chans]
     var tanh_ad: TanhAD[num_chans, os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], max_delay: Float64 = 1.0):
       """Initialize the FB_Delay.
 
       Args:

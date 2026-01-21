@@ -2,13 +2,13 @@
 from mmm_audio import *
 
 struct TestDelay(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var synth: Phasor
     var delay: Delay
     var freq: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.synth = Phasor(self.world)
         self.delay = Delay(self.world, 1.0)

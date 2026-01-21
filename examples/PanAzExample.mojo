@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct PanAz_Synth(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     var osc: Osc
     var freq: Float64
 
@@ -10,7 +10,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     var width: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc(self.world)
         self.freq = 440.0
@@ -40,10 +40,10 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct PanAzExample(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var synth: PanAz_Synth
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.synth = PanAz_Synth(self.world)
 

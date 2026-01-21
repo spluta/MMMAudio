@@ -14,7 +14,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var lp_comb0: LP_Comb[num_chans]
     var lp_comb1: LP_Comb[num_chans]
     var lp_comb2: LP_Comb[num_chans]
@@ -30,7 +30,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
       """
       Initialize the Freeverb struct.
 

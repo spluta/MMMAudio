@@ -1,13 +1,13 @@
 from mmm_audio import *
 
 struct Tone(Movable,Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var osc: Osc
     var freq: Float64
     var m: Messenger
     var gate: Bool
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: String):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], namespace: String):
         self.world = world
         self.osc = Osc(self.world)
         self.freq = 440.0
@@ -27,7 +27,7 @@ struct Tone(Movable,Copyable):
         return sig
 
 struct MessengerExample(Copyable, Movable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var m: Messenger
     var tones: List[Tone]
     
@@ -40,7 +40,7 @@ struct MessengerExample(Copyable, Movable):
     var string: String
     var strings: List[String]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.m = Messenger(self.world)
 

@@ -1,13 +1,13 @@
 from mmm_audio import *
 
 struct Default_Synth(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     var osc: Osc[1,Interp.sinc,1]
     var filt: SVF
     var messenger: Messenger
     var freq: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc[1,Interp.sinc,1](self.world)
         self.filt = SVF(self.world)
@@ -29,10 +29,10 @@ struct Default_Synth(Representable, Movable, Copyable):
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct DefaultGraph(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var synth: Default_Synth
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.synth = Default_Synth(self.world)
 

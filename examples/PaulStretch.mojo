@@ -3,14 +3,14 @@ from mmm_audio import *
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 2048
-alias hop_size = window_size // 2
+comptime window_size = 2048
+comptime hop_size = window_size // 2
 
 struct PaulStretchWindow[window_size: Int](FFTProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var m: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.m = Messenger(self.world)
 
@@ -23,14 +23,14 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 
 # User's Synth
 struct PaulStretch(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buffer: Buffer
     var saw: LFSaw
     var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world)

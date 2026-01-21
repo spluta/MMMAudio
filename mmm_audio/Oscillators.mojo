@@ -24,9 +24,9 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[num_chans]  # Track the last reset state
     var rising_bool_detector_impulse: RisingBoolDetector[num_chans]  # Track the last reset state
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -123,7 +123,7 @@ struct Impulse[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     """
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -180,11 +180,11 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
     """
 
     var phasor: Phasor[num_chans, os_index]  # Instance of the Phasor
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var oversampling: Oversampling[num_chans, 2**os_index]
     var last_phase: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -438,7 +438,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             self.last_phase = phase
             return linear_interp(sample0, sample1, scaled_osc_frac)
         else:
-            alias times_os_int = 2**os_index
+            comptime times_os_int = 2**os_index
             @parameter
             for i in range(times_os_int):
                 # var last_phase = self.phasor.phase
@@ -485,7 +485,7 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
 
     var osc: Osc[num_chans, Interp.linear, os_index]  # Instance of the Oscillator
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -513,7 +513,7 @@ struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
 
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -549,7 +549,7 @@ struct LFSquare[num_chans: Int = 1] (Representable, Movable, Copyable):
 
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -584,7 +584,7 @@ struct LFTri[num_chans: Int = 1] (Representable, Movable, Copyable):
 
     var phasor: Phasor[num_chans]  # Instance of the Oscillator
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -619,7 +619,7 @@ struct Dust[num_chans: Int = 1] (Representable, Movable, Copyable):
     var impulse: Phasor[num_chans]
     var freq: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -684,7 +684,7 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Mo
         num_chans: Number of channels.
         interp: Interpolation method. Options are Interp.none (stepped), Interp.linear, Interp.cubic.
     """
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
     var impulse: Phasor[num_chans]
 
     # Cubic inerpolation only needs 4 points, but it needs to know the true previous point so the history
@@ -695,7 +695,7 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Representable, Mo
     # phase is moving *towards* history_index + 1
     var history_index: List[Int8]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -779,9 +779,9 @@ struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
     var phase: SIMD[DType.float64, num_chans]
     var freq_mul: Float64
     var rising_bool_detector: RisingBoolDetector[num_chans]  # Track the last reset state
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """
 
         Args:
@@ -818,14 +818,14 @@ struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return self.phase
 
-alias OscBuffersSize: Int = 16384  # 2^14
-alias OscBuffersMask: Int = 16383  # 2^14 - 1
+comptime OscBuffersSize: Int = 16384  # 2^14
+comptime OscBuffersMask: Int = 16383  # 2^14 - 1
 
 @doc_private
 struct OscBuffers(Movable, Copyable):
     var buffers: InlineArray[List[Float64],7]
 
-    fn at_phase[osc_type: Int, interp: Int = Interp.none](self, world: UnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0) -> Float64:
+    fn at_phase[osc_type: Int, interp: Int = Interp.none](self, world: LegacyUnsafePointer[MMMWorld], phase: Float64, prev_phase: Float64 = 0) -> Float64:
         return ListInterpolator.read[
             interp=interp,
             bWrap=True,

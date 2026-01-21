@@ -1,12 +1,12 @@
 
 from mmm_audio import *
 
-alias window_size = 4096
-alias hop_size = window_size // 2
+comptime window_size = 4096
+comptime hop_size = window_size // 2
 
 # This corresponds to the user defined BufferedProcess.
 struct FFTLowPass[window_size: Int](BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var fft: RealFFT[window_size]
@@ -14,7 +14,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     var mags: List[Float64]
     var phases: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.bin = (window_size // 2) + 1
         self.m = Messenger(self.world)
@@ -36,7 +36,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
 
 # User's Synth
 struct TestBufferedProcessFFT(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buffer: Buffer
     var playBuf: Play
     var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
@@ -44,7 +44,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 

@@ -3,7 +3,7 @@ from mmm_audio import *
 # Synth Voice - Below is a polyphonic synth. The first struct, TrigSynthVoice, is a single voice of the synth. Each voice is made up of a modulator oscillator, a carrier oscillator, and an envelope generator. 
 
 struct TrigSynthVoice(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var env_params: EnvParams
     var env: Env
@@ -18,7 +18,7 @@ struct TrigSynthVoice(Movable, Copyable):
 
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], name_space: String = ""):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], name_space: String = ""):
         self.world = world
 
         self.mod = Osc(self.world)
@@ -56,7 +56,7 @@ struct TrigSynthVoice(Movable, Copyable):
 
 
 struct TrigSynth(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var voices: List[TrigSynthVoice]
     var current_voice: Int64
@@ -73,7 +73,7 @@ struct TrigSynth(Movable, Copyable):
     var filt_freq: Float64
     var bend_mul: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], num_voices: Int64 = 8):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], num_voices: Int64 = 8):
         self.world = world
         self.num_voices = num_voices
         self.current_voice = 0
@@ -108,13 +108,13 @@ struct TrigSynth(Movable, Copyable):
         
 
 struct MidiSequencer(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
     var output: List[Float64]  # Output buffer for audio samples
 
     var trig_synth: TrigSynth  # Instance of the Oscillator
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.output = List[Float64](0.0, 0.0)  # Initialize output list
 

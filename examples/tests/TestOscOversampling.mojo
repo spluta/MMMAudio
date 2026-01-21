@@ -4,7 +4,7 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestOscOversampling(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var osc: Osc
     var osc1: Osc[1,1,1]
     var osc2: Osc[1,1,2]
@@ -14,7 +14,7 @@ struct TestOscOversampling(Movable, Copyable):
     var messenger: Messenger
     var lag: Lag
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc(world)
         self.osc1 = Osc[1,1,1](world)

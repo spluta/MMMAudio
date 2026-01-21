@@ -1,16 +1,16 @@
 from mmm_audio import *
 
-alias two_pi = 2.0 * pi
+comptime two_pi = 2.0 * pi
 
 struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var m: Messenger
     var bin: Int64
     var freeze_gate: Bool
     var stored_phases: List[SIMD[DType.float64, 2]]
     var stored_mags: List[SIMD[DType.float64, 2]]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world = world
         self.bin = (window_size // 2) + 1
         self.m = Messenger(world, namespace)
@@ -37,14 +37,14 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
 
     """
 
-    alias hop_size = window_size // 4
-    var world: UnsafePointer[MMMWorld]
+    comptime hop_size = window_size // 4
+    var world: LegacyUnsafePointer[MMMWorld]
     var freeze: FFTProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowType.hann,WindowType.hann]
     var m: Messenger
     var freeze_gate: Bool
     var asr: ASREnv
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world = world
         self.freeze = FFTProcess[
                 SpectralFreezeWindow[window_size],
@@ -64,17 +64,17 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         return select(env, [sample, freeze]) * 0.3
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 2048
+comptime window_size = 2048
 
 struct SpectralFreezeExample(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buffer: Buffer
     var play_buf: Play   
     var spectral_freeze: SpectralFreeze[window_size]
     var m: Messenger
     var stereo_switch: Bool
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], namespace: Optional[String] = None):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.play_buf = Play(self.world) 

@@ -3,7 +3,7 @@ from mmm_audio import *
 import time
 
 struct Record_Synth(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buf_dur: Float64
     var buffer: Recorder
     var is_recording: Bool
@@ -17,7 +17,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     var input_chan: Int64
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.buf_dur = 10.0  # seconds
         self.buffer = Recorder(self.world, Int64(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
@@ -88,11 +88,11 @@ struct Record_Synth(Representable, Movable, Copyable):
         return out
 
 struct Record(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
     var synth: Record_Synth
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.synth = Record_Synth(self.world)
 

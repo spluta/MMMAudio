@@ -4,11 +4,11 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestOnePole[N: Int = 2](Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var noise: WhiteNoise[N]
     var filt: OnePole[N]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.noise = WhiteNoise[N]()
         self.filt = OnePole[N](world)

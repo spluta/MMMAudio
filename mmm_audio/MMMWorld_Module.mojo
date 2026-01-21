@@ -37,7 +37,7 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var messengerManager: MessengerManager
 
-    # var pointer_to_self: UnsafePointer[MMMWorld]
+    # var pointer_to_self: LegacyUnsafePointer[MMMWorld]
     var last_print_time: Float64
     var print_flag: Int64
     var last_print_flag: Int64
@@ -146,12 +146,12 @@ struct Interp:
     | Interp.sinc        | 5     | Should only be used with oscillators         |
     
     """
-    alias none: Int = 0
-    alias linear: Int = 1
-    alias quad: Int = 2
-    alias cubic: Int = 3
-    alias lagrange4: Int = 4
-    alias sinc: Int = 5
+    comptime none: Int = 0
+    comptime linear: Int = 1
+    comptime quad: Int = 2
+    comptime cubic: Int = 3
+    comptime lagrange4: Int = 4
+    comptime sinc: Int = 5
 
 struct WindowType:
     """Window types for predefined windows found in world[].windows.
@@ -172,14 +172,14 @@ struct WindowType:
     | WindowType.pan2     | 7     |
     """
 
-    alias rect: Int = 0
-    alias hann: Int = 1
-    alias hamming: Int = 2
-    alias blackman: Int = 3
-    alias kaiser: Int = 4
-    alias sine: Int = 5
-    alias tri: Int = 6
-    alias pan2: Int = 7
+    comptime rect: Int = 0
+    comptime hann: Int = 1
+    comptime hamming: Int = 2
+    comptime blackman: Int = 3
+    comptime kaiser: Int = 4
+    comptime sine: Int = 5
+    comptime tri: Int = 6
+    comptime pan2: Int = 7
 
 struct OscType:
     """Oscillator types for selecting waveform types.
@@ -198,10 +198,10 @@ struct OscType:
     | OscType.bandlimited_saw      | 5     |
     | OscType.bandlimited_square.  | 6     |
     """
-    alias sine: Int = 0
-    alias triangle: Int = 1
-    alias saw: Int = 2
-    alias square: Int = 3
-    alias bandlimited_triangle: Int = 4
-    alias bandlimited_saw: Int = 5
-    alias bandlimited_square: Int = 6
+    comptime sine: Int = 0
+    comptime triangle: Int = 1
+    comptime saw: Int = 2
+    comptime square: Int = 3
+    comptime bandlimited_triangle: Int = 4
+    comptime bandlimited_saw: Int = 5
+    comptime bandlimited_square: Int = 6
