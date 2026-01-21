@@ -37,7 +37,7 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var messengerManager: MessengerManager
 
-    # var pointer_to_self: UnsafePointer[MMMWorld]
+    # var pointer_to_self: LegacyUnsafePointer[MMMWorld]
     var last_print_time: Float64
     var print_flag: Int64
     var last_print_flag: Int64

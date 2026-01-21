@@ -2,7 +2,7 @@
 from mmm_audio import *
 
 struct TestBuffer(Copyable,Movable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var buf: Buffer
     var none: Play
     var linear: Play
@@ -13,7 +13,7 @@ struct TestBuffer(Copyable,Movable):
     var which: Float64
     var m: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.none = Play(self.world)

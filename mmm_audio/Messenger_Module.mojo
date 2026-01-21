@@ -11,11 +11,11 @@ struct Messenger(Copyable, Movable):
     """
 
     var namespace: Optional[String]
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
     var key_dict: Dict[String, String]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], namespace: Optional[String] = None):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], namespace: Optional[String] = None):
         """Initialize the Messenger.
 
         If a 'namespace' is provided, any messages sent from Python need to be prepended with this name.
@@ -23,7 +23,7 @@ struct Messenger(Copyable, Movable):
         namespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.
 
         Args:
-            world: An `UnsafePointer[MMMWorld]` to the world to check for new messages.
+            world: An `LegacyUnsafePointer[MMMWorld]` to the world to check for new messages.
             namespace: A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger. If a 'namespace' is provided, any messages sent from Python need to be prepended with this name. For example, if a Float64 updates with the name 'freq' and this Messenger has the namespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.
         """
 
@@ -32,7 +32,7 @@ struct Messenger(Copyable, Movable):
         self.key_dict = Dict[String, String]()
 
     @doc_private
-    fn get_name_with_namespace(mut self, name: String) raises -> UnsafePointer[String]:
+    fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[String]:
         if not self.key_dict.__contains__(name):
             if self.namespace:
                 with_namespace = self.namespace.value()+"."+name
@@ -41,7 +41,7 @@ struct Messenger(Copyable, Movable):
             print("adding long name: ", with_namespace)
             self.key_dict[name] = with_namespace
 
-        return UnsafePointer(to=self.key_dict[name])
+        return LegacyUnsafePointer(to=self.key_dict[name])
 
     # update Bool
     fn update(mut self, mut param: Bool, name: String):

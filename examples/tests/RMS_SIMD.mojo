@@ -25,7 +25,7 @@ fn rmssimd[windowsize: Int = 1024]() -> Float64:
 
     # print("SIMD width: ", simdwidth)
 
-    window = UnsafePointer[Scalar[DType.float64]].alloc(windowsize)
+    window = LegacyUnsafePointer[Scalar[DType.float64]].alloc(windowsize)
 
     for i in range(windowsize):
         window[i] = random.random_float64() * 2.0 - 1.0

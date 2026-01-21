@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct BufSynth(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld] 
+    var world: LegacyUnsafePointer[MMMWorld] 
     var buffer: Buffer
 
     var num_chans: Int64
@@ -14,7 +14,7 @@ struct BufSynth(Representable, Movable, Copyable):
     var lpf_freq_lag: Lag
     var messenger: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world 
 
         # load the audio buffer 
@@ -49,11 +49,11 @@ struct BufSynth(Representable, Movable, Copyable):
 
 
 struct PlayExample(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
     var buf_synth: BufSynth  # Instance of the GrainSynth
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
 
         self.buf_synth = BufSynth(self.world)  

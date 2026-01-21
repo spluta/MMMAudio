@@ -12,12 +12,12 @@ from mmm_audio.functions import *
 from examples.FeedbackDelays import FeedbackDelays
 
 struct MMMAudioBridge(Representable, Movable):
-    var world: UnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
 
     var graph: FeedbackDelays  # The audio graph instance
 
-    var loc_in_buffer: UnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
-    var loc_out_buffer: UnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
+    var loc_in_buffer: LegacyUnsafePointer[SIMD[DType.float32, 1]]  # Placeholder for output buffer
+    var loc_out_buffer: LegacyUnsafePointer[SIMD[DType.float64, 1]]  # Placeholder for output buffer
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -35,18 +35,18 @@ struct MMMAudioBridge(Representable, Movable):
     fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int64 = 512, num_in_chans: Int64 = 12, num_out_chans: Int64 = 12, graphs: List[Int64] = List[Int64](0)):
         """Initialize the audio engine with sample rate, block size, and number of channels."""
 
-        # it is way more efficient to use an UnsafePointer to write to the output buffer directly
-        self.loc_in_buffer = UnsafePointer[SIMD[DType.float32, 1]]() 
-        self.loc_out_buffer = UnsafePointer[SIMD[DType.float64, 1]]()
+        # it is way more efficient to use an LegacyUnsafePointer to write to the output buffer directly
+        self.loc_in_buffer = LegacyUnsafePointer[SIMD[DType.float32, 1]]() 
+        self.loc_out_buffer = LegacyUnsafePointer[SIMD[DType.float64, 1]]()
         
         # Allocate MMMWorld on heap so it never moves
-        self.world = UnsafePointer[MMMWorld].alloc(1)
+        self.world = LegacyUnsafePointer[MMMWorld].alloc(1)
         __get_address_as_uninit_lvalue(self.world.address) = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
 
         self.graph = FeedbackDelays(self.world)
 
     @staticmethod
-    fn set_channel_count(py_self: UnsafePointer[Self], args: PythonObject) raises -> PythonObject:
+    fn set_channel_count(py_self: LegacyUnsafePointer[Self], args: PythonObject) raises -> PythonObject:
         var num_in_chans = Int64(args[0])
         var num_out_chans = Int64(args[1])
         print("set_channel_count:", num_in_chans, num_out_chans)
@@ -58,14 +58,14 @@ struct MMMAudioBridge(Representable, Movable):
         return String("MMMAudioBridge(sample_rate: " + String(self.world[].sample_rate) + ", block_size: " + String(self.world[].block_size) + ", num_in_chans: " + String(self.world[].num_in_chans) + ", num_out_chans: " + String(self.world[].num_out_chans) + ")")
 
     @staticmethod
-    fn set_screen_dims(py_self: UnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
+    fn set_screen_dims(py_self: LegacyUnsafePointer[Self], dims: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].screen_dims = [Float64(dims[0]), Float64(dims[1])]  # Set the screen size in the MMMWorld instance
 
         return PythonObject(None) 
 
     @staticmethod
-    fn send_raw_hid(py_self: UnsafePointer[Self], info: PythonObject) raises -> PythonObject:
+    fn send_raw_hid(py_self: LegacyUnsafePointer[Self], info: PythonObject) raises -> PythonObject:
         key = String(info[0])
         data = Int16(info[1])
 
@@ -76,7 +76,7 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_mouse_pos(py_self: UnsafePointer[Self], pos: PythonObject) raises -> PythonObject:
+    fn update_mouse_pos(py_self: LegacyUnsafePointer[Self], pos: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].mouse_x = Float64(pos[0])
         py_self[0].world[].mouse_y = Float64(pos[1])
@@ -84,14 +84,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_bool_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_bool_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].messengerManager.update_bool_msg(String(key_vals[0]), Bool(key_vals[1]))
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_bools_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_bools_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = [Bool(b) for b in key_vals[1:]]
@@ -100,14 +100,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_float_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_float_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].messengerManager.update_float_msg(String(key_vals[0]), Float64(key_vals[1]))
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_floats_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_floats_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = [Float64(f) for f in key_vals[1:]]
@@ -117,14 +117,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_int_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_int_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].messengerManager.update_int_msg(String(key_vals[0]), Int64(key_vals[1]))
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_ints_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_ints_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = [Int64(v) for v in key_vals[1:]]
@@ -134,14 +134,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_trig_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_trig_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].messengerManager.update_trig_msg(String(key_vals[0]))
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_trigs_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_trigs_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         values = [Bool(b) for b in key_vals[1:]]
@@ -151,14 +151,14 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_string_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_string_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         py_self[0].world[].messengerManager.update_string_msg(String(key_vals[0]), String(key_vals[1]))
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
-    fn update_strings_msg(py_self: UnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
+    fn update_strings_msg(py_self: LegacyUnsafePointer[Self], key_vals: PythonObject) raises -> PythonObject:
 
         key = String(key_vals[0])
         texts = [String(s) for s in key_vals[1:]]
@@ -167,7 +167,7 @@ struct MMMAudioBridge(Representable, Movable):
 
         return PythonObject(None)  # Return a PythonObject wrapping None
 
-    fn get_audio_samples(mut self, loc_in_buffer: UnsafePointer[Float32], loc_out_buffer: UnsafePointer[Float64]) raises:
+    fn get_audio_samples(mut self, loc_in_buffer: LegacyUnsafePointer[Float32], loc_out_buffer: LegacyUnsafePointer[Float64]) raises:
 
         self.world[].top_of_block = True
         self.world[].messengerManager.transfer_msgs()
@@ -193,7 +193,7 @@ struct MMMAudioBridge(Representable, Movable):
                 loc_out_buffer[i * self.world[].num_out_chans + j] = samples[Int(j)]
 
     @staticmethod
-    fn next(py_self: UnsafePointer[Self], in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
+    fn next(py_self: LegacyUnsafePointer[Self], in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 
         py_self[0].loc_in_buffer = in_buffer.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float32]()
 

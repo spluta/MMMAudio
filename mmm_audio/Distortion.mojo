@@ -91,7 +91,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     comptime TOL = 1.0e-5
     var G1: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         if os_index > 1:
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
@@ -188,7 +188,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var upsampler: Upsampler[num_chans, 2 ** os_index]
     comptime TOL = 1.0e-5
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the HardClipAD.
         
         Args:
@@ -290,7 +290,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the TanhAD.
 
         Args:
@@ -441,11 +441,11 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     var cells: List[BuchlaCell[num_chans]]
     comptime TOL: Float64 = 1.0e-5
     var x1: SIMD[DType.float64, num_chans]
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the BuchlaWavefolder.
 
         Args:

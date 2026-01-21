@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct ChowningFM(Representable, Movable, Copyable):
-    var world: UnsafePointer[MMMWorld] # pointer to the MMMWorld
+    var world: LegacyUnsafePointer[MMMWorld] # pointer to the MMMWorld
     var m: Messenger
     var c_osc: Osc[1,1,1]  # Carrier oscillator
     var m_osc: Osc  # Modulator oscillator
@@ -13,7 +13,7 @@ struct ChowningFM(Representable, Movable, Copyable):
     var mfreq: Float64
     var vol: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.m = Messenger(self.world)
         self.c_osc = Osc[1,1,1](self.world)

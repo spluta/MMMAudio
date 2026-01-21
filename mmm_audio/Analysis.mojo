@@ -22,7 +22,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var pitch: Float64
     var confidence: Float64
     var sample_rate: Float64
@@ -34,7 +34,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
     var yin_buffer: List[Float64]
     var yin_values: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the YIN pitch detector.
 
         Args:
@@ -176,10 +176,10 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
 
     """
 
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var centroid: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.centroid = 0.0
 

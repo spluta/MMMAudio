@@ -57,7 +57,7 @@ struct Env(Representable, Movable, Copyable):
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the Env struct.
 
         Args:
@@ -196,7 +196,7 @@ struct ASREnv(Representable, Movable, Copyable):
     var bool_changed: Changed  # Track the last trigger state
     var freq: Float64  # Frequency for the envelope
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the ASREnv struct.
         
         Args:

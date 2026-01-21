@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var centroid: Float64
     var rms: Float64
     var pitch: Float64
@@ -9,7 +9,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var sr: Float64
     var yin: YIN[window_size, 50, 5000]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.sr = self.world[].sample_rate
         self.centroid = 0.0
@@ -30,7 +30,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.centroid = SpectralCentroid.from_mags(self.yin.fft.mags, self.world[].sample_rate)
 
 struct AnalysisExample(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var osc: Osc[2]
     var buffer: Buffer
     var playBuf: Play
@@ -39,7 +39,7 @@ struct AnalysisExample(Movable, Copyable):
     var m: Messenger
     var which: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = Osc[2](self.world)
         self.buffer = Buffer.load("resources/Shiverer.wav")

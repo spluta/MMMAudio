@@ -11,11 +11,11 @@ from mmm_audio import *
 
 # This corresponds to the user defined BufferedProcess.
 struct BufferedMultiply(BufferedProcessable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var factor: Float64
     var m: Messenger
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.factor = 0.5
         self.m = Messenger(self.world)
@@ -30,13 +30,13 @@ struct BufferedMultiply(BufferedProcessable):
 
 # User's Synth
 struct TestBufferedProcess(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var my_buffered_mul: BufferedProcess[BufferedMultiply,1024,1024,input_window_shape=WindowType.rect,output_window_shape=WindowType.rect]
     var input: Float64
     var m: Messenger
     var ps: List[Print]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.input = 0.1
         var multiply_process = BufferedMultiply(self.world)

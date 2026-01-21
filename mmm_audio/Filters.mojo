@@ -15,12 +15,12 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
     """
 
     comptime simd_width = simd_width_of[DType.float64]()
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var val: SIMD[DType.float64, num_chans]
     var b1: SIMD[DType.float64, num_chans]
     var lag: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], lag: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](0.02)):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], lag: SIMD[DType.float64, num_chans] = SIMD[DType.float64, num_chans](0.02)):
         """Initialize the lag processor with given lag time in seconds.
 
         Args:
@@ -72,7 +72,7 @@ struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
     """
     var list: List[Lag[simd_width]]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], lag_times: List[Float64]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], lag_times: List[Float64]):
         """Initialize the LagN struct.
 
         Args:
@@ -162,7 +162,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     var ic2eq: SIMD[DType.float64, num_chans]  # Internal state 2
     var sample_rate: Float64
     
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the SVF.
         
         Args:
@@ -440,7 +440,7 @@ struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
     var q: Float64
 
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the 4th-order Linkwitz-Riley lowpass filter.
         
         Args:
@@ -476,9 +476,9 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: Number of channels to process in parallel.
     """
     var last_samp: SIMD[DType.float64, num_chans]  # Previous output
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the one-pole filter."""
 
         self.last_samp = SIMD[DType.float64, num_chans](0.0)
@@ -542,7 +542,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
 #     var last_samp: Float64  # Previous output
 #     var sample_rate: Float64
     
-#     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+#     fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
 #         self.last_samp = 0.0
 #         self.sample_rate = world[].sample_rate
     
@@ -563,7 +563,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
 #     var last_samp: Float64  # Previous output
 #     var sample_rate: Float64
     
-#     fn __init__(out self, world: UnsafePointer[MMMWorld]):
+#     fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
 #         """Initialize the one-zero filter"""
 
 #         self.last_samp = 0.0
@@ -592,7 +592,7 @@ struct DCTrap[num_chans: Int=1](Movable, Copyable):
     var last_samp: SIMD[DType.float64, num_chans]
     var last_inner: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the DC blocker filter.
         
         Args:
@@ -632,7 +632,7 @@ struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     var last_1: SIMD[DType.float64, num_chans]  # Previous output
     var step_val: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the VAOnePole filter.
 
         Args:
@@ -702,7 +702,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
     var oversampling: Oversampling[num_chans, 2 ** os_index]
     var upsampler: Upsampler[num_chans, 2 ** os_index]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the VAMoogLadder filter.
 
         Args:
@@ -818,9 +818,9 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     var tf2: tf2[num_chans]
     var coeffs: List[SIMD[DType.float64, num_chans]]
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the Reson filter.
 
         Args:
@@ -918,7 +918,7 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
     var buffer: List[SIMD[DType.float64, num_chans]]
     var index: Int
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], num_coeffs: Int):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], num_coeffs: Int):
         """Initialize the FIR.
 
         Args:
@@ -963,7 +963,7 @@ struct IIR[num_chans: Int = 1](Representable, Movable, Copyable):
     var fir2: FIR[num_chans]
     var fb: SIMD[DType.float64, num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the IIR.
 
         Args:
@@ -1007,7 +1007,7 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     var iir: IIR[num_chans]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         """Initialize the tf2 filter.
 
         Args:

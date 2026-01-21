@@ -2,7 +2,7 @@
 from mmm_audio import *
 
 struct TestSVF(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var osc: LFSaw
     var filts: List[SVF]
     var messenger: Messenger
@@ -10,7 +10,7 @@ struct TestSVF(Movable, Copyable):
     var cutoff: Float64
     var res: Float64
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.osc = LFSaw(self.world)
         self.messenger = Messenger(self.world)

@@ -5,7 +5,7 @@ from mmm_audio import *
 comptime how_many = 16
 
 struct MoogPops(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]  
+    var world: LegacyUnsafePointer[MMMWorld]  
     var dusts: Dust[how_many]
     var filts: VAMoogLadder[how_many, 4]
     var m: Messenger
@@ -14,7 +14,7 @@ struct MoogPops(Movable, Copyable):
     var t_rand2: TRand[how_many]
 
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.dusts = Dust[how_many](world)
         self.filts = VAMoogLadder[how_many, 4](world)

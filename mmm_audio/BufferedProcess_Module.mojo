@@ -36,7 +36,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function.
         input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var input_buffer_write_head: Int
@@ -44,7 +44,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
     var process: T
     var input_attenuation_window: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedInput struct.
 
         Args:
@@ -101,7 +101,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
         output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: LegacyUnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var output_buffer: List[Float64]
@@ -118,7 +118,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
+    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], var process: T, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
         Args:
