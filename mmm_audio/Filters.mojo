@@ -92,7 +92,6 @@ struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
             out_list: List to store output values for each channel.
         """
         vals = SIMD[DType.float64, simd_width](0.0)
-        num_chans = len(out_list)
         in_len = len(in_list)
 
         @parameter
@@ -182,7 +181,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
+    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans], gain_db: SIMD[DType.float64, self.num_chans]) -> Tuple[SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]]:
         """Compute filter coeficients based on type and parameters.
         
         Parameters:
@@ -226,7 +225,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @doc_private
     @always_inline
-    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, num_chans], A: SIMD[DType.float64, self.num_chans]) -> (SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]):
+    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, num_chans], A: SIMD[DType.float64, self.num_chans]) -> Tuple[SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans], SIMD[DType.float64, self.num_chans]]:
         """Get mixing coeficients for different filter types"""
         
         mc0 = SIMD[DType.float64, self.num_chans](1.0)
