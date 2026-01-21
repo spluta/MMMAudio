@@ -223,7 +223,7 @@ class PVoiceAllocator:
         """
         counter = 0
         found = False
-        while not found and counter < 8:
+        while not found and counter < self.num_voices:
             voice = self.voice_seq.next()
             if self.busy_list[voice] == -1:
                 self.busy_list[voice] = note
