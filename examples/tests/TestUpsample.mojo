@@ -1,7 +1,7 @@
 
 from mmm_audio import *
 
-alias times_oversample = 16
+comptime times_oversample = 16
 struct TestUpsample(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
     var osc: Osc

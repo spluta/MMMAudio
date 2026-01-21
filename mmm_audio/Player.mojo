@@ -488,7 +488,7 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         """
 
         self.recorder.write_next(in_sig)  # Write the input signal into the buffer
-        alias overlaps_plus_2 = overlaps + 2
+        comptime overlaps_plus_2 = overlaps + 2
 
         trig_rate = overlaps / grain_dur
         trig = self.rising_bool_detector.next(

@@ -134,7 +134,7 @@ fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], 
         delaytime: The delay time in seconds.
         decaytime: The decay time in seconds (time to -60dB)."""
       
-      alias log001: Float64 = log(0.001)
+      comptime log001: Float64 = log(0.001)
 
       zero: SIMD[DType.bool, num_chans] = delaytime.eq(0) or decaytime.eq(0)
       dec_pos: SIMD[DType.bool, num_chans] = decaytime.ge(0)

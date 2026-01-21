@@ -344,7 +344,7 @@ fn lagrange4[
         The interpolated sample.
     """
 
-    alias o = 1.4999999999999999  # to avoid edge case issues
+    comptime o = 1.4999999999999999  # to avoid edge case issues
     var fd = o + frac
 
     # simd optimized!
@@ -355,7 +355,7 @@ fn lagrange4[
     var fdm3: SIMD[dtype, num_chans] = SIMD[dtype, num_chans](0.0)
     var fdm4: SIMD[dtype, num_chans] = SIMD[dtype, num_chans](0.0)
 
-    alias offsets = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
+    comptime offsets = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
 
     @parameter
     for i in range(num_chans):
@@ -563,7 +563,7 @@ fn Li2[num_chans: Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64,
     Q.append(-4.73366369162599860878254400521224717e-2)
     Q.append(1.23136575793833628711851523557950417e-3)
 
-    alias pi_sq = pi * pi
+    comptime pi_sq = pi * pi
 
     # Initialize output variables
     var y: SIMD[DType.float64, num_chans] = 0.0

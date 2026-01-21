@@ -14,7 +14,7 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: Number of SIMD channels to process in parallel.
     """
 
-    alias simd_width = simd_width_of[DType.float64]()
+    comptime simd_width = simd_width_of[DType.float64]()
     var world: UnsafePointer[MMMWorld]
     var val: SIMD[DType.float64, num_chans]
     var b1: SIMD[DType.float64, num_chans]
@@ -63,7 +63,7 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
         self.lag = lag
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
 
-alias simd_width = simd_width_of[DType.float64]() * 2
+comptime simd_width = simd_width_of[DType.float64]() * 2
 
 struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
     """SIMD parallelization of Lag.
@@ -80,7 +80,7 @@ struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
             lag_times: List of lag times in seconds for each channel.
         """
 
-        alias num_simd = num_chans // simd_width + (0 if num_chans % simd_width == 0 else 1)
+        comptime num_simd = num_chans // simd_width + (0 if num_chans % simd_width == 0 else 1)
         self.list = [Lag[simd_width](world, lag_times[i%num_chans]) for i in range(num_simd)]
 
     @always_inline
@@ -136,15 +136,15 @@ struct SVFModes:
     | lowshelf | 7     |
     | highshelf| 8     |
     """
-    alias lowpass: Int64 = 0
-    alias bandpass: Int64 = 1
-    alias highpass: Int64 = 2
-    alias notch: Int64 = 3
-    alias peak: Int64 = 4
-    alias allpass: Int64 = 5
-    alias bell: Int64 = 6
-    alias lowshelf: Int64 = 7
-    alias highshelf: Int64 = 8
+    comptime lowpass: Int64 = 0
+    comptime bandpass: Int64 = 1
+    comptime highpass: Int64 = 2
+    comptime notch: Int64 = 3
+    comptime peak: Int64 = 4
+    comptime allpass: Int64 = 5
+    comptime bell: Int64 = 6
+    comptime lowshelf: Int64 = 7
+    comptime highshelf: Int64 = 8
 
 struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     """A State Variable Filter struct.
@@ -792,7 +792,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         if os_index == 0:
             return self.lp4(sig, freq, q_val)
         else:
-            alias times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** os_index
 
             @parameter
             for i in range(times_oversampling):

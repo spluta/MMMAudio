@@ -10,9 +10,9 @@ struct Windows(Movable, Copyable):
     var sine: List[Float64]
     var kaiser: List[Float64]
     var pan2: List[SIMD[DType.float64, 2]]
-    alias size: Int64 = 2048
-    alias size_f64: Float64 = 2048.0
-    alias mask: Int = 2047 # yep, gotta make sure this is size - 1
+    comptime size: Int64 = 2048
+    comptime size_f64: Float64 = 2048.0
+    comptime mask: Int = 2047 # yep, gotta make sure this is size - 1
 
     fn __init__(out self):
         self.hann = hann_window(self.size)
@@ -49,7 +49,7 @@ struct Windows(Movable, Copyable):
         """Generate a window of specified type and size.
         
         Parameters:
-            window_type: Type of window to generate. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+            window_type: Type of window to generate. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
         
         Args:
             size: Length of the window.

@@ -2,8 +2,8 @@ from mmm_audio import *
 
 # THE SYNTH
 
-alias num_output_chans = 2
-alias num_simd_chans = next_power_of_two(num_output_chans)
+comptime num_output_chans = 2
+comptime num_simd_chans = next_power_of_two(num_output_chans)
 
 struct Grains(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]

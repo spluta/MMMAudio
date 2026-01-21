@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-alias two_pi = 2.0 * pi
+comptime two_pi = 2.0 * pi
 
 struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     var world: UnsafePointer[MMMWorld]
@@ -37,7 +37,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
 
     """
 
-    alias hop_size = window_size // 4
+    comptime hop_size = window_size // 4
     var world: UnsafePointer[MMMWorld]
     var freeze: FFTProcess[SpectralFreezeWindow[window_size],window_size,Self.hop_size,WindowType.hann,WindowType.hann]
     var m: Messenger
@@ -64,7 +64,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         return select(env, [sample, freeze]) * 0.3
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 2048
+comptime window_size = 2048
 
 struct SpectralFreezeExample(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]

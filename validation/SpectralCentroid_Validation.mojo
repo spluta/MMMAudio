@@ -6,8 +6,8 @@
 .FFTs import *
 from .MMMWorld_Module import *
 
-alias windowsize: Int = 1024
-alias hopsize: Int = 512
+comptime windowsize: Int = 1024
+comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
     var world: UnsafePointer[MMMWorld]

@@ -30,9 +30,9 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
     """
     var result: List[ComplexSIMD[DType.float64, num_chans]]
     var reversed: List[ComplexSIMD[DType.float64, num_chans]]   
-    alias log_n: Int = log2_int(size//2)
-    alias log_n_full: Int = log2_int(size)
-    alias scale: Float64 = 1.0 / Float64(size)
+    comptime log_n: Int = log2_int(size//2)
+    comptime log_n_full: Int = log2_int(size)
+    comptime scale: Float64 = 1.0 / Float64(size)
     var mags: List[SIMD[DType.float64, num_chans]]
     var phases: List[SIMD[DType.float64, num_chans]]
     var w_ms: List[ComplexSIMD[DType.float64, num_chans]]

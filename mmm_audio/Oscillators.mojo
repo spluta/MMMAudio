@@ -438,7 +438,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
             self.last_phase = phase
             return linear_interp(sample0, sample1, scaled_osc_frac)
         else:
-            alias times_os_int = 2**os_index
+            comptime times_os_int = 2**os_index
             @parameter
             for i in range(times_os_int):
                 # var last_phase = self.phasor.phase
@@ -818,8 +818,8 @@ struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return self.phase
 
-alias OscBuffersSize: Int = 16384  # 2^14
-alias OscBuffersMask: Int = 16383  # 2^14 - 1
+comptime OscBuffersSize: Int = 16384  # 2^14
+comptime OscBuffersMask: Int = 16383  # 2^14 - 1
 
 @doc_private
 struct OscBuffers(Movable, Copyable):

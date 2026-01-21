@@ -2,7 +2,7 @@ from mmm_audio import *
 
 # THE SYNTH
 
-alias how_many = 16
+comptime how_many = 16
 
 struct MoogPops(Movable, Copyable):
     var world: UnsafePointer[MMMWorld]  

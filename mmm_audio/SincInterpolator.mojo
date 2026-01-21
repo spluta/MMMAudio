@@ -68,7 +68,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         loop_count = ripples * 2
         
         # Try to process in SIMD chunks if the loop is large enough
-        alias simd_width = simd_width_of[DType.float64]()
+        comptime simd_width = simd_width_of[DType.float64]()
         var out: Float64 = 0.0
         data_len: Int64 = len(data)
         

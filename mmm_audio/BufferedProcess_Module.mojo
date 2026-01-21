@@ -34,7 +34,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
         window_size: The size of the window that is passed to the user defined struct for processing.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function.
-        input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+        input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
     var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]
@@ -98,8 +98,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
         window_size: The size of the window that is passed to the user defined struct for processing.
         hop_size: The number of samples between each call to the user defined struct's `next_window()` function.
-        input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
-        output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use alias variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+        input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+        output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
     var world: UnsafePointer[MMMWorld]
     var input_buffer: List[Float64]

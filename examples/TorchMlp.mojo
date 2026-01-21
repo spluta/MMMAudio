@@ -2,9 +2,9 @@ from mmm_audio import *
 
 from sys import simd_width_of
 
-alias simd_width = simd_width_of[DType.float64]() * 2
-alias model_out_size = 16  # Define the output size of the model
-alias num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
+comptime simd_width = simd_width_of[DType.float64]() * 2
+comptime model_out_size = 16  # Define the output size of the model
+comptime num_simd = (model_out_size + simd_width - 1) // simd_width  # Calculate number of SIMD groups needed
 
 # THE SYNTH - is imported from TorchSynth.mojo in this directory
 struct TorchSynth(Movable, Copyable):

@@ -127,7 +127,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
 
     out = SIMD[DType.float64, simd_out_size](0.0)
 
-    alias simd_width: Int = simd_width_of[DType.float64]() * 2
+    comptime simd_width: Int = simd_width_of[DType.float64]() * 2
 
     @parameter
     fn process_speakers[simd_width: Int](i: Int) -> None:
@@ -150,7 +150,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
 
     return out
 
-alias pi_over_2 = pi / 2.0
+comptime pi_over_2 = pi / 2.0
 
 struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     """

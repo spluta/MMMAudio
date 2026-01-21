@@ -2,7 +2,7 @@ from mmm_audio import *
 
 struct DelaySynth(Representable, Movable, Copyable):
     var world: UnsafePointer[MMMWorld]
-    alias maxdelay = 1.0
+    comptime maxdelay = 1.0
     var main_lag: Lag
     var buf: Buffer
     var playBuf: Play

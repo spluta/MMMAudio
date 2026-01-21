@@ -1,7 +1,7 @@
 
 from mmm_audio import *
 
-alias num_output_channels = 8
+comptime num_output_channels = 8
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestSplay[num: Int = 1000](Movable, Copyable):

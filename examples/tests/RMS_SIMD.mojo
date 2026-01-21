@@ -21,7 +21,7 @@ fn rmsfloat[windowsize: Int = 1024]() -> Float64:
 
 fn rmssimd[windowsize: Int = 1024]() -> Float64:
     
-    alias simdwidth: Int = sys.simd_width_of[Float64]()
+    comptime simdwidth: Int = sys.simd_width_of[Float64]()
 
     # print("SIMD width: ", simdwidth)
 

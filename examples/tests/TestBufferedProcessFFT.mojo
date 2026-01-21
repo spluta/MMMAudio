@@ -1,8 +1,8 @@
 
 from mmm_audio import *
 
-alias window_size = 4096
-alias hop_size = window_size // 2
+comptime window_size = 4096
+comptime hop_size = window_size // 2
 
 # This corresponds to the user defined BufferedProcess.
 struct FFTLowPass[window_size: Int](BufferedProcessable):

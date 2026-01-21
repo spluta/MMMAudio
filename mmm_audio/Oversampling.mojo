@@ -104,7 +104,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     var a2: Float64
     var z1: SIMD[DType.float64, num_chans]
     var z2: SIMD[DType.float64, num_chans]
-    alias INV_SQRT2 = 0.7071067811865475
+    comptime INV_SQRT2 = 0.7071067811865475
 
     fn __init__(out self, world: UnsafePointer[MMMWorld]):
         """
