@@ -8,10 +8,7 @@ a WAV file using the YIN algorithm. The results can be compared to other impleme
 such as librosa in Python.
 """
 
-.Analysis import *
-.Buffer_Module import *
-.Play import *
-from .MMMWorld_Module import *
+from mmm_audio import *
 
 alias minfreq: Float64 = 100.0
 alias maxfreq: Float64 = 5000.0
@@ -47,7 +44,7 @@ fn main():
     analyzer = BufferedInput[Analyzer,windowsize,hopsize](world, Analyzer(world))
 
     for _ in range(buffer.num_frames):
-        sample = playBuf.next(buffer, 0, 1)
+        sample = playBuf.next(buffer)
         analyzer.next(sample)
     
     pth = "validation/outputs/yin_mojo_results.csv"

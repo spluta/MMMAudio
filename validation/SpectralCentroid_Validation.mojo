@@ -1,10 +1,6 @@
 """Spectral Centroid Unit Test"""
 
-.Analysis import *
-.Buffer_Module import *
-.Play import *
-.FFTs import *
-from .MMMWorld_Module import *
+from mmm_audio import *
 
 alias windowsize: Int = 1024
 alias hopsize: Int = 512
@@ -35,11 +31,11 @@ fn main():
     w = UnsafePointer(to=world)
 
     buffer = Buffer.load("resources/Shiverer.wav")
-    playBuf = Play(self.world)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](self.world, Analyzer(self.world,world.sample_rate))
+    playBuf = Play(w)
+    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](w, Analyzer(w,world.sample_rate))
 
     for _ in range(buffer.num_frames):
-        sample = playBuf.next(buffer, 0, 1)
+        sample = playBuf.next(buffer)
         analyzer.next(sample)
     
     pth = "validation/outputs/spectral_centroid_mojo_results.csv"

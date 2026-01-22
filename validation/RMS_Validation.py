@@ -12,7 +12,7 @@ import sys
 
 sys.path.append(os.getcwd())
 
-from .functions import ampdb
+from mmm_python import *
 
 os.system("mojo run validation/RMS_Validation.mojo")
 print("mojo analysis complete")
