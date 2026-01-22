@@ -35,7 +35,7 @@ struct AnalysisExample(Movable, Copyable):
     var buffer: Buffer
     var playBuf: Play
     var freq: Float64
-    var analyzer: BufferedInput[CustomAnalysis[1024],1024,512]
+    var analyzer: BufferedInput[CustomAnalysis[1024],1024,512,WindowType.rect]
     var m: Messenger
     var which: Float64
 
@@ -44,7 +44,7 @@ struct AnalysisExample(Movable, Copyable):
         self.osc = Osc[2](self.world)
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512](self.world, CustomAnalysis[1024](self.world))
+        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512,WindowType.rect](self.world, CustomAnalysis[1024](self.world))
         self.freq = 440.0
         self.m = Messenger(self.world)
         self.which = 0.0
