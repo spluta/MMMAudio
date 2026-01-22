@@ -13,11 +13,9 @@ struct Dusty(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("OleDusty")
 
-    fn next(mut self, freq: Float64) -> SIMD[DType.float64, 2]:
+    fn next(mut self, freq: MMMFloat[1]) -> MMMFloat[2]:
 
-        out = self.dust.next(freq*0.125, freq*8, SIMD[DType.bool, 1](fill=False)) * 0.5
-
-        self.world[].print("dusty", freq*0.125, freq*8, out[0], out[1])
+        out = self.dust.next(freq*0.125, freq*8) * 0.5
 
         # uncomment below for use the phase of the Dust oscillator instead of the impulse
         # out = self.dust.get_phase()
@@ -30,20 +28,20 @@ struct OleDusty(Representable, Movable, Copyable):
     var world: LegacyUnsafePointer[MMMWorld]  
     var dusty: Dusty
     var reson: Reson[2]
-    var freq: Float64
+    var freq: MMMFloat[1]
     var lag: Lag
 
     fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
         self.world = world
         self.dusty = Dusty(world)
         self.reson = Reson[2](world)
-        self.freq = 200.0
+        self.freq = MMMFloat[1](200.0)
         self.lag = Lag(world, 0.1)
 
     fn __repr__(self) -> String:
         return String("OleDusty")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MMMFloat[2]:
 
         freq = linexp(self.world[].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 
