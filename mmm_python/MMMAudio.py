@@ -11,7 +11,6 @@ import mojo.importer
 
 import matplotlib.pyplot as plt
 
-import pyautogui
 from sympy import arg
 import mmm_python.Scheduler as Scheduler
 
@@ -57,40 +56,6 @@ class MMMAudio:
                 device_info = sd.query_devices(kind='output')
 
         return device_info
-    
-    # def get_device_info(self, p_temp, device_name, is_input=True):
-    #     """Look for the audio device by name, or return default device info if not found.
-        
-    #     Args:
-    #         p_temp: An instance of pyaudio.PyAudio
-    #         device_name: Name of the desired audio device
-    #         is_input: Boolean indicating if the device is for input (True) or output (False). Default is True.
-    #     """
-
-    #     print(f"Looking for audio device: {device_name}")
-        
-    #     if device_name != "default":
-    #         device_index = None
-    #         for i in range(p_temp.get_device_count()):
-    #             dev_info = p_temp.get_device_info_by_index(i)
-    #             print(f"Checking device {i}: {dev_info['name']}")
-    #             if device_name in dev_info['name']:
-    #                 device_index = i
-    #                 print(f"Using audio device: {dev_info['name']}")
-    #                 break
-    #         if device_index is not None:
-    #             device_info = p_temp.get_device_info_by_index(device_index)
-                
-    #         else:
-    #             print(f"Audio device '{device_name}' not found. Using default device.")
-    #             device_info = p_temp.get_default_output_device_info()
-    #     else:
-    #         if is_input:
-    #             device_info = p_temp.get_default_input_device_info()
-    #         else:
-    #             device_info = p_temp.get_default_output_device_info()
-
-    #     return device_info
 
 
     def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
@@ -128,11 +93,6 @@ class MMMAudio:
 
         self.scheduler = Scheduler.Scheduler()
 
-        # p_temp = pyaudio.PyAudio()
-        # in_device_info = self.get_device_info(p_temp, in_device, True)
-        # out_device_info = self.get_device_info(p_temp, out_device, False)
-        # p_temp.terminate()
-
         in_device_info = self.get_device_info(in_device, True)
         out_device_info = self.get_device_info(out_device, False)
 
@@ -147,18 +107,6 @@ class MMMAudio:
         self.num_input_channels = min(self.num_input_channels, int(in_device_info['max_input_channels']))
         self.num_output_channels = min(self.num_output_channels, int(out_device_info['max_output_channels']))
 
-
-        # if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
-        #     print(f"Warning: Sample rates do not match ({in_device_info['defaultSampleRate']} vs {out_device_info['defaultSampleRate']})")
-        #     print("Exiting.")
-        #     return
-        
-        # self.sample_rate = int(in_device_info['defaultSampleRate'])
-        # self.in_device_index = in_device_info['index']
-        # self.out_device_index = out_device_info['index']
-        # self.num_input_channels = min(self.num_input_channels, int(in_device_info['maxInputChannels']))
-        # self.num_output_channels = min(self.num_output_channels, int(out_device_info['maxOutputChannels']))
-
         self.out_buffer = np.zeros((self.blocksize, self.num_output_channels), dtype=np.float64)
 
         # Initialize the Mojo module AudioEngine
@@ -170,12 +118,31 @@ class MMMAudio:
         # is called here.
         self.mmm_audio_bridge.set_channel_count((self.num_input_channels, self.num_output_channels))
 
-        # Get screen size
-        screen_dims = pyautogui.size()
-        self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
+        self.mouse_active = True
 
-        # the mouse thread will always be running
-        threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),)).start()
+        import platform
+        if platform.system() == 'Linux' and 'microsoft' in platform.release().lower():
+            print("The platform is WSL. Mouse position tracking is not supported. Use `mmm_audio.fake_mouse()` to simulate mouse movement.")
+        else:
+            print("Mac or Linux detected. Initializing mouse position tracking.")
+            import pyautogui
+
+            async def _get_mouse_position(delay: float = 0.01):
+                while True:
+                    if self.mouse_active:
+                        x, y = pyautogui.position()
+                        x = x / pyautogui.size().width
+                        y = y / pyautogui.size().height
+                        
+                        self.mmm_audio_bridge.update_mouse_pos([ x, y ])
+
+                    await asyncio.sleep(delay)
+
+            screen_dims = pyautogui.size()
+            self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
+
+            # the mouse thread will always be running
+            threading.Thread(target=asyncio.run, args=(_get_mouse_position(0.01),)).start()
         
         # self.returned_samples = []
         self.audio_stopper = threading.Event()
@@ -201,15 +168,35 @@ class MMMAudio:
         self.input_stream.start()
         self.output_stream.start()
 
-    async def _get_mouse_position(self, delay: float = 0.01):
-        while True:
-            x, y = pyautogui.position()
-            x = x / pyautogui.size().width
-            y = y / pyautogui.size().height
-            
-            self.mmm_audio_bridge.update_mouse_pos([ x, y ])
+    def fake_mouse(self, x_size: float = 300, y_size: float = 300):
+        from mmm_python.GUI import Slider2D
+        from mmm_python.MMMAudio import MMMAudio
+        from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
-            await asyncio.sleep(delay)
+        app = QApplication([])
+        app.quitOnLastWindowClosed = True 
+
+        # Create the main window
+        window = QWidget()
+        window.setWindowTitle("Fake Mouse Position Controller")
+        window.resize(x_size, y_size)
+
+        # Create layout
+        layout = QVBoxLayout()
+
+        slider2d = Slider2D(x_size, y_size)
+
+        def on_slider_change(x, y):
+            self.mmm_audio_bridge.update_mouse_pos([ x, y ])
+        # def slider_mouse_updown(is_down):
+        #     self.mmm_audio_bridge.send_bool("mouse_down", is_down)  # set amplitude to 0 when mouse is released
+
+        slider2d.value_changed.connect(on_slider_change)
+        # slider2d.mouse_updown.connect(slider_mouse_updown)
+        layout.addWidget(slider2d)
+        window.setLayout(layout)
+        window.show()
+        app.exec()
 
     def get_samples(self, samples):
         """Get a specified number of audio samples from MMMAudio. This should be called when audio is stopped. It will push the audio graph forward `samples` samples.
@@ -475,15 +462,3 @@ def list_audio_devices():
         print(f"  Default sample rate: {dev_info['default_samplerate']} Hz")
         print()
 
-# def list_audio_devices():
-#     p_temp = pyaudio.PyAudio()
-#     p_temp.get_device_count()
-#     # List all available audio devices
-#     for i in range(p_temp.get_device_count()):
-#         dev_info = p_temp.get_device_info_by_index(i)
-#         print(f"Device {i}: {dev_info['name']}")
-#         print(f"  Input channels: {dev_info['maxInputChannels']}")
-#         print(f"  Output channels: {dev_info['maxOutputChannels']}")
-#         print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
-#         print()
-#     p_temp.terminate()
