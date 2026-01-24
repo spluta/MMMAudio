@@ -1,6 +1,6 @@
 import sys, os
 import numpy as np
-import pyaudio
+import sounddevice as sd
 import asyncio
 
 from pythonosc.dispatcher import Dispatcher
@@ -20,12 +20,11 @@ from math import ceil
 sys.path.insert(0, "mmm_src")
 
 class MMMAudio:
-    
-    def get_device_info(self, p_temp, device_name, is_input=True):
+
+    def get_device_info(self, device_name, is_input=True):
         """Look for the audio device by name, or return default device info if not found.
         
         Args:
-            p_temp: An instance of pyaudio.PyAudio
             device_name: Name of the desired audio device
             is_input: Boolean indicating if the device is for input (True) or output (False). Default is True.
         """
@@ -34,26 +33,64 @@ class MMMAudio:
         
         if device_name != "default":
             device_index = None
-            for i in range(p_temp.get_device_count()):
-                dev_info = p_temp.get_device_info_by_index(i)
+            devices = sd.query_devices()
+            
+            for i, dev_info in enumerate(devices):
                 print(f"Checking device {i}: {dev_info['name']}")
                 if device_name in dev_info['name']:
                     device_index = i
                     print(f"Using audio device: {dev_info['name']}")
                     break
+            
             if device_index is not None:
-                device_info = p_temp.get_device_info_by_index(device_index)
-                
+                device_info = sd.query_devices(device_index)
             else:
                 print(f"Audio device '{device_name}' not found. Using default device.")
-                device_info = p_temp.get_default_output_device_info()
+                if is_input:
+                    device_info = sd.query_devices(kind='input')
+                else:
+                    device_info = sd.query_devices(kind='output')
         else:
             if is_input:
-                device_info = p_temp.get_default_input_device_info()
+                device_info = sd.query_devices(kind='input')
             else:
-                device_info = p_temp.get_default_output_device_info()
+                device_info = sd.query_devices(kind='output')
 
         return device_info
+    
+    # def get_device_info(self, p_temp, device_name, is_input=True):
+    #     """Look for the audio device by name, or return default device info if not found.
+        
+    #     Args:
+    #         p_temp: An instance of pyaudio.PyAudio
+    #         device_name: Name of the desired audio device
+    #         is_input: Boolean indicating if the device is for input (True) or output (False). Default is True.
+    #     """
+
+    #     print(f"Looking for audio device: {device_name}")
+        
+    #     if device_name != "default":
+    #         device_index = None
+    #         for i in range(p_temp.get_device_count()):
+    #             dev_info = p_temp.get_device_info_by_index(i)
+    #             print(f"Checking device {i}: {dev_info['name']}")
+    #             if device_name in dev_info['name']:
+    #                 device_index = i
+    #                 print(f"Using audio device: {dev_info['name']}")
+    #                 break
+    #         if device_index is not None:
+    #             device_info = p_temp.get_device_info_by_index(device_index)
+                
+    #         else:
+    #             print(f"Audio device '{device_name}' not found. Using default device.")
+    #             device_info = p_temp.get_default_output_device_info()
+    #     else:
+    #         if is_input:
+    #             device_info = p_temp.get_default_input_device_info()
+    #         else:
+    #             device_info = p_temp.get_default_output_device_info()
+
+    #     return device_info
 
 
     def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
@@ -91,22 +128,36 @@ class MMMAudio:
 
         self.scheduler = Scheduler.Scheduler()
 
-        p_temp = pyaudio.PyAudio()
-        in_device_info = self.get_device_info(p_temp, in_device, True)
-        out_device_info = self.get_device_info(p_temp, out_device, False)
-        p_temp.terminate()
+        # p_temp = pyaudio.PyAudio()
+        # in_device_info = self.get_device_info(p_temp, in_device, True)
+        # out_device_info = self.get_device_info(p_temp, out_device, False)
+        # p_temp.terminate()
 
+        in_device_info = self.get_device_info(in_device, True)
+        out_device_info = self.get_device_info(out_device, False)
 
-        if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
-            print(f"Warning: Sample rates do not match ({in_device_info['defaultSampleRate']} vs {out_device_info['defaultSampleRate']})")
+        if in_device_info['default_samplerate'] != out_device_info['default_samplerate']:
+            print(f"Warning: Sample rates do not match ({in_device_info['default_samplerate']} vs {out_device_info['default_samplerate']})")
             print("Exiting.")
             return
-        
-        self.sample_rate = int(in_device_info['defaultSampleRate'])
+
+        self.sample_rate = int(in_device_info['default_samplerate'])
         self.in_device_index = in_device_info['index']
         self.out_device_index = out_device_info['index']
-        self.num_input_channels = min(self.num_input_channels, int(in_device_info['maxInputChannels']))
-        self.num_output_channels = min(self.num_output_channels, int(out_device_info['maxOutputChannels']))
+        self.num_input_channels = min(self.num_input_channels, int(in_device_info['max_input_channels']))
+        self.num_output_channels = min(self.num_output_channels, int(out_device_info['max_output_channels']))
+
+
+        # if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
+        #     print(f"Warning: Sample rates do not match ({in_device_info['defaultSampleRate']} vs {out_device_info['defaultSampleRate']})")
+        #     print("Exiting.")
+        #     return
+        
+        # self.sample_rate = int(in_device_info['defaultSampleRate'])
+        # self.in_device_index = in_device_info['index']
+        # self.out_device_index = out_device_info['index']
+        # self.num_input_channels = min(self.num_input_channels, int(in_device_info['maxInputChannels']))
+        # self.num_output_channels = min(self.num_output_channels, int(out_device_info['maxOutputChannels']))
 
         self.out_buffer = np.zeros((self.blocksize, self.num_output_channels), dtype=np.float64)
 
@@ -125,26 +176,30 @@ class MMMAudio:
 
         # the mouse thread will always be running
         threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),)).start()
-        self.p = pyaudio.PyAudio()
-        format_code = pyaudio.paFloat32
-
-        self.audio_stopper = threading.Event()
-
-        self.input_stream = self.p.open(format=format_code,
-            channels= self.num_input_channels,
-            rate=self.sample_rate,
-            input=True,
-            input_device_index=self.in_device_index,
-            frames_per_buffer=self.blocksize)
-
-        self.output_stream = self.p.open(format=format_code,
-            channels= self.num_output_channels,
-            rate=self.sample_rate,
-            output=True,
-            output_device_index=self.out_device_index,
-            frames_per_buffer=self.blocksize)
         
+        # self.returned_samples = []
+        self.audio_stopper = threading.Event()
         self.returned_samples = []
+
+        self.input_stream = sd.InputStream(
+            device=self.in_device_index,
+            channels=self.num_input_channels,
+            samplerate=self.sample_rate,
+            blocksize=self.blocksize,
+            dtype='float32'
+        )
+
+        self.output_stream = sd.OutputStream(
+            device=self.out_device_index,
+            channels=self.num_output_channels,
+            samplerate=self.sample_rate,
+            blocksize=self.blocksize,
+            dtype='float32'
+        )
+
+        # Start streams
+        self.input_stream.start()
+        self.output_stream.start()
 
     async def _get_mouse_position(self, delay: float = 0.01):
         while True:
@@ -226,32 +281,57 @@ class MMMAudio:
     def audio_loop(self):
         max = 0.0
         while not self.audio_stopper.is_set():
-            data = self.input_stream.read(self.blocksize, exception_on_overflow=False)
-            in_data = np.frombuffer(data, dtype=np.float32)
-            # in_data = in_data.flatten()
+            # Read input
+            in_data, overflowed = self.input_stream.read(self.blocksize)
+            if overflowed:
+                print("Input overflow")
+            in_data = in_data.flatten().astype(np.float32)
 
+            # Process
             self.mmm_audio_bridge.next(in_data, self.out_buffer)
             self.out_buffer = np.clip(self.out_buffer, -1.0, 1.0)
-            chunk = self.out_buffer.astype(np.float32).tobytes()
-            self.output_stream.write(chunk)
+
+            # Write output
+            underflowed = self.output_stream.write(self.out_buffer.astype(np.float32))
+            if underflowed:
+                print("Output underflow")
 
     def start_audio(self):
         """Start or restart the audio processing loop."""
-
+        
         print("Starting audio...")
         if not self.running:
             self.running = True
-            self.audio_stopper.clear()
-            print("Audio started with sample rate:", self.sample_rate, "block size:", self.blocksize, "input channels:", self.num_input_channels, "output channels:", self.num_output_channels)
-            self.audio_thread = threading.Thread(target=self.audio_loop)
-            self.audio_thread.start()
-    
+            print(f"Audio started with sample rate: {self.sample_rate}, block size: {self.blocksize}, input channels: {self.num_input_channels}, output channels: {self.num_output_channels}")
+            
+            def audio_callback(indata, outdata, frames, time, status):
+                if status:
+                    print(f"Audio status: {status}")
+                
+                in_data = indata.flatten().astype(np.float32)
+                
+                self.mmm_audio_bridge.next(in_data, self.out_buffer)
+                self.out_buffer = np.clip(self.out_buffer, -1.0, 1.0)
+                
+                outdata[:] = self.out_buffer.reshape(outdata.shape)
+            
+            self.stream = sd.Stream(
+                device=(self.in_device_index, self.out_device_index),
+                channels=(self.num_input_channels, self.num_output_channels),
+                samplerate=self.sample_rate,
+                blocksize=self.blocksize,
+                dtype='float32',
+                callback=audio_callback
+            )
+            self.stream.start()
+
     def stop_audio(self):
         """Stop the audio processing loop."""
         if self.running:
             self.running = False
             print("Stopping audio...")
-            self.audio_stopper.set()
+            self.stream.stop()
+            self.stream.close()
 
     def send_bool(self, key: str, value: bool):
         """
@@ -386,14 +466,24 @@ class MMMAudio:
  
 
 def list_audio_devices():
-    p_temp = pyaudio.PyAudio()
-    p_temp.get_device_count()
-    # List all available audio devices
-    for i in range(p_temp.get_device_count()):
-        dev_info = p_temp.get_device_info_by_index(i)
+    devices = sd.query_devices()
+    
+    for i, dev_info in enumerate(devices):
         print(f"Device {i}: {dev_info['name']}")
-        print(f"  Input channels: {dev_info['maxInputChannels']}")
-        print(f"  Output channels: {dev_info['maxOutputChannels']}")
-        print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
+        print(f"  Input channels: {dev_info['max_input_channels']}")
+        print(f"  Output channels: {dev_info['max_output_channels']}")
+        print(f"  Default sample rate: {dev_info['default_samplerate']} Hz")
         print()
-    p_temp.terminate()
+
+# def list_audio_devices():
+#     p_temp = pyaudio.PyAudio()
+#     p_temp.get_device_count()
+#     # List all available audio devices
+#     for i in range(p_temp.get_device_count()):
+#         dev_info = p_temp.get_device_info_by_index(i)
+#         print(f"Device {i}: {dev_info['name']}")
+#         print(f"  Input channels: {dev_info['maxInputChannels']}")
+#         print(f"  Output channels: {dev_info['maxOutputChannels']}")
+#         print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
+#         print()
+#     p_temp.terminate()
