@@ -2,7 +2,7 @@
 
 MMMAudio uses [Mojo's Python interop](https://docs.modular.com/mojo/manual/python/) to compile audio graphs directly in your Python programming environment.
 
-Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. Windows users can use WSL2 as described below. 
+Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. On Windows, follow the [Getting Started with Windows/WSL Guide](doc_generation/static_docs/getting_started/getting_started_windows.md) and return here to follow 3. and 4. 
 
 Please see the [MMMAudio YouTube Playlist](https://www.youtube.com/playlist?list=PLeOjmNO6F-TQ6p9pEYT3zt1dEfFaUWezr) to view the available video tutorials about MMMAudio!
 
@@ -14,7 +14,7 @@ git clone https://github.com/spluta/MMMAudio.git
 
 or [grab the latest release](https://github.com/spluta/MMMAudio/releases).
 
-## 2. Setup the Python Virtual Environment (On Windows, follow the instructions under 2b. first, then come back here to get Python correctly configured)
+## 2. Setup the Python Virtual Environment (On Windows, follow the [Getting Started with Windows/WSL Guide](doc_generation/static_docs/getting_started/getting_started_windows.md). first, then come back here to get Python correctly configured)
 
 `cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and 3.13.  If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
 
@@ -55,7 +55,7 @@ if you have trouble installing/running `pyaudio`, try this:
 1. [do this](https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed/68296168#68296168)
 2. Then this uninstall and reinstall `pyaudio` (`hidapi` may be the same).
 
-### 2b. Setup the Environment on Windows/WSL2 with Ubuntu
+<!-- ### 2b. Setup the Environment on Windows/WSL2 with Ubuntu
 
 Here are some hints to get the audio samples running under Windows/WSL2. 
 I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
@@ -117,7 +117,7 @@ pactl info
 Now run your MMMAudio script WITHOUT running pulseaudio --start and enjoy the sound:
 ```shell
 python3 examples/DefaultGraph.py
-```
+``` -->
 
 ## 3. Run an Example
 
