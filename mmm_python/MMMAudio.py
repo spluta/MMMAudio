@@ -58,7 +58,7 @@ class MMMAudio:
         return device_info
 
 
-    def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples"):
+    def __init__(self, blocksize=64, num_input_channels=2, num_output_channels=2, in_device="default", out_device="default", graph_name="FeedbackDelays", package_name="examples", latency="default"):
         """Initialize the MMMAudio class.
         
         Args:
@@ -148,12 +148,19 @@ class MMMAudio:
         self.audio_stopper = threading.Event()
         self.returned_samples = []
 
+        lat = 'high'
+        if latency == "default":
+            lat = sd.default.latency
+        else:
+            lat = latency
+
         self.input_stream = sd.InputStream(
             device=self.in_device_index,
             channels=self.num_input_channels,
             samplerate=self.sample_rate,
             blocksize=self.blocksize,
-            dtype='float32'
+            dtype='float32',
+            latency = lat
         )
 
         self.output_stream = sd.OutputStream(
@@ -161,7 +168,8 @@ class MMMAudio:
             channels=self.num_output_channels,
             samplerate=self.sample_rate,
             blocksize=self.blocksize,
-            dtype='float32'
+            dtype='float32',
+            latency = lat
         )
 
         # Start streams
@@ -461,4 +469,3 @@ def list_audio_devices():
         print(f"  Output channels: {dev_info['max_output_channels']}")
         print(f"  Default sample rate: {dev_info['default_samplerate']} Hz")
         print()
-
