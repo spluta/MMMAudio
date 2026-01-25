@@ -2,7 +2,7 @@
 
 MMMAudio uses [Mojo's Python interop](https://docs.modular.com/mojo/manual/python/) to compile audio graphs directly in your Python programming environment.
 
-Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. On Windows, follow the [Getting Started with Windows/WSL Guide](doc_generation/static_docs/getting_started/getting_started_windows.md) and return here to follow 3. and 4. 
+Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. On Windows, follow the [Getting Started with Windows/WSL Guide](getting_started_windows.md) and return here to follow 3. and 4. 
 
 Please see the [MMMAudio YouTube Playlist](https://www.youtube.com/playlist?list=PLeOjmNO6F-TQ6p9pEYT3zt1dEfFaUWezr) to view the available video tutorials about MMMAudio!
 
@@ -14,7 +14,7 @@ git clone https://github.com/spluta/MMMAudio.git
 
 or [grab the latest release](https://github.com/spluta/MMMAudio/releases).
 
-## 2. Setup the Python Virtual Environment (On Windows, follow the [Getting Started with Windows/WSL Guide](doc_generation/static_docs/getting_started/getting_started_windows.md). first, then come back here to get Python correctly configured)
+## 2. Setup the Python Virtual Environment (On Windows, follow the [Getting Started with Windows/WSL Guide](getting_started_windows.md) first, then come back here to get Python correctly configured)
 
 `cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and 3.13.  If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
 
