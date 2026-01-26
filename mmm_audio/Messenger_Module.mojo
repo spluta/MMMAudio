@@ -251,7 +251,7 @@ struct Messenger(Copyable, Movable):
         return False
 
     # update List[Int64]
-    fn update(mut self, mut param: List[Int64], ref name: String) -> Bool:
+    fn update(mut self, mut param: List[Int64], ref name: String):
         """Update a List[Int64] variable with a value sent from Python.
 
         Args:
@@ -263,10 +263,8 @@ struct Messenger(Copyable, Movable):
                 var opt = self.world[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
-                    return True
             except error:
                 print("Error occurred while updating int list message. Error: ", error)
-        return False
 
     # notify_update List[Int64]
     fn notify_update(mut self, mut param: List[Int64], ref name: String) -> Bool:
