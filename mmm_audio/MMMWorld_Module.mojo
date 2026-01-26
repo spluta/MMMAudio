@@ -7,9 +7,9 @@ from collections import Set
 from .SincInterpolator import SincInterpolator
 from .Messenger_Module import MessengerManager
 
-comptime MMMFloat[N: Int = 1] = SIMD[DType.float64, N]
-comptime MMMInt[N: Int = 1] = SIMD[DType.int64, N]
-comptime MMMBool[N: Int = 1] = SIMD[DType.bool, N]
+comptime MFloat[N: Int = 1] = SIMD[DType.float64, N]
+comptime MInt[N: Int = 1] = SIMD[DType.int64, N]
+comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 
 # struct MMMFloat[N: Int = 1](Movable, Copyable):
 #     """A SIMD vector of Float64 values used throughout the MMMAudio library.
