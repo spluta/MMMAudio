@@ -7,9 +7,9 @@ from collections import Set
 from .SincInterpolator import SincInterpolator
 from .Messenger_Module import MessengerManager
 
-alias MFloat[N: Int = 1] = SIMD[DType.float64, N]()
-alias MInt[N: Int = 1] = SIMD[DType.int64, N]()
-alias MBool[N: Int = 1] = SIMD[DType.bool, N]()
+alias MFloat[N: Int = 1] = SIMD[DType.float64, N]
+alias MInt[N: Int = 1] = SIMD[DType.int64, N]
+alias MBool[N: Int = 1] = SIMD[DType.bool, N]
 
 struct MMMWorld(Representable, Movable, Copyable):
     """The MMMWorld struct holds global audio processing parameters and state.
