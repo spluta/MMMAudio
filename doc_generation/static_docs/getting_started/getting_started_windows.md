@@ -56,6 +56,7 @@ clone the MMMAudio program
 
 ```shell
 git clone https://github.com/spluta/MMMAudio.git
+cd MMMAudio
 ```
 
 check out the sounddevice branch (wsl doesn't like pyaudio):
