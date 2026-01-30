@@ -125,8 +125,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                 @parameter
                 for i in range(Self.output_size):
                     var py_val: PythonObject = py_output[0][i].item()
-                    # print(Float64(Int(py=py_val*2000000000.0))/2000000000.0)
-                    # self.model_output[i] = Float64(Int(py=py_val))
-                    self.model_output[i] = Float64(Int(py=py_val*2000000000.0))/2000000000.0
+                    # self.model_output[i] = Float64(py=py_val)
+                    self.model_output[i] = Float64(Int(py=py_val*Int.MAX))/Int.MAX
             except Exception:
                 print("Error processing input through MLP:")
