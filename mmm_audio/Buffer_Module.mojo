@@ -88,13 +88,13 @@ struct Buffer(Movable, Copyable):
 
                 print(py_data)  # Print the loaded data for debugging
 
-                self_sample_rate = Float64(Int(py_data[0]))  # Sample rate is the first element of the tuple
+                self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
 
                 if num_wavetables > 1:
                     # If num_wavetables is specified, calculate num_chans accordingly
                     total_samples = py_data[1].shape[0]
                     self_num_chans = num_wavetables
-                    self_num_frames = Int(Float64(Int(total_samples)) / Float64(num_wavetables))
+                    self_num_frames = Int(Float64(Int(py=total_samples)) / Float64(num_wavetables))
                 else:
                     self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
                     if len(py_data[1].shape) == 1:
@@ -102,7 +102,7 @@ struct Buffer(Movable, Copyable):
                         self_num_chans = 1
                     else:
                         # Multi-channel file
-                        self_num_chans = Int(py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
+                        self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
 
                 self_num_frames_f64 = Float64(self_num_frames)
                 print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
@@ -124,14 +124,14 @@ struct Buffer(Movable, Copyable):
                     for c in range(self_num_chans):
                         channel_data = List[Float64]()
                         for f in range(Int64(self_num_frames)):
-                            channel_data.append(data_ptr[(c * Int64(self_num_frames)) + f])
+                            channel_data.append(Float64(data_ptr[(c * Int64(self_num_frames)) + f]))
                         self_data.append(channel_data^)
                 else:
                     # normal multi-channel interleaved data
                     for c in range(self_num_chans):
                         channel_data = List[Float64]()
                         for f in range(Int64(self_num_frames)):
-                            channel_data.append(data_ptr[(f * self_num_chans) + c])
+                            channel_data.append(Float64(data_ptr[(f * self_num_chans) + c]))
                         self_data.append(channel_data^)
 
                 print("Buffer initialized with file:", filename)  # Print the filename for debugging

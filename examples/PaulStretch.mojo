@@ -25,7 +25,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 struct PaulStretch(Movable, Copyable):
     var world: World
     var buffer: Buffer
-    var saw: LFSaw
+    var saw: LFSaw[1]
     var paul_stretch: FFTProcess[PaulStretchWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64

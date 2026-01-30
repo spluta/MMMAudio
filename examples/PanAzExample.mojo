@@ -2,10 +2,10 @@ from mmm_audio import *
 
 struct PanAz_Synth(Representable, Movable, Copyable):
     var world: World  
-    var osc: Osc
+    var osc: Osc[1]
     var freq: Float64
 
-    var pan_osc: Phasor
+    var pan_osc: Phasor[1]
     var num_speakers: Int64
     var width: Float64
     var messenger: Messenger

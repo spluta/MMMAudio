@@ -14,7 +14,7 @@ comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 # struct MMMFloat[N: Int = 1](Movable, Copyable):
 #     """A SIMD vector of Float64 values used throughout the MMMAudio library.
 
-#     This is an alias for `SIMD[DType.float64, N]` where `N` is the number of lanes in the SIMD vector.
+#     This is an comptime for `SIMD[DType.float64, N]` where `N` is the number of lanes in the SIMD vector.
 #     It is used to represent audio signals and parameters that can be processed in parallel.
 
 #     Example usage:
@@ -38,7 +38,7 @@ comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 # struct MMMInt[N: Int = 1](Movable, Copyable):
 #     """A SIMD vector of Int64 values used throughout the MMMAudio library.
 
-#     This is an alias for `SIMD[DType.int64, N]` where `N` is the number of lanes in the SIMD vector.
+#     This is an comptime for `SIMD[DType.int64, N]` where `N` is the number of lanes in the SIMD vector.
 #     It is used to represent integer parameters that can be processed in parallel.
 
 #     Example usage:
@@ -62,7 +62,7 @@ comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 # struct MMMBool[N: Int = 1](Movable, Copyable):
 #     """A SIMD vector of Bool values used throughout the MMMAudio library.
 
-#     This is an alias for `SIMD[DType.bool, N]` where `N` is the number of lanes in the SIMD vector.
+#     This is an comptime for `SIMD[DType.bool, N]` where `N` is the number of lanes in the SIMD vector.
 #     It is used to represent boolean parameters that can be processed in parallel.
 
 #     Example usage:

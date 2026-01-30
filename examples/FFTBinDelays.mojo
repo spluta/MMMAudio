@@ -3,8 +3,8 @@ from mmm_audio import *
 from random import random_float64
 
 # this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
-alias window_size = 2048
-alias hop_size = window_size // 2
+comptime window_size = 2048
+comptime hop_size = window_size // 2
 
 struct BinDelaysWindow[window_size: Int](FFTProcessable):
     var world: World
@@ -18,11 +18,11 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
     fn __init__(out self, world: World):
         self.world = world
         self.one_samp = 1.0 / self.world[].sample_rate
-        self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, window_size // 2 + 1)]
+        self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, Self.window_size // 2 + 1)]
         self.delay_times = List[Int64]()
         self.feedback = List[Float64]()
         vals = [random_float64(0.0, 1.0) for _ in range(5)]
-        for _ in range(0, window_size // 2 + 1):
+        for _ in range(0, Self.window_size // 2 + 1):
             self.delay_times.append(4)
             self.feedback.append(0.5)
         self.m = Messenger(world)
@@ -44,14 +44,14 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
 
 # User's Synth
 struct FFTBinDelays(Movable, Copyable):
-    var world: UnsafePointer[MMMWorld]
+    var world: World
     var buffer: Buffer
     var fft_bin_delays: FFTProcess[BinDelaysWindow[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
     var play: Play
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
 

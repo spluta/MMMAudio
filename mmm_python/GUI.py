@@ -113,7 +113,7 @@ class Slider2D(QWidget):
     def paintEvent(self, event):
         """Paint the slider"""
         painter = QPainter(self)
-        painter.setRenderHint(QPainter.Antialiasing)
+        painter.setRenderHint(QPainter.Anticomptimeing)
         
         # Draw background
         painter.fillRect(self.rect(), Qt.lightGray)

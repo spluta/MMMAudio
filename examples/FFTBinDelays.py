@@ -5,7 +5,7 @@ You can change the stretch factor by sending different float values to the "dur_
 """
 
 from mmm_python import *
-mmm_audio = MMMAudio(2048, graph_name="FFTBinDelays", package_name="mine")
+mmm_audio = MMMAudio(2048, graph_name="FFTBinDelays", package_name="examples")
 mmm_audio.start_audio()
 
 def make_delay_times():

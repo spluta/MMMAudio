@@ -503,7 +503,7 @@ struct SinOsc[num_chans: Int = 1, os_index: Int = 0] (Representable, Movable, Co
 struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
     """A low-frequency sawtooth oscillator.
     
-    This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+    This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to comptimeing.
 
     Outputs values between 0.0 and 1.0.
 
@@ -541,7 +541,7 @@ struct LFSaw[num_chans: Int = 1] (Representable, Movable, Copyable):
 struct LFSquare[num_chans: Int = 1] (Representable, Movable, Copyable):
     """A low-frequency square wave oscillator.
     
-    Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
+    Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to comptimeing.
 
     Parameters:
         num_chans: Number of channels (default is 1).
@@ -576,7 +576,7 @@ struct LFTri[num_chans: Int = 1] (Representable, Movable, Copyable):
     """A low-frequency triangle wave oscillator.
     
     This oscillator generates a triangle wave at audio rate. It is useful for 
-    modulation, but should be avoided for audio-rate synthesis due to aliasing.
+    modulation, but should be avoided for audio-rate synthesis due to comptimeing.
 
     Parameters:
         num_chans: Number of channels (default is 1).

@@ -1,5 +1,5 @@
 """
-A synthesis example that sends Dust, single sample triggers to a Virtual Analog Moog-style ladder filter. The ladder filter uses oversampling that allows for more extreme resonance settings without aliasing artifacts.
+A synthesis example that sends Dust, single sample triggers to a Virtual Analog Moog-style ladder filter. The ladder filter uses oversampling that allows for more extreme resonance settings without comptimeing artifacts.
 """
 
 
