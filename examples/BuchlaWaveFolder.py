@@ -17,10 +17,3 @@ mmm_audio.start_audio()
 
 mmm_audio.stop_audio()
 mmm_audio.plot(4000)
-
-# plot the spectrum of the the plotted output
-from numpy import fft
-from matplotlib import pyplot as plt
-spectrum = fft.rfft(mmm_audio.returned_samples[:, 0])
-plt.plot(spectrum)
-plt.show()

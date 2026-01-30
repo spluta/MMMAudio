@@ -43,6 +43,10 @@ struct MMMAudioBridge(Representable, Movable):
         self.world = LegacyUnsafePointer[MMMWorld].alloc(1)
         __get_address_as_uninit_lvalue(self.world.address) = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
 
+        # maybe this will just work?
+        # a = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
+        # ptr = UnsafePointer(to=a)
+
         self.graph = FeedbackDelays(self.world)
 
     @staticmethod
