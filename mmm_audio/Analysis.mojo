@@ -22,11 +22,11 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         min_freq: The minimum frequency to consider for pitch detection.
         max_freq: The maximum frequency to consider for pitch detection.
     """
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var pitch: Float64
     var confidence: Float64
     var sample_rate: Float64
-    var fft: RealFFT[window_size * 2]
+    var fft: RealFFT[Self.window_size * 2]
     var fft_input: List[Float64]
     var fft_power_mags: List[Float64]
     var fft_zero_phases: List[Float64]
@@ -34,7 +34,7 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
     var yin_buffer: List[Float64]
     var yin_values: List[Float64]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """Initialize the YIN pitch detector.
 
         Args:
@@ -47,13 +47,13 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         self.pitch = 0.0
         self.confidence = 0.0
         self.sample_rate = self.world[].sample_rate
-        self.fft = RealFFT[window_size * 2]()
-        self.fft_input = List[Float64](length=window_size * 2, fill=0.0)
-        self.fft_power_mags = List[Float64](length=window_size + 1, fill=0.0)
-        self.fft_zero_phases = List[Float64](length=window_size + 1, fill=0.0)
-        self.acf_real = List[Float64](length=window_size * 2, fill=0.0)
-        self.yin_buffer = List[Float64](length=window_size, fill=0.0)
-        self.yin_values = List[Float64](length=window_size, fill=0.0)
+        self.fft = RealFFT[Self.window_size * 2]()
+        self.fft_input = List[Float64](length=Self.window_size * 2, fill=0.0)
+        self.fft_power_mags = List[Float64](length=Self.window_size + 1, fill=0.0)
+        self.fft_zero_phases = List[Float64](length=Self.window_size + 1, fill=0.0)
+        self.acf_real = List[Float64](length=Self.window_size * 2, fill=0.0)
+        self.yin_buffer = List[Float64](length=Self.window_size, fill=0.0)
+        self.yin_values = List[Float64](length=Self.window_size, fill=0.0)
     
     fn next_window(mut self, mut frame: List[Float64]):
         """Compute the YIN pitch estimate for the given frame of audio samples.
@@ -112,8 +112,8 @@ struct YIN[window_size: Int, min_freq: Float64 = 20, max_freq: Float64 = 20000](
         var local_pitch = 0.0
         var local_conf = 0.0
         if tmp_sum > 0.0:
-            var high_freq = max_freq if max_freq > 0.0 else 1.0
-            var low_freq = min_freq if min_freq > 0.0 else 1.0
+            var high_freq = Self.max_freq if Self.max_freq > 0.0 else 1.0
+            var low_freq = Self.min_freq if Self.min_freq > 0.0 else 1.0
             
             var min_bin = Int((self.sample_rate / high_freq) + 0.5)
             var max_bin = Int((self.sample_rate / low_freq) + 0.5)
@@ -176,10 +176,10 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
 
     """
 
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var centroid: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.centroid = 0.0
 
@@ -211,8 +211,8 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
         fft_size: Int = (len(mags) - 1) * 2
         binHz: Float64 = sample_rate / fft_size
 
-        min_bin = Int(ceil(min_freq / binHz))
-        max_bin = Int(floor(max_freq / binHz))
+        min_bin = Int(ceil(Self.min_freq / binHz))
+        max_bin = Int(floor(Self.max_freq / binHz))
         
         min_bin = max(min_bin, 0)
         max_bin = min(max_bin, fft_size // 2)
@@ -227,7 +227,7 @@ struct SpectralCentroid[min_freq: Float64 = 20, max_freq: Float64 = 20000, power
             m: Float64 = mags[i]
 
             @parameter
-            if power_mag:
+            if Self.power_mag:
                 m = m * m
 
             ampsum += m

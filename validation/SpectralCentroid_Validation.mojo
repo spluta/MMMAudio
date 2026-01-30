@@ -10,12 +10,12 @@ comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var fft: RealFFT[windowsize]
     var centroids: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], sample_rate: Float64):
+    fn __init__(out self, world: World, sample_rate: Float64):
         self.world = world
         self.fft = RealFFT[windowsize]()
         self.centroids = List[Float64]()

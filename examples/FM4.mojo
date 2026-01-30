@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct FM4(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
 
     var osc0: Osc[1, Interp.sinc, 2]
     var osc1: Osc[1, Interp.sinc, 2]
@@ -23,7 +23,7 @@ struct FM4(Movable, Copyable):
 
     var osc_frac: List[MFloat[1]]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World) :
         self.world = world
 
         self.osc0 = Osc[1, Interp.sinc, 2](world)

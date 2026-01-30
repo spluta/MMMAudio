@@ -4,7 +4,7 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestCombAllpass(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var synth: Impulse[1]
     var messenger: Messenger
     var which: Float64
@@ -15,7 +15,7 @@ struct TestCombAllpass(Movable, Copyable):
     var LP_Comb: LP_Comb[1, Interp.lagrange4]
     var delay_time: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.synth = Impulse[1](self.world)
         self.messenger = Messenger(world)

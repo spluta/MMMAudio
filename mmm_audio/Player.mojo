@@ -17,15 +17,15 @@ struct Play(Representable, Movable, Copyable):
     
     Plays back audio from a Buffer with variable rate, interpolation, looping, and triggering capabilities.
     """
-    var impulse: Phasor  # Current phase of the buf
+    var impulse: Phasor[1]  # Current phase of the buf
     var done: Bool
-    var world: LegacyUnsafePointer[MMMWorld]  
-    var rising_bool_detector: RisingBoolDetector
+    var world: World  
+    var rising_bool_detector: RisingBoolDetector[1]
     var start_frame: Int64 
     var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """ 
         
         Args:
@@ -148,18 +148,18 @@ struct Grain(Representable, Movable, Copyable):
 
     Used as part of the TGrains struct for triggered granular synthesis.
     """
-    var world: LegacyUnsafePointer[MMMWorld]  # Pointer to the MMMWorld instance
+    var world: World  # Pointer to the MMMWorld instance
 
     var start_frame: Int64
     var num_frames: Int64  
     var rate: Float64  
     var pan: Float64  
     var gain: Float64 
-    var rising_bool_detector: RisingBoolDetector
+    var rising_bool_detector: RisingBoolDetector[1]
     var play_buf: Play
     var win_phase: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """
 
         Args:
@@ -320,17 +320,17 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
     """
     var grains: List[Grain]  
     var counter: Int 
-    var rising_bool_detector: RisingBoolDetector 
+    var rising_bool_detector: RisingBoolDetector[1]
     var trig: Bool
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """
 
         Args:
             world: Pointer to the MMMWorld instance.
         """
         self.grains = List[Grain]()  # Initialize the list of grains
-        for _ in range(max_grains):
+        for _ in range(Self.max_grains):
             self.grains.append(Grain(world))  
         self.counter = 0  
         self.trig = False  
@@ -372,12 +372,12 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
 
         if self.rising_bool_detector.next(trig):
             self.counter += 1  # Increment the counter on trigger
-            if self.counter >= max_grains:
+            if self.counter >= Self.max_grains:
                 self.counter = 0  # Reset counter if it exceeds the number of grains
 
         out = SIMD[DType.float64, 2](0.0, 0.0)
         @parameter
-        for i in range(max_grains):
+        for i in range(Self.max_grains):
             b = i == self.counter and self.rising_bool_detector.state
             out += self.grains[i].next_pan2[num_playback_chans, WindowType.hann, bWrap=bWrap](buffer, rate, False, b, start_frame, duration, buf_chan, pan, gain)
 
@@ -418,12 +418,12 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
 
         if self.rising_bool_detector.next(trig):
             self.counter += 1  # Increment the counter on trigger
-            if self.counter >= max_grains:
+            if self.counter >= Self.max_grains:
                 self.counter = 0  # Reset counter if it exceeds the number of grains
 
         out = SIMD[DType.float64, num_simd_chans](0.0)
         @parameter
-        for i in range(max_grains):
+        for i in range(Self.max_grains):
             b = i == self.counter and self.rising_bool_detector.state
             out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, b, start_frame, duration, buf_chan, pan, gain)
 
@@ -444,15 +444,15 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         buf_dur: Duration of the internal buffer in seconds.
     """
     var grains: List[Grain]  
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var counter: Int 
-    var rising_bool_detector: RisingBoolDetector
+    var rising_bool_detector: RisingBoolDetector[1]
     var trig: Bool
-    var recorder: Recorder[num_chans]
-    var impulse: Dust
+    var recorder: Recorder[Self.num_chans]
+    var impulse: Dust[1]
     var pitch_ratio: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], buf_dur: Float64 = 1.0):
+    fn __init__(out self, world: World, buf_dur: Float64 = 1.0):
         """ 
 
         Args:
@@ -461,13 +461,13 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         """
         self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
-        for _ in range(overlaps+2):
+        for _ in range(Self.overlaps+2):
             self.grains.append(Grain(world)) 
             
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-        self.recorder = Recorder[num_chans](world, Int(buf_dur * world[].sample_rate), world[].sample_rate)
+        self.recorder = Recorder[Self.num_chans](world, Int(buf_dur * world[].sample_rate), world[].sample_rate)
         self.impulse = Dust(world)
         self.pitch_ratio = 1.0
     
@@ -475,7 +475,7 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         return String("TGrains")
 
     @always_inline
-    fn next(mut self, in_sig: SIMD[DType.float64, num_chans], grain_dur: Float64 = 0.2, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, in_sig: SIMD[DType.float64, Self.num_chans], grain_dur: Float64 = 0.2, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, gain: Float64 = 1.0) -> SIMD[DType.float64, Self.num_chans]:
         """Generate the next set of grains for pitch shifting.
 
         Args:
@@ -488,16 +488,16 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
         """
 
         self.recorder.write_next(in_sig)  # Write the input signal into the buffer
-        comptime overlaps_plus_2 = overlaps + 2
+        comptime overlaps_plus_2 = Self.overlaps + 2
 
-        trig_rate = overlaps / grain_dur
+        trig_rate = Self.overlaps / grain_dur
         trig = self.rising_bool_detector.next(
             self.impulse.next_bool(trig_rate*(1-time_dispersion), trig_rate*(1+time_dispersion), trig = SIMD[DType.bool, 1](fill=True))
             )
         if trig:
             self.counter = (self.counter + 1) % overlaps_plus_2  # Cycle through 6 grains
 
-        out = SIMD[DType.float64, num_chans](0.0)
+        out = SIMD[DType.float64, Self.num_chans](0.0)
 
         @parameter
         for i in range(overlaps_plus_2):
@@ -511,8 +511,8 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
                     start_frame = Int(Float64(self.recorder.write_head) - ((grain_dur * self.world[].sample_rate) * (self.pitch_ratio-1.0))) % Int(self.recorder.buf.num_frames)
                 
             if i == self.counter:
-                out += self.grains[i].next[num_chans, win_type=win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, True, start_frame, grain_dur, 0, 0.0, gain)
+                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, True, start_frame, grain_dur, 0, 0.0, gain)
             else:
-                out += self.grains[i].next[num_chans, win_type=win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, False, start_frame, grain_dur, 0, 0.0, gain)
+                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, False, start_frame, grain_dur, 0, 0.0, gain)
 
         return out

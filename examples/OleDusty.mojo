@@ -3,10 +3,10 @@ from mmm_audio import *
 # THE SYNTH
 
 struct Dusty(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]  
+    var world: World  
     var dust: Dust[2] 
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.dust = Dust[2](world)
 
@@ -25,13 +25,13 @@ struct Dusty(Representable, Movable, Copyable):
 # THE GRAPH
 
 struct OleDusty(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]  
+    var world: World  
     var dusty: Dusty
     var reson: Reson[2]
     var freq: MMMFloat[1]
     var lag: Lag
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.dusty = Dusty(world)
         self.reson = Reson[2](world)

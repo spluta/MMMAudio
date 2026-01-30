@@ -5,14 +5,14 @@ comptime num_output_channels = 8
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestSplay[num: Int = 1000](Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var osc: List[Osc[2]]
     var freqs: List[Float64]
     var mult: Float64
     var samples: List[SIMD[DType.float64, 2]]
     var splay: SplayN[num_output_channels]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.osc = [Osc[2](self.world) for _ in range(self.num)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(self.num)]

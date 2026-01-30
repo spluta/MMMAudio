@@ -1,14 +1,14 @@
 from mmm_audio import *
 
 struct BuchlaWaveFolder_AD(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]  
+    var world: World  
     var osc: Osc[2]
     var lag: Lag
     var b259: BuchlaWavefolder[2, 1]
     var m: Messenger
 
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
         self.osc = Osc[2](world)

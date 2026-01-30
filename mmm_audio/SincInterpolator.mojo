@@ -64,7 +64,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
     fn spaced_sinc[bWrap: Bool = False, mask: Int = 0](self, data: List[Float64], index: Int64, frac: Float64, spacing: Int64) -> Float64:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
         sinc_mult = self.max_sinc_offset / spacing
-        loop_count = ripples * 2
+        loop_count = Self.ripples * 2
         
         # Try to process in SIMD chunks if the loop is large enough
         comptime simd_width = simd_width_of[DType.float64]()
@@ -73,13 +73,13 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
         
         # Process SIMD chunks
         for base_sp in range(0, loop_count, simd_width):
-            remaining = min(simd_width, loop_count - base_sp)
+            remaining: Int64 = min(Int64(simd_width), loop_count - base_sp)
             
             @parameter
             for i in range(simd_width):
                 if Int64(i) < remaining:
                     sp = base_sp + i
-                    offset: Int64 = Int64(sp - ripples + 1)
+                    offset: Int64 = Int64(sp - Self.ripples + 1)
                     
                     @parameter
                     if bWrap:
@@ -169,7 +169,7 @@ struct SincInterpolator[ripples: Int64 = 4, power: Int64 = 14](Movable, Copyable
     fn build_sinc_table(table_size: Int64) -> List[Float64]:
         
         # Create evenly spaced points - the width is determined by ripples
-        var width = Float64(ripples)
+        var width = Float64(Self.ripples)
         # Create evenly spaced x values from -width*π to width*π
         var x_values = List[Float64]()
 

@@ -5,13 +5,13 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var osc: Osc
     var lag: Lag
     var clip: SoftClipAD[1,4]
     var overdrive: TanhAD[num_chans]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.osc = Osc(world)
         self.clip = SoftClipAD[1,4](world)

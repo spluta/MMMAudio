@@ -9,7 +9,7 @@ Ported to MMMAudio by Ted Moore, October 2025
 from mmm_audio import *
 
 struct Benjolin(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]  
+    var world: World  
     var m: Messenger
     var feedback: Float64
     var rungler: Float64
@@ -39,7 +39,7 @@ struct Benjolin(Representable, Movable, Copyable):
     var outSignalL: Float64
     var outSignalR: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.m = Messenger(self.world)
         self.feedback = 0.0
@@ -153,10 +153,10 @@ struct Benjolin(Representable, Movable, Copyable):
         return output * 0.4
 
 struct BenjolinExample(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var benjolin: Benjolin
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.benjolin = Benjolin(self.world)
 

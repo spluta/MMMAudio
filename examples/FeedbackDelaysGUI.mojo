@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct DelaySynth(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     comptime maxdelay = 1.0
     var main_lag: Lag
     var buf: Buffer
@@ -20,7 +20,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mix: Float64
     var main: Bool
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world  
         self.main_lag = Lag(self.world, 0.03)
         self.buf = Buffer.load("resources/Shiverer.wav")
@@ -69,10 +69,10 @@ struct DelaySynth(Representable, Movable, Copyable):
 
 
 struct FeedbackDelaysGUI(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 

@@ -9,10 +9,10 @@ comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var rms_values: List[Float64]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.rms_values = List[Float64]()
 

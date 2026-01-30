@@ -19,12 +19,12 @@ comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var yin: YIN[windowsize, minfreq, maxfreq]
     var freqs: List[Float64]
     var confs: List[Float64]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.yin = YIN[windowsize, minfreq, maxfreq](self.world)
         self.freqs = List[Float64]()

@@ -1,14 +1,14 @@
 from mmm_audio import *
 
 struct DelaySynth(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
 
     var buf: Buffer
     var playBuf: Play
     var delays: FB_Delay[2, Interp.lagrange4, True, 1]  # FB_Delay for feedback delay effect - notice we are using ADAA and Oversampling in the internal Tanh funciton.
     var lag: Lag[2]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world  
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -41,10 +41,10 @@ struct DelaySynth(Representable, Movable, Copyable):
 
 
 struct FeedbackDelays(Representable, Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 

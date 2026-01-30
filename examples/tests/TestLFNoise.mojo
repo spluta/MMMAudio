@@ -4,12 +4,12 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestLFNoise[num_osc: Int = 4](Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var noise: LFNoise[num_osc, 1]
     var synth: Osc[num_osc]
     var interp: Int64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.noise = LFNoise[num_osc, 1](self.world)
         self.synth = Osc[num_osc](self.world)

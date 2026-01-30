@@ -83,6 +83,8 @@ comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
 #     fn __repr__(self) -> String:
 #         return "MMMBool" + String(self.data)
 
+comptime World = LegacyUnsafePointer[mut=True, MMMWorld]
+
 struct MMMWorld(Representable, Movable, Copyable):
     """The MMMWorld struct holds global audio processing parameters and state.
 
@@ -113,7 +115,7 @@ struct MMMWorld(Representable, Movable, Copyable):
 
     var messengerManager: MessengerManager
 
-    # var pointer_to_self: LegacyUnsafePointer[MMMWorld]
+    # var pointer_to_self: World
     var last_print_time: Float64
     var print_flag: Int64
     var last_print_flag: Int64
@@ -148,7 +150,7 @@ struct MMMWorld(Representable, Movable, Copyable):
         # I don't know why, but objects don't see these as updated? maybe it is copying the world when I pass it?
         self.mouse_x = 0.0
         self.mouse_y = 0.0
-        self.screen_dims = List[Float64](0.0, 0.0)  # Initialize screen dimensions with zeros
+        self.screen_dims = [0.0, 0.0]  # Initialize screen dimensions with zeros
 
         self.block_state = 0
 

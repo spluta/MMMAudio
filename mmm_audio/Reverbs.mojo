@@ -14,23 +14,23 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     Parameters:
       num_chans: Size of the SIMD vector - defaults to 1.
     """
-    var world: LegacyUnsafePointer[MMMWorld]
-    var lp_comb0: LP_Comb[num_chans]
-    var lp_comb1: LP_Comb[num_chans]
-    var lp_comb2: LP_Comb[num_chans]
-    var lp_comb3: LP_Comb[num_chans]
-    var lp_comb4: LP_Comb[num_chans]
-    var lp_comb5: LP_Comb[num_chans]
-    var lp_comb6: LP_Comb[num_chans]
-    var lp_comb7: LP_Comb[num_chans]
+    var world: World
+    var lp_comb0: LP_Comb[Self.num_chans]
+    var lp_comb1: LP_Comb[Self.num_chans]
+    var lp_comb2: LP_Comb[Self.num_chans]
+    var lp_comb3: LP_Comb[Self.num_chans]
+    var lp_comb4: LP_Comb[Self.num_chans]
+    var lp_comb5: LP_Comb[Self.num_chans]
+    var lp_comb6: LP_Comb[Self.num_chans]
+    var lp_comb7: LP_Comb[Self.num_chans]
 
     var temp: List[Float64]
-    var allpass_combs: List[Allpass_Comb[num_chans]]
+    var allpass_combs: List[Allpass_Comb[Self.num_chans]]
     var feedback: List[Float64]
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
       """
       Initialize the Freeverb struct.
 
@@ -42,17 +42,17 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         
         # I tried doing this with lists of LP_Comb[N] but avoiding lists seems to work better in Mojo currently
 
-        self.lp_comb0 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb1 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb2 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb3 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb4 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb5 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb6 = LP_Comb[num_chans](self.world, 0.04)
-        self.lp_comb7 = LP_Comb[num_chans](self.world, 0.04)
+        self.lp_comb0 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb1 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb2 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb3 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb4 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb5 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb6 = LP_Comb[Self.num_chans](self.world, 0.04)
+        self.lp_comb7 = LP_Comb[Self.num_chans](self.world, 0.04)
 
         self.temp = [0.0 for _ in range(8)]
-        self.allpass_combs = [Allpass_Comb[num_chans](self.world, 0.015) for _ in range(4)]
+        self.allpass_combs = [Allpass_Comb[Self.num_chans](self.world, 0.015) for _ in range(4)]
         
         self.feedback = [0.0]
         self.lp_comb_lpfreq = [1000.0]

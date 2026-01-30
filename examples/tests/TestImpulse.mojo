@@ -5,7 +5,7 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestImpulse(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var synth: Impulse[2]
     var trig: SIMD[DType.bool, 2]
     var freqs: SIMD[DType.float64, 2]
@@ -13,7 +13,7 @@ struct TestImpulse(Movable, Copyable):
     var ints: List[Int64]
     var phase_offsets: SIMD[DType.float64, 2]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.synth = Impulse[2](self.world)
         self.trig = SIMD[DType.bool, 2](fill=True)

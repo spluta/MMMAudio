@@ -5,10 +5,10 @@ struct Print(Representable, Copyable, Movable):
     """
     A struct for printing values in the MMMWorld environment.
     """
-    var impulse: Impulse
-    var world: LegacyUnsafePointer[MMMWorld]
+    var impulse: Impulse[1]
+    var world: World
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """
         Initialize the Print struct.
 

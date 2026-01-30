@@ -4,15 +4,15 @@ struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
     Parameters:
         num_chans: The size of the SIMD vector - defaults to 1.
     """
-    var state: SIMD[DType.bool, num_chans]
+    var state: SIMD[DType.bool, Self.num_chans]
 
     fn __init__(out self):
-        self.state = SIMD[DType.bool, num_chans](fill=False)
+        self.state = SIMD[DType.bool, Self.num_chans](fill=False)
         
     fn __repr__(self) -> String:
         return String("RisingBoolDetector")
     
-    fn next(mut self, trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.bool, num_chans]:
+    fn next(mut self, trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.bool, Self.num_chans]:
         """Check if a trigger has occurred (rising edge) per SIMD lane.
         
         Args:
@@ -33,20 +33,20 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
     Parameters:
         num_chans: The size of the SIMD vector - defaults to 1.
     """
-    var state: SIMD[DType.bool, num_chans]
-    var rbd: RisingBoolDetector[num_chans]
+    var state: SIMD[DType.bool, Self.num_chans]
+    var rbd: RisingBoolDetector[Self.num_chans]
 
     fn __init__(out self):
         """
         Initialize the ToggleBool struct.
         """
-        self.state = SIMD[DType.bool, num_chans](fill=False)
-        self.rbd = RisingBoolDetector[num_chans]()
+        self.state = SIMD[DType.bool, Self.num_chans](fill=False)
+        self.rbd = RisingBoolDetector[Self.num_chans]()
         
     fn __repr__(self) -> String:
         return String("RisingBoolDetector")
     
-    fn next(mut self, trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.bool, num_chans]:
+    fn next(mut self, trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.bool, Self.num_chans]:
         """Check if a trigger has occurred (rising edge) per SIMD lane.
         
         Args:

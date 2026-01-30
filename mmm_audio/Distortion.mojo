@@ -27,18 +27,18 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
     Parameters:
         num_chans: The number of channels for SIMD operations.
     """
-    var samp: SIMD[DType.float64, num_chans]
-    var last_trig: SIMD[DType.bool, num_chans]
+    var samp: SIMD[DType.float64, Self.num_chans]
+    var last_trig: SIMD[DType.bool, Self.num_chans]
 
     fn __init__(out self):
         """Initialize the Latch."""
-        self.samp = SIMD[DType.float64, num_chans](0)
-        self.last_trig = SIMD[DType.bool, num_chans](False)
+        self.samp = SIMD[DType.float64, Self.num_chans](0)
+        self.last_trig = SIMD[DType.bool, Self.num_chans](False)
 
     fn __repr__(self) -> String:
         return String("Latch")
 
-    fn next(mut self, in_samp: SIMD[DType.float64, self.num_chans], trig: SIMD[DType.bool, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self, in_samp: SIMD[DType.float64, Self.num_chans], trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """
         Process the input sample and trigger, returning the latched output sample.
 
@@ -47,7 +47,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
             trig: A boolean trigger signal. When switching from false to true, the latch updates its output to the current input sample.
         """
         
-        rising_edge: SIMD[DType.bool, self.num_chans] = trig & ~self.last_trig
+        rising_edge: SIMD[DType.bool, Self.num_chans] = trig & ~self.last_trig
         self.samp = rising_edge.select(in_samp, self.samp)
         self.last_trig = trig
         return self.samp
@@ -81,33 +81,33 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).
         degree: The degree of the soft clipping polynomial (must be odd).
     """
-    comptime times_oversampling = 2 ** os_index
-    var x1: SIMD[DType.float64, num_chans]
-    var oversampling: Oversampling[num_chans, Self.times_oversampling]
-    var upsampler: Upsampler[num_chans, Self.times_oversampling]
+    comptime times_oversampling = 2 ** Self.os_index    
+    var x1: SIMD[DType.float64, Self.num_chans]
+    var oversampling: Oversampling[Self.num_chans, Self.times_oversampling]
+    var upsampler: Upsampler[Self.num_chans, Self.times_oversampling]
     var D: Int
     var norm_factor: Float64
     var inv_norm_factor: Float64
     comptime TOL = 1.0e-5
     var G1: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
-        self.x1 = SIMD[DType.float64, num_chans](0.0)
-        if os_index > 1:
+    fn __init__(out self, world: World):
+        self.x1 = SIMD[DType.float64, Self.num_chans](0.0)
+        if Self.os_index > 1:
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
-        self.oversampling = Oversampling[num_chans, Self.times_oversampling](world)
-        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
-        self.D = degree // 2 * 2 + 1  # ensure degree is odd
+        self.oversampling = Oversampling[Self.num_chans, Self.times_oversampling](world)
+        self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
+        self.D = Self.degree // 2 * 2 + 1  # ensure degree is odd
         self.norm_factor = (self.D - 1) / self.D
         self.inv_norm_factor = 1.0 / self.norm_factor
         self.G1 = 1.0 / (2.0 * (self.norm_factor * self.norm_factor)) - 1.0 / ((self.norm_factor * self.norm_factor) * self.D * (self.D + 1))
 
     @doc_private
     @always_inline
-    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next_norm(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """Transfer function: x - x^n/n"""
 
-        mask: SIMD[DType.bool, num_chans] = abs(x*self.norm_factor).gt(1.0)
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x*self.norm_factor).gt(1.0)
 
         out = ((x * self.norm_factor) - pow(x * self.norm_factor, self.D) / self.D) * self.inv_norm_factor
 
@@ -117,9 +117,9 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
 
     @doc_private
     @always_inline
-    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next_AD1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """First antiderivative: x²/2 - x^(n+1) / (n*(n+1))"""
-        mask: SIMD[DType.bool, num_chans] = abs(x*self.norm_factor).gt(1.0)
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x*self.norm_factor).gt(1.0)
 
         outA = x * sign(x) + self.G1 - self.inv_norm_factor
 
@@ -129,7 +129,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
 
     @doc_private
     @always_inline
-    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """
         Computes the first-order anti-aliased SoftClip.
 
@@ -146,7 +146,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         return out
 
     @always_inline
-    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -158,7 +158,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
             The anti-aliased `soft_clip` of `x`.
         """
         @parameter
-        if os_index == 0:
+        if Self.os_index == 0:
             return self._next1(x)
         else:
             @parameter
@@ -182,47 +182,47 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         num_chans: The number of channels for SIMD operations.
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).
     """
-    var x1: SIMD[DType.float64, num_chans]
-    var x2: SIMD[DType.float64, num_chans]
-    var oversampling: Oversampling[num_chans, 2 ** os_index]
-    var upsampler: Upsampler[num_chans, 2 ** os_index]
+    var x1: SIMD[DType.float64, Self.num_chans]
+    var x2: SIMD[DType.float64, Self.num_chans]
+    var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
+    var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
     comptime TOL = 1.0e-5
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """Initialize the HardClipAD.
         
         Args:
             world: A pointer to the MMMWorld.
         """
-        self.x1 = SIMD[DType.float64, num_chans](0.0)
-        self.x2 = SIMD[DType.float64, num_chans](0.0)
-        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
-        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
+        self.x1 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.x2 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
+        self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
     @doc_private
     @always_inline
-    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
+    fn _next_norm(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x).lt(1.0)
         return mask.select(x, sign(x))
 
     @doc_private
     @always_inline
-    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
+    fn _next_AD1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x).lt(1.0)
         return mask.select(x * x * 0.5, x * sign(x) - 0.5)
 
     @doc_private
     @always_inline
-    fn _next_AD2(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        mask: SIMD[DType.bool, num_chans] = abs(x).lt(1.0)
+    fn _next_AD2(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x).lt(1.0)
 
         return mask.select(x * x * x / 6.0, ((x * x * 0.5) + (1.0 / 6.0)) * sign(x) - (x/2))
 
     @doc_private
     @always_inline
-    fn _calcD(mut self, x0: SIMD[DType.float64, num_chans], x1: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _calcD(mut self, x0: SIMD[DType.float64, Self.num_chans], x1: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
 
-        mask: SIMD[DType.bool, num_chans] = abs(x0 - x1).lt(self.TOL)
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x0 - x1).lt(self.TOL)
 
         return mask.select(
             self._next_AD1((x0 + x1) * 0.5),
@@ -231,11 +231,11 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     @doc_private
     @always_inline
-    fn _fallback(mut self, x0: SIMD[DType.float64, num_chans], x2: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _fallback(mut self, x0: SIMD[DType.float64, Self.num_chans], x2: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         x_bar = (x0 + x2) * 0.5
         delta = x_bar - x0
 
-        mask: SIMD[DType.bool, num_chans] = abs(delta).lt(self.TOL)  # Changed to abs(delta)
+        mask: SIMD[DType.bool, Self.num_chans] = abs(delta).lt(self.TOL)  # Changed to abs(delta)
         return mask.select(
             self._next_norm((x_bar + x0) * 0.5),
             (2.0 / delta) * (self._next_AD1(x_bar) + (self._next_AD2(x0) - self._next_AD2(x_bar)) / delta)
@@ -243,14 +243,14 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     @doc_private
     @always_inline
-    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
+    fn _next1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x - self. x1).lt(self.TOL)
         out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
 
     @always_inline
-    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -262,10 +262,10 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             The anti-aliased `hard_clip` of `x`.
         """
         @parameter
-        if os_index == 0:
+        if Self.os_index == 0:
             return self._next1(x)
         else:
-            comptime times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** Self.os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input
@@ -284,31 +284,31 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         os_index: The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).
     """
 
-    var x1: SIMD[DType.float64, num_chans]
+    var x1: SIMD[DType.float64, Self.num_chans]
     # var x2: SIMD[DType.float64, num_chans]
     comptime TOL = 1.0e-5
-    var oversampling: Oversampling[num_chans, 2 ** os_index]
-    var upsampler: Upsampler[num_chans, 2 ** os_index]
+    var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
+    var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """Initialize the TanhAD.
 
         Args:
             world: A pointer to the MMMWorld.
         """
-        self.x1 = SIMD[DType.float64, num_chans](0.0)
-        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
-        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
+        self.x1 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
+        self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
     @doc_private
-    fn _next_norm(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next_norm(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         return tanh(x)
 
     @doc_private
-    fn _next_AD1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next_AD1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         return log (cosh (x))
 
-    fn _next1(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn _next1(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """
         Computes the first-order anti-aliased `tanh` of `x`.
 
@@ -320,14 +320,14 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         Returns:
             The anti-aliased `tanh` of `x`.
         """
-        mask: SIMD[DType.bool, num_chans] = abs(x - self. x1).lt(self.TOL)
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x - self. x1).lt(self.TOL)
 
         out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
     
     @always_inline
-    fn next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -339,10 +339,10 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             The anti-aliased `hard_clip` of `x`.
         """
         @parameter
-        if os_index == 0:
+        if Self.os_index == 0:
             return self._next1(x)
         else:
-            comptime times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** Self.os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input
@@ -410,13 +410,13 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
         self.Bp = 0.5 * G * (thresh*thresh) - B * thresh
         self.Bpp = Self.one_sixth * G * (thresh*thresh*thresh) - 0.5 * B * (thresh*thresh) - thresh * self.Bp
 
-    fn func(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        mask: SIMD[DType.bool, num_chans] = abs(x).gt(self.thresh)
-        return mask.select(self.G * x - self.B * sign(x), SIMD[DType.float64, num_chans](0.0))
+    fn func(self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        mask: SIMD[DType.bool, Self.num_chans] = abs(x).gt(self.thresh)
+        return mask.select(self.G * x - self.B * sign(x), SIMD[DType.float64, Self.num_chans](0.0))
 
-    fn func_AD(self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
-        var mask: SIMD[DType.bool, num_chans] = abs(x).gt(self.thresh)
-        return mask.select(0.5 * self.G * (x * x) - self.B * x * sign(x) - self.Bp, SIMD[DType.float64, num_chans](0.0))
+    fn func_AD(self, x: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        var mask: SIMD[DType.bool, Self.num_chans] = abs(x).gt(self.thresh)
+        return mask.select(0.5 * self.G * (x * x) - self.B * x * sign(x) - self.Bp, SIMD[DType.float64, Self.num_chans](0.0))
 
     # fn func_AD2(self, x: Float64) -> Float64:
     #     var sgn = sign(x)
@@ -438,43 +438,43 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     """
     
     comptime x_mix: Float64 = 5.0
-    var cells: List[BuchlaCell[num_chans]]
+    var cells: List[BuchlaCell[Self.num_chans]]
     comptime TOL: Float64 = 1.0e-5
-    var x1: SIMD[DType.float64, num_chans]
-    var world: LegacyUnsafePointer[MMMWorld]
-    var oversampling: Oversampling[num_chans, 2 ** os_index]
-    var upsampler: Upsampler[num_chans, 2 ** os_index]
+    var x1: SIMD[DType.float64, Self.num_chans]
+    var world: World
+    var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
+    var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """Initialize the BuchlaWavefolder.
 
         Args:
             world: A pointer to the MMMWorld.
         """
         self.world = world
-        self.x1 = SIMD[DType.float64, num_chans](0.0)
+        self.x1 = SIMD[DType.float64, Self.num_chans](0.0)
         # Initialize folder cells
-        self.cells = List[BuchlaCell[num_chans]]()
-        self.cells.append(BuchlaCell[num_chans](0.8333, 0.5, 0.6, -12.0))
-        self.cells.append(BuchlaCell[num_chans](0.3768, 1.1281, 2.994, -27.777))
-        self.cells.append(BuchlaCell[num_chans](0.2829, 1.5446, 5.46, -21.428))
-        self.cells.append(BuchlaCell[num_chans](0.5743, 1.0338, 1.8, 17.647))
-        self.cells.append(BuchlaCell[num_chans](0.2673, 1.0907, 4.08, 36.363))
-        self.oversampling = Oversampling[num_chans, 2 ** os_index](world)
-        self.upsampler = Upsampler[num_chans, 2 ** os_index](world)
+        self.cells = List[BuchlaCell[Self.num_chans]]()
+        self.cells.append(BuchlaCell[Self.num_chans](0.8333, 0.5, 0.6, -12.0))
+        self.cells.append(BuchlaCell[Self.num_chans](0.3768, 1.1281, 2.994, -27.777))
+        self.cells.append(BuchlaCell[Self.num_chans](0.2829, 1.5446, 5.46, -21.428))
+        self.cells.append(BuchlaCell[Self.num_chans](0.5743, 1.0338, 1.8, 17.647))
+        self.cells.append(BuchlaCell[Self.num_chans](0.2673, 1.0907, 4.08, 36.363))
+        self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
+        self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
     @doc_private
-    fn _next_norm(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+    fn _next_norm(self, x: SIMD[DType.float64, Self.num_chans], amp: Float64) -> SIMD[DType.float64, Self.num_chans]:
         x2 = x * amp
-        var y: SIMD[DType.float64, num_chans] = Self.x_mix * x2
+        var y: SIMD[DType.float64, Self.num_chans] = Self.x_mix * x2
         for i in range(len(self.cells)):
             y += self.cells[i].mix * self.cells[i].func(x2)
         return y / amp
 
     @doc_private
-    fn _next_AD1(self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+    fn _next_AD1(self, x: SIMD[DType.float64, Self.num_chans], amp: Float64) -> SIMD[DType.float64, Self.num_chans]:
         x2 = x * amp
-        var y: SIMD[DType.float64, num_chans] = 0.5 * Self.x_mix * (x2 * x2)
+        var y: SIMD[DType.float64, Self.num_chans] = 0.5 * Self.x_mix * (x2 * x2)
         for i in range(len(self.cells)):
             y += self.cells[i].mix * self.cells[i].func_AD(x2)
         return y / (amp * amp)
@@ -487,7 +487,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     #     return y
     @doc_private
     @always_inline
-    fn _next1(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+    fn _next1(mut self, x: SIMD[DType.float64, Self.num_chans], amp: Float64) -> SIMD[DType.float64, Self.num_chans]:
         """
         Computes the first-order anti-aliased BuchlaWavefolder.
 
@@ -505,7 +505,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         return out
 
     @always_inline
-    fn next(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]:
+    fn next(mut self, x: SIMD[DType.float64, Self.num_chans], amp: Float64) -> SIMD[DType.float64, Self.num_chans]:
         """First-order anti-aliased BuchlaWavefolder.
 
         Computes the first-order anti-aliased BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -518,10 +518,10 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
             The anti-aliased `hard_clip` of `x`.
         """
         @parameter
-        if os_index == 0:
+        if Self.os_index == 0:
             return self._next1(x, amp)
         else:
-            comptime times_oversampling = 2 ** os_index
+            comptime times_oversampling = 2 ** Self.os_index
             @parameter
             for i in range(times_oversampling):
                 # upsample the input

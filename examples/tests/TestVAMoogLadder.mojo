@@ -4,7 +4,7 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var noise: WhiteNoise[N]
     var filt0: VAMoogLadder[N, 0]
     var filt2: VAMoogLadder[N, 2]
@@ -13,7 +13,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
     var which: Float64
 
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.noise = WhiteNoise[N]()
         self.filt0 = VAMoogLadder[N, 0](world)

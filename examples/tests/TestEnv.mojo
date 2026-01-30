@@ -4,7 +4,7 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestEnv(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var env_params: EnvParams
     var env: Env
     var synth: Osc
@@ -12,7 +12,7 @@ struct TestEnv(Movable, Copyable):
     var impulse: Impulse
     var mul: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.env_params = EnvParams(List[Float64](0, 1.0, 0.5, 0.5, 0.0), List[Float64](1, 1, 0.5, 4), List[Float64](2), True, 0.1)
         self.env = Env(self.world)

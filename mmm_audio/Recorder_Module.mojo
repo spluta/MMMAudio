@@ -13,11 +13,11 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: The number of channels in the buffer. Default is 1 (mono).
     """
 
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var write_head: Int64
     var buf: Buffer
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld], num_frames: Int64, sample_rate: Float64):
+    fn __init__(out self, world: World, num_frames: Int64, sample_rate: Float64):
         """
         Initialize the Recorder struct.
 
@@ -28,7 +28,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         self.world = world
         self.write_head = 0
-        self.buf = Buffer.zeros(num_frames, num_chans, sample_rate)
+        self.buf = Buffer.zeros(num_frames, Self.num_chans, sample_rate)
 
     fn replace_buffer(mut self, new_buf: Buffer):
         """
@@ -37,7 +37,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         Args:
             new_buf: The new buffer to replace the existing buffer with.
         """
-        if new_buf.num_chans != num_chans:
+        if new_buf.num_chans != Self.num_chans:
             print("Recorder::replace_buffer: New buffer must have the same number of channels as existing buffer.")
             return
         self.buf = new_buf.copy()
@@ -47,7 +47,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("RecordBuf")
     
     # Write SIMD input to buffer
-    fn write(mut self, input: SIMD[DType.float64, num_chans], index: Int64):
+    fn write(mut self, input: SIMD[DType.float64, Self.num_chans], index: Int64):
         """
         Write SIMD input to buffer at specified index. Used internally by write_next and write_previous, which will be more appropriate for most use cases.
 
@@ -59,11 +59,11 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         if index >= self.buf.num_frames:
             print("Recorder::write: Index out of bounds:", index)
 
-        for chan in range(num_chans):
+        for chan in range(Self.num_chans):
             self.buf.data[chan][index] = input[chan]
 
     # write_next SIMD input to buffer at current write head and advance write head
-    fn write_next(mut self, value: SIMD[DType.float64, num_chans]):
+    fn write_next(mut self, value: SIMD[DType.float64, Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and advance write head forward. This is the correct option in most use cases.
         
@@ -73,7 +73,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.write(value, self.write_head)
         self.write_head = (self.write_head + 1) % self.buf.num_frames
     
-    fn write_previous(mut self, value: SIMD[DType.float64, num_chans]):
+    fn write_previous(mut self, value: SIMD[DType.float64, Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and move write head backward. This is useful for things like delay lines, which write backwards through a buffer so they can interpolate forwards.
 

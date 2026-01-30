@@ -4,14 +4,14 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestLatch(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var osc: SinOsc
     var lfo: SinOsc
     var latch: Latch 
     var dusty: Dust
     var messenger: Messenger
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.osc = SinOsc(self.world)
         self.lfo = SinOsc(self.world)

@@ -7,7 +7,7 @@ alias window_size = 2048
 alias hop_size = window_size // 2
 
 struct BinDelaysWindow[window_size: Int](FFTProcessable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var delays: List[Delay[2, Interp.none]]
     var delay_times: List[Int64]
     var feedback: List[Float64]
@@ -15,7 +15,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
     var one_samp: Float64
 
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.one_samp = 1.0 / self.world[].sample_rate
         self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, window_size // 2 + 1)]

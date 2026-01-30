@@ -28,19 +28,19 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         size: Size of the FFT (must be a power of two).
         num_chans: Number of channels for SIMD processing.
     """
-    var result: List[ComplexSIMD[DType.float64, num_chans]]
-    var reversed: List[ComplexSIMD[DType.float64, num_chans]]   
-    comptime log_n: Int = log2_int(size//2)
-    comptime log_n_full: Int = log2_int(size)
-    comptime scale: Float64 = 1.0 / Float64(size)
-    var mags: List[SIMD[DType.float64, num_chans]]
-    var phases: List[SIMD[DType.float64, num_chans]]
-    var w_ms: List[ComplexSIMD[DType.float64, num_chans]]
+    var result: List[ComplexSIMD[DType.float64, Self.num_chans]]
+    var reversed: List[ComplexSIMD[DType.float64, Self.num_chans]]   
+    comptime log_n: Int = log2_int(Self.size//2)
+    comptime log_n_full: Int = log2_int(Self.size)
+    comptime scale: Float64 = 1.0 / Float64(Self.size)
+    var mags: List[SIMD[DType.float64, Self.num_chans]]
+    var phases: List[SIMD[DType.float64, Self.num_chans]]
+    var w_ms: List[ComplexSIMD[DType.float64, Self.num_chans]]
     var bit_reverse_lut: List[Int]
-    var packed_freq: List[ComplexSIMD[DType.float64, num_chans]]
-    var unpacked: List[ComplexSIMD[DType.float64, num_chans]]
+    var packed_freq: List[ComplexSIMD[DType.float64, Self.num_chans]]
+    var unpacked: List[ComplexSIMD[DType.float64, Self.num_chans]]
 
-    var unpack_twiddles: List[ComplexSIMD[DType.float64, num_chans]]
+    var unpack_twiddles: List[ComplexSIMD[DType.float64, Self.num_chans]]
 
     fn __init__(out self):
         """Initialize the RealFFT struct.
@@ -48,43 +48,43 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         All internal buffers and lookup tables are set up here based on the Parameters.
 
         """
-        self.result = List[ComplexSIMD[DType.float64, num_chans]](capacity=size // 2)
-        self.reversed = List[ComplexSIMD[DType.float64, num_chans]](capacity=size)
-        self.mags = List[SIMD[DType.float64, num_chans]](capacity=size // 2 + 1)
-        self.phases = List[SIMD[DType.float64, num_chans]](capacity=size // 2 + 1)
-        for _ in range(size // 2):
-            self.result.append(ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
-        for _ in range(size):
-            self.reversed.append(ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
-        for _ in range(size//2 + 1):
-            self.mags.append(SIMD[DType.float64, num_chans](0.0))
-            self.phases.append(SIMD[DType.float64, num_chans](0.0))
-        self.w_ms = List[ComplexSIMD[DType.float64, num_chans]](capacity=self.log_n // 2)
+        self.result = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=Self.size // 2)
+        self.reversed = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=Self.size)
+        self.mags = List[SIMD[DType.float64, Self.num_chans]](capacity=Self.size // 2 + 1)
+        self.phases = List[SIMD[DType.float64, Self.num_chans]](capacity=Self.size // 2 + 1)
+        for _ in range(Self.size // 2):
+            self.result.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
+        for _ in range(Self.size):
+            self.reversed.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
+        for _ in range(Self.size//2 + 1):
+            self.mags.append(SIMD[DType.float64, Self.num_chans](0.0))
+            self.phases.append(SIMD[DType.float64, Self.num_chans](0.0))
+        self.w_ms = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=self.log_n // 2)
         for i in range(self.log_n // 2):
-            self.w_ms.append(ComplexSIMD[DType.float64, num_chans](
+            self.w_ms.append(ComplexSIMD[DType.float64, Self.num_chans](
                 Math.cos(2.0 * Math.pi / Float64(1 << (i + 1))),
                 -Math.sin(2.0 * Math.pi / Float64(1 << (i + 1)))
             ))
         
 
-        self.unpack_twiddles = List[ComplexSIMD[DType.float64, num_chans]](capacity=size // 2)
-        for k in range(size // 2):
-            var angle = -2.0 * Math.pi * Float64(k) / Float64(size)
-            self.unpack_twiddles.append(ComplexSIMD[DType.float64, num_chans](
+        self.unpack_twiddles = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=Self.size // 2)
+        for k in range(Self.size // 2):
+            var angle = -2.0 * Math.pi * Float64(k) / Float64(Self.size)
+            self.unpack_twiddles.append(ComplexSIMD[DType.float64, Self.num_chans](
                 Math.cos(angle), Math.sin(angle)
             ))
 
-        self.packed_freq = List[ComplexSIMD[DType.float64, num_chans]](capacity=size // 2)
-        for _ in range(size // 2):
-            self.packed_freq.append(ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
+        self.packed_freq = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=Self.size // 2)
+        for _ in range(Self.size // 2):
+            self.packed_freq.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
 
-        self.unpacked = List[ComplexSIMD[DType.float64, num_chans]](capacity=size)
-        for _ in range(size):
-            self.unpacked.append(ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
+        self.unpacked = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=Self.size)
+        for _ in range(Self.size):
+            self.unpacked.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
 
-        self.bit_reverse_lut = List[Int](capacity=size // 2)
-        for i in range(size // 2):
-            self.bit_reverse_lut.append(self.bit_reverse(i, self.log_n))  # Full size
+        self.bit_reverse_lut = List[Int](capacity=Self.size // 2)
+        for i in range(Self.size // 2):
+            self.bit_reverse_lut.append(self.bit_reverse(i, self.log_n))  # Full Self.size
 
     @doc_private
     fn bit_reverse(self,num: Int, bits: Int) -> Int:
@@ -96,7 +96,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             n >>= 1
         return result
 
-    fn fft(mut self, input: List[SIMD[DType.float64, num_chans]]):
+    fn fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the internal `mags` and `phases` lists.
@@ -106,11 +106,11 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         """
         self._compute_fft(input)
         # Compute magnitudes and phases
-        for i in range(size // 2 + 1):
+        for i in range(Self.size // 2 + 1):
             self.mags[i] = self.result[i].norm()
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
-    fn fft(mut self, input: List[SIMD[DType.float64, num_chans]], mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]]):
+    fn fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]], mut mags: List[SIMD[DType.float64, Self.num_chans]], mut phases: List[SIMD[DType.float64, Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the provided lists.
@@ -122,28 +122,28 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
         """
         self._compute_fft(input)
         # Compute magnitudes and phases
-        for i in range(size // 2 + 1):
+        for i in range(Self.size // 2 + 1):
             mags[i] = self.result[i].norm()
             phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
     @doc_private
-    fn _compute_fft(mut self, input: List[SIMD[DType.float64, num_chans]]):
-        for i in range(size // 2):
+    fn _compute_fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]]):
+        for i in range(Self.size // 2):
             var real_part = input[2 * i]
             var imag_part = input[2 * i + 1]
-            self.result[self.bit_reverse_lut[i]] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
+            self.result[self.bit_reverse_lut[i]] = ComplexSIMD[DType.float64, Self.num_chans](real_part, imag_part)
 
         for stage in range(1, self.log_n + 1):
             var m = 1 << stage
             var half_m = m >> 1
             
-            stage_twiddle = ComplexSIMD[DType.float64, num_chans](
+            stage_twiddle = ComplexSIMD[DType.float64, Self.num_chans](
                 Math.cos(2.0 * Math.pi / Float64(m)),
                 -Math.sin(2.0 * Math.pi / Float64(m))
             )
 
-            for k in range(0, size // 2, m):
-                var w = ComplexSIMD[DType.float64, num_chans](1.0, 0.0)
+            for k in range(0, Self.size // 2, m):
+                var w = ComplexSIMD[DType.float64, Self.num_chans](1.0, 0.0)
                 
                 for j in range(half_m):
                     var idx1 = k + j
@@ -157,33 +157,33 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
 
                     w = w * stage_twiddle
 
-        for k in range(size // 2 + 1):
+        for k in range(Self.size // 2 + 1):
             if k == 0:
                 # DC components
                 var X_even_0 = (self.result[0].re + self.result[0].re) * 0.5  # Real part
                 var X_odd_0 = (self.result[0].im + self.result[0].im) * 0.5   # Imag part
-                self.unpacked[0] = ComplexSIMD[DType.float64, num_chans](X_even_0 + X_odd_0, SIMD[DType.float64, num_chans](0.0))
-                if size > 1:
-                    self.unpacked[size // 2] = ComplexSIMD[DType.float64, num_chans](X_even_0 - X_odd_0, SIMD[DType.float64, num_chans](0.0))
-            elif k < size // 2:
+                self.unpacked[0] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 + X_odd_0, SIMD[DType.float64, Self.num_chans](0.0))
+                if Self.size > 1:
+                    self.unpacked[Self.size // 2] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 - X_odd_0, SIMD[DType.float64, Self.num_chans](0.0))
+            elif k < Self.size // 2:
                 var Gk = self.result[k]
-                var Gk_conj = self.result[size // 2 - k].conj()
+                var Gk_conj = self.result[Self.size // 2 - k].conj()
                 
                 var X_even_k = (Gk + Gk_conj) * 0.5
-                var X_odd_k = (Gk - Gk_conj) * ComplexSIMD[DType.float64, num_chans](0.0, -0.5)
+                var X_odd_k = (Gk - Gk_conj) * ComplexSIMD[DType.float64, Self.num_chans](0.0, -0.5)
                 
                 var twiddle = self.unpack_twiddles[k]
                 var X_odd_k_rotated = X_odd_k * twiddle
                 
                 self.unpacked[k] = X_even_k + X_odd_k_rotated
-                self.unpacked[size - k] = (X_even_k - X_odd_k_rotated).conj()
+                self.unpacked[Self.size - k] = (X_even_k - X_odd_k_rotated).conj()
 
         self.result.clear()
-        self.result.resize(size, ComplexSIMD[DType.float64, num_chans](0.0, 0.0))
-        for i in range(size):
+        self.result.resize(Self.size, ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
+        for i in range(Self.size):
             self.result[i] = self.unpacked[i]
 
-    fn ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
+    fn ifft(mut self, mut output: List[SIMD[DType.float64, Self.num_chans]]):
         """Compute the inverse FFT using the internal magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -192,7 +192,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             output: A mutable list to store the output real-valued samples.
         """
         
-        for k in range(size // 2 + 1):
+        for k in range(Self.size // 2 + 1):
             if k < len(self.mags):
                 var mag = self.mags[k]
                 var phase = self.phases[k]
@@ -200,11 +200,11 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
                 var real_part = mag * Math.cos(phase)
                 var imag_part = mag * Math.sin(phase)
                 
-                self.result[k] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
+                self.result[k] = ComplexSIMD[DType.float64, Self.num_chans](real_part, imag_part)
         
         self._compute_inverse_fft(output)
 
-    fn ifft(mut self, mags: List[SIMD[DType.float64, num_chans]], phases: List[SIMD[DType.float64, num_chans]], mut output: List[SIMD[DType.float64, num_chans]]):
+    fn ifft(mut self, mags: List[SIMD[DType.float64, Self.num_chans]], phases: List[SIMD[DType.float64, Self.num_chans]], mut output: List[SIMD[DType.float64, Self.num_chans]]):
         """Compute the inverse FFT using the provided magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -215,7 +215,7 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
             output: A mutable list to store the output real-valued samples.
         """
         
-        for k in range(size // 2 + 1):
+        for k in range(Self.size // 2 + 1):
             if k < len(mags):
                 var mag = mags[k]
                 var phase = phases[k]
@@ -223,33 +223,33 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
                 var real_part = mag * Math.cos(phase)
                 var imag_part = mag * Math.sin(phase)
                 
-                self.result[k] = ComplexSIMD[DType.float64, num_chans](real_part, imag_part)
+                self.result[k] = ComplexSIMD[DType.float64, Self.num_chans](real_part, imag_part)
         
         self._compute_inverse_fft(output)
 
     @doc_private
-    fn _compute_inverse_fft(mut self, mut output: List[SIMD[DType.float64, num_chans]]):
-        for k in range(1, size // 2):  # k=1 to size//2-1
-            self.result[size - k] = self.result[k].conj()
+    fn _compute_inverse_fft(mut self, mut output: List[SIMD[DType.float64, Self.num_chans]]):
+        for k in range(1, Self.size // 2):  # k=1 to size//2-1
+            self.result[Self.size - k] = self.result[k].conj()
 
-        self.result[0] = ComplexSIMD[DType.float64, num_chans](self.result[0].re, SIMD[DType.float64, num_chans](0.0))
-        self.result[size // 2] = ComplexSIMD[DType.float64, num_chans](self.result[size // 2].re, SIMD[DType.float64, num_chans](0.0))
+        self.result[0] = ComplexSIMD[DType.float64, Self.num_chans](self.result[0].re, SIMD[DType.float64, Self.num_chans](0.0))
+        self.result[Self.size // 2] = ComplexSIMD[DType.float64, Self.num_chans](self.result[Self.size // 2].re, SIMD[DType.float64, Self.num_chans](0.0))
         
         #  this should be a variable, but it won't let me make it one!
-        for i in range(size):
+        for i in range(Self.size):
             self.reversed[self.bit_reverse(i, self.log_n_full)] = self.result[i]
 
         for stage in range(1, self.log_n_full + 1):
             var m = 1 << stage
             var half_m = m >> 1
             
-            var stage_twiddle = ComplexSIMD[DType.float64, num_chans](
+            var stage_twiddle = ComplexSIMD[DType.float64, Self.num_chans](
                 Math.cos(2.0 * Math.pi / Float64(m)),
                 Math.sin(2.0 * Math.pi / Float64(m))
             )
             
-            for k in range(0, size, m):
-                var w = ComplexSIMD[DType.float64, num_chans](1.0, 0.0)
+            for k in range(0, Self.size, m):
+                var w = ComplexSIMD[DType.float64, Self.num_chans](1.0, 0.0)
                 
                 for j in range(half_m):
                     var idx1 = k + j
@@ -263,5 +263,5 @@ struct RealFFT[size: Int = 1024, num_chans: Int = 1](Copyable, Movable):
                     w = w * stage_twiddle
         
         # Extract real parts
-        for i in range(min(size, len(output))):
+        for i in range(min(Self.size, len(output))):
             output[i] = self.reversed[i].re * self.scale

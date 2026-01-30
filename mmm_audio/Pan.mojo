@@ -43,7 +43,7 @@ fn pan_stereo(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: LegacyUnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -73,7 +73,7 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: Legac
     return out
 
 @always_inline
-fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: LegacyUnsafePointer[MMMWorld]) -> SIMD[DType.float64, 2]:
+fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: World) -> SIMD[DType.float64, 2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -130,7 +130,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
     comptime simd_width: Int = simd_width_of[DType.float64]() * 2
 
     @parameter
-    fn process_speakers[simd_width: Int](i: Int) -> None:
+    fn process_speakers[simd_width: Int](i: Int) unified {mut}:
         # Create index vector
         var indices = SIMD[DType.float64, simd_width]()
         for j in range(simd_width):
@@ -146,7 +146,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
         for j in range(simd_width):
             out[Int(i + j)] = sig[j]
 
-    vectorize[process_speakers, simd_width](Int(num_speakers))
+    vectorize[simd_width](Int(num_speakers), process_speakers)
 
     return out
 
@@ -161,17 +161,17 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
         pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
     """
     var output: List[Float64]  # Output list for stereo output
-    var world: LegacyUnsafePointer[MMMWorld]
-    var mul_list: List[SIMD[DType.float64, num_channels]]
+    var world: World
+    var mul_list: List[SIMD[DType.float64, Self.num_channels]]
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         """
         Initialize the SplayN instance.
 
         Args:
             world: Pointer to the MMMWorld instance.
         """
-        self.output = List[Float64](0.0, 0.0)  # Initialize output list for stereo output
+        self.output = [0.0, 0.0]  # Initialize output list for stereo output
         self.world = world
 
         js = SIMD[DType.float64, self.num_channels](0.0, 1.0)

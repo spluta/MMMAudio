@@ -3,7 +3,7 @@ from mmm_audio import *
 
 # User's Synth
 struct TestRMS(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var buffer: Buffer
     var playBuf: Play
     # samplerate of 48000 50 ms for the RMS = 2400 samples
@@ -12,7 +12,7 @@ struct TestRMS(Movable, Copyable):
     var printer: Print
     var vol: Float64
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 

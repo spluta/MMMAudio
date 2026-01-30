@@ -4,14 +4,14 @@ from mmm_audio import *
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
 struct TestASR(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var env: ASREnv
     var synth: Osc
     var messenger: Messenger
     var curves: SIMD[DType.float64, 2]
     var gate: Bool
 
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.env = ASREnv(self.world)
         self.synth = Osc(self.world)

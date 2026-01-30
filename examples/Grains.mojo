@@ -6,14 +6,14 @@ comptime num_output_chans = 2
 comptime num_simd_chans = next_power_of_two(num_output_chans)
 
 struct Grains(Movable, Copyable):
-    var world: LegacyUnsafePointer[MMMWorld]
+    var world: World
     var buffer: Buffer
     
     var tgrains: TGrains[10] # set the number of simultaneous grains by setting the max_grains parameter here
     var impulse: Phasor  
     var start_frame: Float64
      
-    fn __init__(out self, world: LegacyUnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world  
 
         # buffer uses numpy to load a buffer into an N channel array
