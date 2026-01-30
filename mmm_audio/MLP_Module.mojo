@@ -20,7 +20,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var MLP: PythonObject  
     var torch: PythonObject  
     var model_input: InlineArray[Float64, Self.input_size]  
-    var model_output: List[Float64]#InlineArray[Float64, Self.output_size]  
+    var model_output: InlineArray[Float64, Self.output_size]  
     var fake_model_output: List[Float64]
     var inference_trig: Phasor[1]
     var inference_gate: Bool
@@ -44,7 +44,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         self.MLP = PythonObject(None)  
         self.torch = PythonObject(None) 
         self.model_input = InlineArray[Float64, Self.input_size](fill=0.0)
-        self.model_output = [0.0 for _ in range(Self.output_size)]  
+        self.model_output = InlineArray[Float64, Self.output_size](fill=0.0)
         self.fake_model_output = [0.0 for _ in range(Self.output_size)]    
         self.inference_trig = Phasor[1](world)
         self.inference_gate = True
@@ -124,6 +124,9 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                 py_output = self.model(self.py_input)  # Run the model with the input
                 @parameter
                 for i in range(Self.output_size):
-                    self.model_output[Int(i)] = Float64(py=py_output[0][i].item())  # Convert each output to Float64
+                    var py_val: PythonObject = py_output[0][i].item()
+                    # print(Float64(Int(py=py_val*2000000000.0))/2000000000.0)
+                    # self.model_output[i] = Float64(Int(py=py_val))
+                    self.model_output[i] = Float64(Int(py=py_val*2000000000.0))/2000000000.0
             except Exception:
                 print("Error processing input through MLP:")
