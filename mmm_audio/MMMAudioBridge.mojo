@@ -78,6 +78,10 @@ struct MMMAudioBridge(Representable, Movable):
         return PythonObject(None)  # Return a PythonObject wrapping None
 
     @staticmethod
+    fn to_float64(py_float: PythonObject) raises -> Float64:
+        return Float64(py=py_float)
+
+    @staticmethod
     fn update_bool_msg(py_selfA: PythonObject, key_vals: PythonObject) raises -> PythonObject:
         var py_self = py_selfA.downcast_value_ptr[Self]()
         py_self[0].world[].messengerManager.update_bool_msg(String(key_vals[0]), Bool(key_vals[1]))
