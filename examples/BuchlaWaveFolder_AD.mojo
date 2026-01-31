@@ -3,7 +3,7 @@ from mmm_audio import *
 struct BuchlaWaveFolder_AD(Representable, Movable, Copyable):
     var world: World  
     var osc: Osc[2]
-    var lag: Lag
+    var lag: Lag[1]
     var b259: BuchlaWavefolder[2, 1]
     var m: Messenger
 
