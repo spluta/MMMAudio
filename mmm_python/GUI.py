@@ -6,7 +6,7 @@ from PySide6.QtCore import QPointF
 from .python_utils import clip, linlin
 
 class ControlSpec:
-    def __init__(self, min: float, max: float, exp: float = 1.0):
+    def __init__(self, min: float = 0.0, max: float = 1.0, exp: float = 1.0):
         if min >= max:
             raise ValueError("ControlSpec min must be less than max")
         if exp <= 0:
@@ -26,7 +26,7 @@ class ControlSpec:
         return linlin(norm_val, 0.0, 1.0, self.min, self.max)
 
 class Handle(QWidget):
-    def __init__(self, label: str, spec: ControlSpec, default: float, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
+    def __init__(self, label: str, spec: ControlSpec = ControlSpec(), default: float = 0.0, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
         super().__init__()
         self.resolution = resolution
         self.handle = QSlider(orientation)

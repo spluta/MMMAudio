@@ -1,12 +1,19 @@
 from mmm_audio import *
+from mmm_audio.Oversampling import Oversampling
+
 
 struct FM4(Movable, Copyable):
     var world: World
 
-    var osc0: Osc[1, Interp.sinc, 2]
-    var osc1: Osc[1, Interp.sinc, 2]
-    var osc2: Osc[1, Interp.sinc, 2]
-    var osc3: Osc[1, Interp.sinc, 2]
+    comptime os_index = 2
+
+    comptime times_oversampling = 1 << Self.os_index
+    var over: Oversampling[2, Self.times_oversampling]
+
+    var osc0: Osc[1, Interp.sinc, 0]
+    var osc1: Osc[1, Interp.sinc, 0]
+    var osc2: Osc[1, Interp.sinc, 0]
+    var osc3: Osc[1, Interp.sinc, 0]
 
     var osc0_freq: MFloat[1]
     var osc1_freq: MFloat[1]
@@ -26,10 +33,17 @@ struct FM4(Movable, Copyable):
     fn __init__(out self, world: World) :
         self.world = world
 
-        self.osc0 = Osc[1, Interp.sinc, 2](world)
-        self.osc1 = Osc[1, Interp.sinc, 2](world)
-        self.osc2 = Osc[1, Interp.sinc, 2](world)
-        self.osc3 = Osc[1, Interp.sinc, 2](world)
+        self.over = Oversampling[2, Self.times_oversampling](world)
+
+        self.osc0 = Osc[1, Interp.sinc, 0](world)
+        self.osc1 = Osc[1, Interp.sinc, 0](world)
+        self.osc2 = Osc[1, Interp.sinc, 0](world)
+        self.osc3 = Osc[1, Interp.sinc, 0](world)
+
+        self.osc0.phasor.freq_mul /= Self.times_oversampling
+        self.osc1.phasor.freq_mul /= Self.times_oversampling
+        self.osc2.phasor.freq_mul /= Self.times_oversampling
+        self.osc3.phasor.freq_mul /= Self.times_oversampling
         
         self.osc0_freq = 220.0
         self.osc1_freq = 440.0
@@ -69,16 +83,20 @@ struct FM4(Movable, Copyable):
         self.m.update(self.osc_frac[2], "osc_frac2")
         self.m.update(self.osc_frac[3], "osc_frac3")
 
-        fm_0 = self.fb[1] * self.osc0_mul[0] + self.fb[2] * self.osc0_mul[1]
 
-        osc0 = self.osc0.next_vwt(self.osc0_freq + fm_0, osc_frac=self.osc_frac[0])
-        fm_1 = osc0 * self.osc1_mul[0] + self.fb[3] * self.osc1_mul[1]
-        osc1 = self.osc1.next_vwt(self.osc1_freq + fm_1, osc_frac=self.osc_frac[1])
-        fm_2 = osc1 * self.osc2_mul[0] + self.fb[3] * self.osc2_mul[1]
-        osc2 = self.osc2.next_vwt(self.osc2_freq + fm_2, osc_frac=self.osc_frac[2])
-        fm_3 = osc0 * self.osc3_mul[0] + osc1 * self.osc3_mul[1]
-        osc3 = self.osc3.next_vwt(self.osc3_freq + fm_3, osc_frac=self.osc_frac[3])
+        for i in range(Self.times_oversampling):
+            fm_0 = self.fb[1] * self.osc0_mul[0] + self.fb[2] * self.osc0_mul[1]
 
-        self.fb = [osc0, osc1, osc2, osc3]
+            osc0 = self.osc0.next_vwt(self.osc0_freq + fm_0, osc_frac=self.osc_frac[0])
+            fm_1 = osc0 * self.osc1_mul[0] + self.fb[3] * self.osc1_mul[1]
+            osc1 = self.osc1.next_vwt(self.osc1_freq + fm_1, osc_frac=self.osc_frac[1])
+            fm_2 = osc1 * self.osc2_mul[0] + self.fb[3] * self.osc2_mul[1]
+            osc2 = self.osc2.next_vwt(self.osc2_freq + fm_2, osc_frac=self.osc_frac[2])
+            fm_3 = osc0 * self.osc3_mul[0] + osc1 * self.osc3_mul[1]
+            osc3 = self.osc3.next_vwt(self.osc3_freq + fm_3, osc_frac=self.osc_frac[3])
 
-        return MFloat[2](osc0, osc1) *0.2
+            self.fb = [osc0, osc1, osc2, osc3]
+
+            self.over.add_sample(MFloat[2](osc0, osc1))
+        
+        return self.over.get_sample()
