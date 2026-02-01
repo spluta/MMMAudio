@@ -1135,7 +1135,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("Biquad")
 
     fn reset(mut self):
-        """Reset internal state of the filter."""
+        """Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream.""" 
         self.x1 = SIMD[DType.float64, num_chans](0.0)
         self.x2 = SIMD[DType.float64, num_chans](0.0)
         self.y1 = SIMD[DType.float64, num_chans](0.0)
@@ -1307,6 +1307,18 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
      
     @always_inline
     fn lpf(
+        """
+        Process input through a biquad lowpass filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
@@ -1317,6 +1329,18 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn hpf(
+        """
+        Process input through a biquad highpass filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
@@ -1327,26 +1351,62 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn bpf(
+        """
+        Process input through a biquad bandpass filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The bandwidth and peak height of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Bandpass (constant‑skirt gain; q sets peak gain)"""
+        """Bandpass (passes frequencies near the center; q controls how narrow the band is.)"""
         return self.next[BiquadModes.bandpass](input, frequency, q)
 
     @always_inline
     fn peak(
+        """
+        Process input through a biquad peaking filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The bandwidth of the filter.
+
+        Returns:
+            The next sample of the filtered output
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Bandpass (constant‑peak gain = 0 dB; not a peaking EQ)"""
+        """Peak (bandpass with a fixed 0 dB center level, regardless of q.)"""
         return self.next[BiquadModes.peak](input, frequency, q)
 
     @always_inline
     fn notch(
+        """
+        Process input through a biquad notch (band-reject) filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
@@ -1357,6 +1417,18 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn allpass(
+        """
+        Process input through a biquad allpass filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance (Q factor) of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
@@ -1367,17 +1439,43 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn bell(
+        """
+        Process input through a biquad bell/EQ filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance (Q factor) of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
         q: SIMD[DType.float64, self.num_chans],
         gain_db: SIMD[DType.float64, self.num_chans]
     ) -> SIMD[DType.float64, self.num_chans]:
-        """Peaking EQ"""
+        """Bell (EQ filter that boosts or cuts around the center using the gain value)."""
         return self.next[BiquadModes.bell](input, frequency, q, gain_db)
 
     @always_inline
     fn lowshelf(
+        """
+        Process input through a biquad lowshelf filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance (Q factor) of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
@@ -1389,6 +1487,19 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn highshelf(
+        """
+        Process input through a biquad highshelf filter.
+
+        Args:
+            self: The filter instance to configure.
+            sample_rate: The sample rate in Hz.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance (Q factor) of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
         mut self,
         input: SIMD[DType.float64, self.num_chans],
         frequency: SIMD[DType.float64, self.num_chans],
