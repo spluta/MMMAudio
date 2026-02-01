@@ -1,0 +1,81 @@
+"""
+5-band parametric EQ using Biquad filters.
+Demonstrates: lowshelf, 3x bell (peaking EQ), highshelf
+"""
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mmm_python.MMMAudio import MMMAudio
+from mmm_python.GUI import Handle, ControlSpec
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QLabel
+
+mmm_audio = MMMAudio(128, graph_name="BiquadEQ", package_name="examples")
+mmm_audio.start_audio()
+
+app = QApplication([])
+window = QWidget()
+window.setWindowTitle("5-Band Biquad EQ")
+window.resize(400, 500)
+window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
+
+layout = QVBoxLayout()
+
+# Low Shelf
+layout.addWidget(QLabel("<b>Low Shelf</b>"))
+ls_freq = Handle("LS Freq", ControlSpec(50, 200, 0.5), 100, 
+                 callback=lambda v: mmm_audio.send_float("ls_freq", v), run_callback_on_init=True)
+ls_gain = Handle("LS Gain (dB)", ControlSpec(-12, 12), 0,
+                 callback=lambda v: mmm_audio.send_float("ls_gain", v), run_callback_on_init=True)
+layout.addWidget(ls_freq)
+layout.addWidget(ls_gain)
+
+# Bell 1
+layout.addWidget(QLabel("<b>Bell 1</b>"))
+b1_freq = Handle("B1 Freq", ControlSpec(200, 500, 0.5), 250,
+                 callback=lambda v: mmm_audio.send_float("b1_freq", v), run_callback_on_init=True)
+b1_gain = Handle("B1 Gain (dB)", ControlSpec(-12, 12), 0,
+                 callback=lambda v: mmm_audio.send_float("b1_gain", v), run_callback_on_init=True)
+b1_q = Handle("B1 Q", ControlSpec(0.5, 5), 1.0,
+              callback=lambda v: mmm_audio.send_float("b1_q", v), run_callback_on_init=True)
+layout.addWidget(b1_freq)
+layout.addWidget(b1_gain)
+layout.addWidget(b1_q)
+
+# Bell 2
+layout.addWidget(QLabel("<b>Bell 2</b>"))
+b2_freq = Handle("B2 Freq", ControlSpec(500, 2000, 0.5), 1000,
+                 callback=lambda v: mmm_audio.send_float("b2_freq", v), run_callback_on_init=True)
+b2_gain = Handle("B2 Gain (dB)", ControlSpec(-12, 12), 0,
+                 callback=lambda v: mmm_audio.send_float("b2_gain", v), run_callback_on_init=True)
+b2_q = Handle("B2 Q", ControlSpec(0.5, 5), 1.0,
+              callback=lambda v: mmm_audio.send_float("b2_q", v), run_callback_on_init=True)
+layout.addWidget(b2_freq)
+layout.addWidget(b2_gain)
+layout.addWidget(b2_q)
+
+# Bell 3
+layout.addWidget(QLabel("<b>Bell 3</b>"))
+b3_freq = Handle("B3 Freq", ControlSpec(2000, 8000, 0.5), 4000,
+                 callback=lambda v: mmm_audio.send_float("b3_freq", v), run_callback_on_init=True)
+b3_gain = Handle("B3 Gain (dB)", ControlSpec(-12, 12), 0,
+                 callback=lambda v: mmm_audio.send_float("b3_gain", v), run_callback_on_init=True)
+b3_q = Handle("B3 Q", ControlSpec(0.5, 5), 1.0,
+              callback=lambda v: mmm_audio.send_float("b3_q", v), run_callback_on_init=True)
+layout.addWidget(b3_freq)
+layout.addWidget(b3_gain)
+layout.addWidget(b3_q)
+
+# High Shelf
+layout.addWidget(QLabel("<b>High Shelf</b>"))
+hs_freq = Handle("HS Freq", ControlSpec(5000, 12000, 0.5), 8000,
+                 callback=lambda v: mmm_audio.send_float("hs_freq", v), run_callback_on_init=True)
+hs_gain = Handle("HS Gain (dB)", ControlSpec(-12, 12), 0,
+                 callback=lambda v: mmm_audio.send_float("hs_gain", v), run_callback_on_init=True)
+layout.addWidget(hs_freq)
+layout.addWidget(hs_gain)
+
+window.setLayout(layout)
+window.show()
+app.exec()
