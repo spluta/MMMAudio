@@ -11,6 +11,7 @@ from .FFTs import *
 from .Filters import *
 from .MLP_Module import *
 from .Noise import *
+from .ODESolver import *
 from .Oscillators import *
 from .Oversampling import *
 from .Pan import *
