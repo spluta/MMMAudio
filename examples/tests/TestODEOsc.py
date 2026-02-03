@@ -1,7 +1,5 @@
-"""
-Test the ODE solvers with a simple harmonic oscillator.
-Should produce a clean sine wave tone.
-"""
+# Test the RK4 ODE solver with a simple harmonic oscillator.
+# Should produce a clean sine wave tone.
 
 from mmm_python.MMMAudio import MMMAudio
 

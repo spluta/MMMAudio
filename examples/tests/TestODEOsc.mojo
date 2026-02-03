@@ -1,5 +1,10 @@
 from mmm_audio import *
 
+# there can only be one graph in an MMMAudio instance
+# a graph can have as many synths as you want
+
+# Simple harmonic oscillator using RK4 ODE solver
+
 fn harmonic_oscillator_derivatives(state: List[SIMD[DType.float64, 1]], omega_sq: Float64) -> List[SIMD[DType.float64, 1]]:
     """Compute derivatives for a harmonic oscillator.
     
