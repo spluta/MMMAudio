@@ -24,7 +24,6 @@ struct MoogPops(Movable, Copyable):
         self.t_rand2 = TRand[how_many]()
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        
         dusts = self.dusts.next_bool(0.25, 4.0)
         freqs = self.t_exp_rand.next(8000.0, 18000.0, dusts)
         qs = self.t_rand.next(0.5, 1.04, dusts)

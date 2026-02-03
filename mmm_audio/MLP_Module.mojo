@@ -107,7 +107,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                 for i in range(self.output_size):
                     if i < len(self.fake_model_output):
                         self.model_output[Int(i)] = self.fake_model_output[i]
-                        
+        
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
             if self.torch is None:
