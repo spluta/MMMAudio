@@ -1,5 +1,7 @@
 .DS_Store
 
+# user files
+mine/
 user_files/
 
 kgen.trace.json.time-events.txt
@@ -12,9 +14,6 @@ __pycache__/
 
 # Mojo cache
 __mojocache__/
-
-# mine
-mine/
 
 # C extensions
 *.so
@@ -156,6 +155,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+venv*/
 
 # Spyder project settings
 .spyderproject

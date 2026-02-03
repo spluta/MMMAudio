@@ -61,19 +61,10 @@ struct TorchSynth(Movable, Copyable):
 
         self.model.next()  # Run the model inference
 
-        @parameter
-        for i in range(num_simd):
-            # process each lag group
-            model_output_simd = SIMD[DType.float64, simd_width](0.0)
-            for j in range(simd_width):
-                idx = i * simd_width + j
-                if idx < model_out_size:
-                    model_output_simd[j] = self.model.model_output[idx]
-            lagged_output = self.lags[i].next(model_output_simd)
-            for j in range(simd_width):
-                idx = i * simd_width + j
-                if idx < model_out_size:
-                    self.lag_vals[idx] = lagged_output[j]
+        for i in range(model_out_size):
+            self.lag_vals[i] = self.model.model_output[i]
+
+        Lag.par_process[num_simd, simd_width](self.lags, self.lag_vals)
 
         # uncomment to see the output of the model
         # self.world[].print(self.lag_vals[0], self.lag_vals[1], self.lag_vals[2], self.lag_vals[3], self.lag_vals[4], self.lag_vals[5], self.lag_vals[6], self.lag_vals[7], self.lag_vals[8], self.lag_vals[9], self.lag_vals[10], self.lag_vals[11], self.lag_vals[12], self.lag_vals[13], self.lag_vals[14], self.lag_vals[15])

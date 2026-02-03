@@ -62,59 +62,25 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         self.lag = lag
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
-
-comptime simd_width = simd_width_of[DType.float64]() * 2
-
-struct LagN[lag: Float64 = 0.02, num_chans: Int = 1](Movable, Copyable):
-    """SIMD parallelization of Lag.
     
-    This convenience class creates a List of N Lag structs, then auto SIMD parallelizes the list so that the filters are processed efficiently in parallel.
-    """
-    var list: List[Lag[simd_width]]
-
-    fn __init__(out self, world: World, lag_times: List[Float64]):
-        """Initialize the LagN struct.
-
-        Args:
-            world: Pointer to the MMMWorld.
-            lag_times: List of lag times in seconds for each channel.
-        """
-
-        comptime num_simd = Self.num_chans // simd_width + (0 if Self.num_chans % simd_width == 0 else 1)
-        self.list = [Lag[simd_width](world, lag_times[i%Self.num_chans]) for i in range(num_simd)]
-
-    @always_inline
-    fn next(mut self, ref in_list: List[Float64], mut out_list: List[Float64]):
-        """Process one sample through the LagN processor.
-
-        Args:
-            in_list: List of input values for each channel.
-            out_list: List to store output values for each channel.
-        """
-        vals = SIMD[DType.float64, simd_width](0.0)
-        in_len = len(in_list)
-
+    @staticmethod
+    fn par_process[num_simd: Int, simd_width: Int](mut lags: List[Lag[simd_width]], mut vals:List[MFloat[1]]):
+        """Parallel processes a List[Lag[simd_width]]. The one dimensional list of vals is both the input and the output."""
+        
+        len_vals = len(vals)
         @parameter
-        fn closure[width: Int](i: Int) unified {mut}:
-            if i + simd_width <= in_len:
-                vals = in_list.unsafe_ptr().load[width=simd_width](i)
-            else:
-                @parameter
-                for j in range(simd_width):
-                    vals[j] = in_list[(j + i) % in_len]
-
-            temp = self.list[i // simd_width].next(vals)
-            # More efficient storing
-            remaining = Self.num_chans - i
-            if remaining >= simd_width:
-                out_list.unsafe_ptr().store(i, temp)
-            else:
-                # Handle partial store for the last chunk
-                @parameter
-                for j in range(simd_width):
-                    if j < remaining:
-                        out_list[i + j] = temp[j]
-        vectorize[simd_width](Self.num_chans, closure)
+        for i in range(num_simd):
+            # process each lag group
+            simd_val = SIMD[DType.float64, simd_width](0.0)
+            for j in range(simd_width):
+                idx = i * simd_width + j
+                if idx < len_vals:
+                    simd_val[j] = vals[idx]
+            lagged_output = lags[i].next(simd_val)
+            for j in range(simd_width):
+                idx = i * simd_width + j
+                if idx < len_vals:
+                    vals[idx] = lagged_output[j]
 
 @doc_private
 struct SVFModes:
