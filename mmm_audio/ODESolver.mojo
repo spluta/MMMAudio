@@ -66,6 +66,28 @@ struct RK2[num_dims: Int, num_chans: Int = 1](Copyable, Movable):
         for i in range(num_dims):
             self.state[i] = self.state[i] + k2[i] * self.dt
 
+    fn step[T: AnyType](mut self, fn_deriv: fn(List[SIMD[DType.float64, num_chans]], T) -> List[SIMD[DType.float64, num_chans]], params: T):
+        """Perform a single RK2 integration step with additional parameters.
+        
+        This overload allows passing extra parameters to the derivative function.
+        
+        Parameters:
+            T: Type of the parameter struct/value to pass to derivative function.
+        
+        Args:
+            fn_deriv: Function that computes derivatives given state and parameters.
+            params: Additional parameters to pass to the derivative function.
+        """
+        var k1 = fn_deriv(self.state, params)
+        var temp_state = List[SIMD[DType.float64, num_chans]]()
+        for i in range(num_dims):
+            temp_state.append(self.state[i] + k1[i] * (self.dt / 2.0))
+        
+        var k2 = fn_deriv(temp_state, params)
+        
+        for i in range(num_dims):
+            self.state[i] = self.state[i] + k2[i] * self.dt
+
 struct RK4[num_dims: Int, num_chans: Int = 1](Copyable, Movable):
     """Runge-Kutta 4th order ODE solver.
     Parameters:
@@ -105,5 +127,36 @@ struct RK4[num_dims: Int, num_chans: Int = 1](Copyable, Movable):
             temp_state.append(self.state[i] + k3[i] * self.dt)
         
         var k4 = fn_deriv(temp_state)
+        for i in range(num_dims):
+            self.state[i] = self.state[i] + (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) * (self.dt / 6.0)
+
+    fn step[T: AnyType](mut self, fn_deriv: fn(List[SIMD[DType.float64, num_chans]], T) -> List[SIMD[DType.float64, num_chans]], params: T):
+        """Perform a single RK4 integration step with additional parameters.
+        
+        This overload allows passing extra parameters to the derivative function.
+        
+        Parameters:
+            T: Type of the parameter struct/value to pass to derivative function.
+        
+        Args:
+            fn_deriv: Function that computes derivatives given state and parameters.
+            params: Additional parameters to pass to the derivative function.
+        """
+        var k1 = fn_deriv(self.state, params)
+        var temp_state = List[SIMD[DType.float64, num_chans]]()
+        for i in range(num_dims):
+            temp_state.append(self.state[i] + k1[i] * (self.dt / 2.0))
+        
+        var k2 = fn_deriv(temp_state, params)
+        temp_state.clear()
+        for i in range(num_dims):
+            temp_state.append(self.state[i] + k2[i] * (self.dt / 2.0))
+            
+        var k3 = fn_deriv(temp_state, params)
+        temp_state.clear()
+        for i in range(num_dims):
+            temp_state.append(self.state[i] + k3[i] * self.dt)
+        
+        var k4 = fn_deriv(temp_state, params)
         for i in range(num_dims):
             self.state[i] = self.state[i] + (k1[i] + 2.0 * k2[i] + 2.0 * k3[i] + k4[i]) * (self.dt / 6.0)

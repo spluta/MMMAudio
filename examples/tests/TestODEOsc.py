@@ -3,13 +3,9 @@ Test the ODE solvers with a simple harmonic oscillator.
 Should produce a clean sine wave tone.
 """
 
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-
 from mmm_python.MMMAudio import MMMAudio
 
-mmm_audio = MMMAudio(128, graph_name="TestODEOscillator", package_name="examples.tests")
+mmm_audio = MMMAudio(128, graph_name="TestODEOsc", package_name="examples.tests")
 mmm_audio.start_audio()
 
 # Change frequency

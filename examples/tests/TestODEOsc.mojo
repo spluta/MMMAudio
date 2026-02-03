@@ -1,6 +1,21 @@
 from mmm_audio import *
 
-struct TestODEOscillator(Representable, Movable, Copyable):
+fn harmonic_oscillator_derivatives(state: List[SIMD[DType.float64, 1]], omega_sq: Float64) -> List[SIMD[DType.float64, 1]]:
+    """Compute derivatives for a harmonic oscillator.
+    
+    Args:
+        state: Current state [position, velocity].
+        omega_sq: Square of angular frequency (omega^2).
+    
+    Returns:
+        Derivatives [dx/dt, dv/dt].
+    """
+    var derivs = List[SIMD[DType.float64, 1]]()
+    derivs.append(state[1])  # dx/dt = velocity
+    derivs.append(-omega_sq * state[0])  # dv/dt = -omega^2 * position
+    return derivs^
+
+struct TestODEOsc(Representable, Movable, Copyable):
     """Simple harmonic oscillator using RK4 ODE solver.
     
     Tests that the ODE solver produces a clean sine wave.
@@ -21,7 +36,7 @@ struct TestODEOscillator(Representable, Movable, Copyable):
         self.solver.state[1] = 0.0  # velocity
 
     fn __repr__(self) -> String:
-        return String("TestODEOscillator")
+        return String("TestODEOsc")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
         self.m.update(self.frequency, "frequency")
@@ -29,14 +44,7 @@ struct TestODEOscillator(Representable, Movable, Copyable):
         var omega = 2.0 * 3.14159265359 * self.frequency
         var omega_sq = omega * omega
         
-        # Define derivatives for harmonic oscillator
-        fn derivatives(state: List[SIMD[DType.float64, 1]]) -> List[SIMD[DType.float64, 1]]:
-            var derivs = List[SIMD[DType.float64, 1]]()
-            derivs.append(state[1])  # dx/dt = velocity
-            derivs.append(-omega_sq * state[0])  # dv/dt = -omega^2 * position
-            return derivs
-        
-        self.solver.step(derivatives)
+        self.solver.step(harmonic_oscillator_derivatives, omega_sq)
         
         var output = self.solver.state[0][0]
         return SIMD[DType.float64, 2](output, output) * 0.5
