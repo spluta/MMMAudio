@@ -20,7 +20,8 @@ fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int
 
     return out_samp
 
-struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
+
+struct Latch[num_chans: Int = 1](Copyable, Movable):
     """
     A simple latch that holds the last input sample when a trigger is received.
 
@@ -34,9 +35,6 @@ struct Latch[num_chans: Int = 1](Copyable, Movable, Representable):
         """Initialize the Latch."""
         self.samp = SIMD[DType.float64, Self.num_chans](0)
         self.last_trig = SIMD[DType.bool, Self.num_chans](False)
-
-    fn __repr__(self) -> String:
-        return String("Latch")
 
     fn next(mut self, in_samp: SIMD[DType.float64, Self.num_chans], trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """

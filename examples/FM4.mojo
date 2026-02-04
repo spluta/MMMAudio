@@ -1,7 +1,6 @@
 from mmm_audio import *
 from mmm_audio.Oversampling import Oversampling
 
-
 struct FM4(Movable, Copyable):
     var world: World
 

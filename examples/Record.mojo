@@ -5,7 +5,7 @@ import time
 struct Record_Synth(Representable, Movable, Copyable):
     var world: World
     var buf_dur: Float64
-    var buffer: Recorder
+    var buffer: Recorder[]
     var is_recording: Bool
     var is_playing: Float64
     var playback_speed: Float64

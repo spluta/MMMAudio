@@ -8,7 +8,7 @@ Ported to MMMAudio by Ted Moore, October 2025
 
 from mmm_audio import *
 
-struct Benjolin(Representable, Movable, Copyable):
+struct Benjolin(Movable, Copyable):
     var world: World  
     var m: Messenger
     var feedback: Float64
@@ -18,12 +18,12 @@ struct Benjolin(Representable, Movable, Copyable):
     var pulse1: Osc[interp=2,os_index=1]
     var pulse2: Osc[interp=2,os_index=1]
     var delays: List[Delay[1,3]]
-    var latches: List[Latch]
-    var filters: List[SVF]
+    var latches: List[Latch[1]]
+    var filters: List[SVF[1]]
     var filter_outputs: List[Float64]
     var sample_dur: Float64
     var sh: List[Float64]
-    var dctraps: List[DCTrap]
+    var dctraps: List[DCTrap[1]]
 
     var freq1: Float64
     var freq2: Float64
@@ -49,12 +49,12 @@ struct Benjolin(Representable, Movable, Copyable):
         self.pulse1 = Osc[interp=2,os_index=1](self.world)
         self.pulse2 = Osc[interp=2,os_index=1](self.world)
         self.delays = List[Delay[1,3]](capacity=8)
-        self.latches = List[Latch](capacity=8)
-        self.filters = List[SVF](capacity=9)
+        self.latches = List[Latch[1]](capacity=8)
+        self.filters = List[SVF[1]](capacity=9)
         self.filter_outputs = List[Float64](capacity=9)
         self.sample_dur = 1.0 / self.world[].sample_rate
         self.sh = List[Float64](capacity=9)
-        self.dctraps = List[DCTrap](capacity=2)
+        self.dctraps = List[DCTrap[1]](capacity=2)
 
         self.freq1 = 40
         self.freq2 = 4
@@ -81,9 +81,6 @@ struct Benjolin(Representable, Movable, Copyable):
 
         for _ in range(2):
             self.dctraps.append(DCTrap(self.world))
-
-    fn __repr__(self) -> String:
-        return String("Default")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
@@ -152,16 +149,13 @@ struct Benjolin(Representable, Movable, Copyable):
 
         return output * 0.4
 
-struct BenjolinExample(Representable, Movable, Copyable):
+struct BenjolinExample(Movable, Copyable):
     var world: World
     var benjolin: Benjolin
 
     fn __init__(out self, world: World):
         self.world = world
         self.benjolin = Benjolin(self.world)
-
-    fn __repr__(self) -> String:
-        return String("Benjolin_Example")
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
 

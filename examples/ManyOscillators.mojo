@@ -13,9 +13,9 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     var osc1: Osc[interp=Interp.linear] # first oscillator
     var osc2: Osc[interp=Interp.linear] # second oscillator
     var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
-    var pan2_osc: Osc # LFO for panning
+    var pan2_osc: Osc[1] # LFO for panning
     var pan2_freq: Float64 # frequency for the panning LFO
-    var vol_osc: Osc # LFO for volume
+    var vol_osc: Osc[] # LFO for volume
     var vol_osc_freq: Float64 # frequency for the volume LFO
 
     fn __init__(out self, world: World, center_freq: Float64):
@@ -32,10 +32,10 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         self.osc1 = Osc[interp=Interp.linear](self.world)
         self.osc2 = Osc[interp=Interp.linear](self.world)
         
-        self.pan2_osc = Osc(self.world)
+        self.pan2_osc = Osc[1](self.world)
         self.pan2_freq = random_float64(0.03, 0.1)
 
-        self.vol_osc = Osc(self.world)
+        self.vol_osc = Osc[](self.world)
         self.vol_osc_freq = random_float64(0.05, 0.2)
         self.osc_freqs = SIMD[DType.float64, 2](
             center_freq + random_float64(1.0, 5.0),

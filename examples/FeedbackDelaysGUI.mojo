@@ -3,7 +3,7 @@ from mmm_audio import *
 struct DelaySynth(Representable, Movable, Copyable):
     var world: World
     comptime maxdelay = 1.0
-    var main_lag: Lag
+    var main_lag: Lag[1]
     var buf: Buffer
     var playBuf: Play
     var delays: FB_Delay[num_chans=2, interp=4]  # FB_Delay with 2 channels and interpolation type 3 ()
@@ -22,13 +22,13 @@ struct DelaySynth(Representable, Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world  
-        self.main_lag = Lag(self.world, 0.03)
+        self.main_lag = Lag[1](self.world, 0.03)
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
         self.delays = FB_Delay[num_chans=2, interp=4](self.world, self.maxdelay) 
         self.delay_time_lag = Lag[2](self.world, 0.2)  # Initialize Lag with a default time constant
         self.m = Messenger(self.world)
-        self.gate_lag = Lag(self.world, 0.03)
+        self.gate_lag = Lag[1](self.world, 0.03)
         self.svf = SVF[2](self.world)
         self.play = True
         self.delaytime_m = 0.5

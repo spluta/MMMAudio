@@ -18,16 +18,16 @@ struct TorchSynth(Movable, Copyable):
 
     var fb: Float64
 
-    var latch1: Latch[1]
-    var latch2: Latch[1]
-    var impulse1: Phasor[1]
-    var impulse2: Phasor[1]
+    var latch1: Latch[]
+    var latch2: Latch[]
+    var impulse1: Phasor[]
+    var impulse2: Phasor[]
 
-    var filt1: SVF[1]
-    var filt2: SVF[1]
+    var filt1: SVF[]
+    var filt2: SVF[]
 
-    var dc1: DCTrap[1]
-    var dc2: DCTrap[1]
+    var dc1: DCTrap[]
+    var dc2: DCTrap[]
 
     fn __init__(out self, world: World):
         self.world = world

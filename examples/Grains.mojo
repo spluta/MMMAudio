@@ -10,7 +10,7 @@ struct Grains(Movable, Copyable):
     var buffer: Buffer
     
     var tgrains: TGrains[10] # set the number of simultaneous grains by setting the max_grains parameter here
-    var impulse: Phasor  
+    var impulse: Phasor[1]  
     var start_frame: Float64
      
     fn __init__(out self, world: World):
@@ -20,7 +20,7 @@ struct Grains(Movable, Copyable):
         self.buffer = Buffer.load("resources/Shiverer.wav")
 
         self.tgrains = TGrains[10](self.world)  
-        self.impulse = Phasor(self.world)
+        self.impulse = Phasor[1](self.world)
 
 
         self.start_frame = 0.0 

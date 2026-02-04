@@ -2,7 +2,7 @@ from mmm_audio import *
 
 struct Tone(Movable,Copyable):
     var world: World
-    var osc: Osc
+    var osc: Osc[]
     var freq: Float64
     var m: Messenger
     var gate: Bool
@@ -49,14 +49,13 @@ struct MessengerExample(Copyable, Movable):
             self.tones.append(Tone(self.world, "tone_" + String(i)))
 
         self.bool = False
-        self.bools = List[Bool](False, False)
+        self.bools = [False, False]
         self.float = 0.0
-        self.floats = List[Float64](0.0, 0.0)
+        self.floats = [0.0, 0.0]
         self.int = 0
-        self.ints = List[Int64](0, 0)
+        self.ints = [0, 0]
         self.string = ""
-        self.strings = List[String]("", "")
-
+        self.strings = ["", ""]
     fn next(mut self) -> SIMD[DType.float64, 2]:
 
         

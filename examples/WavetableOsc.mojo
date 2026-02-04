@@ -2,7 +2,7 @@ from mmm_audio import *
 
 struct OscVoice(Movable, Copyable):
     var osc: Osc[1,Interp.quad,1]
-    var tri: LFTri
+    var tri: LFTri[]
     var world: World
     var env: ASREnv
     var gate: Bool

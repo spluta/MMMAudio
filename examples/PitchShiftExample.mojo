@@ -13,7 +13,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var time_dispersion: Float64
     var in_chan: Int64
     var which_input: Float64
-    var noise: WhiteNoise
+    var noise: WhiteNoise[]
      
     fn __init__(out self, world: World):
         self.world = world

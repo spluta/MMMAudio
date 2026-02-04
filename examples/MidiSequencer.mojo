@@ -8,9 +8,9 @@ struct TrigSynthVoice(Movable, Copyable):
     var env_params: EnvParams
     var env: Env
 
-    var mod: Osc
+    var mod: Osc[]
     var car: Osc[1, Interp.linear, 0]
-    var sub: Osc
+    var sub: Osc[]
 
     var bend_mul: Float64
 
@@ -68,8 +68,8 @@ struct TrigSynth(Movable, Copyable):
 
     var num_voices: Int64
 
-    var svf: SVF
-    var filt_lag: Lag
+    var svf: SVF[]
+    var filt_lag: Lag[]
     var filt_freq: Float64
     var bend_mul: Float64
 
@@ -116,7 +116,7 @@ struct MidiSequencer(Representable, Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world
-        self.output = List[Float64](0.0, 0.0)  # Initialize output list
+        self.output = [0.0, 0.0]  # Initialize output list
 
         self.trig_synth = TrigSynth(self.world)  # Initialize the TrigSynth with the world instance
 

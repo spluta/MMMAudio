@@ -3,14 +3,14 @@ from mmm_audio import *
 struct Default_Synth(Representable, Movable, Copyable):
     var world: World  
     var osc: Osc[1,Interp.sinc,1]
-    var filt: SVF
+    var filt: SVF[1]
     var messenger: Messenger
     var freq: Float64
 
     fn __init__(out self, world: World):
         self.world = world
         self.osc = Osc[1,Interp.sinc,1](self.world)
-        self.filt = SVF(self.world)
+        self.filt = SVF[1](self.world)
         self.messenger = Messenger(self.world)
         self.freq = 440.0
 
