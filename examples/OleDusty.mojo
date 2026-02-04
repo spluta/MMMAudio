@@ -13,7 +13,7 @@ struct Dusty(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("OleDusty")
 
-    fn next(mut self, freq: MMMFloat[1]) -> MMMFloat[2]:
+    fn next(mut self, freq: MFloat[1]) -> MFloat[2]:
 
         out = self.dust.next(freq*0.125, freq*8) * 0.5
 
@@ -28,20 +28,20 @@ struct OleDusty(Representable, Movable, Copyable):
     var world: World  
     var dusty: Dusty
     var reson: Reson[2]
-    var freq: MMMFloat[1]
-    var lag: Lag
+    var freq: MFloat[1]
+    var lag: Lag[1]
 
     fn __init__(out self, world: World):
         self.world = world
         self.dusty = Dusty(world)
         self.reson = Reson[2](world)
-        self.freq = MMMFloat[1](200.0)
+        self.freq = MFloat[1](200.0)
         self.lag = Lag(world, 0.1)
 
     fn __repr__(self) -> String:
         return String("OleDusty")
 
-    fn next(mut self) -> MMMFloat[2]:
+    fn next(mut self) -> MFloat[2]:
 
         freq = linexp(self.world[].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 
@@ -50,6 +50,6 @@ struct OleDusty(Representable, Movable, Copyable):
         # there is really no difference between ugens, synths, graphs
         # thus there is no reason you can't process the output of a synth directly in the graph
         # the reson filter uses SIMD to run 2 filters in parallel, each processing a channel of the dusty synth
-        out = self.reson.hpf(out, self.lag.next(freq), 10.0, 1.0)  # apply a bandpass filter to the output of the Dusty synth
+        out = self.reson.bpf(out, self.lag.next(freq), 10.0, 1.0)  # apply a bandpass filter to the output of the Dusty synth
 
         return out * 0.5

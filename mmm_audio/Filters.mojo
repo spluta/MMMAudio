@@ -772,7 +772,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
                     self.oversampling.add_sample(lp4)
             return self.oversampling.get_sample()
 
-struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
+struct Reson[num_chans: Int = 1](Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
 
     A translation of Julius Smith's Faust implementation of [tf2s (virtual analog) resonant filters](https://github.com/grame-cncm/faustlibraries/blob/6061da8bf2279ae4281333861a3dc6254e9076f9/filters.lib#L2054).
@@ -781,9 +781,9 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
     Parameters:
         num_chans: Number of SIMD channels to process in parallel.
     """
-    var tf2: tf2[Self.num_chans]
-    var coeffs: List[SIMD[DType.float64, Self.num_chans]]
-    var world: World
+    var tf2: tf2[num_chans = Self.num_chans]
+    var coeffs: List[MFloat[Self.num_chans]]
+    var sample_rate: Float64
 
     fn __init__(out self, world: World):
         """Initialize the Reson filter.
@@ -791,15 +791,26 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.tf2 = tf2[Self.num_chans](world)
-        self.coeffs = [SIMD[DType.float64, Self.num_chans](0.0) for _ in range(5)]
-        self.world = world
+        self.tf2 = tf2[num_chans = Self.num_chans](world)
+        self.coeffs = [MFloat[Self.num_chans](0.0) for _ in range(5)]
+        self.sample_rate = world[].sample_rate
 
-    fn __repr__(self) -> String:
-        return String("Reson")
+    @doc_private
+    @always_inline
+    fn tf2s(mut self, b2: SIMD[DType.float64, Self.num_chans], b1: SIMD[DType.float64, Self.num_chans], b0: SIMD[DType.float64, self.num_chans], a1: SIMD[DType.float64, Self.num_chans], a0: SIMD[DType.float64, Self.num_chans], w1: SIMD[DType.float64, Self.num_chans], sample_rate: Float64) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+        var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
+        var csq = c*c
+        var d   = a0 + a1 * c + csq
+        var b0d = (b0 + b1 * c + b2 * csq)/d
+        var b1d = 2 * (b0 - b2 * csq)/d
+        var b2d = (b0 - b1 * c + b2 * csq)/d
+        var a1d = 2 * (a0 - csq)/d
+        var a2d = (a0 - a1*c + csq)/d
+
+        return (b0d, b1d, b2d, a1d, a2d)
 
     @always_inline
-    fn lpf(mut self: Reson, input: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn lpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant lowpass filter.
 
         Args:
@@ -813,17 +824,17 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = SIMD[DType.float64, Self.num_chans](1.0)
-        var b2 = SIMD[DType.float64, Self.num_chans](0.0)
-        var b1 = SIMD[DType.float64, Self.num_chans](0.0)
-        var b0 = SIMD[DType.float64, Self.num_chans](clip(gain, 0.0, 1.0))
+        var a0 = 1.0
+        var b2 = 0.0
+        var b1 = 0.0
+        var b0 = clip(gain, 0.0, 1.0)
 
-        tf2s[Self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
+        b0d, b1d, b2d, a1d, a2d = self.tf2s(b2, b1, b0, a1, a0, wc, self.sample_rate)
 
-        return self.tf2.next(input, self.coeffs)
+        return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
     @always_inline
-    fn hpf(mut self: Reson, input: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn hpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant highpass filter.
 
         Args:
@@ -835,19 +846,11 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
         Returns:
             The next sample of the filtered output.
         """
-        var wc = 2*pi*freq
-        var a1 = 1/q
-        var a0 = SIMD[DType.float64, Self.num_chans](1.0)
-        var b2 = SIMD[DType.float64, Self.num_chans](0.0)
-        var b1 = SIMD[DType.float64, Self.num_chans](0.0)
-        var b0 = SIMD[DType.float64, Self.num_chans](clip(gain, 0.0, 1.0))
 
-        tf2s[Self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
-
-        return gain*input - self.tf2.next(input, self.coeffs)
+        return gain*input - self.lpf(input, freq, q, gain)
 
     @always_inline
-    fn bpf(mut self: Reson, input: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn bpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant bandpass filter.
 
         Args:
@@ -861,13 +864,14 @@ struct Reson[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         var wc = 2*pi*freq
         var a1 = 1/q
-        var a0 = SIMD[DType.float64, Self.num_chans](1.0)
-        var b2 = SIMD[DType.float64, Self.num_chans](0.0)
-        var b1 = SIMD[DType.float64, Self.num_chans](clip(gain, 0.0, 1.0))
-        var b0 = SIMD[DType.float64, Self.num_chans](0.0)
+        var a0 = 1.0
+        var b2 = 0.0
+        var b1 = clip(gain, 0.0, 1.0)
+        var b0 = 0.0
 
-        tf2s[Self.num_chans]([b2, b1, b0, a1, a0, wc], self.coeffs, self.world[].sample_rate)
-        return self.tf2.next(input, self.coeffs)
+        b0d, b1d, b2d, a1d, a2d = self.tf2s(b2, b1, b0, a1, a0, wc, self.sample_rate)
+
+        return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
 @doc_private
 struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
@@ -880,7 +884,7 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
         num_chans: The number of SIMD channels to process.
     """
 
-    var buffer: List[SIMD[DType.float64, Self.num_chans]]
+    var buffer: List[MFloat[Self.num_chans]]
     var index: Int
 
     fn __init__(out self, world: World, num_coeffs: Int):
@@ -890,14 +894,14 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
             world: Pointer to the MMMWorld.
             num_coeffs: The number of filter coefficients.
         """
-        self.buffer = [SIMD[DType.float64, Self.num_chans](0.0) for _ in range(num_coeffs)]
+        self.buffer = [MFloat[Self.num_chans](0.0) for _ in range(num_coeffs)]
         self.index = 0
 
     fn __repr__(self) -> String:
         return String("FIR")
 
     @always_inline
-    fn next(mut self: FIR, input: SIMD[DType.float64, self.num_chans], coeffs: List[SIMD[DType.float64, self.num_chans]]) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self: FIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the FIR filter.
 
         Args:
@@ -908,14 +912,14 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
             The next sample of the filtered output.
         """
         self.buffer[self.index] = input
-        var output = SIMD[DType.float64, self.num_chans](0.0)
+        var output = MFloat[self.num_chans](0.0)
         for i in range(len(coeffs)):
             output += coeffs[i] * self.buffer[(self.index - i + len(self.buffer)) % len(self.buffer)]
         self.index = (self.index + 1) % len(self.buffer)
         return output
 
 @doc_private
-struct IIR[num_chans: Int = 1](Representable, Movable, Copyable):
+struct IIR[num_chans: Int = 1](Movable, Copyable):
     """Infinite Impulse Response (IIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -926,7 +930,7 @@ struct IIR[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     var fir1: FIR[Self.num_chans]
     var fir2: FIR[Self.num_chans]
-    var fb: SIMD[DType.float64, Self.num_chans]
+    var fb: MFloat[Self.num_chans]
 
     fn __init__(out self, world: World):
         """Initialize the IIR.
@@ -936,27 +940,23 @@ struct IIR[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         self.fir1 = FIR[Self.num_chans](world,2)
         self.fir2 = FIR[Self.num_chans](world,3)
-        self.fb = SIMD[DType.float64, self.num_chans](0.0)
-
-    fn __repr__(self) -> String:
-        return String("IIR")
+        self.fb = MFloat[Self.num_chans](0.0)
 
     @always_inline
-    fn next(mut self: IIR, input: SIMD[DType.float64, self.num_chans], coeffsbv: List[SIMD[DType.float64, self.num_chans]], coeffsav: List[SIMD[DType.float64, self.num_chans]]) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self: IIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the IIR filter.
         
         Args:
             input: The input signal to process.
-            coeffsbv: The 'b' coefficients of the IIR filter.
-            coeffsav: The 'a' coefficients of the IIR filter.
-
+            coeffs: The filter coefficients.
+            
         Returns:
             The next sample of the filtered output.
         """
         var temp = input - self.fb
         # calls the parallelized fir function, indicating the size of the simd vector to use
-        var output1 = self.fir1.next(temp, coeffsav)
-        var output2 = self.fir2.next(temp, coeffsbv)
+        var output1 = self.fir1.next(temp, coeffs[3], coeffs[4])
+        var output2 = self.fir2.next(temp, coeffs[0], coeffs[1], coeffs[2])
         self.fb = output1
         return output2
 
@@ -984,53 +984,19 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("tf2")
 
     @always_inline
-    fn next(mut self: tf2, input: SIMD[DType.float64, Self.num_chans], coeffs: List[SIMD[DType.float64, Self.num_chans]]) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self: tf2, input: MFloat[self.num_chans], b0d: MFloat[self.num_chans], b1d: MFloat[self.num_chans], b2d: MFloat[self.num_chans], a1d: MFloat[self.num_chans], a2d: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the second-order transfer function filter.
 
         Args:
             input: The input signal to process.
-            coeffs: List of filter coefficients.
+            b0d: The b0 coefficient.
+            b1d: The b1 coefficient.
+            b2d: The b2 coefficient.
+            a1d: The a1 coefficient.
+            a2d: The a2 coefficient.
 
         Returns:
             The next sample of the filtered output.
         """
-        return self.iir.next(input, coeffs[:3], coeffs[3:])
+        return self.iir.next(input, b0d, b1d, b2d, a1d, a2d)
 
-@doc_private
-@always_inline
-fn tf2s[num_chans: Int = 1](coeffs: List[SIMD[DType.float64, num_chans]], mut coeffs_out: List[SIMD[DType.float64, num_chans]], sample_rate: Float64):
-    """
-    A translation of Julius Smith's Faust implementation of digital filters.
-    Copyright (C) 2003-2019 by Julius O. Smith III.
-
-    Results are stored in coeffs_out.
-
-    Parameters:
-        num_chans: The number of SIMD channels to process.
-
-    Args:
-        coeffs: List containing analog coefficients [b2, b1, b0, a1, a0, w1] where b coefficients are numerator, a coefficients are denominator, and w1 is the angular frequency.
-        coeffs_out: Output list for digital coefficients [b0d, b1d, b2d, a1d, a2d].
-        sample_rate: The sample rate in Hz.
-    """
-    var b2 = coeffs[0]
-    var b1 = coeffs[1]
-    var b0 = coeffs[2]
-    var a1 = coeffs[3]
-    var a0 = coeffs[4]
-    var w1 = coeffs[5]
-
-    var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
-    var csq = c*c
-    var d   = a0 + a1 * c + csq
-    var b0d = (b0 + b1 * c + b2 * csq)/d
-    var b1d = 2 * (b0 - b2 * csq)/d
-    var b2d = (b0 - b1 * c + b2 * csq)/d
-    var a1d = 2 * (a0 - csq)/d
-    var a2d = (a0 - a1*c + csq)/d
-
-    coeffs_out[0] = b0d
-    coeffs_out[1] = b1d
-    coeffs_out[2] = b2d
-    coeffs_out[3] = a1d
-    coeffs_out[4] = a2d
