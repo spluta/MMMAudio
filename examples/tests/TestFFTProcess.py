@@ -10,3 +10,5 @@ mmm_audio.send_int("scramble_range",10)
 mmm_audio.send_int("lpbin",60)
 
 mmm_audio.stop_audio()
+
+mmm_audio.plot(2048)

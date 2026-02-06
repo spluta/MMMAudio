@@ -47,9 +47,9 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 
     fn __init__(out self, world: World):
         self.world = world
-        self.bin = (window_size // 2) + 1
+        self.bin = (self.window_size // 2) + 1
         self.m = Messenger(self.world)
-        self.bin_scramble = BinScramble(nbins=(window_size // 2) + 1, nscrambles=20)
+        self.bin_scramble = BinScramble(nbins=(self.window_size // 2) + 1, nscrambles=20)
 
     fn get_messages(mut self) -> None:
         self.m.update(self.bin,"lpbin")
@@ -60,7 +60,7 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
 
     fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         self.bin_scramble.next(magnitudes,phases)
-        for i in range(self.bin,(window_size // 2) + 1):
+        for i in range(self.bin,(self.window_size // 2) + 1):
             magnitudes[i] *= 0.0
 
 # User's Main Synth
@@ -68,7 +68,7 @@ struct TestFFTProcess(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var fftlowpass: FFTProcess[ScrambleAndLowPass,1024,512,WindowType.hann,WindowType.hann]
+    var fftlowpass: FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -77,7 +77,7 @@ struct TestFFTProcess(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass(self.world))
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[1024](self.world))
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0

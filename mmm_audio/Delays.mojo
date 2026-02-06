@@ -37,6 +37,21 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         self.sample_duration = 1.0 / self.world[].sample_rate
         self.prev_f_idx = [Self.num_chans, 0.0]
 
+    fn __init__(out self, world: World, max_delay_samples: Int64 = 1024):
+      """Initialize the Delay line.
+
+      Args:
+        world: A pointer to the MMMWorld.
+        max_delay_samples: The maximum delay time in samples. The internal buffer will be allocated to accommodate this delay.
+      """
+        self.world = world
+        self.max_delay_time = Float64(max_delay_samples) / self.world[].sample_rate
+        self.max_delay_samples = max_delay_samples
+        self.delay_line = Recorder[Self.num_chans](self.world, self.max_delay_samples, self.world[].sample_rate)
+        self.two_sample_duration = 2.0 / self.world[].sample_rate
+        self.sample_duration = 1.0 / self.world[].sample_rate
+        self.prev_f_idx = [Self.num_chans, 0.0]
+
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 

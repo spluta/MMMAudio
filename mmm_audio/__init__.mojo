@@ -24,6 +24,7 @@ from .Print_Module import *
 from .RisingBoolDetector_Module import *
 from .Windows_Module import *
 from .functions import *
+from .FFT_Processes import *
 
 from random import random_float64
 from math import *

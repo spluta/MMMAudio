@@ -2,7 +2,6 @@ from mmm_audio import *
 
 from random import random_float64
 
-# this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
 comptime window_size = 2048
 comptime hop_size = window_size // 2
 

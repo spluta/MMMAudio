@@ -222,6 +222,7 @@ class MMMAudio:
         
         plt.tight_layout()
         plt.show(block=False)
+        
     
     def audio_loop(self):
         max = 0.0

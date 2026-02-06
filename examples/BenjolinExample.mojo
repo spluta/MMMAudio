@@ -18,12 +18,12 @@ struct Benjolin(Movable, Copyable):
     var pulse1: Osc[interp=2,os_index=1]
     var pulse2: Osc[interp=2,os_index=1]
     var delays: List[Delay[1,3]]
-    var latches: List[Latch[1]]
-    var filters: List[SVF[1]]
+    var latches: List[Latch[]]
+    var filters: List[SVF[]]
     var filter_outputs: List[Float64]
     var sample_dur: Float64
     var sh: List[Float64]
-    var dctraps: List[DCTrap[1]]
+    var dctraps: List[DCTrap[]]
 
     var freq1: Float64
     var freq2: Float64
@@ -49,12 +49,12 @@ struct Benjolin(Movable, Copyable):
         self.pulse1 = Osc[interp=2,os_index=1](self.world)
         self.pulse2 = Osc[interp=2,os_index=1](self.world)
         self.delays = List[Delay[1,3]](capacity=8)
-        self.latches = List[Latch[1]](capacity=8)
-        self.filters = List[SVF[1]](capacity=9)
+        self.latches = List[Latch[]](capacity=8)
+        self.filters = List[SVF[]](capacity=9)
         self.filter_outputs = List[Float64](capacity=9)
         self.sample_dur = 1.0 / self.world[].sample_rate
         self.sh = List[Float64](capacity=9)
-        self.dctraps = List[DCTrap[1]](capacity=2)
+        self.dctraps = List[DCTrap[]](capacity=2)
 
         self.freq1 = 40
         self.freq2 = 4
