@@ -25,7 +25,7 @@ struct Hilbert[window_size: Int, hop_size: Int, window_type: Int = WindowType.si
         self.world = world
         self.delay_time = Float64(self.window_size)/self.world[].sample_rate
 
-        self.delay = Delay[1, Interp.none](self.world, self.delay_time+1.0/self.world[].sample_rate)
+        self.delay = Delay[1, Interp.none](self.world, Int64(self.window_size))
 
         self.hilbert = FFTProcess[
                 HilbertWindow[Self.window_size],
@@ -37,6 +37,6 @@ struct Hilbert[window_size: Int, hop_size: Int, window_type: Int = WindowType.si
 
     fn next(mut self, input: MFloat[1]) -> Tuple[Float64, Float64]:
         o = self.hilbert.next(input)
-        delayed: Float64 = self.delay.next(input, self.delay_time)
+        delayed: Float64 = self.delay.next(input, Int64(self.window_size))
         return Tuple(delayed, o)
 

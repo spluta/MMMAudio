@@ -19,5 +19,5 @@ struct TestHilbert(Movable, Copyable):
         self.m.update(self.freq, "freq")
         s = self.sine.next(self.freq)
         o = self.hilbert.next(s)
-        return SIMD[DType.float64,2](o[0],o[1]) * 0.2
+        return SIMD[DType.float64,2](o[0],o[1]) * 0.1
 

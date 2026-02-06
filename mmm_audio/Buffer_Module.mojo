@@ -215,7 +215,11 @@ struct ListInterpolator(Movable, Copyable):
         """
 
         idx = Int64(f_idx)
-            
+        return ListInterpolator.read_none[bWrap,mask](data, idx)
+    
+    @always_inline
+    @staticmethod
+    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], mut idx: Int64) -> Float64:
         @parameter
         if bWrap:
             @parameter
