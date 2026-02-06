@@ -219,17 +219,18 @@ struct ListInterpolator(Movable, Copyable):
     
     @always_inline
     @staticmethod
-    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], mut idx: Int64) -> Float64:
+    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], idx: Int64) -> Float64:
+        idx2 = idx
         @parameter
         if bWrap:
             @parameter
             if mask != 0:
-                idx = idx & mask
+                idx2 = idx2 & mask
             else:
-                idx = idx % len(data)
-            return data[idx]
+                idx2 = idx2 % len(data)
+            return data[idx2]
         else:
-            return data[idx] if ListInterpolator.idx_in_range(data,idx) else 0.0
+            return data[idx2] if ListInterpolator.idx_in_range(data,idx2) else 0.0
         
     @always_inline
     @staticmethod
