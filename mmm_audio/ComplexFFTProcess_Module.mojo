@@ -3,7 +3,7 @@ from .FFTs import RealFFT
 from .Buffer_Module import *
 
 @doc_private
-struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):
+struct ComplexFFTProcessor[T: ComplexFFTProcessable, window_size: Int = 1024](BufferedProcessable):
     """This is a private struct that the user doesn't *need* to see or use. This is the
     connective tissue between FFTProcess (which the user *does* see and uses to
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
@@ -31,35 +31,35 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
         self.st_phases = List[SIMD[DType.float64,2]](length=(Self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
 
     fn next_window(mut self, mut input: List[Float64]) -> None:
-        self.fft.fft(input)
-        self.process.next_frame(self.fft.mags,self.fft.phases)
-        self.fft.ifft(input)
+        self.fft._compute_fft(input)
+        self.process.next_frame(self.fft.result)
+        self.fft._compute_inverse_fft(input)
     
     fn next_stereo_window(mut self, mut input: List[SIMD[DType.float64,2]]) -> None:
-        self.fft2.fft(input)
-        self.process.next_stereo_frame(self.fft2.mags,self.fft2.phases)
-        self.fft2.ifft(input)
+        self.fft2._compute_fft(input)
+        self.process.next_stereo_frame(self.fft2.result)
+        self.fft2._compute_inverse_fft(input)
 
     @doc_private
     fn get_messages(mut self) -> None:
         self.process.get_messages()
 
-trait FFTProcessable(Movable,Copyable):
+trait ComplexFFTProcessable(Movable,Copyable):
     """Implement this trait in a custom struct to pass to `FFTProcess`
     as a Parameter.
 
     See `TestFFTProcess.mojo` for an example on how to create a spectral process 
     using a struct that implements FFTProcessable.
     """
-    fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+    fn next_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 1]]) -> None:
         return None
-    fn next_stereo_frame(mut self, mut magnitudes: List[SIMD[DType.float64,2]], mut phases: List[SIMD[DType.float64,2]]) -> None:
+    fn next_stereo_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 2]]) -> None:
         return None
     fn get_messages(mut self) -> None:
         return None
 
-struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
-    """Create an FFTProcess for audio manipulation in the frequency domain.
+struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
+    """Create an FFTProcess for audio manipulation in the frequency domain. This version will output and input complex frequency bins directly rather than magnitude and phase. This is currently untested.
 
     Parameters:
         T: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
@@ -69,7 +69,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
     var world: World
-    var buffered_process: BufferedProcess[FFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape]
+    var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape]
 
     fn __init__(out self, world: World, var process: Self.T):
         """Initializes a `FFTProcess` struct.
@@ -82,7 +82,7 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
             An initialized `FFTProcess` struct.
         """
         self.world = world
-        self.buffered_process = BufferedProcess[FFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape](self.world, process=FFTProcessor[Self.T, Self.window_size](self.world, process=process^))
+        self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape](self.world, process=ComplexFFTProcessor[Self.T, Self.window_size](self.world, process=process^))
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
@@ -131,4 +131,3 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
             The next stereo output sample.
         """
         return self.buffered_process.next_from_stereo_buffer(buffer, phase, start_chan)
-
