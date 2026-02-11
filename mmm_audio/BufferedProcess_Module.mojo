@@ -18,10 +18,10 @@ trait BufferedProcessable(Movable, Copyable):
     - `get_messages() -> None`: This function is called at the top of each audio block to allow the user to retrieve any messages
       they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
-    fn next_window(mut self, mut buffer: List[Float64]) -> None:
+    fn next_window(mut self, mut samples: List[Float64]) -> None:
         return None
 
-    fn next_stereo_window(mut self, mut buffer: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_stereo_window(mut self, mut samples: List[SIMD[DType.float64, 2]]) -> None:
         return None
     
     fn get_messages(mut self) -> None:
