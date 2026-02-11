@@ -86,8 +86,6 @@ struct Buffer(Movable, Copyable):
             try:
                 py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
 
-                print(py_data)  # Print the loaded data for debugging
-
                 self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
 
                 if num_wavetables > 1:
@@ -105,8 +103,7 @@ struct Buffer(Movable, Copyable):
                         self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
 
                 self_num_frames_f64 = Float64(self_num_frames)
-                print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
-
+                
                 var data = py_data[1]  # Extract the actual sound data from the tuple
                 # Convert to float64 if it's not already
                 if data.dtype != np.float64:
@@ -134,7 +131,6 @@ struct Buffer(Movable, Copyable):
                             channel_data.append(Float64(data_ptr[(f * self_num_chans) + c]))
                         self_data.append(channel_data^)
 
-                print("Buffer initialized with file:", filename)  # Print the filename for debugging
                 return Buffer(self_data, self_sample_rate)
             except err:
                 print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)

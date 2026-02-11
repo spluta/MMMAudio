@@ -11,5 +11,21 @@ class MBufAnalysis:
         return MBufAnalysisBridge.rms(dict)
     
     @staticmethod
+    def yin(dict:dict):
+        return MBufAnalysisBridge.yin(dict)
+    
+    @staticmethod
+    def spectral_centroid(dict:dict):
+        return MBufAnalysisBridge.spectral_centroid(dict)
+    
+    @staticmethod
+    def mfcc(dict:dict):
+        return MBufAnalysisBridge.mfcc(dict)
+    
+    @staticmethod
+    def mel_bands(dict:dict):
+        return MBufAnalysisBridge.mel_bands(dict)
+    
+    @staticmethod
     def custom_analysis(dict:dict):
         return MBufAnalysisBridge.custom(dict)
