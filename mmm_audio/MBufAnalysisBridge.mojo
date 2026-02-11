@@ -9,11 +9,11 @@ fn PyInit_MBufAnalysisBridge() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MBufAnalysisBridge")
         m.def_function[MBufAnalysisBridge.rms]("rms")
-        m.def_function[MBufAnalysisBridge.custom]("custom")
         m.def_function[MBufAnalysisBridge.yin]("yin")
         m.def_function[MBufAnalysisBridge.mfcc]("mfcc")
         m.def_function[MBufAnalysisBridge.mel_bands]("mel_bands")
         m.def_function[MBufAnalysisBridge.spectral_centroid]("spectral_centroid")
+        # m.def_function[MBufAnalysisBridge.custom]("custom")
         return m.finalize()
     except e:
         abort(String("error creating Python Mojo module:", e))
@@ -163,8 +163,8 @@ struct MBufAnalysisBridge:
                 nparray[i][j] = list[i][j]
         return nparray
 
-    @staticmethod
-    fn custom(py_path: PythonObject) raises -> PythonObject:
-        path = String(py=py_path)
-        print("custom analysis called, not yet implemented", path)
-        return 42
+    # @staticmethod
+    # fn custom(py_path: PythonObject) raises -> PythonObject:
+    #     path = String(py=py_path)
+    #     print("custom analysis called, not yet implemented", path)
+    #     return 42
