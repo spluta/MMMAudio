@@ -11,6 +11,88 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64
     refined_val = cur - 0.25 * (prev - next) * p
     return (p, refined_val)
 
+@doc_private
+fn spectral_shape_prepare(
+    mags: List[Float64],
+    sample_rate: Float64,
+    min_freq: Float64,
+    max_freq: Float64,
+    log_freq: Bool,
+    power_mag: Bool,
+) -> Tuple[List[Float64], List[Float64], Float64, Float64]:
+    var n_bins = len(mags)
+    if n_bins < 2:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var max_f = max_freq
+    if max_f < 0.0:
+        max_f = sample_rate / 2.0
+    max_f = min(max_f, sample_rate / 2.0)
+
+    var fft_size = (n_bins - 1) * 2
+    if fft_size <= 0:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var freqs_full = RealFFT.fft_frequencies(sr=sample_rate, n_fft=fft_size)
+    var bin_hz: Float64 = 0.0
+    if len(freqs_full) > 1:
+        bin_hz = freqs_full[1] - freqs_full[0]
+
+    if bin_hz <= 0.0:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var min_bin = Int(ceil(min_freq / bin_hz))
+    var max_bin = Int(floor(max_f / bin_hz))
+    min_bin = max(min_bin, 0)
+    max_bin = min(max_bin, n_bins - 1)
+
+    if max_bin <= min_bin:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var eps: Float64 = 1.0e-12
+    var mag = List[Float64](length=n_bins, fill=0.0)
+    for i in range(n_bins):
+        mag[i] = max(mags[i], eps)
+
+    if log_freq and min_bin == 0 and n_bins > 1:
+        min_bin = 1
+        mag[1] += mag[0]
+
+    if max_bin <= min_bin:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var size = max_bin - min_bin
+    if size <= 0:
+        return (List[Float64](), List[Float64](), 0.0, 0.0)
+
+    var amp = List[Float64](length=size, fill=0.0)
+    var amp_sum: Float64 = 0.0
+    var max_amp: Float64 = 0.0
+    for i in range(size):
+        var v = mag[min_bin + i]
+        if power_mag:
+            v = v * v
+        amp[i] = v
+        amp_sum += v
+        if v > max_amp:
+            max_amp = v
+
+    var freqs = List[Float64](length=size, fill=0.0)
+    if size == 1:
+        freqs[0] = Float64(min_bin) * bin_hz
+    else:
+        var start_f = Float64(min_bin) * bin_hz
+        var end_f = Float64(max_bin) * bin_hz
+        var step = (end_f - start_f) / Float64(size - 1)
+        for i in range(size):
+            freqs[i] = start_f + step * Float64(i)
+
+    if log_freq:
+        for i in range(size):
+            freqs[i] = 69.0 + 12.0 * log2(freqs[i] / 440.0)
+
+    return (amp^, freqs^, amp_sum, max_amp)
+
 trait GetFeaturable:
     fn get_features(self) -> List[Float64]:...
 
@@ -231,36 +313,431 @@ struct SpectralCentroid(FFTProcessable, GetFeaturable):
         Returns:
             Float64. The spectral centroid value.
         """
-        fft_size: Int = (len(mags) - 1) * 2
-        binHz: Float64 = sample_rate / fft_size
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            False,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var freqs = shape[1].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
 
-        min_bin = Int(ceil(min_freq / binHz))
-        max_bin = Int(floor(max_freq / binHz))
-        
-        min_bin = max(min_bin, 0)
-        max_bin = min(max_bin, fft_size // 2)
-        max_bin = max(max_bin, min_bin)
+        var centroid: Float64 = 0.0
+        for i in range(len(amp)):
+            centroid += amp[i] * freqs[i]
+        return centroid / amp_sum
 
-        centroid: Float64 = 0.0
-        ampsum: Float64 = 0.0
+struct SpectralSpread(FFTProcessable, GetFeaturable):
+    """Spectral Spread analysis."""
 
-        for i in range(min_bin, max_bin):
-            f: Float64 = i * binHz
+    var sr: Float64
+    var spread: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var log_freq: Bool
+    var power_mag: Bool
 
-            m: Float64 = mags[i]
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral spread value as a List of Float64."""
+        return [self.spread]
 
-            if power_mag:
-                m = m * m
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Spread analyzer.
 
-            ampsum += m
-            centroid += m * f
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.spread = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.log_freq = log_freq
+        self.power_mag = power_mag
 
-        if ampsum > 0.0:
-            centroid /= ampsum
-        else:
-            centroid = 0.0
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral spread for a given FFT analysis."""
+        self.spread = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
-        return centroid
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var freqs = shape[1].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var centroid: Float64 = 0.0
+        for i in range(len(amp)):
+            centroid += amp[i] * freqs[i]
+        centroid /= amp_sum
+
+        var variance: Float64 = 0.0
+        for i in range(len(amp)):
+            var diff = freqs[i] - centroid
+            variance += amp[i] * diff * diff
+        variance /= amp_sum
+
+        return sqrt(max(variance, 0.0))
+
+struct SpectralSkewness(FFTProcessable, GetFeaturable):
+    """Spectral Skewness analysis."""
+
+    var sr: Float64
+    var skewness: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var log_freq: Bool
+    var power_mag: Bool
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral skewness value as a List of Float64."""
+        return [self.skewness]
+
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Skewness analyzer.
+
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.skewness = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.log_freq = log_freq
+        self.power_mag = power_mag
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral skewness for a given FFT analysis."""
+        self.skewness = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
+
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var freqs = shape[1].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var centroid: Float64 = 0.0
+        for i in range(len(amp)):
+            centroid += amp[i] * freqs[i]
+        centroid /= amp_sum
+
+        var variance: Float64 = 0.0
+        for i in range(len(amp)):
+            var diff = freqs[i] - centroid
+            variance += amp[i] * diff * diff
+        variance /= amp_sum
+
+        if variance <= 0.0:
+            return 0.0
+
+        var denom3 = variance * sqrt(variance) * amp_sum
+        var acc3: Float64 = 0.0
+        for i in range(len(amp)):
+            var diff = freqs[i] - centroid
+            var diff2 = diff * diff
+            acc3 += amp[i] * diff2 * diff
+        return acc3 / denom3
+
+struct SpectralKurtosis(FFTProcessable, GetFeaturable):
+    """Spectral Kurtosis analysis."""
+
+    var sr: Float64
+    var kurtosis: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var log_freq: Bool
+    var power_mag: Bool
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral kurtosis value as a List of Float64."""
+        return [self.kurtosis]
+
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Kurtosis analyzer.
+
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.kurtosis = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.log_freq = log_freq
+        self.power_mag = power_mag
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral kurtosis for a given FFT analysis."""
+        self.kurtosis = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
+
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var freqs = shape[1].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var centroid: Float64 = 0.0
+        for i in range(len(amp)):
+            centroid += amp[i] * freqs[i]
+        centroid /= amp_sum
+
+        var variance: Float64 = 0.0
+        for i in range(len(amp)):
+            var diff = freqs[i] - centroid
+            variance += amp[i] * diff * diff
+        variance /= amp_sum
+
+        if variance <= 0.0:
+            return 0.0
+
+        var denom4 = variance * variance * amp_sum
+        var acc4: Float64 = 0.0
+        for i in range(len(amp)):
+            var diff = freqs[i] - centroid
+            var diff2 = diff * diff
+            acc4 += amp[i] * diff2 * diff2
+        return acc4 / denom4
+
+struct SpectralRolloff(FFTProcessable, GetFeaturable):
+    """Spectral Rolloff analysis."""
+
+    var sr: Float64
+    var rolloff: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var rolloff_target: Float64
+    var log_freq: Bool
+    var power_mag: Bool
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral rolloff value as a List of Float64."""
+        return [self.rolloff]
+
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95.0, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Rolloff analyzer.
+
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            rolloff_target: Percentage of spectral energy for rolloff.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.rolloff = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.rolloff_target = rolloff_target
+        self.log_freq = log_freq
+        self.power_mag = power_mag
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral rolloff for a given FFT analysis."""
+        self.rolloff = self.from_mags(
+            mags,
+            self.sr,
+            self.min_freq,
+            self.max_freq,
+            self.rolloff_target,
+            self.log_freq,
+            self.power_mag,
+        )
+
+    @staticmethod
+    fn from_mags(
+        mags: List[Float64],
+        sample_rate: Float64,
+        min_freq: Float64 = 20,
+        max_freq: Float64 = 20000,
+        rolloff_target: Float64 = 95.0,
+        log_freq: Bool = False,
+        power_mag: Bool = False,
+    ) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var freqs = shape[1].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var rolloff: Float64 = 0.0
+        var cum_sum: Float64 = 0.0
+        var target = amp_sum * rolloff_target / 100.0
+        for i in range(len(amp)):
+            cum_sum += amp[i]
+            if cum_sum >= target:
+                if i == 0:
+                    rolloff = freqs[0]
+                else:
+                    rolloff = freqs[i] - (freqs[i] - freqs[i - 1]) * (cum_sum - target) / amp[i]
+                break
+        return rolloff
+
+struct SpectralFlatness(FFTProcessable, GetFeaturable):
+    """Spectral Flatness analysis."""
+
+    var sr: Float64
+    var flatness: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var log_freq: Bool
+    var power_mag: Bool
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral flatness value (dB) as a List of Float64."""
+        return [self.flatness]
+
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Flatness analyzer.
+
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.flatness = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.log_freq = log_freq
+        self.power_mag = power_mag
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral flatness for a given FFT analysis."""
+        self.flatness = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
+
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var amp_sum = shape[2]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var eps: Float64 = 1.0e-12
+        var amp_mean = amp_sum / Float64(len(amp))
+        var sum_log: Float64 = 0.0
+        for i in range(len(amp)):
+            sum_log += log(max(amp[i], eps))
+        var flatness = exp(sum_log / Float64(len(amp))) / max(amp_mean, eps)
+        return 20.0 * log(max(flatness, eps)) / log(10.0)
+
+struct SpectralCrest(FFTProcessable, GetFeaturable):
+    """Spectral Crest analysis."""
+
+    var sr: Float64
+    var crest: Float64
+    var min_freq: Float64
+    var max_freq: Float64
+    var log_freq: Bool
+    var power_mag: Bool
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral crest value (dB) as a List of Float64."""
+        return [self.crest]
+
+    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+        """Initialize the Spectral Crest analyzer.
+
+        Args:
+            sr: The sample rate from the MMMWorld.
+            min_freq: The minimum frequency to consider.
+            max_freq: The maximum frequency to consider.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2).
+        """
+        self.sr = sr
+        self.crest = 0.0
+        self.min_freq = min_freq
+        self.max_freq = max_freq
+        self.log_freq = log_freq
+        self.power_mag = power_mag
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral crest for a given FFT analysis."""
+        self.crest = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
+
+    @staticmethod
+    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+        var shape = spectral_shape_prepare(
+            mags,
+            sample_rate,
+            min_freq,
+            max_freq,
+            log_freq,
+            power_mag,
+        )
+        var amp = shape[0].copy()
+        var amp_sum = shape[2]
+        var max_amp = shape[3]
+        if len(amp) == 0 or amp_sum <= 0.0:
+            return 0.0
+
+        var eps: Float64 = 1.0e-12
+        var amp_mean = amp_sum / Float64(len(amp))
+        var crest = max_amp / max(amp_mean, eps)
+        return 20.0 * log(max(crest, eps)) / log(10.0)
 
 struct RMS(BufferedProcessable, GetFeaturable):
     """Root Mean Square (RMS) amplitude analysis.

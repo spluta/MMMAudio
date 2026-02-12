@@ -12,8 +12,8 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     var world: World
     var process: Self.T
 
-    var fft: RealFFT[Self.window_size, 1]
-    var fft2: RealFFT[Self.window_size, 2]
+    var fft: RealFFT[1]
+    var fft2: RealFFT[2]
     var mags: List[Float64]
     var phases: List[Float64]
     var st_mags: List[SIMD[DType.float64,2]]
@@ -23,8 +23,8 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     fn __init__(out self, world: World, var process: Self.T):
         self.world = world
         self.process = process^
-        self.fft = RealFFT[Self.window_size, 1]()
-        self.fft2 = RealFFT[Self.window_size, 2]()
+        self.fft = RealFFT[1](Self.window_size)
+        self.fft2 = RealFFT[2](Self.window_size)
         self.mags = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.st_mags = List[SIMD[DType.float64,2]](length=(Self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))

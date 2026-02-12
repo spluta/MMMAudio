@@ -1,6 +1,6 @@
-"""Spectral Centroid Unit Test
+"""Spectral Flatness Unit Test
 
-This script tests the Spectral Centroid implementation in the mmm_dsp library
+This script tests the Spectral Flatness implementation in the MMMAudio library
 by comparing its output against the librosa library's implementation.
 """
 
@@ -51,73 +51,68 @@ def load_flucoma_spectral_shape(windowsize, hopsize):
         print("Error reading FluCoMa results:", e)
     return results
 
-os.system("mojo run validation/SpectralCentroid_Validation.mojo")
+os.system("mojo run validation/SpectralFlatness_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/spectral_centroid_mojo_results.csv", "r") as f:
+with open("validation/outputs/spectral_flatness_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
-    
-    mojo_centroids = []
+
+    mojo_flatness = []
     # skip line 2 (header)
     # skip line 3, to account for 1 frame lag
     for line in lines[4:]:
         val = float(line.strip())
-        mojo_centroids.append(val)
+        mojo_flatness.append(val)
 
 y, sr = librosa.load("resources/Shiverer.wav", sr=None)
 
-# Librosa Spectral Centroid
-# center=False to match Mojo
-librosa_centroids = librosa.feature.spectral_centroid(y=y, sr=sr, n_fft=windowsize, hop_length=hopsize, center=False)[0]
+# Librosa Spectral Flatness
+librosa_flatness = librosa.feature.spectral_flatness(
+    y=y,
+    n_fft=windowsize,
+    hop_length=hopsize,
+    win_length=windowsize,
+    window="hann",
+    center=False,
+)[0]
 
-def compare_analyses_pitch(list1, list2):
+eps = 1.0e-12
+librosa_flatness_db = 20.0 * np.log10(np.maximum(librosa_flatness, eps))
+
+def compare_analyses(list1, list2):
     shorter = min(len(list1), len(list2))
     arr1 = np.array(list1[:shorter])
     arr2 = np.array(list2[:shorter])
-    
-    # Filter out zero or very low frequencies to avoid log errors or huge jumps
-    mask = (arr1 > 10) & (arr2 > 10)
-    arr1 = arr1[mask]
-    arr2 = arr2[mask]
-    
-    diff_hz = arr1 - arr2
-    mean_hz = np.mean(np.abs(diff_hz))
-    std_hz = np.std(diff_hz)
-    
-    # Semitones: 12 * log2(f1 / f2)
-    diff_st = 12 * np.log2(arr1 / arr2)
-    mean_st = np.mean(np.abs(diff_st))
-    std_st = np.std(diff_st)
-    
-    return mean_hz, std_hz, mean_st, std_st
+    diff = arr1 - arr2
+    return np.mean(np.abs(diff)), np.std(diff)
 
 flucoma_results = load_flucoma_spectral_shape(windowsize, hopsize)
-flucoma_centroids = flucoma_results["centroid"]
+flucoma_flatness = flucoma_results["flatness"]
 
 plt.figure(figsize=(12, 6))
-plt.plot(mojo_centroids, label="MMMAudio Spectral Centroid", alpha=0.7)
-plt.plot(librosa_centroids, label="librosa Spectral Centroid", alpha=0.7)
+plt.plot(mojo_flatness, label="MMMAudio Spectral Flatness (dB)", alpha=0.7)
+plt.plot(librosa_flatness_db, label="librosa Spectral Flatness (dB)", alpha=0.7)
 
-if flucoma_centroids:
-    plt.plot(flucoma_centroids, label="FluCoMa Spectral Centroid", alpha=0.7)
+if flucoma_flatness:
+    plt.plot(flucoma_flatness, label="FluCoMa Spectral Flatness", alpha=0.7)
 
-plt.legend()
-plt.title("Spectral Centroid Comparison")
+mean_dev_librosa, std_dev_librosa = compare_analyses(mojo_flatness, librosa_flatness_db)
+print(f"MMMAudio vs Librosa Spectral Flatness: Mean Dev = {mean_dev_librosa:.4f} dB, Std Dev = {std_dev_librosa:.4f} dB")
 
-mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(mojo_centroids, librosa_centroids)
-print(f"MMMAudio vs Librosa Spectral Centroid: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
-
-if flucoma_centroids:
+if flucoma_flatness:
     try:
-        mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(mojo_centroids, flucoma_centroids)
-        print(f"MMMAudio vs FluCoMa Spectral Centroid: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
+        mean_dev_flucoma, std_dev_flucoma = compare_analyses(mojo_flatness, flucoma_flatness)
+        print(f"MMMAudio vs FluCoMa Spectral Flatness: Mean Dev = {mean_dev_flucoma:.4f} dB, Std Dev = {std_dev_flucoma:.4f} dB")
 
-        mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(librosa_centroids, flucoma_centroids)
-        print(f"Librosa vs FluCoMa Spectral Centroid: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
+        mean_dev_lib_flu, std_dev_lib_flu = compare_analyses(librosa_flatness_db, flucoma_flatness)
+        print(f"Librosa vs FluCoMa Spectral Flatness: Mean Dev = {mean_dev_lib_flu:.4f} dB, Std Dev = {std_dev_lib_flu:.4f} dB")
     except Exception as e:
         print("Error comparing FluCoMa results:", e)
 
-plt.savefig("validation/outputs/spectral_centroid_comparison.png")
+plt.legend()
+plt.ylabel("dB")
+plt.title("Spectral Flatness Comparison")
+plt.savefig("validation/outputs/spectral_flatness_comparison.png")
 plt.show()

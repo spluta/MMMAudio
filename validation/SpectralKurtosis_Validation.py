@@ -1,0 +1,94 @@
+"""Spectral Kurtosis Unit Test
+
+This script tests the Spectral Kurtosis implementation in the MMMAudio library
+by comparing its output against FluCoMa.
+"""
+
+import os
+import matplotlib.pyplot as plt
+import numpy as np
+import sys
+
+sys.path.append(os.getcwd())
+
+def load_flucoma_spectral_shape(windowsize, hopsize):
+    output_path = "validation/outputs/spectral_shape_flucoma_results.csv"
+    settings_path = "validation/outputs/spectral_shape_settings.csv"
+
+    if not os.path.exists(output_path):
+        try:
+            with open(settings_path, "w") as f:
+                f.write(f"windowsize,{windowsize}\n")
+                f.write(f"hopsize,{hopsize}\n")
+            os.system("sclang validation/SpectralShape_Validation.scd")
+        except Exception as e:
+            print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+
+    results = {
+        "centroid": [],
+        "spread": [],
+        "skewness": [],
+        "kurtosis": [],
+        "rolloff": [],
+        "flatness": [],
+        "crest": [],
+    }
+    try:
+        with open(output_path, "r") as f:
+            for line in f:
+                parts = [p.strip() for p in line.strip().split(",")]
+                if len(parts) < 7:
+                    continue
+                results["centroid"].append(float(parts[0]))
+                results["spread"].append(float(parts[1]))
+                results["skewness"].append(float(parts[2]))
+                results["kurtosis"].append(float(parts[3]))
+                results["rolloff"].append(float(parts[4]))
+                results["flatness"].append(float(parts[5]))
+                results["crest"].append(float(parts[6]))
+    except Exception as e:
+        print("Error reading FluCoMa results:", e)
+    return results
+
+os.system("mojo run validation/SpectralKurtosis_Validation.mojo")
+print("mojo analysis complete")
+
+with open("validation/outputs/spectral_kurtosis_mojo_results.csv", "r") as f:
+    lines = f.readlines()
+    windowsize = int(lines[0].strip().split(",")[1])
+    hopsize = int(lines[1].strip().split(",")[1])
+
+    mojo_kurtosis = []
+    # skip line 2 (header)
+    # skip line 3, to account for 1 frame lag
+    for line in lines[4:]:
+        val = float(line.strip())
+        mojo_kurtosis.append(val)
+
+def compare_analyses(list1, list2):
+    shorter = min(len(list1), len(list2))
+    arr1 = np.array(list1[:shorter])
+    arr2 = np.array(list2[:shorter])
+    diff = arr1 - arr2
+    return np.mean(np.abs(diff)), np.std(diff)
+
+flucoma_results = load_flucoma_spectral_shape(windowsize, hopsize)
+flucoma_kurtosis = flucoma_results["kurtosis"]
+
+plt.figure(figsize=(12, 6))
+plt.plot(mojo_kurtosis, label="MMMAudio Spectral Kurtosis", alpha=0.7)
+
+if flucoma_kurtosis:
+    plt.plot(flucoma_kurtosis, label="FluCoMa Spectral Kurtosis", alpha=0.7)
+
+if flucoma_kurtosis:
+    try:
+        mean_dev_flucoma, std_dev_flucoma = compare_analyses(mojo_kurtosis, flucoma_kurtosis)
+        print(f"MMMAudio vs FluCoMa Spectral Kurtosis: Mean Dev = {mean_dev_flucoma:.6f}, Std Dev = {std_dev_flucoma:.6f}")
+    except Exception as e:
+        print("Error comparing FluCoMa results:", e)
+
+plt.legend()
+plt.title("Spectral Kurtosis Comparison")
+plt.savefig("validation/outputs/spectral_kurtosis_comparison.png")
+plt.show()

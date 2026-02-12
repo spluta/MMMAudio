@@ -8,11 +8,11 @@ comptime min_freq: Float64 = 20.0
 comptime max_freq: Float64 = 20000.0
 
 struct MFCCTestSuite(FFTProcessable):
-    var mfcc: MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize]
+    var mfcc: MFCC
     var data: List[List[Float64]]
 
     fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
-        self.mfcc = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize](w)
+        self.mfcc = MFCC[](w[].sample_rate,num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize)
         self.data = List[List[Float64]]()
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):

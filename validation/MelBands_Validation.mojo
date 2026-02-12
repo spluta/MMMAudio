@@ -5,11 +5,11 @@ comptime hopsize: Int = 512
 comptime nbands: Int = 10
 
 struct MelBandsTestSuite(FFTProcessable):
-    var melbands: MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize]
+    var melbands: MelBands[]
     var data: List[List[Float64]]
 
     fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
-        self.melbands = MelBands[num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize](w)
+        self.melbands = MelBands[](w[].sample_rate,num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize)
         self.data = List[List[Float64]]()
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
