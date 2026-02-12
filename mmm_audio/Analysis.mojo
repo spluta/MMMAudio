@@ -2,6 +2,7 @@ from mmm_audio import *
 from math import ceil, floor, log2, log, exp, sqrt, cos, pi
 from math import sqrt
 
+@always_inline
 @doc_private
 fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64, Float64]:
     denom = prev - 2.0 * cur + next
@@ -11,18 +12,23 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64
     refined_val = cur - 0.25 * (prev - next) * p
     return (p, refined_val)
 
+@always_inline
 @doc_private
-fn spectral_shape_prepare(
+fn spectral_amp_prepare(
     mags: List[Float64],
     sample_rate: Float64,
     min_freq: Float64,
     max_freq: Float64,
     log_freq: Bool,
     power_mag: Bool,
-) -> Tuple[List[Float64], List[Float64], Float64, Float64]:
+    mut amp: List[Float64],
+    mut amp_sum: Float64,
+    mut max_amp: Float64,
+    mut min_bin: Int,
+    mut max_bin: Int,
+    mut bin_hz: Float64,
+) -> Bool:
     var n_bins = len(mags)
-    if n_bins < 2:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
 
     var max_f = max_freq
     if max_f < 0.0:
@@ -30,46 +36,25 @@ fn spectral_shape_prepare(
     max_f = min(max_f, sample_rate / 2.0)
 
     var fft_size = (n_bins - 1) * 2
-    if fft_size <= 0:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
+    bin_hz = sample_rate / Float64(fft_size)
 
-    var freqs_full = RealFFT.fft_frequencies(sr=sample_rate, n_fft=fft_size)
-    var bin_hz: Float64 = 0.0
-    if len(freqs_full) > 1:
-        bin_hz = freqs_full[1] - freqs_full[0]
-
-    if bin_hz <= 0.0:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
-
-    var min_bin = Int(ceil(min_freq / bin_hz))
-    var max_bin = Int(floor(max_f / bin_hz))
+    min_bin = Int(ceil(min_freq / bin_hz))
+    max_bin = Int(floor(max_f / bin_hz))
     min_bin = max(min_bin, 0)
     max_bin = min(max_bin, n_bins - 1)
 
-    if max_bin <= min_bin:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
-
-    var eps: Float64 = 1.0e-12
-    var mag = List[Float64](length=n_bins, fill=0.0)
-    for i in range(n_bins):
-        mag[i] = max(mags[i], eps)
-
-    if log_freq and min_bin == 0 and n_bins > 1:
+    if log_freq and min_bin == 0:
         min_bin = 1
-        mag[1] += mag[0]
-
-    if max_bin <= min_bin:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
 
     var size = max_bin - min_bin
-    if size <= 0:
-        return (List[Float64](), List[Float64](), 0.0, 0.0)
 
-    var amp = List[Float64](length=size, fill=0.0)
-    var amp_sum: Float64 = 0.0
-    var max_amp: Float64 = 0.0
+    amp = List[Float64](length=size, fill=0.0)
+    amp_sum = 0.0
+    max_amp = 0.0
+    var eps: Float64 = 1.0e-12
     for i in range(size):
-        var v = mag[min_bin + i]
+        var bin = min_bin + i
+        var v = max(mags[bin], eps)
         if power_mag:
             v = v * v
         amp[i] = v
@@ -77,7 +62,23 @@ fn spectral_shape_prepare(
         if v > max_amp:
             max_amp = v
 
-    var freqs = List[Float64](length=size, fill=0.0)
+    return True
+
+@always_inline
+@doc_private
+fn spectral_freqs_prepare(
+    min_bin: Int,
+    max_bin: Int,
+    bin_hz: Float64,
+    log_freq: Bool,
+    mut freqs: List[Float64],
+):
+    var size = max_bin - min_bin
+    if size <= 0:
+        freqs = List[Float64]()
+        return
+
+    freqs = List[Float64](length=size, fill=0.0)
     if size == 1:
         freqs[0] = Float64(min_bin) * bin_hz
     else:
@@ -91,7 +92,7 @@ fn spectral_shape_prepare(
         for i in range(size):
             freqs[i] = 69.0 + 12.0 * log2(freqs[i] / 440.0)
 
-    return (amp^, freqs^, amp_sum, max_amp)
+    return
 
 trait GetFeaturable:
     fn get_features(self) -> List[Float64]:...
@@ -313,19 +314,29 @@ struct SpectralCentroid(FFTProcessable, GetFeaturable):
         Returns:
             Float64. The spectral centroid value.
         """
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var freqs = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             False,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var freqs = shape[1].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
+        spectral_freqs_prepare(min_bin, max_bin, bin_hz, False, freqs)
 
         var centroid: Float64 = 0.0
         for i in range(len(amp)):
@@ -369,19 +380,29 @@ struct SpectralSpread(FFTProcessable, GetFeaturable):
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var freqs = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var freqs = shape[1].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
+        spectral_freqs_prepare(min_bin, max_bin, bin_hz, log_freq, freqs)
 
         var centroid: Float64 = 0.0
         for i in range(len(amp)):
@@ -433,19 +454,29 @@ struct SpectralSkewness(FFTProcessable, GetFeaturable):
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var freqs = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var freqs = shape[1].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
+        spectral_freqs_prepare(min_bin, max_bin, bin_hz, log_freq, freqs)
 
         var centroid: Float64 = 0.0
         for i in range(len(amp)):
@@ -506,19 +537,29 @@ struct SpectralKurtosis(FFTProcessable, GetFeaturable):
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var freqs = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var freqs = shape[1].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
+        spectral_freqs_prepare(min_bin, max_bin, bin_hz, log_freq, freqs)
 
         var centroid: Float64 = 0.0
         for i in range(len(amp)):
@@ -598,19 +639,29 @@ struct SpectralRolloff(FFTProcessable, GetFeaturable):
         log_freq: Bool = False,
         power_mag: Bool = False,
     ) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var freqs = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var freqs = shape[1].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
+        spectral_freqs_prepare(min_bin, max_bin, bin_hz, log_freq, freqs)
 
         var rolloff: Float64 = 0.0
         var cum_sum: Float64 = 0.0
@@ -662,17 +713,26 @@ struct SpectralFlatness(FFTProcessable, GetFeaturable):
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var amp_sum = shape[2]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
 
         var eps: Float64 = 1.0e-12
@@ -720,18 +780,26 @@ struct SpectralCrest(FFTProcessable, GetFeaturable):
 
     @staticmethod
     fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
-        var shape = spectral_shape_prepare(
+        var amp = List[Float64]()
+        var amp_sum: Float64 = 0.0
+        var max_amp: Float64 = 0.0
+        var min_bin: Int = 0
+        var max_bin: Int = 0
+        var bin_hz: Float64 = 0.0
+        if not spectral_amp_prepare(
             mags,
             sample_rate,
             min_freq,
             max_freq,
             log_freq,
             power_mag,
-        )
-        var amp = shape[0].copy()
-        var amp_sum = shape[2]
-        var max_amp = shape[3]
-        if len(amp) == 0 or amp_sum <= 0.0:
+            amp,
+            amp_sum,
+            max_amp,
+            min_bin,
+            max_bin,
+            bin_hz,
+        ):
             return 0.0
 
         var eps: Float64 = 1.0e-12
