@@ -10,6 +10,7 @@ from .FFTProcess_Module import *
 from .FFTs import *
 from .Filters import *
 from .MLP_Module import *
+from .MedianFilter_Module import *
 from .Noise import *
 from .Oscillators import *
 from .Oversampling import *

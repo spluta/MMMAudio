@@ -2,11 +2,11 @@ from mmm_audio import *
 
 comptime fft_size: Int = 1024
 
-struct SpectralFluxOnsetExample(Movable, Copyable):
+struct SpectralFluxOnsetsExample(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var onsets: SpectralFluxOnset[1,fft_size,fft_size//2]
+    var onsets: SpectralFluxOnsets[1,fft_size,fft_size//2]
     var m: Messenger
     var impulse_vol: Float64
     var onsetcounter: Int64
@@ -15,9 +15,9 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        self.onsets = SpectralFluxOnset[1,fft_size,fft_size//2](self.world,(fft_size//2) + 1)
+        self.onsets = SpectralFluxOnsets[1,fft_size,fft_size//2](self.world,(fft_size//2) + 1)
         self.onsets.thresh = 67.0
-        self.onsets.min_slice_length = 0.3
+        self.onsets.min_slice_len = 0.3
         self.m = Messenger(self.world)
         self.impulse_vol = 0.5
         self.onsetcounter = 0
@@ -26,7 +26,7 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
         
         self.m.update(self.onsets.thresh,"thresh")
         self.m.update(self.impulse_vol,"impulse_vol")
-        self.m.update(self.onsets.min_slice_length,"minSliceLength")
+        self.m.update(self.onsets.min_slice_len,"minSliceLength")
         
         # play the audio file
         audio = self.playBuf.next(self.buffer)

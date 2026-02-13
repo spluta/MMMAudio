@@ -19,6 +19,10 @@ class MBufAnalysis:
         return MBufAnalysisBridge.spectral_centroid(dict)
     
     @staticmethod
+    def spectral_flux_onsets(dict:dict):
+        return MBufAnalysisBridge.spectral_flux_onsets(dict)
+    
+    @staticmethod
     def mfcc(dict:dict):
         return MBufAnalysisBridge.mfcc(dict)
     

@@ -71,7 +71,7 @@ struct TestFFTProcess(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var onsets: SpectralFluxOnset[1,windowsize,hopsize]
+    var onsets: SpectralFluxOnsets[1,windowsize,hopsize]
     var fftlowpass: FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
@@ -81,9 +81,9 @@ struct TestFFTProcess(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.onsets = SpectralFluxOnset[1,windowsize,hopsize](self.world,(windowsize//2) + 1)
+        self.onsets = SpectralFluxOnsets[1,windowsize,hopsize](self.world,(windowsize//2) + 1)
         self.onsets.thresh = 67
-        self.onsets.min_slice_length = 0.3
+        self.onsets.min_slice_len = 0.3
         self.fftlowpass = FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[windowsize](self.world))
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
@@ -92,7 +92,7 @@ struct TestFFTProcess(Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64,2]:
 
         self.m.update(self.onsets.thresh,"onsets_thresh")
-        self.m.update(self.onsets.min_slice_length,"onsets_min_slice_length")
+        self.m.update(self.onsets.min_slice_len,"onsets_min_slice_len")
 
         input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         onset = self.onsets.next(input)

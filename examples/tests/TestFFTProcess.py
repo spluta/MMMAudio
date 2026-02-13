@@ -4,7 +4,7 @@ mmm_audio = MMMAudio(128, graph_name="TestFFTProcess", package_name="examples.te
 mmm_audio.start_audio()
 
 mmm_audio.send_float("onsets_thresh",68)
-mmm_audio.send_float("onsets_min_slice_length",3)
+mmm_audio.send_float("onsets_min_slice_len",3)
 
 mmm_audio.send_int("nscrambles",100)
 mmm_audio.send_trig("rescramble")

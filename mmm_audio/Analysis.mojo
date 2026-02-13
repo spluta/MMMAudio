@@ -1208,8 +1208,6 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     var flux: Float64
     var positive_only: Bool
 
-    # num_mags instead of "fft_size" because this could also be used with melbands or another
-    # spectral summary that produces a list of values.
     fn __init__(out self, num_mags: Int, positive_only: Bool = False):
         """Initialize the Spectral Flux analyzer.
 
@@ -1226,7 +1224,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         """Compute the spectral flux onset value for a given FFT analysis.
 
-        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnset is passed as the "process".
+        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnsets is passed as the "process".
 
         Nothing is returned from this function, but the computed spectral flux value is stored in self.flux.
 
@@ -1269,28 +1267,33 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
 trait GetBoolFeaturable:
     fn get_features(self) -> List[Bool]:...
 
-struct SpectralFluxOnset[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable):
+struct SpectralFluxOnsets[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable):
     """Spectral Flux Onset analysis.
     """
     var world: World
     var thresh: Float64
     var state: Bool
     var current_slice_length_samps: Float64
-    var min_slice_length: Float64
-    var fftp: FFTProcess[SpectralFlux]
+    var min_slice_len: Float64
+    var filter_size: Int
+    var filter: MedianFilter
+    var prev_flux: Float64
+    var fftp: FFTProcess[SpectralFlux,WindowType.hann,WindowType.hann]
 
     fn get_features(self) -> List[Bool]:
         return [self.state]
 
-    # num_mags instead of "fft_size" because this could also be used with melbands or another spectral summary that produces a list of values.
-    fn __init__(out self, world: World, num_mags: Int, window_size: Int = 1024, hop_size: Int = 512):
+    fn __init__(out self, world: World, num_mags: Int, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
         self.world = world
-        self.thresh = 0
+        self.thresh = 0.5
         self.state = False
         self.current_slice_length_samps = 0
-        self.min_slice_length = 1
+        self.min_slice_len = 1
+        self.filter_size = filter_size
+        self.filter = MedianFilter(filter_size)
+        self.prev_flux = 0.0
         sfp = SpectralFlux(num_mags=num_mags, positive_only=True)
-        self.fftp = FFTProcess[SpectralFlux](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
+        self.fftp = FFTProcess[SpectralFlux,WindowType.hann,WindowType.hann](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
 
     fn next(mut self, input: SIMD[DType.float64,1]) -> Bool:
 
@@ -1303,8 +1306,14 @@ struct SpectralFluxOnset[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable)
             self.state = False
         else: # state *will* be low if we're in here:
             flux = self.fftp.buffered_process.process.process.flux
+            var filtered_flux: Float64
+            if self.filter_size >= 3:
+                filtered_flux = flux - self.filter.process_sample(flux)
+            else:
+                filtered_flux = flux - self.prev_flux
+            self.prev_flux = flux
             curr_slice_len_sec = self.current_slice_length_samps / self.world[].sample_rate
-            if flux > self.thresh and curr_slice_len_sec > self.min_slice_length:
+            if filtered_flux > self.thresh and curr_slice_len_sec > self.min_slice_len:
                 self.state = True
 
                 # should this actually be 1?
