@@ -1,10 +1,27 @@
 # run this from directly inside the "validation" directory, not from project root
 
+import argparse
 import librosa
 import os
 import csv
 import matplotlib.pyplot as plt
 import numpy as np
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate mel band output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 flucoma_csv_path = "./validation/outputs/mel_bands_flucoma.csv"
 if not os.path.exists(flucoma_csv_path):
@@ -78,4 +95,8 @@ ax[0].set(title='Librosa')
 ax[1].set(title='FluCoMa')
 ax[2].set(title='MMMAudio')
 ax[0].label_outer()
-plt.show()
+plt.savefig("validation/outputs/mel_bands_comparison.png")
+if show_plots:
+    plt.show()
+else:
+    plt.close()

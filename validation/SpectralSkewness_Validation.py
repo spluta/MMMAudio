@@ -4,12 +4,29 @@ This script tests the Spectral Skewness implementation in the MMMAudio library
 by comparing its output against FluCoMa.
 """
 
+import argparse
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
 
 sys.path.append(os.getcwd())
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate spectral skewness output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 def load_flucoma_spectral_shape(windowsize, hopsize):
     output_path = "validation/outputs/spectral_shape_flucoma_results.csv"
@@ -91,4 +108,7 @@ if flucoma_skewness:
 plt.legend()
 plt.title("Spectral Skewness Comparison")
 plt.savefig("validation/outputs/spectral_skewness_comparison.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()

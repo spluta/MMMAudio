@@ -7,6 +7,7 @@ This script needs to be run from the root MMMAudio directory.
 
 """
 
+import argparse
 import librosa
 import os
 import matplotlib.pyplot as plt
@@ -14,6 +15,22 @@ import numpy as np
 import sys
 
 sys.path.append(os.getcwd())
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate YIN pitch detection output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 os.system("mojo run validation/YIN_Validation.mojo")
 print("mojo analysis complete")
@@ -161,7 +178,10 @@ except Exception as e:
 
 plt.tight_layout()
 plt.savefig("validation/outputs/yin_comparison.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()
 
 # Histogram of deviations
 plt.figure(figsize=(10, 6))
@@ -189,4 +209,7 @@ plt.title('Histogram of Pitch Deviation (Semitones)')
 plt.legend()
 plt.xticks(bins)
 plt.savefig("validation/outputs/yin_deviation_histogram.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()

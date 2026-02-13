@@ -4,15 +4,31 @@ This script tests the RMS implementation in the mmm_dsp library
 by comparing its output against the librosa library's RMS implementation.
 """
 
+import argparse
 import librosa
 import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
+# from .functions import ampdb
 
 sys.path.append(os.getcwd())
+from mmm_python import *
 
-from .functions import ampdb
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate RMS output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 os.system("mojo run validation/RMS_Validation.mojo")
 print("mojo analysis complete")
@@ -53,9 +69,12 @@ else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 	scrun = True
 
+mojo_rms_db = [ampdb(float(val)) for val in mojo_rms]
+librosa_rms_db = [ampdb(float(val)) for val in librosa_rms]
+
 plt.figure(figsize=(12, 6))
-plt.plot(mojo_rms, label="MMMAudio RMS", alpha=0.7)
-plt.plot(librosa_rms, label="librosa RMS", alpha=0.7)
+plt.plot(mojo_rms_db, label="MMMAudio RMS (dB)", alpha=0.7)
+plt.plot(librosa_rms_db, label="librosa RMS (dB)", alpha=0.7)
 
 try:
     with open("validation/outputs/rms_flucoma_results.csv", "r") as f:
@@ -65,7 +84,8 @@ try:
             val = float(line.strip())
             sclang_rms.append(val)
 
-    plt.plot(sclang_rms, label="FluCoMa RMS", alpha=0.7)
+    sclang_rms_db = [ampdb(float(val)) for val in sclang_rms]
+    plt.plot(sclang_rms_db, label="FluCoMa RMS (dB)", alpha=0.7)
 except Exception as e:
     print("Error reading FluCoMa results:", e)
 
@@ -82,7 +102,10 @@ except Exception as e:
     print("Error comparing FluCoMa results:", e)
 
 plt.legend()
-plt.ylabel("Amplitude")
+plt.ylabel("dB")
 plt.title("RMS Comparison")
 plt.savefig("validation/outputs/rms_comparison.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()

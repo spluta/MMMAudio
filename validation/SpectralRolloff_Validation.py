@@ -4,6 +4,7 @@ This script tests the Spectral Rolloff implementation in the MMMAudio library
 by comparing its output against the librosa library's implementation.
 """
 
+import argparse
 import librosa
 import os
 import matplotlib.pyplot as plt
@@ -11,6 +12,22 @@ import numpy as np
 import sys
 
 sys.path.append(os.getcwd())
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate spectral rolloff output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 def load_flucoma_spectral_shape(windowsize, hopsize):
     output_path = "validation/outputs/spectral_shape_flucoma_results.csv"
@@ -114,4 +131,7 @@ plt.legend()
 plt.ylabel("Hz")
 plt.title("Spectral Rolloff Comparison")
 plt.savefig("validation/outputs/spectral_rolloff_comparison.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()

@@ -4,6 +4,7 @@ This script tests the Spectral Centroid implementation in the mmm_dsp library
 by comparing its output against the librosa library's implementation.
 """
 
+import argparse
 import librosa
 import os
 import matplotlib.pyplot as plt
@@ -11,6 +12,22 @@ import numpy as np
 import sys
 
 sys.path.append(os.getcwd())
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description="Validate spectral centroid output.")
+    parser.add_argument(
+        "--show-plots",
+        action="store_true",
+        help="Display plots interactively (pauses execution).",
+    )
+    return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 def load_flucoma_spectral_shape(windowsize, hopsize):
     output_path = "validation/outputs/spectral_shape_flucoma_results.csv"
@@ -120,4 +137,7 @@ if flucoma_centroids:
         print("Error comparing FluCoMa results:", e)
 
 plt.savefig("validation/outputs/spectral_centroid_comparison.png")
-plt.show()
+if show_plots:
+    plt.show()
+else:
+    plt.close()

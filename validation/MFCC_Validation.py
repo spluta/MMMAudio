@@ -4,6 +4,7 @@ This script tests the MFCC implementation in the MMMAudio library by comparing
 its output against librosa and FluCoMa.
 """
 
+import argparse
 import csv
 import librosa
 import matplotlib.pyplot as plt
@@ -12,6 +13,22 @@ import os
 import sys
 
 sys.path.append(os.getcwd())
+
+
+def parse_args():
+	parser = argparse.ArgumentParser(description="Validate MFCC output.")
+	parser.add_argument(
+		"--show-plots",
+		action="store_true",
+		help="Display plots interactively (pauses execution).",
+	)
+	return parser.parse_args()
+
+
+args = parse_args()
+show_plots = args.show_plots
+
+os.makedirs("validation/outputs", exist_ok=True)
 
 os.system("mojo run validation/MFCC_Validation.mojo")
 print("mojo analysis complete")
@@ -110,4 +127,8 @@ ax[0].set(title="Librosa", ylabel="MFCC")
 ax[1].set(title="FluCoMa", ylabel="MFCC")
 ax[2].set(title="MMMAudio", xlabel="Frame", ylabel="MFCC")
 plt.tight_layout()
-plt.show()
+plt.savefig("validation/outputs/mfcc_comparison.png")
+if show_plots:
+	plt.show()
+else:
+	plt.close()
