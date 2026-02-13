@@ -78,15 +78,10 @@ fn spectral_freqs_prepare(
         freqs = List[Float64]()
         return
 
-    freqs = List[Float64](length=size, fill=0.0)
-    if size == 1:
-        freqs[0] = Float64(min_bin) * bin_hz
-    else:
-        var start_f = Float64(min_bin) * bin_hz
-        var end_f = Float64(max_bin) * bin_hz
-        var step = (end_f - start_f) / Float64(size - 1)
-        for i in range(size):
-            freqs[i] = start_f + step * Float64(i)
+    var nyquist_bin = max(max_bin, 1)
+    var n_fft = nyquist_bin * 2
+    var sr = bin_hz * Float64(n_fft)
+    freqs = RealFFT.fft_frequencies(sr=sr, n_fft=n_fft, min_bin=min_bin, num_bins=size)
 
     if log_freq:
         for i in range(size):
@@ -94,10 +89,10 @@ fn spectral_freqs_prepare(
 
     return
 
-trait GetFeaturable:
+trait GetFloat64Featurable:
     fn get_features(self) -> List[Float64]:...
 
-struct YIN(BufferedProcessable,GetFeaturable):
+struct YIN(BufferedProcessable,GetFloat64Featurable):
     """Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version)."""
     var pitch: Float64
     var confidence: Float64
@@ -253,7 +248,7 @@ struct YIN(BufferedProcessable,GetFeaturable):
         self.pitch = local_pitch
         self.confidence = local_conf
 
-struct SpectralCentroid(FFTProcessable, GetFeaturable):
+struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
     """Spectral Centroid analysis.
 
     Based on the [Peeters (2003)](http://recherche.ircam.fr/anasyn/peeters/ARTICLES/Peeters_2003_cuidadoaudiofeatures.pdf)
@@ -343,7 +338,7 @@ struct SpectralCentroid(FFTProcessable, GetFeaturable):
             centroid += amp[i] * freqs[i]
         return centroid / amp_sum
 
-struct SpectralSpread(FFTProcessable, GetFeaturable):
+struct SpectralSpread(FFTProcessable, GetFloat64Featurable):
     """Spectral Spread analysis."""
 
     var sr: Float64
@@ -417,7 +412,7 @@ struct SpectralSpread(FFTProcessable, GetFeaturable):
 
         return sqrt(max(variance, 0.0))
 
-struct SpectralSkewness(FFTProcessable, GetFeaturable):
+struct SpectralSkewness(FFTProcessable, GetFloat64Featurable):
     """Spectral Skewness analysis."""
 
     var sr: Float64
@@ -500,7 +495,7 @@ struct SpectralSkewness(FFTProcessable, GetFeaturable):
             acc3 += amp[i] * diff2 * diff
         return acc3 / denom3
 
-struct SpectralKurtosis(FFTProcessable, GetFeaturable):
+struct SpectralKurtosis(FFTProcessable, GetFloat64Featurable):
     """Spectral Kurtosis analysis."""
 
     var sr: Float64
@@ -583,7 +578,7 @@ struct SpectralKurtosis(FFTProcessable, GetFeaturable):
             acc4 += amp[i] * diff2 * diff2
         return acc4 / denom4
 
-struct SpectralRolloff(FFTProcessable, GetFeaturable):
+struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
     """Spectral Rolloff analysis."""
 
     var sr: Float64
@@ -676,7 +671,7 @@ struct SpectralRolloff(FFTProcessable, GetFeaturable):
                 break
         return rolloff
 
-struct SpectralFlatness(FFTProcessable, GetFeaturable):
+struct SpectralFlatness(FFTProcessable, GetFloat64Featurable):
     """Spectral Flatness analysis."""
 
     var sr: Float64
@@ -743,7 +738,7 @@ struct SpectralFlatness(FFTProcessable, GetFeaturable):
         var flatness = exp(sum_log / Float64(len(amp))) / max(amp_mean, eps)
         return 20.0 * log(max(flatness, eps)) / log(10.0)
 
-struct SpectralCrest(FFTProcessable, GetFeaturable):
+struct SpectralCrest(FFTProcessable, GetFloat64Featurable):
     """Spectral Crest analysis."""
 
     var sr: Float64
@@ -807,7 +802,7 @@ struct SpectralCrest(FFTProcessable, GetFeaturable):
         var crest = max_amp / max(amp_mean, eps)
         return 20.0 * log(max(crest, eps)) / log(10.0)
 
-struct RMS(BufferedProcessable, GetFeaturable):
+struct RMS(BufferedProcessable, GetFloat64Featurable):
     """Root Mean Square (RMS) amplitude analysis.
     """
     var rms: Float64
@@ -850,7 +845,7 @@ struct RMS(BufferedProcessable, GetFeaturable):
             sum_sq += v * v
         return sqrt(sum_sq / Float64(len(frame)))
 
-struct MelBands(FFTProcessable, GetFeaturable):
+struct MelBands(FFTProcessable, GetFloat64Featurable):
     """Mel Bands analysis.
 
     This implementation follows the approach used in the [Librosa](https://librosa.org/) library. 
@@ -1049,7 +1044,7 @@ struct MelBands(FFTProcessable, GetFeaturable):
 
         return freq
 
-struct MFCC(FFTProcessable, GetFeaturable):
+struct MFCC(FFTProcessable, GetFloat64Featurable):
     """Mel-Frequency Cepstral Coefficients (MFCC) analysis.
     """
 
@@ -1201,3 +1196,136 @@ struct DCT(Movable,Copyable):
                 var n_f_idx = Float64(n) + 0.5
                 var angle = (pi / n_f) * n_f_idx * k_f
                 self.weights[k][n] = alpha * cos(angle)
+
+struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
+    """Spectral Flux analysis.
+
+    This implementation computes the squared difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins. To only consider increases
+    in energy (to look for onsets) use SpectralFluxOnset instead of SpectralFlux.
+    """
+    var num_mags: Int
+    var prev_mags: List[Float64]
+    var flux: Float64
+
+    # num_mags instead of "fft_size" because this could also be used with melbands or another
+    # spectral summary that produces a list of values.
+    fn __init__(out self, num_mags: Int):
+        self.num_mags = num_mags
+        self.prev_mags = List[Float64](length=self.num_mags, fill=0.0)
+        self.flux = 0.0
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
+        """Compute the spectral flux onset value for a given FFT analysis.
+
+        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnset is passed as the "process".
+
+        Nothing is returned from this function, but the computed spectral flux value is stored in self.flux.
+
+        Args:
+            mags: The input magnitudes as a List of Float64.
+            phases: The input phases as a List of Float64.
+        """
+        _ = self.from_mags(mags)
+
+    fn get_features(self) -> List[Float64]:
+        """Return the current spectral flux value as a List of Float64."""
+        return [self.flux]
+
+    fn from_mags(mut self, ref mags: List[Float64]) -> Float64:
+        """Compute the spectral flux onset value for a given list of magnitudes.
+
+        This function is useful when there is an FFT already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
+
+        Nothing is returned from this function, but the computed spectral flux value is stored in self.flux.
+
+        Args:
+            mags: The input magnitudes as a List of Float64.
+        """
+        self.flux = 0.0
+        for i in range(self.num_mags):
+            diff = mags[i] - self.prev_mags[i]
+            self.flux += diff * diff
+            self.prev_mags[i] = mags[i]
+        
+        return self.flux
+        
+
+trait GetBoolFeaturable:
+    fn get_features(self) -> List[Bool]:...
+
+struct SpectralFluxOnset(FFTProcessable,GetBoolFeaturable):
+    """Spectral Flux Onset analysis.
+
+    This implementation computes the difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins, therefore only considers positive differences (increases in energy) to look for onsets. To consider both increases and decreases in energy use SpectralFlux instead of SpectralFluxOnset.
+    """
+    var num_mags: Int
+    var prev_mags: List[Float64]
+    var flux: Float64
+    var thresh: Float64
+    var state: Bool
+    var current_slice_length: Int
+
+    fn get_features(self) -> List[Bool]:
+        return [self.state]
+
+    # num_mags instead of "fft_size" because this could also be used with melbands or another spectral summary that produces a list of values.
+    fn __init__(out self, num_mags: Int):
+        self.num_mags = num_mags
+        self.prev_mags = List[Float64](length=self.num_mags, fill=0.0)
+        self.flux = 0.0
+        self.thresh = 0
+        self.state = False
+        self.current_slice_length = 0
+
+    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+        """Compute the spectral flux onset value for a given FFT analysis.
+
+        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnset is passed as the "process".
+
+        Nothing is returned from this function, but the onset detection state is stored in self.state.
+        """
+        _ = self.from_mags(mags)
+
+    fn from_mags(mut self, ref mags: List[Float64], minSliceLength: Int = 2) -> Bool:
+        """Compute the spectral flux onset value for a given list of magnitudes.
+
+        This function is useful when there is an FFT already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
+
+        Args:
+            mags: The input magnitudes as a List of Float64.
+            minSliceLength: The minimum number of frames between onsets. This is used to prevent multiple onsets from being detected in rapid succession. The default value is 2, which means that at least 2 frames must pass between detected onsets.
+        
+        Returns:
+            Bool. The onset detection state stored in self.state.
+        """
+
+        # if we're currently in an onset state, we're not going to trigger one right now,
+        # we'll bring down the bool, "increment" current_slice length to 1 (it started last 
+        # frame) and copy the current mags to prev mags, but we won't compute flux or check for a new onset until the next frame. This is to prevent multiple onsets from being detected in rapid succession.
+        if self.state:
+            self.state = False
+            self.current_slice_length = 1
+            for i in range(self.num_mags):
+                self.prev_mags[i] = mags[i]
+            return self.state
+
+        # state is low
+
+        # compute flux and check for onset
+        self.flux = 0.0
+        for i in range(self.num_mags):
+            var diff = mags[i] - self.prev_mags[i]
+            if diff > 0:
+                self.flux += diff
+            self.prev_mags[i] = mags[i]
+
+        var is_onset = self.flux > self.thresh
+        if is_onset and self.current_slice_length >= minSliceLength:
+            # rising
+            self.state = True
+        else:
+            self.current_slice_length += 1
+
+        return self.state
+
+

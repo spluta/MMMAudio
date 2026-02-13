@@ -118,7 +118,7 @@ struct MBufAnalysisBridge:
 
     # TODO: add windowing
     @staticmethod
-    fn buffered_process[T: GetFeaturable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams) raises -> List[List[Float64]]:
+    fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
         frame: Int64 = analysis_params.start_frame
         window = List[Float64](length=analysis_params.window_size,fill=0.0)
@@ -134,7 +134,7 @@ struct MBufAnalysisBridge:
         return result^
 
     @staticmethod
-    fn fft_process[T: GetFeaturable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, analysis_params: AnalysisParams) raises -> List[List[Float64]]:
+    fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, analysis_params: AnalysisParams) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
         frame: Int64 = analysis_params.start_frame
         window_samps = List[Float64](length=analysis_params.window_size,fill=0.0)

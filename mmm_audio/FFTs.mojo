@@ -271,7 +271,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             output[i] = self.reversed[i].re * self.scale
     
     @staticmethod
-    fn fft_frequencies(sr: Float64, n_fft: Int) -> List[Float64]:
+    fn fft_frequencies(sr: Float64, n_fft: Int, min_bin: Int = 0, num_bins: Int = -1) -> List[Float64]:
         """Compute the FFT bin center frequencies.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.fft_frequencies.html).
@@ -279,13 +279,22 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         Args:
             sr: The sample rate of the audio signal.
             n_fft: The size of the FFT.
+            min_bin: The minimum FFT bin index to include.
+            num_bins: The number of FFT bins to include. Defaults to all bins from min_bin to n_fft//2.
 
         Returns:
             A List of Float64 representing the center frequencies of each FFT bin.
         """
-        num_bins = (n_fft // 2) + 1
+        var nyquist_bin = n_fft // 2
+        var min_b = max(min_bin, 0)
+        var max_possible = nyquist_bin - min_b + 1
+        var count = num_bins
+        if count < 0 or count > max_possible:
+            count = max_possible
+        if count <= 0:
+            return List[Float64]()
         binHz = sr / Float64(n_fft)
-        freqs = List[Float64](length=num_bins, fill=0.0)
-        for i in range(num_bins):
-            freqs[i] = Float64(i) * binHz
+        freqs = List[Float64](length=count, fill=0.0)
+        for i in range(count):
+            freqs[i] = Float64(min_b + i) * binHz
         return freqs^
