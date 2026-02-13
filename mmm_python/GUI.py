@@ -1,5 +1,5 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QPushButton, QLabel, QHBoxLayout, QMainWindow, QWidget, QVBoxLayout
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QPushButton, QLabel, QHBoxLayout, QMainWindow, QWidget, QVBoxLayout, QSizePolicy
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QPainter, QPen, QBrush
 from PySide6.QtCore import QPointF
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
@@ -175,9 +175,9 @@ class Slider2D(QWidget):
             self.mouse_updown.emit(False)
         
 
-class MPlot(QMainWindow):
-    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None):
-        super().__init__()
+class MPlotWidget(QWidget):
+    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None, parent=None):
+        super().__init__(parent)
         self.mouse_callback = mouse_callback
         self._pressed_button = None
         self._modifiers = set()
@@ -188,6 +188,7 @@ class MPlot(QMainWindow):
         self.canvas.setFocusPolicy(Qt.StrongFocus)
         self.canvas.setFocus()
         self.ax = self.fig.add_subplot(111)
+        self.ax.set_aspect("equal", adjustable="box")
 
         self._scatter = self.ax.scatter(points[:, 0], points[:, 1], s=4, zorder=1)
         self._highlight_color = mcolors.to_rgba("orange")
@@ -214,10 +215,20 @@ class MPlot(QMainWindow):
         self.canvas.mpl_connect("key_release_event", self._on_key_release)
         self.canvas.mpl_connect("scroll_event", self._on_scroll)
 
-        root = QWidget()
-        layout = QVBoxLayout(root)
+        layout = QVBoxLayout(self)
         layout.addWidget(self.canvas)
-        self.setCentralWidget(root)
+        policy = self.sizePolicy()
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return width
+
+    def sizeHint(self):
+        return QSize(500, 500)
 
     def _on_motion(self, event):
         # event.xdata, event.ydata are in data coords; None if outside axes
@@ -300,3 +311,56 @@ class MPlot(QMainWindow):
         self._highlight_index = idx
         self._highlight_marker.set_offsets(self._points[idx])
         self.canvas.draw_idle()
+
+
+class WaveformWidget(QWidget):
+    def __init__(self, wave, wave_time, slice_times, parent=None):
+        super().__init__(parent)
+        self._slice_times = slice_times
+
+        fig = Figure(figsize=(6, 3), dpi=100)
+        self.canvas = FigureCanvas(fig)
+        self.ax = fig.add_subplot(111)
+
+        self.ax.plot(wave_time, wave, color="black", linewidth=0.6, alpha=0.85)
+        self.ax.vlines(
+            slice_times,
+            ymin=wave.min(),
+            ymax=wave.max(),
+            color="steelblue",
+            linewidth=0.6,
+            alpha=0.6,
+            zorder=2,
+        )
+        self._slice_highlight = None
+        self.ax.set_xlabel("Time (s)")
+        self.ax.set_ylabel("Amplitude")
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.canvas)
+
+    def highlight_slice(self, idx):
+        if idx < 0 or idx + 1 >= len(self._slice_times):
+            return
+        start = self._slice_times[idx]
+        end = self._slice_times[idx + 1]
+        if self._slice_highlight is not None:
+            self._slice_highlight.remove()
+        self._slice_highlight = self.ax.axvspan(
+            start,
+            end,
+            color="orange",
+            alpha=0.25,
+            zorder=1,
+        )
+        self.canvas.draw_idle()
+
+
+class MPlot(QMainWindow):
+    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None):
+        super().__init__()
+        self._plot = MPlotWidget(points, mouse_callback, xlabel, ylabel)
+        self.setCentralWidget(self._plot)
+
+    def highlight_index(self, idx):
+        self._plot.highlight_index(idx)

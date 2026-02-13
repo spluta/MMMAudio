@@ -1,4 +1,4 @@
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QSizePolicy
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -38,15 +38,51 @@ data_norm = MinMaxScaler().fit_transform(data)
 
 kdtree = KDTree(data_norm)
 
+slice_times = slice_points / sr
+time_axis = np.arange(len(y)) / sr
+
+ma = MMMAudio(128,graph_name="MPlotExample", package_name="examples")
+ma.start_audio()
+
+ma.send_string("load_sound", d["path"])
+
+prev = None
+
 def get_nearest(view, x, y, button, is_dragging, key, dblclick, step):
+    global prev
     if step is None:
         dist, idx = kdtree.query([[x, y]], k=1)
-        view.highlight_index(int(idx[0][0]))
-        print(f"x: {x:.2f}, y: {y:.2f}")
-        print(f"Nearest idx: {idx[0][0]}, dist: {dist[0][0]:.4f}")
+        nearest = int(idx[0][0])
+        if nearest != prev:
+            prev = nearest
+            start = slice_points[nearest]
+            num = slice_points[nearest+1] - start
+            
+            view.highlight_index(nearest)
+            
+            # [TODO] this should be in samples: start, num, not a slice index
+            waveform_win.highlight_slice(nearest)
+            
+            ma.send_ints("play_data", [start, num])
+            print(f"x: {x:.2f}, y: {y:.2f}")
+            print(f"Nearest idx: {idx[0][0]}, dist: {dist[0][0]:.4f}")
 
 app = QApplication([])
-win = MPlot(data_norm, mouse_callback=get_nearest)
-win.resize(700, 500)
-win.show()
+main = QMainWindow()
+root = QWidget()
+layout = QVBoxLayout(root)
+
+win = MPlotWidget(data_norm, mouse_callback=get_nearest,xlabel="Normalized Spectral Centroid", ylabel="Normalized RMS")
+waveform_win = WaveformWidget(y, time_axis, slice_times)
+waveform_win.setFixedHeight(220)
+waveform_win.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
+
+layout.addWidget(win)
+layout.addWidget(waveform_win)
+layout.setStretch(0, 1)
+layout.setStretch(1, 0)
+main.setCentralWidget(root)
+
+main.resize(900, 850)
+main.show()
 app.exec()
