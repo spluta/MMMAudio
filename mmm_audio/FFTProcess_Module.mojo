@@ -58,20 +58,20 @@ trait FFTProcessable(Movable,Copyable):
     fn get_messages(mut self) -> None:
         return None
 
-struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
+struct FFTProcess[T: FFTProcessable, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
     """Create an FFTProcess for audio manipulation in the frequency domain.
 
     Parameters:
         T: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
-        window_size: The size of the FFT window.
-        hop_size: The number of samples between each processed spectral frame.
         input_window_shape: Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
     var world: World
-    var buffered_process: BufferedProcess[FFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape]
+    var window_size: Int
+    var hop_size: Int
+    var buffered_process: BufferedProcess[FFTProcessor[Self.T], Self.input_window_shape, Self.output_window_shape]
 
-    fn __init__(out self, world: World, var process: Self.T):
+    fn __init__(out self, world: World, var process: Self.T, window_size: Int = 1024, hop_size: Int = 512,):
         """Initializes a `FFTProcess` struct.
 
         Args:
@@ -82,7 +82,10 @@ struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 51
             An initialized `FFTProcess` struct.
         """
         self.world = world
-        self.buffered_process = BufferedProcess[FFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape](self.world, process=FFTProcessor[Self.T, Self.window_size](self.world, process=process^))
+        self.window_size = window_size
+        self.hop_size = hop_size
+        p = FFTProcessor[Self.T](self.world, process=process^)
+        self.buffered_process = BufferedProcess[FFTProcessor[Self.T],Self.input_window_shape, Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.

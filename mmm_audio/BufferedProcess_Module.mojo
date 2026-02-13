@@ -91,7 +91,7 @@ struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: 
         self.hop_counter = (self.hop_counter + 1) % Self.hop_size
 
 
-struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable, Copyable):
+struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
 
     Parameters:
@@ -102,6 +102,8 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
     var world: World
+    var window_size: Int
+    var hop_size: Int
     var input_buffer: List[Float64]
     var passing_buffer: List[Float64]
     var output_buffer: List[Float64]
@@ -118,7 +120,7 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn __init__(out self, world: World, var process: Self.T, hop_start: Int = 0):
+    fn __init__(out self, world: World, var process: Self.T, window_size: Int = 1024, hop_size: Int = 512, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
         Args:
@@ -131,21 +133,23 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         """
         
         self.world = world
+        self.window_size = window_size
+        self.hop_size = hop_size
         self.input_buffer_write_head = 0
         self.output_buffer_write_head = 0
         self.hop_counter = hop_start
         self.read_head = 0
         self.process = process^
-        self.input_buffer = List[Float64](length=Self.window_size * 2, fill=0.0)
-        self.passing_buffer = List[Float64](length=Self.window_size, fill=0.0)
-        self.output_buffer = List[Float64](length=Self.window_size, fill=0.0)
+        self.input_buffer = List[Float64](length=self.window_size * 2, fill=0.0)
+        self.passing_buffer = List[Float64](length=self.window_size, fill=0.0)
+        self.output_buffer = List[Float64](length=self.window_size, fill=0.0)
 
-        self.st_input_buffer = List[SIMD[DType.float64,2]](length=Self.window_size * 2, fill=0.0)
-        self.st_passing_buffer = List[SIMD[DType.float64,2]](length=Self.window_size, fill=0.0)
-        self.st_output_buffer = List[SIMD[DType.float64,2]](length=Self.window_size, fill=0.0)
+        self.st_input_buffer = List[SIMD[DType.float64,2]](length=self.window_size * 2, fill=0.0)
+        self.st_passing_buffer = List[SIMD[DType.float64,2]](length=self.window_size, fill=0.0)
+        self.st_output_buffer = List[SIMD[DType.float64,2]](length=self.window_size, fill=0.0)
         
-        self.input_attenuation_window = Windows.make_window[Self.input_window_shape](Self.window_size)
-        self.output_attenuation_window = Windows.make_window[Self.output_window_shape](Self.window_size)
+        self.input_attenuation_window = Windows.make_window[Self.input_window_shape](self.window_size)
+        self.output_attenuation_window = Windows.make_window[Self.output_window_shape](self.window_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Process the next input sample and return the next output sample.
@@ -163,27 +167,27 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             self.process.get_messages()
     
         self.input_buffer[self.input_buffer_write_head] = input
-        self.input_buffer[self.input_buffer_write_head + Self.window_size] = input
-        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % Self.window_size
+        self.input_buffer[self.input_buffer_write_head + self.window_size] = input
+        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % self.window_size
         
         if self.hop_counter == 0:
 
-            for i in range(Self.window_size):
+            for i in range(self.window_size):
                 self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
 
-            for i in range(Self.window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % Self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
+            for i in range(self.window_size):
+                self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + Self.hop_size) % Self.window_size
+            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
-        self.hop_counter = (self.hop_counter + 1) % Self.hop_size
+        self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
         outval = self.output_buffer[self.read_head]
         self.output_buffer[self.read_head] = 0.0
 
-        self.read_head = (self.read_head + 1) % Self.window_size
+        self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
     fn next_stereo(mut self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2]:
@@ -202,27 +206,27 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
             self.process.get_messages()
 
         self.st_input_buffer[self.input_buffer_write_head] = input
-        self.st_input_buffer[self.input_buffer_write_head + Self.window_size] = input
-        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % Self.window_size
+        self.st_input_buffer[self.input_buffer_write_head + self.window_size] = input
+        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % self.window_size
         
         if self.hop_counter == 0:
 
-            for i in range(Self.window_size):
+            for i in range(self.window_size):
                 self.st_passing_buffer[i] = self.st_input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
-            for i in range(Self.window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % Self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
+            for i in range(self.window_size):
+                self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + Self.hop_size) % Self.window_size
+            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
-        self.hop_counter = (self.hop_counter + 1) % Self.hop_size
+        self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
         outval = self.st_output_buffer[self.read_head]
         self.st_output_buffer[self.read_head] = 0.0
 
-        self.read_head = (self.read_head + 1) % Self.window_size
+        self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
     fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
@@ -239,23 +243,23 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         
         if self.hop_counter == 0:
 
-            for i in range(Self.window_size):
+            for i in range(self.window_size):
                 index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
                 self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
 
-            for i in range(Self.window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % Self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
+            for i in range(self.window_size):
+                self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + Self.hop_size) % Self.window_size
+            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
-        self.hop_counter = (self.hop_counter + 1) % Self.hop_size
+        self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
         outval = self.output_buffer[self.read_head]
         self.output_buffer[self.read_head] = 0.0
         
-        self.read_head = (self.read_head + 1) % Self.window_size
+        self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
     fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2]:
@@ -272,21 +276,21 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         
         if self.hop_counter == 0:
            
-            for i in range(Self.window_size):
+            for i in range(self.window_size):
                 index = floor(phase * buffer.num_frames_f64) + i
                 self.st_passing_buffer[i][0] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
                 self.st_passing_buffer[i][1] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
-            for i in range(Self.window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % Self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
-            self.output_buffer_write_head = (self.output_buffer_write_head + Self.hop_size) % Self.window_size
+            for i in range(self.window_size):
+                self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
+            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
-        self.hop_counter = (self.hop_counter + 1) % Self.hop_size
+        self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
         outval = self.st_output_buffer[self.read_head]
         self.st_output_buffer[self.read_head] = 0.0
 
-        self.read_head = (self.read_head + 1) % Self.window_size
+        self.read_head = (self.read_head + 1) % self.window_size
         return outval

@@ -1269,7 +1269,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
 trait GetBoolFeaturable:
     fn get_features(self) -> List[Bool]:...
 
-struct SpectralFluxOnset[num_chans: Int = 1, window_size: Int = 1024, hop_size: Int = 512](Movable,Copyable,GetBoolFeaturable):
+struct SpectralFluxOnset[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable):
     """Spectral Flux Onset analysis.
     """
     var world: World
@@ -1277,20 +1277,20 @@ struct SpectralFluxOnset[num_chans: Int = 1, window_size: Int = 1024, hop_size: 
     var state: Bool
     var current_slice_length_samps: Float64
     var min_slice_length: Float64
-    var fftp: FFTProcess[SpectralFlux,Self.window_size,Self.hop_size]
+    var fftp: FFTProcess[SpectralFlux]
 
     fn get_features(self) -> List[Bool]:
         return [self.state]
 
     # num_mags instead of "fft_size" because this could also be used with melbands or another spectral summary that produces a list of values.
-    fn __init__(out self, world: World, num_mags: Int):
+    fn __init__(out self, world: World, num_mags: Int, window_size: Int = 1024, hop_size: Int = 512):
         self.world = world
         self.thresh = 0
         self.state = False
         self.current_slice_length_samps = 0
         self.min_slice_length = 1
         sfp = SpectralFlux(num_mags=num_mags, positive_only=True)
-        self.fftp = FFTProcess[SpectralFlux,Self.window_size,Self.hop_size](self.world,process=sfp^)
+        self.fftp = FFTProcess[SpectralFlux](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
 
     fn next(mut self, input: SIMD[DType.float64,1]) -> Bool:
 
