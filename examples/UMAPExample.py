@@ -12,9 +12,9 @@ from umap import UMAP
 from sklearn.neighbors import KDTree
 
 class MPlot(QMainWindow):
-    def __init__(self, points, on_mouse_move=None, xlabel=None, ylabel=None):
+    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None):
         super().__init__()
-        self.on_mouse_move = on_mouse_move
+        self.mouse_callback = mouse_callback
         self._pressed_button = None
         self._modifiers = set()
         self._points = points
@@ -100,8 +100,8 @@ class MPlot(QMainWindow):
         step = getattr(event, "step", None)
         step = step if step != 0 else None
         dblclick = getattr(event, "dblclick", False)
-        if self.on_mouse_move:
-            self.on_mouse_move(
+        if self.mouse_callback:
+            self.mouse_callback(
                 self,
                 event.xdata,
                 event.ydata,
@@ -153,7 +153,7 @@ def get_nearest(view, x, y, button, is_dragging, key, dblclick, step):
             f"Nearest idx: {idx[0][0]}, dist: {dist[0][0]:.4f}"
         )
 
-win = MPlot(reducs, on_mouse_move=get_nearest)
+win = MPlot(reducs, mouse_callback=get_nearest)
 win.resize(700, 500)
 win.show()
 app.exec()
