@@ -16,10 +16,14 @@ sys.path.append(os.getcwd())
 os.system("mojo run validation/MFCC_Validation.mojo")
 print("mojo analysis complete")
 
-try:
-	os.system("sclang validation/MFCC_Validation.scd")
-except Exception as e:
-	print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+flucoma_csv_path = "validation/outputs/mfcc_flucoma_results.csv"
+if not os.path.exists(flucoma_csv_path):
+	try:
+		os.system("sclang validation/MFCC_Validation.scd")
+	except Exception as e:
+		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+else:
+	print("FluCoMa CSV already exists, skipping .scd execution")
 
 with open("validation/outputs/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()

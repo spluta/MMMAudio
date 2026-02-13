@@ -1200,19 +1200,28 @@ struct DCT(Movable,Copyable):
 struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     """Spectral Flux analysis.
 
-    This implementation computes the squared difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins. To only consider increases
-    in energy (to look for onsets) use SpectralFluxOnset instead of SpectralFlux.
+    This implementation computes the squared difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins.
     """
     var num_mags: Int
+    var num_mags_f64: Float64
     var prev_mags: List[Float64]
     var flux: Float64
+    var positive_only: Bool
 
     # num_mags instead of "fft_size" because this could also be used with melbands or another
     # spectral summary that produces a list of values.
-    fn __init__(out self, num_mags: Int):
+    fn __init__(out self, num_mags: Int, positive_only: Bool = False):
+        """Initialize the Spectral Flux analyzer.
+
+        Args:
+            num_mags: The number of magnitude bins in the input to expect. This is typically the FFT size divided by 2, but could also be the number of mel bands or another spectral summary that produces a list of values.
+            positive_only: Whether to only consider positive differences (increases in energy) when computing the spectral flux. If `False`, spectral flux is the average of squared differences between the magnitudes. If `True`, spectral flux is the average of (non-squared to match FluCoMa) differences between the magnitudes, but negative differences are set to 0. Using `positive_only=True` is a common approach when using spectral flux for onset detection, as onsets are typically characterized by increases in energy.
+        """
         self.num_mags = num_mags
+        self.num_mags_f64 = Float64(self.num_mags)
         self.prev_mags = List[Float64](length=self.num_mags, fill=0.0)
         self.flux = 0.0
+        self.positive_only = positive_only
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         """Compute the spectral flux onset value for a given FFT analysis.
@@ -1241,90 +1250,65 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         Args:
             mags: The input magnitudes as a List of Float64.
         """
+        
         self.flux = 0.0
-        for i in range(self.num_mags):
-            diff = mags[i] - self.prev_mags[i]
-            self.flux += diff * diff
-            self.prev_mags[i] = mags[i]
         
-        return self.flux
-        
+        if self.positive_only:
+            for i in range(self.num_mags):
+                var diff = mags[i] - self.prev_mags[i]
+                self.flux += max(0.0, diff)
+                self.prev_mags[i] = mags[i]
+        else:
+            for i in range(self.num_mags):
+                var diff = mags[i] - self.prev_mags[i]
+                self.flux += diff * diff
+                self.prev_mags[i] = mags[i]
+            
+        return self.flux / self.num_mags_f64
 
 trait GetBoolFeaturable:
     fn get_features(self) -> List[Bool]:...
 
-struct SpectralFluxOnset(FFTProcessable,GetBoolFeaturable):
+struct SpectralFluxOnset[num_chans: Int = 1, window_size: Int = 1024, hop_size: Int = 512](Movable,Copyable,GetBoolFeaturable):
     """Spectral Flux Onset analysis.
-
-    This implementation computes the difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins, therefore only considers positive differences (increases in energy) to look for onsets. To consider both increases and decreases in energy use SpectralFlux instead of SpectralFluxOnset.
     """
-    var num_mags: Int
-    var prev_mags: List[Float64]
-    var flux: Float64
+    var world: World
     var thresh: Float64
     var state: Bool
-    var current_slice_length: Int
+    var current_slice_length_samps: Float64
+    var min_slice_length: Float64
+    var fftp: FFTProcess[SpectralFlux,Self.window_size,Self.hop_size]
 
     fn get_features(self) -> List[Bool]:
         return [self.state]
 
     # num_mags instead of "fft_size" because this could also be used with melbands or another spectral summary that produces a list of values.
-    fn __init__(out self, num_mags: Int):
-        self.num_mags = num_mags
-        self.prev_mags = List[Float64](length=self.num_mags, fill=0.0)
-        self.flux = 0.0
+    fn __init__(out self, world: World, num_mags: Int):
+        self.world = world
         self.thresh = 0
         self.state = False
-        self.current_slice_length = 0
+        self.current_slice_length_samps = 0
+        self.min_slice_length = 1
+        sfp = SpectralFlux(num_mags=num_mags, positive_only=True)
+        self.fftp = FFTProcess[SpectralFlux,Self.window_size,Self.hop_size](self.world,process=sfp^)
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
-        """Compute the spectral flux onset value for a given FFT analysis.
+    fn next(mut self, input: SIMD[DType.float64,1]) -> Bool:
 
-        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnset is passed as the "process".
-
-        Nothing is returned from this function, but the onset detection state is stored in self.state.
-        """
-        _ = self.from_mags(mags)
-
-    fn from_mags(mut self, ref mags: List[Float64], minSliceLength: Int = 2) -> Bool:
-        """Compute the spectral flux onset value for a given list of magnitudes.
-
-        This function is useful when there is an FFT already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
-
-        Args:
-            mags: The input magnitudes as a List of Float64.
-            minSliceLength: The minimum number of frames between onsets. This is used to prevent multiple onsets from being detected in rapid succession. The default value is 2, which means that at least 2 frames must pass between detected onsets.
+        _ = self.fftp.next(input)
         
-        Returns:
-            Bool. The onset detection state stored in self.state.
-        """
+        self.current_slice_length_samps += 1
 
-        # if we're currently in an onset state, we're not going to trigger one right now,
-        # we'll bring down the bool, "increment" current_slice length to 1 (it started last 
-        # frame) and copy the current mags to prev mags, but we won't compute flux or check for a new onset until the next frame. This is to prevent multiple onsets from being detected in rapid succession.
-        if self.state:
+        if self.state: # state is high
+            # set low
             self.state = False
-            self.current_slice_length = 1
-            for i in range(self.num_mags):
-                self.prev_mags[i] = mags[i]
-            return self.state
+        else: # state *will* be low if we're in here:
+            flux = self.fftp.buffered_process.process.process.flux
+            curr_slice_len_sec = self.current_slice_length_samps / self.world[].sample_rate
+            if flux > self.thresh and curr_slice_len_sec > self.min_slice_length:
+                self.state = True
 
-        # state is low
-
-        # compute flux and check for onset
-        self.flux = 0.0
-        for i in range(self.num_mags):
-            var diff = mags[i] - self.prev_mags[i]
-            if diff > 0:
-                self.flux += diff
-            self.prev_mags[i] = mags[i]
-
-        var is_onset = self.flux > self.thresh
-        if is_onset and self.current_slice_length >= minSliceLength:
-            # rising
-            self.state = True
-        else:
-            self.current_slice_length += 1
+                # should this actually be 1?
+                self.current_slice_length_samps = 0
 
         return self.state
 

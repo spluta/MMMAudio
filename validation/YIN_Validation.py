@@ -84,10 +84,14 @@ def compare_analyses_confidence(list1, list2):
     
     return mean_diff, std_diff
 
-try:
-    os.system("sclang validation/YIN_Validation.scd")
-except Exception as e:
-    print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+flucoma_csv_path = "validation/outputs/yin_flucoma_results.csv"
+if not os.path.exists(flucoma_csv_path):
+	try:
+		os.system("sclang validation/YIN_Validation.scd")
+	except Exception as e:
+		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+else:
+	print("FluCoMa CSV already exists, skipping .scd execution")
 
 fig, (ax_freq, ax_conf) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 

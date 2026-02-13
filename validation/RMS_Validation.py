@@ -42,11 +42,16 @@ def compare_analyses(list1, list2):
     diff = np.array(list1) - np.array(list2)
     return np.mean(np.abs(diff)), np.std(diff)
 
-try:
-    os.system("sclang validation/RMS_Validation.scd")
-    scrun = True
-except Exception as e:
-    print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+flucoma_csv_path = "validation/outputs/rms_flucoma_results.csv"
+if not os.path.exists(flucoma_csv_path):
+	try:
+		os.system("sclang validation/RMS_Validation.scd")
+		scrun = True
+	except Exception as e:
+		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
+else:
+	print("FluCoMa CSV already exists, skipping .scd execution")
+	scrun = True
 
 plt.figure(figsize=(12, 6))
 plt.plot(mojo_rms, label="MMMAudio RMS", alpha=0.7)

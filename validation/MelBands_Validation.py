@@ -6,7 +6,11 @@ import csv
 import matplotlib.pyplot as plt
 import numpy as np
 
-os.system("sclang ./validation/MelBands_Validation.scd")
+flucoma_csv_path = "./validation/outputs/mel_bands_flucoma.csv"
+if not os.path.exists(flucoma_csv_path):
+	os.system("sclang ./validation/MelBands_Validation.scd")
+else:
+	print("FluCoMa CSV already exists, skipping .scd execution")
 
 os.system("mojo run ./validation/MelBands_Validation.mojo")
 

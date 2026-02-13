@@ -2,6 +2,9 @@
 from mmm_audio import *
 from random import random
 
+comptime windowsize: Int = 1024
+comptime hopsize: Int = 512
+
 # User defined struct that just operates on two lists
 # and therefore is useful for operating on mags and phases.
 # Things like this can basically be used like the PV_
@@ -68,7 +71,8 @@ struct TestFFTProcess(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var fftlowpass: FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann]
+    var onsets: SpectralFluxOnset[1,windowsize,hopsize]
+    var fftlowpass: FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -77,13 +81,23 @@ struct TestFFTProcess(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[1024],1024,512,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[1024](self.world))
+        self.onsets = SpectralFluxOnset[1,windowsize,hopsize](self.world,(windowsize//2) + 1)
+        self.onsets.thresh = 67
+        self.onsets.min_slice_length = 0.3
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[windowsize](self.world))
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
     fn next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
-        o = self.fftlowpass.next(i)
-        return SIMD[DType.float64,2](o,o)
+
+        self.m.update(self.onsets.thresh,"onsets_thresh")
+        self.m.update(self.onsets.min_slice_length,"onsets_min_slice_length")
+
+        input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        onset = self.onsets.next(input)
+        if onset:
+            self.fftlowpass.buffered_process.process.process.bin_scramble.new_swaps()
+        out = self.fftlowpass.next(input)
+        return SIMD[DType.float64,2](out,out)
 
