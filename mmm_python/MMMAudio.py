@@ -123,12 +123,19 @@ class MMMAudio:
         screen_dims = pyautogui.size()
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
-        # the mouse thread will always be running
-        threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),)).start()
+        self.audio_stopper = threading.Event()
+        self.mouse_stopper = threading.Event()
+
+        # the mouse thread will always be running while not stopped
+        self.mouse_thread = threading.Thread(
+            target=asyncio.run,
+            args=(self._get_mouse_position(0.01),),
+            daemon=True,
+        )
+        self.mouse_thread.start()
+
         self.p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
-
-        self.audio_stopper = threading.Event()
 
         self.input_stream = self.p.open(format=format_code,
             channels= self.num_input_channels,
@@ -147,7 +154,7 @@ class MMMAudio:
         self.returned_samples = []
 
     async def _get_mouse_position(self, delay: float = 0.01):
-        while True:
+        while not self.mouse_stopper.is_set():
             x, y = pyautogui.position()
             x = x / pyautogui.size().width
             y = y / pyautogui.size().height
@@ -244,7 +251,7 @@ class MMMAudio:
             self.running = True
             self.audio_stopper.clear()
             print("Audio started with sample rate:", self.sample_rate, "block size:", self.blocksize, "input channels:", self.num_input_channels, "output channels:", self.num_output_channels)
-            self.audio_thread = threading.Thread(target=self.audio_loop)
+            self.audio_thread = threading.Thread(target=self.audio_loop, daemon=True)
             self.audio_thread.start()
     
     def stop_audio(self):
@@ -253,6 +260,7 @@ class MMMAudio:
             self.running = False
             print("Stopping audio...")
             self.audio_stopper.set()
+        self.mouse_stopper.set()
 
     def send_bool(self, key: str, value: bool):
         """

@@ -4,9 +4,11 @@
         {
             "label": "Run Python (High Priority)",
             "type": "shell",
-            "command": "nice -n -20",
+            "command": "nice",
             "args": [
-                "${config:python.pythonPath}",
+                "-n",
+                "-20",
+                "${workspaceFolder}/.pixi/envs/default/bin/python",
                 "${file}"
             ],
             "group": {

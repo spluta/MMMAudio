@@ -80,5 +80,21 @@ layout.setStretch(1, 0)
 main.setCentralWidget(root)
 
 main.resize(900, 850)
+
+audio_stopped = False
+
+def cleanup_audio():
+    global audio_stopped
+    if audio_stopped:
+        return
+    audio_stopped = True
+    ma.stop_audio()
+
+app.aboutToQuit.connect(cleanup_audio)
+main.closeEvent = lambda event: (cleanup_audio(), event.accept())
+
 main.show()
-app.exec()
+try:
+    app.exec()
+finally:
+    cleanup_audio()
