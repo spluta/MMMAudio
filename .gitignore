@@ -229,3 +229,5 @@ mine.worktrees
 # pixi environments
 .pixi/*
 !.pixi/config.toml
+pixi.lock
+pixi.toml
