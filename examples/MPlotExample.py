@@ -38,9 +38,6 @@ data_norm = MinMaxScaler().fit_transform(data)
 
 kdtree = KDTree(data_norm)
 
-slice_times = slice_points / sr
-time_axis = np.arange(len(y)) / sr
-
 ma = MMMAudio(128,graph_name="MPlotExample", package_name="examples")
 ma.start_audio()
 
@@ -60,8 +57,7 @@ def get_nearest(view, x, y, button, is_dragging, key, dblclick, step):
             
             view.highlight_index(nearest)
             
-            # [TODO] this should be in samples: start, num, not a slice index
-            waveform_win.highlight_slice(nearest)
+            waveform_win.highlight(start, num)
             
             ma.send_ints("play_data", [start, num])
             print(f"x: {x:.2f}, y: {y:.2f}")
@@ -72,8 +68,8 @@ main = QMainWindow()
 root = QWidget()
 layout = QVBoxLayout(root)
 
-win = MPlotWidget(data_norm, mouse_callback=get_nearest,xlabel="Normalized Spectral Centroid", ylabel="Normalized RMS")
-waveform_win = WaveformWidget(y, time_axis, slice_times)
+win = MPlot(data_norm, mouse_callback=get_nearest,xlabel="Normalized Spectral Centroid", ylabel="Normalized RMS")
+waveform_win = MWaveform(y, slice_points)
 waveform_win.setFixedHeight(220)
 waveform_win.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Fixed)
 

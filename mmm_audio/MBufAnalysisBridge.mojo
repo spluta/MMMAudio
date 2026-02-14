@@ -66,7 +66,7 @@ struct AnalysisParams:
     var chan: Int
     var start_frame: Int
     var num_frames: Int
-    # TODO: padding
+    # [TODO]: padding
 
     fn __init__(out self, py_dict: PythonObject) raises:
 
@@ -201,7 +201,7 @@ struct MBufAnalysisBridge:
             nparray[i] = list[i]
         return nparray
 
-    # TODO: add windowing
+    # [TODO]: add windowing
     @staticmethod
     fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
         result = List[List[Float64]]()

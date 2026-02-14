@@ -175,7 +175,7 @@ class Slider2D(QWidget):
             self.mouse_updown.emit(False)
         
 
-class MPlotWidget(QWidget):
+class MPlot(QWidget):
     def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None, parent=None):
         super().__init__(parent)
         self.mouse_callback = mouse_callback
@@ -313,54 +313,53 @@ class MPlotWidget(QWidget):
         self.canvas.draw_idle()
 
 
-class WaveformWidget(QWidget):
-    def __init__(self, wave, wave_time, slice_times, parent=None):
+class MWaveform(QWidget):
+    def __init__(self, wave, slice_points, parent=None):
         super().__init__(parent)
-        self._slice_times = slice_times
+        self._slice_points = slice_points
+        self._wave_length = len(wave)
 
         fig = Figure(figsize=(6, 3), dpi=100)
         self.canvas = FigureCanvas(fig)
         self.ax = fig.add_subplot(111)
 
-        self.ax.plot(wave_time, wave, color="black", linewidth=0.6, alpha=0.85)
-        self.ax.vlines(
-            slice_times,
-            ymin=wave.min(),
-            ymax=wave.max(),
-            color="steelblue",
-            linewidth=0.6,
-            alpha=0.6,
-            zorder=2,
-        )
+        self.ax.plot(wave, color="black", linewidth=0.6, alpha=0.85)
+        
+        if slice_points is not None and len(slice_points) > 0:
+            self.ax.vlines(
+                slice_points,
+                ymin=wave.min(),
+                ymax=wave.max(),
+                color="steelblue",
+                linewidth=0.6,
+                alpha=0.6,
+                zorder=2,
+            )
+            
         self._slice_highlight = None
-        self.ax.set_xlabel("Time (s)")
+        self.ax.set_xlabel("Samples")
         self.ax.set_ylabel("Amplitude")
 
         layout = QVBoxLayout(self)
         layout.addWidget(self.canvas)
 
-    def highlight_slice(self, idx):
-        if idx < 0 or idx + 1 >= len(self._slice_times):
+    def highlight(self, start_frame, num_frames):
+        if num_frames <= 0 or self._wave_length <= 0:
             return
-        start = self._slice_times[idx]
-        end = self._slice_times[idx + 1]
+
+        start_frame = int(max(0, start_frame))
+        end_frame = int(min(start_frame + num_frames, self._wave_length))
+        if start_frame >= end_frame:
+            return
+
         if self._slice_highlight is not None:
             self._slice_highlight.remove()
+
         self._slice_highlight = self.ax.axvspan(
-            start,
-            end,
+            start_frame,
+            end_frame,
             color="orange",
             alpha=0.25,
             zorder=1,
         )
         self.canvas.draw_idle()
-
-
-class MPlot(QMainWindow):
-    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None):
-        super().__init__()
-        self._plot = MPlotWidget(points, mouse_callback, xlabel, ylabel)
-        self.setCentralWidget(self._plot)
-
-    def highlight_index(self, idx):
-        self._plot.highlight_index(idx)
