@@ -5,14 +5,14 @@ struct BiquadEQ(Movable, Copyable):
     
     Demonstrates: lowshelf, 3x bell, highshelf
     """
-    var world: UnsafePointer[MMMWorld]
+    var world: World
     var buf: Buffer
     var play: Play
-    var lowshelf: Biquad
-    var bell1: Biquad
-    var bell2: Biquad
-    var bell3: Biquad
-    var highshelf: Biquad
+    var lowshelf: Biquad[]
+    var bell1: Biquad[]
+    var bell2: Biquad[]
+    var bell3: Biquad[]
+    var highshelf: Biquad[]
     var messenger: Messenger
     
     # EQ parameters
@@ -31,7 +31,7 @@ struct BiquadEQ(Movable, Copyable):
     var hs_gain: Float64
     var playing: Bool
 
-    fn __init__(out self, world: UnsafePointer[MMMWorld]):
+    fn __init__(out self, world: World):
         self.world = world
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.play = Play(self.world)
