@@ -31,6 +31,7 @@ struct Messenger(Copyable, Movable):
         self.namespace = namespace
         self.key_dict = Dict[String, String]()
 
+
     @doc_private
     fn get_name_with_namespace(mut self, name: String) raises -> LegacyUnsafePointer[mut=False,String]:
         if not self.key_dict.__contains__(name):
@@ -110,6 +111,7 @@ struct Messenger(Copyable, Movable):
             param: A `Float64` variable to be updated.
             name: A `String` to identify the Float64 sent from Python.
         """
+        
         if self.world[].top_of_block:
             try:
                 var opt = self.world[].messengerManager.get_float(self.get_name_with_namespace(name)[])

@@ -11,12 +11,8 @@ from mmm_audio import *
 from examples.FeedbackDelays import FeedbackDelays
 
 struct MMMAudioBridge(Representable, Movable):
-    var world: LegacyUnsafePointer[mut=True, MMMWorld]  # Pointer to the MMMWorld instance
-
+    var world: World
     var graph: FeedbackDelays  # The audio graph instance
-
-    # var loc_in_buffer: MutUnsafePointer[Float32]  # Placeholder for output buffer
-    # var loc_out_buffer: MutUnsafePointer[Float64]  # Placeholder for output buffer
 
     @staticmethod
     fn py_init(out self: MMMAudioBridge, args: PythonObject, kwargs: PythonObject) raises:
@@ -31,20 +27,14 @@ struct MMMAudioBridge(Representable, Movable):
 
         self = Self(sample_rate, block_size, num_in_chans, num_out_chans)  # Initialize with sample rate, block size, and number of channels
 
+    fn __repr__(self) -> String:
+        return "MMMAudioBridge(world={self.world})"
+
     fn __init__(out self, sample_rate: Float64 = 44100.0, block_size: Int64 = 512, num_in_chans: Int64 = 12, num_out_chans: Int64 = 12):
         """Initialize the audio engine with sample rate, block size, and number of channels."""
 
-        # it is way more efficient to use an LegacyUnsafePointer to write to the output buffer directly
-        # self.loc_in_buffer = MutUnsafePointer[Float32]() 
-        # self.loc_out_buffer = LegacyUnsafePointer[SIMD[DType.float64, 1]]()
-        
-        # Allocate MMMWorld on heap so it never moves
-        self.world = LegacyUnsafePointer[mut = True, MMMWorld].alloc(1)
-        __get_address_as_uninit_lvalue(self.world.address) = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
-
-        # maybe this will just work?
-        # a = MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans)
-        # ptr = UnsafePointer(to=a)
+        self.world = alloc[MMMWorld](1) 
+        self.world.init_pointee_move(MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans))
 
         self.graph = FeedbackDelays(self.world)
 
@@ -57,9 +47,6 @@ struct MMMAudioBridge(Representable, Movable):
         py_self[0].world[].set_channel_count(num_in_chans, num_out_chans)
     
         return None # PythonObject(None)
-
-    fn __repr__(self) -> String:
-        return String("MMMAudioBridge(sample_rate: " + String(self.world[].sample_rate) + ", block_size: " + String(self.world[].block_size) + ", num_in_chans: " + String(self.world[].num_in_chans) + ", num_out_chans: " + String(self.world[].num_out_chans) + ")")
 
     @staticmethod
     fn set_screen_dims(py_selfA: PythonObject, dims: PythonObject) raises -> PythonObject:
@@ -184,7 +171,6 @@ struct MMMAudioBridge(Representable, Movable):
 
             if self.world[].top_of_block:
                 self.world[].print_counter += 1
-
             # fill the sound_in list with the current sample from all inputs
             for j in range(self.world[].num_in_chans):
                 self.world[].sound_in[j] = Float64(loc_in_buffer[i * self.world[].num_in_chans + j]) 
@@ -194,7 +180,6 @@ struct MMMAudioBridge(Representable, Movable):
             # Fill the wire buffer with the sample data
             for j in range(min(self.world[].num_out_chans, samples.__len__())):
                 loc_out_buffer[i * self.world[].num_out_chans + j] = samples[Int(j)]
-
     @staticmethod
     fn next(py_selfA: PythonObject, in_buffer: PythonObject, out_buffer: PythonObject) raises -> PythonObject:
 

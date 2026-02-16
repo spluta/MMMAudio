@@ -99,8 +99,8 @@ def test_mfcc_paths_consistency():
     comptime num_bands: Int = 8
     comptime num_coeffs: Int = 4
 
-    world = MMMWorld(sample_rate=48000.0)
-    w = LegacyUnsafePointer(to=world)
+    w = alloc[MMMWorld](1) 
+    w.init_pointee_move(MMMWorld(48000.0))
 
     mags = List[Float64](length=(fft_size // 2) + 1, fill=0.0)
     phases = List[Float64](length=(fft_size // 2) + 1, fill=0.0)
@@ -124,8 +124,8 @@ def test_mfcc_paths_consistency():
         assert_almost_equal(mfcc_next.coeffs[i], mfcc_bands.coeffs[i], "Test: MFCC next_frame vs from_mel_bands mismatch")
 
 def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
-    world = MMMWorld(sample_rate=sr)
-    w = LegacyUnsafePointer(to=world)
+    w = alloc[MMMWorld](1) 
+    w.init_pointee_move(MMMWorld(sample_rate = sr))
     melbands = MelBands[num_bands=n_mels,min_freq=20.0,max_freq=20000.0,fft_size=n_fft](w)
 
     print("=======================================")

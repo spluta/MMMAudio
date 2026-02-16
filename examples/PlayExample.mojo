@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 struct BufSynth(Movable, Copyable):
-    var world: World 
+    var world: World
     var buffer: Buffer
 
     var num_chans: Int64
@@ -16,6 +16,7 @@ struct BufSynth(Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world 
+        print("world memory location:", world)
 
         # load the audio buffer 
         self.buffer = Buffer.load("resources/Shiverer.wav")

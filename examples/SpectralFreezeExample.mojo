@@ -32,8 +32,7 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
 
 struct SpectralFreeze[window_size: Int](Movable, Copyable):
     """
-     Spectral Freeze
-
+     Spectral Freeze.
     """
 
     comptime hop_size = Self.window_size // 4

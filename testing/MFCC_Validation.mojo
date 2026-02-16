@@ -11,7 +11,7 @@ struct MFCCTestSuite(FFTProcessable):
     var mfcc: MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize]
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: LegacyWorld):
+    fn __init__(out self, w: World):
         self.mfcc = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize](w)
         self.data = List[List[Float64]]()
 
@@ -20,8 +20,9 @@ struct MFCCTestSuite(FFTProcessable):
         self.data.append(self.mfcc.coeffs.copy())
 
 def main():
-    world = MMMWorld(sample_rate=44100)
-    w = LegacyUnsafePointer(to=world)
+    w = alloc[MMMWorld](1) 
+    w.init_pointee_move(MMMWorld(44100.0))
+
     mfcc_ts = MFCCTestSuite(w)
     fftprocess = FFTProcess[MFCCTestSuite,fftsize,hopsize,WindowType.hann](w, mfcc_ts^)
     buf = Buffer.load("resources/Shiverer.wav")

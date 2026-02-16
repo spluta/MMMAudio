@@ -1,6 +1,5 @@
 from python import PythonObject
 from python import Python
-from memory import LegacyUnsafePointer
 from mmm_audio import *
 from time import time
 
@@ -11,7 +10,7 @@ struct Play(Representable, Movable, Copyable):
     """
     var impulse: Phasor[1]  # Current phase of the buf
     var done: Bool
-    var world: World  
+    var world: World
     var rising_bool_detector: RisingBoolDetector[1]
     var start_frame: Int64 
     var reset_phase_point: Float64
@@ -25,7 +24,7 @@ struct Play(Representable, Movable, Copyable):
         """
 
         self.world = world
-        self.impulse = Phasor(self.world)
+        self.impulse = Phasor(world)
         self.done = True
         self.rising_bool_detector = RisingBoolDetector()
 

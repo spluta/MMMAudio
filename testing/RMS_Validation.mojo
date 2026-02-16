@@ -19,9 +19,8 @@ struct Analyzer(BufferedProcessable):
         return
 
 fn main():
-    world = MMMWorld()
-    w = LegacyUnsafePointer(to=world)
-    world.sample_rate = 44100.0
+    w = alloc[MMMWorld](1)
+    w.init_pointee_move(MMMWorld(44100.0))
 
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(w)

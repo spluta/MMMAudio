@@ -6,9 +6,9 @@ from mmm_audio import *
 comptime MFloat[N: Int = 1] = SIMD[DType.float64, N]
 comptime MInt[N: Int = 1] = SIMD[DType.int64, N]
 comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
-comptime World = LegacyUnsafePointer[mut=True, MMMWorld]
+comptime World = UnsafePointer[mut=True, MMMWorld, MutExternalOrigin]
 
-struct MMMWorld(Representable, Movable, Copyable):
+struct MMMWorld(Movable, Copyable):
     """The MMMWorld struct holds global audio processing parameters and state.
 
     In pretty much all usage, don't edit this struct.
@@ -102,9 +102,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.sound_in = List[Float64]()
         for _ in range(self.num_in_chans):
             self.sound_in.append(0.0)  # Reinitialize input buffer with zeros
-
-    fn __repr__(self) -> String:
-        return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
     @always_inline
     fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
