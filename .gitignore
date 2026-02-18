@@ -226,3 +226,6 @@ validation/outputs
 examples/tests/results_for_testing_against
 venv0257
 mine.worktrees
+testing/librosa_results
+testing/mojo_results
+testing/validation_results
