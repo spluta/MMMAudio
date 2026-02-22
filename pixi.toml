@@ -1,0 +1,61 @@
+[workspace]
+authors = ["Sam Pluta <spluta@gmail.com>","Ted Moore <ted@tedmooremusic.com>"]
+channels = ["https://conda.modular.com/max-nightly", "conda-forge", "pytorch","https://repo.prefix.dev/modular-community"]
+name = "MMMAudio"
+platforms = ["osx-arm64"]
+version = "0.0.0"
+
+[tasks.validate]
+args = [
+  { "arg" = "plots", "default" = "" }
+]
+cmd = "python testing/run_all_validations.py {{ plots }}"
+
+[tasks.make_librosa_results]
+cmd = "python testing/librosa_results_for_testing_against.py"
+
+[tasks.validate_snapshot]
+cmd = "python testing/validate_against_snapshot.py"
+
+[tasks.unit_tests]
+depends-on = ["make_librosa_results"]
+cmd = "mojo testing/UnitTests.mojo"
+
+[tasks.test_building]
+cmd = "python testing/test_build_mojo_files.py"
+
+[tasks.test_all]
+depends-on = ["unit_tests", "test_building","validate_snapshot"]
+
+[tasks.docs_serve]
+cmd = "mkdocs serve"
+
+[dependencies]
+mojo = "0.26.1.*"
+numpy = ">=2.3.5,<3"
+scipy = ">=1.17.0,<2"
+librosa = ">=0.11.0,<0.12"
+python = "3.13.*"
+mido = ">=1.2.10,<2"
+matplotlib = ">=3.10.8,<4"
+pyside6 = ">=6.10.2,<7"
+umap-learn = ">=0.5.11,<0.6"
+mojmelo = ">=0.1.1,<0.2"
+mkdocs = ">=1.6.1,<2"
+mkdocs-material = ">=9.7.1,<10"
+mkdocstrings = ">=1.0.3,<2"
+pymdown-extensions = ">=10.21.1,<11"
+pygments = ">=2.19.2,<3"
+mkdocstrings-python = ">=2.0.2,<3"
+ipykernel = ">=7.1.0,<8"
+
+[pypi-dependencies]
+torch = ">=2.10.0, <3"
+pyautogui = ">=0.9.54, <0.10"
+python-osc = ">=1.9.3, <2"
+python-rtmidi = ">=1.5.8, <2"
+hidapi = ">=0.15.0, <0.16"
+pyaudio = ">=0.2.14, <0.3"
+mkdocs-pdf = ">=0.1.2, <0.2"
+mkdocs-with-pdf = ">=0.9.3, <0.10"
+mkdocs-simple-hooks = ">=0.1.5, <0.2"

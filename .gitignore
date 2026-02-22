@@ -225,8 +225,6 @@ site
 testing/librosa_results
 .venv-257
 venv0257
-pixi.lock
-pixi.toml
 mine.worktrees
 *.o
 testing/outputs

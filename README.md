@@ -50,7 +50,7 @@ For more information on running examples see [Examples Index](https://spluta.git
 
 ## VS Code + pixi: run Python line-by-line with Shift+Enter
 
-If you want to use pixi as the environment manager and be able to press `Shift+Enter` in a `.py` file to execute the current line/selection in REPL mode, use these settings:
+If you want to use [pixi](https://pixi.prefix.dev/latest/) as the environment manager and be able to press `Shift+Enter` in a `.py` file to execute the current line/selection in REPL mode, use these settings:
 
 - In workspace `.vscode/settings.json`:
    - `python.defaultInterpreterPath`: `${workspaceFolder}/.pixi/envs/default/bin/python`
