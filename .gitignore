@@ -226,8 +226,6 @@ validation/outputs
 examples/tests/results_for_testing_against
 venv0257
 mine.worktrees
-# pixi environments
-.pixi/*
-!.pixi/config.toml
-pixi.lock
-pixi.toml
+testing/librosa_results
+testing/mojo_results
+testing/validation_results
