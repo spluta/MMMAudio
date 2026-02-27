@@ -10,9 +10,10 @@ from math import ceil
 from typing import Optional, Tuple, List
 from enum import IntEnum
 import mojo.importer
+import threading
+import asyncio
 
 import pyautogui
-
 
 class AudioCommand(IntEnum):
     STOP_PROCESS = 0
@@ -27,6 +28,10 @@ class AudioCommand(IntEnum):
     SEND_STRING = 9
     SEND_STRINGS = 10
     GET_SAMPLES = 11
+
+class ResponseCommand(IntEnum):
+    SAMPLES = 0
+    CALLBACKS = 1
 
 class MMMAudio:
     """
@@ -78,6 +83,9 @@ class MMMAudio:
         # Response queue for getting data back from audio process
         self.response_queue = Queue()
         
+        # Callback queue for receiving callbacks from audio process
+        self.callback_queue = Queue()
+        
         # Shared values for real-time parameter control
         # Add more as needed for your specific parameters
         self.shared_float_params = {}
@@ -86,7 +94,33 @@ class MMMAudio:
         # Sample rate will be set when process initializes
         self.sample_rate = Value(ctypes.c_int, 0)
 
+        self.callbacks = {}
+        
+        # Callback polling thread
+        self.callback_thread = None
+        self.callback_active = threading.Event()
+
         self.start_process()
+
+    def register_callback(self, name: str, callback):
+        """Register a callback function that can be called from the audio process.
+        
+        The function will be passed a single argument, which will be the data being sent from Mojo. The callback function will be called whenever the audio process sends a message with the corresponding name.
+
+        If Mojo is sending a List[Float64] the callback will be a numpy array of dtype float64.
+        If Mojo is sending a List[Int] the callback will be a numpy array of dtype int64.
+        Other Lists from Mojo will be sent as Python lists.
+        
+        Args:
+            name: The name of the callback.
+            callback: The function to call when the callback is triggered.
+        """
+        self.callbacks[name] = callback
+
+    def unregister_callback(self, name: str):
+        """Unregister a previously registered callback function."""
+        if name in self.callbacks:
+            del self.callbacks[name]
         
     def start_process(self):
         """Start the audio process"""
@@ -112,6 +146,7 @@ class MMMAudio:
                 self.process_ready,
                 self.command_queue,
                 self.response_queue,
+                self.callback_queue,
                 self.sample_rate
             )
         )
@@ -128,6 +163,9 @@ class MMMAudio:
         """Stop the audio process and clean up resources"""
         if self.process is None:
             return
+        
+        # Stop callback polling first
+        self._stop_callback_polling()
         
         print("[Main] Stopping audio process...")
         self.stop_flag.set()
@@ -147,9 +185,11 @@ class MMMAudio:
     def start_audio(self):
         """Start audio streaming in the audio process"""
         self.command_queue.put((AudioCommand.START_AUDIO, None))
+        self._start_callback_polling()
     
     def stop_audio(self):
         """Stop audio streaming in the audio process"""
+        self._stop_callback_polling()
         self.command_queue.put((AudioCommand.STOP_AUDIO, None))
     
     def is_running(self) -> bool:
@@ -159,6 +199,68 @@ class MMMAudio:
     def is_process_alive(self) -> bool:
         """Check if the audio process is alive"""
         return self.process is not None and self.process.is_alive()
+    
+    # =========================================================================
+    # Callback polling methods
+    # =========================================================================
+    
+    def _start_callback_polling(self):
+        """Start the callback polling thread"""
+        if self.callback_thread is not None and self.callback_thread.is_alive():
+            return  # Already running
+        
+        self.callback_active.set()
+        self.callback_thread = threading.Thread(
+            target=asyncio.run,
+            args=(self._callback_polling_loop(),),
+            daemon=False
+        )
+        self.callback_thread.start()
+        print("[Main] Callback polling started")
+    
+    def _stop_callback_polling(self):
+        """Stop the callback polling thread"""
+        if self.callback_thread is None:
+            return
+        
+        self.callback_active.clear()
+        if self.callback_thread.is_alive():
+            self.callback_thread.join(timeout=2.0)
+            if self.callback_thread.is_alive():
+                print("[Main] Warning: Callback thread did not stop cleanly")
+        self.callback_thread = None
+        print("[Main] Callback polling stopped")
+    
+    async def _callback_polling_loop(self):
+        """Async loop that polls for callbacks from the audio process"""
+        import asyncio
+        from queue import Empty
+        
+        print("[Main] Callback polling loop started")
+        
+        while self.callback_active.is_set():
+            try:
+                # Try to get callback message from queue (non-blocking)
+                try:
+                    command, data = self.callback_queue.get(timeout=0.1)
+                    
+                    if command == ResponseCommand.CALLBACKS:
+                        for key, value in data.items():
+                            if key in self.callbacks:
+                                try:
+                                    self.callbacks[key](value)
+                                except Exception as e:
+                                    print(f"[Main] Callback error for '{key}': {e}")
+                except Empty:
+                    pass  # No callbacks available
+                
+                await asyncio.sleep(0.01)
+                
+            except Exception as e:
+                print(f"[Main] Error in callback polling loop: {e}")
+                await asyncio.sleep(0.1)
+        
+        print("[Main] Callback polling loop ended")
     
     # =========================================================================
     # Message sending methods (same interface as original)
@@ -207,7 +309,7 @@ class MMMAudio:
         # Wait for response
         try:
             response = self.response_queue.get(timeout=30.0)
-            if response[0] == "SAMPLES":
+            if response[0] == ResponseCommand.SAMPLES:
                 return response[1]
             else:
                 print(f"[Main] Unexpected response: {response[0]}")
@@ -264,6 +366,7 @@ class MMMAudio:
         process_ready: Event,
         command_queue: Queue,
         response_queue: Queue,
+        callback_queue: Queue,
         sample_rate_value: Value
     ):
         """
@@ -401,8 +504,13 @@ class MMMAudio:
                 )
                 # Process through Mojo bridge
                 with bridge_lock:
-                    mmm_audio_bridge.next(in_array, out_buffer)
-                
+                    to_py_dict = mmm_audio_bridge.next(in_array, out_buffer)
+                    if to_py_dict:
+                        try:
+                            callback_queue.put_nowait((ResponseCommand.CALLBACKS, to_py_dict))
+                        except:
+                            pass  # Queue full, drop callbacks
+
                 out_buffer = np.clip(out_buffer, -1.0, 1.0)
                 output_bytes = out_buffer.astype(np.float32).tobytes()
                 
@@ -585,7 +693,7 @@ class MMMAudio:
                         if i * blocksize + j < samples:
                             waveform[i * blocksize + j] = temp_out[j]
 
-            response_queue.put(("SAMPLES", waveform))
+            response_queue.put((ResponseCommand.SAMPLES, waveform))
             return True
 
         command_handlers = [

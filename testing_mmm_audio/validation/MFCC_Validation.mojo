@@ -31,7 +31,7 @@ def main():
 
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("testing/mojo_results/mfcc_mojo_results.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "w") as f:
         f.write("windowsize," + String(fftsize) + "\n")
         f.write("hopsize," + String(hopsize) + "\n")
         f.write("num_coeffs," + String(num_coeffs) + "\n")

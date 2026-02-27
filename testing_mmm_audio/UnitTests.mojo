@@ -146,7 +146,7 @@ def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
 
     # print("melband weights flat len: ", len(weights_flat))
 
-    expected_path = "testing/librosa_results/librosa_mel_bands_weights_results"
+    expected_path = "testing_mmm_audio/validation/librosa_results/librosa_mel_bands_weights_results"
     expected_path += "_nmels=" + String(n_mels)
     expected_path += "_fftsize=" + String(n_fft)
     expected_path += "_sr=" + String(sr)

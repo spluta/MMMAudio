@@ -12,7 +12,7 @@ s.waitForBoot{
 	"minfreq:    %".format(minfreq).postln;
 	"maxfreq:    %".format(maxfreq).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
 	s.sync;
 	FluidBufPitch.processBlocking(

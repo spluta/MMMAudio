@@ -8,23 +8,42 @@ from math import floor
 # parameters. I think `hop_size` would still be a parameter of the BufferedProcess struct.
 trait BufferedProcessable(Movable, Copyable):
     """Trait that user structs must implement to be used with a BufferedProcess.
-    
-    Requires two functions:
-
-    - `next_window(buffer: List[Float64]) -> None`: This function is called when enough samples have been buffered.
-      The user can process the input buffer in place meaning that the samples you want to return to the output need
-      to replace the samples that you receive in the input list.
-    
-    - `get_messages() -> None`: This function is called at the top of each audio block to allow the user to retrieve any messages
-      they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
+    
     fn next_window(mut self, mut buffer: List[Float64]) -> None:
+        """This function is called when enough samples have been buffered.
+        The user can process the input buffer in place meaning that the samples you want to return to the output need
+        to replace the samples that you receive in the input list.
+        
+        This function has a default implementation that does nothing so it is possible to *not* 
+        implement it. This would probably be because a stereo process is implementing `next_stereo_window()` instead.
+        """
         return None
 
     fn next_stereo_window(mut self, mut buffer: List[SIMD[DType.float64, 2]]) -> None:
+        """The stereo version of `next_window()`. See that for details.
+        
+        This function has a default implementation that does nothing so it is possible to *not* 
+        implement it. This would probably be because a mono process is implementing `next_window()` instead.
+        """
         return None
     
     fn get_messages(mut self) -> None:
+        """This function is called at the top of each audio block to allow the user to retrieve any messages
+        they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. 
+        (e.g. `self.messenger.update(self.param, "param_name")`).
+
+        This method has a default implementation that does nothing, so it is not necessary to 
+        implement it if you don't need to retrieve any messages.
+        """
+        return None
+
+    fn send_streams(mut self) -> None:
+        """This function can be used to stream data back to Python. Put your [Messenger](Messenger.md) message sending code here.
+        (e.g. `self.messenger.reply_stream("stream_name", value)`).
+
+        This method has a default implementation that does nothing, so it is not necessary to implement it if you don't need to send any stream data.
+        """
         return None
 
 struct BufferedInput[T: BufferedProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann](Movable, Copyable):
@@ -161,6 +180,9 @@ struct BufferedProcess[T: BufferedProcessable, window_size: Int = 1024, hop_size
         """
         if self.world[].top_of_block:
             self.process.get_messages()
+        
+        if self.world[].messengerManager.accepting_stream_data:
+            self.process.send_streams()
     
         self.input_buffer[self.input_buffer_write_head] = input
         self.input_buffer[self.input_buffer_write_head + Self.window_size] = input

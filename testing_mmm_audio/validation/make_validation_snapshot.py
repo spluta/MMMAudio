@@ -70,7 +70,7 @@ def build_snapshot(show_plots: bool) -> dict[str, Any]:
 
     scripts = validation_scripts()
     if not scripts:
-        raise RuntimeError("No *_Validation.py scripts found under testing/.")
+        raise RuntimeError("No *_Validation.py scripts found under testing_mmm_audio/.")
 
     for script in scripts:
         name = os.path.basename(script)
@@ -97,7 +97,7 @@ def build_snapshot(show_plots: bool) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run validation scripts and create/update testing/validation_snapshot.json"
+        description="Run validation scripts and create/update testing_mmm_audio/validation_snapshot.json"
     )
     parser.add_argument(
         "--show-plots",

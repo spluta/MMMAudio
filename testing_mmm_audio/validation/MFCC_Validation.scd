@@ -14,7 +14,7 @@ s.waitForBoot{
 	"numCoeffs: %".format(numCoeffs).postln;
 	"numBands: %".format(numBands).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
 	s.sync;
 	FluidBufMFCC.processBlocking(

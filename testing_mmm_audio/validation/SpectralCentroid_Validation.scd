@@ -1,4 +1,5 @@
 var dir = thisProcess.nowExecutingPath.dirname;
+s.options.numWireBufs = 1024;
 s.waitForBoot{
 
 	var windowsize = 1024;
@@ -7,7 +8,7 @@ s.waitForBoot{
 	"windowsize: %".format(windowsize).postln;
 	"hopsize: %".format(hopsize).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
     s.sync;
 	FluidBufSpectralShape.processBlocking(

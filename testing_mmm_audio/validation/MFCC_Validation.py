@@ -19,21 +19,21 @@ parser.add_argument("--show-plots", action="store_true", help="Display plots int
 args = parser.parse_args()
 show_plots = args.show_plots
 
-os.makedirs("testing/validation_results", exist_ok=True)
-os.makedirs("testing/mojo_results", exist_ok=True)
-os.makedirs("testing/flucoma_sc_results", exist_ok=True)
+os.makedirs("testing_mmm_audio/validation/validation_results", exist_ok=True)
+os.makedirs("testing_mmm_audio/validation/mojo_results", exist_ok=True)
+os.makedirs("testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
-os.system("mojo run testing/MFCC_Validation.mojo")
+os.system("mojo run -I . testing_mmm_audio/validation/MFCC_Validation.mojo")
 print("mojo analysis complete")
 
 try:
-	flucoma_csv_path = "testing/flucoma_sc_results/mfcc_flucoma_results.csv"
+	flucoma_csv_path = "testing_mmm_audio/validation/flucoma_sc_results/mfcc_flucoma_results.csv"
 	if not os.path.exists(flucoma_csv_path):
-		os.system("sclang testing/MFCC_Validation.scd")
+		os.system("sclang testing_mmm_audio/validation/MFCC_Validation.scd")
 except Exception as e:
 	print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 
-with open("testing/mojo_results/mfcc_mojo_results.csv", "r") as f:
+with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()
 
 	windowsize = int(lines[0].strip().split(",")[1])
@@ -118,7 +118,7 @@ ax[0].set(title="Librosa", ylabel="MFCC")
 ax[1].set(title="FluCoMa", ylabel="MFCC")
 ax[2].set(title="MMMAudio", xlabel="Frame", ylabel="MFCC")
 plt.tight_layout()
-plt.savefig("testing/validation_results/mfcc_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/mfcc_comparison.png")
 if show_plots:
 	plt.show()
 else:

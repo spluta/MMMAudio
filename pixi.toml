@@ -9,23 +9,26 @@ version = "0.0.0"
 args = [
   { "arg" = "plots", "default" = "" }
 ]
-cmd = "python testing/run_all_validations.py {{ plots }}"
+cmd = "python testing_mmm_audio/validation/run_all_validations.py {{ plots }}"
 
 [tasks.make_librosa_results]
-cmd = "python testing/librosa_results_for_testing_against.py"
+cmd = "python testing_mmm_audio/validation/librosa_results_for_testing_against.py"
 
 [tasks.validate_snapshot]
-cmd = "python testing/validate_against_snapshot.py"
+cmd = "python testing_mmm_audio/validation/validate_against_snapshot.py"
 
 [tasks.unit_tests]
 depends-on = ["make_librosa_results"]
-cmd = "mojo testing/UnitTests.mojo"
+cmd = "mojo testing_mmm_audio/UnitTests.mojo"
+
+[tasks.py_unit_tests]
+cmd = "python testing_mmm_audio/unit_test_py_files.py"
 
 [tasks.test_building]
-cmd = "python testing/test_build_mojo_files.py"
+cmd = "python testing_mmm_audio/test_build_mojo_files.py"
 
 [tasks.test_all]
-depends-on = ["unit_tests", "test_building","validate_snapshot"]
+depends-on = ["unit_tests", "test_building","validate_snapshot","py_unit_tests"]
 
 [tasks.docs_serve]
 cmd = "mkdocs serve"

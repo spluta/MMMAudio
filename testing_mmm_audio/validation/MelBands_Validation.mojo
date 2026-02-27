@@ -27,7 +27,7 @@ def main():
     
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("testing/mojo_results/mel_bands_mojo.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mel_bands_mojo.csv", "w") as f:
         for i,frame in enumerate(fftprocess.buffered_process.process.process.data):
             if i > 0:
                 f.write("\n")

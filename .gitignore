@@ -222,11 +222,12 @@ __marimo__/
 doc_generation/docs_md
 site
 .vscode
-testing/librosa_results
+testing_mmm_audio/validation/librosa_results
 .venv-257
 venv0257
 mine.worktrees
 *.o
-testing/outputs
-testing/mojo_results
-testing/validation_results
+testing_mmm_audio/outputs
+testing_mmm_audio/validation/mojo_results
+testing_mmm_audio/validation/validation_results
+

@@ -41,6 +41,10 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     @doc_private
     fn get_messages(mut self) -> None:
         self.process.get_messages()
+    
+    @doc_private
+    fn send_streams(mut self) -> None:
+        self.process.send_streams()
 
 trait FFTProcessable(Movable,Copyable):
     """Implement this trait in a custom struct to pass to `FFTProcess`
@@ -50,10 +54,33 @@ trait FFTProcessable(Movable,Copyable):
     using a struct that implements FFTProcessable.
     """
     fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+        """This function is called when the internal buffered process has enough samples to 
+        perform an FFT. The user can modify the magnitudes and phases in place to achieve 
+        their desired spectral processing. The modified magnitudes and phases will then be 
+        used by the internal buffered process to perform an IFFT and return to the time domain.
+
+        This function has a default implementation that does nothing so it is possible to *not* 
+        implement it. This would probably be because a stereo process is implementing 
+        `next_stereo_frame()` instead.
+        """
         return None
     fn next_stereo_frame(mut self, mut magnitudes: List[SIMD[DType.float64,2]], mut phases: List[SIMD[DType.float64,2]]) -> None:
+        """The stereo version of `next_frame()`. See that for details.
+        """
         return None
     fn get_messages(mut self) -> None:
+        """This function is called at the top of each audio block to allow the user to retrieve any messages
+        they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`).
+
+        This method has a default implementation that does nothing, so it is not necessary to implement it if you don't need to retrieve any messages.
+        """
+        return None
+    fn send_streams(mut self) -> None:
+        """This function can be used to stream data back to Python. Put your [Messenger](Messenger.md) message sending code here.
+        (e.g. `self.messenger.reply_stream("stream_name", value)`).
+
+        This method has a default implementation that does nothing, so it is not necessary to implement it if you don't need to send any stream data.
+        """
         return None
 
 struct FFTProcess[T: FFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):

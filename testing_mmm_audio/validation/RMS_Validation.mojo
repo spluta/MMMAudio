@@ -31,7 +31,7 @@ fn main():
         sample = playBuf.next(buffer)
         analyzer.next(sample)
     
-    pth = "testing/mojo_results/rms_mojo_results.csv"
+    pth = "testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

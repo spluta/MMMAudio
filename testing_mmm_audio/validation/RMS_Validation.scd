@@ -8,7 +8,7 @@ s.waitForBoot{
 	"windowsize: %".format(windowsize).postln;
 	"hopsize: %".format(hopsize).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
     s.sync;
 	FluidBufLoudness.processBlocking(

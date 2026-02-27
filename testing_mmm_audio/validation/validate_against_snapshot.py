@@ -12,11 +12,11 @@ FLOAT_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 
 
 def repo_root() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 
 def testing_dir() -> str:
-    return os.path.join(repo_root(), "testing")
+    return os.path.join(repo_root(), "testing_mmm_audio/validation")
 
 
 def snapshot_path() -> str:
@@ -76,7 +76,7 @@ def current_results(show_plots: bool) -> dict[str, Any]:
     out: dict[str, Any] = {"scripts": {}}
     scripts = validation_scripts()
     if not scripts:
-        raise RuntimeError("No *_Validation.py scripts found under testing/.")
+        raise RuntimeError("No *_Validation.py scripts found under testing_mmm_audio/.")
 
     for script in scripts:
         name = os.path.basename(script)
@@ -116,7 +116,7 @@ def load_snapshot() -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Run validation scripts and compare against testing/validation_snapshot.json"
+        description="Run validation scripts and compare against testing_mmm_audio/validation_snapshot.json"
     )
     parser.add_argument(
         "--show-plots",
