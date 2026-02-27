@@ -16,11 +16,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_python import *
-from mmm_python.python_utils import *
 
-from mmm_python.GUI import Handle, ControlSpec
 from mmm_python import *
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
+from PySide6.QtWidgets import *
 
 def main():
     mmm_audio = MMMAudio(128, graph_name="FreeverbExample", package_name="examples")

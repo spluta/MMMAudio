@@ -16,6 +16,10 @@ struct MMMWorld(Movable, Copyable):
     var sample_rate: Float64
     var block_size: Int
     var osc_buffers: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin]
+    # windows
+    var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin]
+    var messenger_manager: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]
+    
     var num_in_chans: Int
     var num_out_chans: Int
 
@@ -30,13 +34,9 @@ struct MMMWorld(Movable, Copyable):
 
     var block_state: Int
     var top_of_block: Bool
-    
-    # windows
-    var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin]
+
 
     var sinc_interpolator: SincInterpolator[4, 14]
-
-    var messengerManager: MessengerManager
 
     var last_print_time: Float64
     var print_flag: Int
@@ -44,7 +44,7 @@ struct MMMWorld(Movable, Copyable):
 
     var print_counter: UInt16
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin]()):
+    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin](), messenger_manager_ptr: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin] = UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]()):
         """Initializes the MMMWorld struct.
 
         Args:
@@ -83,7 +83,7 @@ struct MMMWorld(Movable, Copyable):
         self.print_flag = 0
         self.last_print_flag = 0
 
-        self.messengerManager = MessengerManager()
+        self.messenger_manager = messenger_manager_ptr
 
         self.print_counter = 0
 

@@ -54,7 +54,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_bool(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -73,7 +73,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_bool(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_bool(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
                     return True
@@ -85,7 +85,7 @@ struct Messenger(Copyable, Movable):
     # fn update(mut self, mut param: List[Bool], name: String):
     #     if self.world[].top_of_block:
     #         try:
-    #             var opt = self.world[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             var opt = self.world[].messenger_manager[].get_bools(self.get_name_with_namespace(name)[])
     #             if opt:
     #                 param = opt.value().copy()
     #         except error:
@@ -95,7 +95,7 @@ struct Messenger(Copyable, Movable):
     # fn notify_update(mut self, mut param: List[Bool], name: String) -> Bool:
     #     if self.world[].top_of_block:
     #         try:
-    #             var opt = self.world[].messengerManager.get_bools(self.get_name_with_namespace(name)[])
+    #             var opt = self.world[].messenger_manager[].get_bools(self.get_name_with_namespace(name)[])
     #             if opt:
     #                 param = opt.value().copy()
     #                 return True
@@ -114,7 +114,7 @@ struct Messenger(Copyable, Movable):
         
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_float(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_float(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -133,7 +133,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_float(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_float(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
                     return True
@@ -151,7 +151,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
             except error:
@@ -170,7 +170,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
                     return True
@@ -187,7 +187,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
                 if opt:
                     for i in range(len(opt.value())):
                         param[i] = opt.value()[i]
@@ -206,7 +206,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_floats(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
                 if opt:
                     for i in range(len(opt.value())):
                         param[i] = opt.value()[i]
@@ -225,7 +225,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_int(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_int(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -244,7 +244,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_int(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_int(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
                     return True
@@ -262,7 +262,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_ints(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
             except error:
@@ -281,7 +281,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_ints(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_ints(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
                     return True
@@ -299,7 +299,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_string(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_string(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
             except error:
@@ -318,7 +318,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_string(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_string(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value()
                     return True
@@ -336,7 +336,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_strings(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
             except error:
@@ -355,7 +355,7 @@ struct Messenger(Copyable, Movable):
         """
         if self.world[].top_of_block:
             try:
-                var opt = self.world[].messengerManager.get_strings(self.get_name_with_namespace(name)[])
+                var opt = self.world[].messenger_manager[].get_strings(self.get_name_with_namespace(name)[])
                 if opt:
                     param = opt.value().copy()
                     return True
@@ -375,7 +375,7 @@ struct Messenger(Copyable, Movable):
 
         if self.world[].top_of_block:
             try:
-                return self.world[].messengerManager.get_trig(self.get_name_with_namespace(name)[])
+                return self.world[].messenger_manager[].get_trig(self.get_name_with_namespace(name)[])
             except error:
                 print("Error occurred while updating trig message. Error: ", error)
         return False

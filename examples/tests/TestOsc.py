@@ -9,4 +9,5 @@ for i in range(7):
     mmm_audio.start_audio() 
     m_s.append(mmm_audio)
 
-m_s[0].stop_audio()  
+for i in range(7):
+    m_s[i].stop_audio()  
