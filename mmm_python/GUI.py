@@ -201,13 +201,16 @@ class MPlot(QWidget):
             edgecolors="black",
             linewidths=0.5,
             zorder=3,
+            animated=True,  # excluded from normal draws; we blit it ourselves
         )
+        self._bg = None  # cached background for blitting
     
         if xlabel:
             self.ax.set_xlabel(xlabel)
         if ylabel:
             self.ax.set_ylabel(ylabel)
 
+        self.canvas.mpl_connect("draw_event", self._on_draw)
         self.canvas.mpl_connect("motion_notify_event", self._on_motion)
         self.canvas.mpl_connect("button_press_event", self._on_press)
         self.canvas.mpl_connect("button_release_event", self._on_release)
@@ -305,12 +308,27 @@ class MPlot(QWidget):
             return "+".join(sorted(self._modifiers))
         return None
 
+    def _on_draw(self, event):
+        """Cache the background (without the animated highlight) after every full redraw."""
+        self._bg = self.canvas.copy_from_bbox(self.ax.bbox)
+        # Re-blit the highlight if one is active so it reappears after a resize/zoom
+        if self._highlight_index is not None:
+            self.ax.draw_artist(self._highlight_marker)
+            self.canvas.blit(self.ax.bbox)
+
     def highlight_index(self, idx):
         if idx is None or idx < 0 or idx >= len(self._points):
             return
         self._highlight_index = idx
         self._highlight_marker.set_offsets(self._points[idx])
-        self.canvas.draw_idle()
+        if self._bg is not None:
+            # Fast path: restore static background, paint only the orange dot
+            self.canvas.restore_region(self._bg)
+            self.ax.draw_artist(self._highlight_marker)
+            self.canvas.blit(self.ax.bbox)
+        else:
+            # Fallback before the first full draw has happened
+            self.canvas.draw_idle()
 
 
 class MWaveform(QWidget):
