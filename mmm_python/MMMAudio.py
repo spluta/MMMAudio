@@ -124,7 +124,7 @@ class MMMAudio:
         self.mmm_audio_bridge.set_screen_dims(screen_dims)  # Initialize with sample rate and screen size
 
         # the mouse thread will always be running
-        threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),)).start()
+        threading.Thread(target=asyncio.run, args=(self._get_mouse_position(0.01),), daemon=True).start()
         self.p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
 
@@ -244,7 +244,7 @@ class MMMAudio:
             self.running = True
             self.audio_stopper.clear()
             print("Audio started with sample rate:", self.sample_rate, "block size:", self.blocksize, "input channels:", self.num_input_channels, "output channels:", self.num_output_channels)
-            self.audio_thread = threading.Thread(target=self.audio_loop)
+            self.audio_thread = threading.Thread(target=self.audio_loop, daemon=True)
             self.audio_thread.start()
     
     def stop_audio(self):
@@ -253,6 +253,15 @@ class MMMAudio:
             self.running = False
             print("Stopping audio...")
             self.audio_stopper.set()
+            self.audio_thread.join(timeout=2.0)
+            try:
+                self.input_stream.stop_stream()
+                self.input_stream.close()
+                self.output_stream.stop_stream()
+                self.output_stream.close()
+                self.p.terminate()
+            except Exception:
+                pass
 
     def send_bool(self, key: str, value: bool):
         """
