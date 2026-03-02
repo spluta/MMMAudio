@@ -35,7 +35,7 @@ for i in range(len(slice_points)-1):
     d["start_frame"] = start
     d["num_frames"] = end - start
     mfccs = MBufAnalysis.mfcc(d)
-    mfccs = mfccs[:, 1:] # drop first coefficient
+    mfccs = mfccs[:, 1:] # drop 0th coefficient
     data[i] = mfccs.mean(axis=0)
     print(f"MFCCs for slice {i}: {data[i]}")
 
