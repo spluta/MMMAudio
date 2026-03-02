@@ -342,7 +342,7 @@ class MWaveform(QWidget):
         self.ax = fig.add_subplot(111)
 
         self.ax.plot(wave, color="black", linewidth=0.6, alpha=0.85)
-        
+
         if slice_points is not None and len(slice_points) > 0:
             self.ax.vlines(
                 slice_points,
@@ -353,13 +353,26 @@ class MWaveform(QWidget):
                 alpha=0.6,
                 zorder=2,
             )
-            
-        self._slice_highlight = None
+
+        # Create a persistent highlight Polygon (animated=True excludes it from normal draws)
+        self._slice_highlight = self.ax.axvspan(
+            0, 1, color="orange", alpha=0.25, zorder=3, animated=True, visible=False
+        )
+        self._bg = None  # cached background for blitting
+
         self.ax.set_xlabel("Samples")
         self.ax.set_ylabel("Amplitude")
 
+        self.canvas.mpl_connect("draw_event", self._on_draw)
         layout = QVBoxLayout(self)
         layout.addWidget(self.canvas)
+
+    def _on_draw(self, event):
+        """Cache the static background after every full redraw."""
+        self._bg = self.canvas.copy_from_bbox(self.ax.bbox)
+        if self._slice_highlight.get_visible():
+            self.ax.draw_artist(self._slice_highlight)
+            self.canvas.blit(self.ax.bbox)
 
     def highlight(self, start_frame, num_frames):
         if num_frames <= 0 or self._wave_length <= 0:
@@ -370,14 +383,14 @@ class MWaveform(QWidget):
         if start_frame >= end_frame:
             return
 
-        if self._slice_highlight is not None:
-            self._slice_highlight.remove()
+        # axvspan returns a Rectangle — update its position and width in-place
+        self._slice_highlight.set_x(start_frame)
+        self._slice_highlight.set_width(end_frame - start_frame)
+        self._slice_highlight.set_visible(True)
 
-        self._slice_highlight = self.ax.axvspan(
-            start_frame,
-            end_frame,
-            color="orange",
-            alpha=0.25,
-            zorder=1,
-        )
-        self.canvas.draw_idle()
+        if self._bg is not None:
+            self.canvas.restore_region(self._bg)
+            self.ax.draw_artist(self._slice_highlight)
+            self.canvas.blit(self.ax.bbox)
+        else:
+            self.canvas.draw_idle()

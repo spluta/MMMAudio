@@ -37,11 +37,10 @@ def gui():
                 start = slice_points[nearest]
                 num = slice_points[nearest+1] - start
                 
+                ma.send_ints("play_data", [start, num])
                 view.highlight_index(nearest)
-                
                 waveform_win.highlight(start, num)
                 
-                ma.send_ints("play_data", [start, num])
                 print(f"x: {x:.2f}, y: {y:.2f}")
                 print(f"Nearest idx: {idx[0][0]}, dist: {dist[0][0]:.4f}")
 
