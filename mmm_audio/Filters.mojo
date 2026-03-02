@@ -311,7 +311,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     @always_inline
     fn peak(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """
-        Process input through a SVF peak filter. 
+        Process input through a SVF peak filter. Boosts or cuts a band of frequencies centered at the cutoff by an amount determined by q, leaving frequencies outside the band unaffected.
 
         Args:
             input: The input signal to process.

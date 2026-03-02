@@ -33,13 +33,13 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         self.osc2 = Osc[interp=Interp.linear](self.world)
         
         self.pan2_osc = Osc[1](self.world)
-        self.pan2_freq = random_float64(0.03, 0.1)
+        self.pan2_freq = rrand(0.03, 0.1)
 
         self.vol_osc = Osc[](self.world)
-        self.vol_osc_freq = random_float64(0.05, 0.2)
+        self.vol_osc_freq = rrand(0.05, 0.2)
         self.osc_freqs = SIMD[DType.float64, 2](
-            center_freq + random_float64(1.0, 5.0),
-            center_freq - random_float64(1.0, 5.0)
+            center_freq + rrand(1.0, 5.0),
+            center_freq - rrand(1.0, 5.0)
         )
 
     fn __repr__(self) -> String:
@@ -79,7 +79,7 @@ struct ManyOscillators(Copyable, Movable):
 
         # add 10 pairs to the list
         for _ in range(self.num_pairs):
-            self.synths.append(StereoBeatingSines(self.world, random_exp_float64(100.0, 1000.0)))
+            self.synths.append(StereoBeatingSines(self.world, exprand(100.0, 1000.0)))
 
     @always_inline
     fn next(mut self) -> SIMD[DType.float64, 2]:
@@ -89,7 +89,7 @@ struct ManyOscillators(Copyable, Movable):
                 if self.num_pairs > len(self.synths):
                     # add more
                     for _ in range(self.num_pairs - len(self.synths)):
-                        self.synths.append(StereoBeatingSines(self.world, random_exp_float64(100.0, 1000.0)))
+                        self.synths.append(StereoBeatingSines(self.world, exprand(100.0, 1000.0)))
                 else:
                     # remove some
                     for _ in range(len(self.synths) - self.num_pairs):
