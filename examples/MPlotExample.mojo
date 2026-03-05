@@ -5,14 +5,14 @@ struct MPlotExample(Representable, Movable, Copyable):
     var buf: Buffer
     var play: Play
     var m: Messenger
-    var play_data: List[Int64]
+    var play_data: List[Int]
     var path: String
 
     fn __init__(out self, world: World):
         self.world = world
         self.play = Play(self.world)
         self.m = Messenger(self.world)
-        self.play_data = List[Int64](length=2, fill=0)
+        self.play_data = List[Int](length=2, fill=0)
         self.path = String("resources/Shiverer.wav")
         self.buf = Buffer.load(self.path)
 

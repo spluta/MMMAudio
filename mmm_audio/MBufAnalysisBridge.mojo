@@ -174,10 +174,10 @@ struct MBufAnalysisBridge:
         filter_size = getInt(py_dict, "filter_size", 5)
         min_slice_len = getFloat64(py_dict, "min_slice_len", 0.1)
         
-        world = MMMWorld()
-        w = LegacyUnsafePointer(to=world)
+        w = alloc[MMMWorld](1) 
+        w.init_pointee_move(MMMWorld(analysis_params.buf.sample_rate))
 
-        # # run the analysis
+        # run the analysis
         sf_onsets = SpectralFluxOnsets[1](w,(window_size // 2) + 1,window_size,hop_size,filter_size)
         sf_onsets.thresh = thresh
         sf_onsets.min_slice_len = min_slice_len

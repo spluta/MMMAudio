@@ -63,7 +63,7 @@ def mel_bands_weights_results(n_mels: int, n_fft: int, sr: int):
     
 
     os.makedirs("testing/librosa_results", exist_ok=True)
-    with open(f"testing/librosa_results/librosa_mel_bands_weights_results_nmels={n_mels}_fftsize={n_fft}_sr={sr}.csv", "w") as f:
+    with open(f"testing_mmm_audio/validation/librosa_mel_bands_weights_results_nmels={n_mels}_fftsize={n_fft}_sr={sr}.csv", "w") as f:
         for row in range(len(mel_weights)):
             for col in range(len(mel_weights[row])):
                 f.write(f"{mel_weights[row][col]}\n")

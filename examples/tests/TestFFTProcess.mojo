@@ -71,8 +71,8 @@ struct TestFFTProcess(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var onsets: SpectralFluxOnsets[1,windowsize,hopsize]
-    var fftlowpass: FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann]
+    var onsets: SpectralFluxOnsets[1]
+    var fftlowpass: FFTProcess[ScrambleAndLowPass[windowsize],WindowType.hann,WindowType.hann]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -81,10 +81,10 @@ struct TestFFTProcess(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.onsets = SpectralFluxOnsets[1,windowsize,hopsize](self.world,(windowsize//2) + 1)
+        self.onsets = SpectralFluxOnsets[1](self.world,(windowsize//2) + 1)
         self.onsets.thresh = 67
         self.onsets.min_slice_len = 0.3
-        self.fftlowpass = FFTProcess[ScrambleAndLowPass[windowsize],windowsize,hopsize,WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[windowsize](self.world))
+        self.fftlowpass = FFTProcess[ScrambleAndLowPass[windowsize],WindowType.hann,WindowType.hann](self.world,process=ScrambleAndLowPass[windowsize](self.world),window_size=windowsize,hop_size=hopsize)
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0

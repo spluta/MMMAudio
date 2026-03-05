@@ -115,7 +115,7 @@ def test_fft_frequencies():
     assert_almost_equal(result_simd, expected, "Test: fft_frequencies function failed")
 
 def test_dct():
-    dct = DCT[4,3]()
+    dct = DCT(4,3)
     input_vals = List[Float64]([1.0, 2.0, 3.0, 4.0])
     output_vals = List[Float64](length=3, fill=0.0)
     dct.process(input_vals, output_vals)
@@ -139,12 +139,12 @@ def test_mfcc_paths_consistency():
     for i in range(len(mags)):
         mags[i] = 0.001 + 0.001 * Float64(i)
 
-    mel = MelBands[num_bands=num_bands,min_freq=20.0,max_freq=20000.0,fft_size=fft_size](w)
+    mel = MelBands(w[].sample_rate, num_bands=num_bands, min_freq=20.0, max_freq=20000.0, fft_size=fft_size)
     mel.from_mags(mags)
 
-    mfcc_next = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=20.0,max_freq=20000.0,fft_size=fft_size](w)
-    mfcc_mags = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=20.0,max_freq=20000.0,fft_size=fft_size](w)
-    mfcc_bands = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=20.0,max_freq=20000.0,fft_size=fft_size](w)
+    mfcc_next = MFCC(w[].sample_rate, num_coeffs=num_coeffs, num_bands=num_bands, min_freq=20.0, max_freq=20000.0, fft_size=fft_size)
+    mfcc_mags = MFCC(w[].sample_rate, num_coeffs=num_coeffs, num_bands=num_bands, min_freq=20.0, max_freq=20000.0, fft_size=fft_size)
+    mfcc_bands = MFCC(w[].sample_rate, num_coeffs=num_coeffs, num_bands=num_bands, min_freq=20.0, max_freq=20000.0, fft_size=fft_size)
 
     mfcc_next.next_frame(mags, phases)
     mfcc_mags.from_mags(mags)
@@ -157,7 +157,7 @@ def test_mfcc_paths_consistency():
 def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
     w = alloc[MMMWorld](1) 
     w.init_pointee_move(MMMWorld(sample_rate = sr))
-    melbands = MelBands[num_bands=n_mels,min_freq=20.0,max_freq=20000.0,fft_size=n_fft](w)
+    melbands = MelBands(w[].sample_rate, num_bands=n_mels,min_freq=20.0,max_freq=20000.0,fft_size=n_fft)
 
     print("=======================================")
     print("Testing mel bands with parameters:")
@@ -177,7 +177,7 @@ def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
 
     # print("melband weights flat len: ", len(weights_flat))
 
-    expected_path = "testing/librosa_results/librosa_mel_bands_weights_results"
+    expected_path = "testing_mmm_audio/validation/librosa_mel_bands_weights_results"
     expected_path += "_nmels=" + String(n_mels)
     expected_path += "_fftsize=" + String(n_fft)
     expected_path += "_sr=" + String(sr)

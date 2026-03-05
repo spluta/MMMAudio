@@ -1,5 +1,3 @@
-# run this from directly inside the "validation" directory, not from project root
-
 import argparse
 import librosa
 import os
@@ -21,23 +19,24 @@ def parse_args():
 args = parse_args()
 show_plots = args.show_plots
 
-os.makedirs("validation/outputs", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
-flucoma_csv_path = "./validation/outputs/mel_bands_flucoma.csv"
+flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/mel_bands_flucoma.csv"
 if not os.path.exists(flucoma_csv_path):
-	os.system("sclang ./validation/MelBands_Validation.scd")
+    print("FluCoMa CSV not found, running .scd to generate it...")
+    os.system("sclang ./MelBands_Validation.scd")
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 
-os.system("mojo run ./validation/MelBands_Validation.mojo")
+os.system("mojo run ./testing_mmm_audio/validation/MelBands_Validation.mojo")
 
-with open("./validation/outputs/mel_bands_flucoma.csv", "r") as f:
+with open("./testing_mmm_audio/validation/flucoma_sc_results/mel_bands_flucoma.csv", "r") as f:
     reader = csv.reader(f)
     flucoma_results = []
     for row in reader:
         flucoma_results.append([float(value) for value in row])
         
-with open("./validation/outputs/mel_bands_mojo.csv", "r") as f:
+with open("./testing_mmm_audio/validation/mojo_results/mel_bands_mojo.csv", "r") as f:
     reader = csv.reader(f)
     mojo_results = []
     for row in reader:

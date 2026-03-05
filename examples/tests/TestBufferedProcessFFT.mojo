@@ -9,7 +9,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     var world: World
     var m: Messenger
     var bin: Int
-    var fft: RealFFT[Self.window_size]
+    var fft: RealFFT[]
     # var complex: List[ComplexFloat64]
     var mags: List[Float64]
     var phases: List[Float64]
@@ -18,7 +18,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
         self.world = world
         self.bin = (Self.window_size // 2) + 1
         self.m = Messenger(self.world)
-        self.fft = RealFFT[Self.window_size]()
+        self.fft = RealFFT(Self.window_size)
         # self.complex = List[ComplexFloat64](length=(Self.window_size // 2) + 1, fill=ComplexFloat64(0.0,0.0))
         self.mags = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
@@ -39,7 +39,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var fftlowpass: BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine]
+    var fftlowpass: BufferedProcess[FFTLowPass[window_size],WindowType.sine,WindowType.sine]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -48,7 +48,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],window_size,hop_size,WindowType.sine,WindowType.sine](self.world,process=FFTLowPass[window_size](self.world))
+        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],WindowType.sine,WindowType.sine](self.world,process=FFTLowPass[window_size](self.world),window_size=window_size,hop_size=hop_size)
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0

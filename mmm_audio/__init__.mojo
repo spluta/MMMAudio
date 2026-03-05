@@ -19,6 +19,7 @@ from .Player import *
 from .Recorder_Module import *
 from .Reverbs import *
 from .SincInterpolator_Module import *
+from .sound_file import *
 
 from .Messenger_Module import *
 from .Print_Module import *

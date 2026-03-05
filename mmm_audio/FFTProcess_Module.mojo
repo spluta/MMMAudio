@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 @doc_private
-struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):
+struct FFTProcessor[T: FFTProcessable](BufferedProcessable):
     """This is a private struct that the user doesn't *need* to see or use. This is the
     connective tissue between FFTProcess (which the user *does* see and uses to
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
@@ -9,7 +9,8 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     """
     var world: World
     var process: Self.T
-
+    
+    var window_size: Int
     var fft: RealFFT[1]
     var fft2: RealFFT[2]
     var mags: List[Float64]
@@ -18,15 +19,16 @@ struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessa
     var st_phases: List[SIMD[DType.float64,2]]
 
     @doc_private
-    fn __init__(out self, world: World, var process: Self.T):
+    fn __init__(out self, world: World, var process: Self.T, window_size: Int):
         self.world = world
         self.process = process^
-        self.fft = RealFFT[1](Self.window_size)
-        self.fft2 = RealFFT[2](Self.window_size)
-        self.mags = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
-        self.phases = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
-        self.st_mags = List[SIMD[DType.float64,2]](length=(Self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
-        self.st_phases = List[SIMD[DType.float64,2]](length=(Self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
+        self.window_size = window_size
+        self.fft = RealFFT[1](self.window_size)
+        self.fft2 = RealFFT[2](self.window_size)
+        self.mags = List[Float64](length=(self.window_size // 2) + 1, fill=0.0)
+        self.phases = List[Float64](length=(self.window_size // 2) + 1, fill=0.0)
+        self.st_mags = List[SIMD[DType.float64,2]](length=(self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
+        self.st_phases = List[SIMD[DType.float64,2]](length=(self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
 
     fn next_window(mut self, mut input: List[Float64]) -> None:
         self.fft.fft(input)
@@ -69,12 +71,14 @@ struct FFTProcess[T: FFTProcessable, input_window_shape: Int = WindowType.hann, 
     var hop_size: Int
     var buffered_process: BufferedProcess[FFTProcessor[Self.T], Self.input_window_shape, Self.output_window_shape]
 
-    fn __init__(out self, world: World, var process: Self.T, window_size: Int = 1024, hop_size: Int = 512,):
+    fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int):
         """Initializes a `FFTProcess` struct.
 
         Args:
             world: A pointer to the MMMWorld.
             process: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
+            window_size: The size of the window to use for processing. This will determine how many samples are passed to the user defined struct's `.next_window()` method.
+            hop_size: The number of samples between the beginning of FFT windows.
 
         Returns:
             An initialized `FFTProcess` struct.
@@ -82,7 +86,7 @@ struct FFTProcess[T: FFTProcessable, input_window_shape: Int = WindowType.hann, 
         self.world = world
         self.window_size = window_size
         self.hop_size = hop_size
-        p = FFTProcessor[Self.T](self.world, process=process^)
+        p = FFTProcessor[Self.T](self.world, process=process^, window_size=self.window_size)
         self.buffered_process = BufferedProcess[FFTProcessor[Self.T],Self.input_window_shape, Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
     fn next(mut self, input: Float64) -> Float64:

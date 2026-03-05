@@ -32,9 +32,6 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         Args:
             new_buf: The new buffer to replace the existing buffer with.
         """
-        if new_buf.num_chans != Self.num_chans:
-            print("Recorder::replace_buffer: New buffer must have the same number of channels as existing buffer.")
-            return
         self.buf = new_buf.copy()
         self.write_head = 0
 

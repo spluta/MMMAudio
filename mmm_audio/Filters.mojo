@@ -326,7 +326,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     @always_inline
     fn notch(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """
-        Process input through a SVF notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others. 
+        Process input through a SVF notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others.
 
         Args:
             input: The input signal to process.
@@ -1291,7 +1291,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         q: SIMD[DType.float64, Self.num_chans]
     ) -> SIMD[DType.float64, Self.num_chans]:
         """
-        Process input through a biquad notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others. 
+        Process input through a biquad notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others.
 
         Args:
             input: The input signal to process.
