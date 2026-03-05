@@ -28,7 +28,7 @@ if not os.path.exists(flucoma_csv_path):
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 
-os.system("mojo run ./testing_mmm_audio/validation/MelBands_Validation.mojo")
+os.system("mojo run -I . ./testing_mmm_audio/validation/MelBands_Validation.mojo")
 
 with open("./testing_mmm_audio/validation/flucoma_sc_results/mel_bands_flucoma.csv", "r") as f:
     reader = csv.reader(f)
