@@ -1,5 +1,4 @@
-from .Filters import lpf_LR4
-from .MMMWorld_Module import *
+from mmm_audio import *
 
 struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
     """A struct that collects ` times_oversampling` samples and then downsamples them using a low-pass filter. Add a sample for each oversampling iteration with `add_sample()`, then get the downsampled output with `get_sample()`.
@@ -10,7 +9,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     """
 
     var buffer: InlineArray[SIMD[DType.float64, Self.num_chans], Self.times_oversampling]  # Buffer for oversampled values
-    var counter: Int64
+    var counter: Int
     var lpf: OS_LPF4[Self.num_chans]
 
     fn __init__(out self, world: World):

@@ -1,6 +1,4 @@
-from .BufferedProcess_Module import *
-from .FFTs import RealFFT
-from .Buffer_Module import *
+from mmm_audio import *
 
 @doc_private
 struct FFTProcessor[T: FFTProcessable, window_size: Int = 1024](BufferedProcessable):

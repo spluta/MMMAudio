@@ -4,7 +4,7 @@ Chowning FM synthesis example.
 These examples are adapted from Chowning's original [paper](https://web.eecs.umich.edu/~fessler/course/100/misc/chowning-73-tso.pdf) on FM synthesis and can also be found in "Computer Music" by Dodge and Jerse. pg. 123-127.
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 mmm_audio = MMMAudio(128, graph_name="ChowningFM", package_name="examples")
 mmm_audio.start_audio()
 

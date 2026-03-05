@@ -5,7 +5,7 @@ comptime two_pi = 2.0 * pi
 struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     var world: World
     var m: Messenger
-    var bin: Int64
+    var bin: Int
     var freeze_gate: Bool
     var stored_phases: List[SIMD[DType.float64, 2]]
     var stored_mags: List[SIMD[DType.float64, 2]]
@@ -32,8 +32,7 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
 
 struct SpectralFreeze[window_size: Int](Movable, Copyable):
     """
-     Spectral Freeze
-
+     Spectral Freeze.
     """
 
     comptime hop_size = Self.window_size // 4

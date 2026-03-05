@@ -52,7 +52,7 @@ if True:
             time.sleep(0.01)
 
     # Start the thread
-    midi_thread = threading.Thread(target=start_midi, daemon=True)
+    midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
 
 # To stop the thread:

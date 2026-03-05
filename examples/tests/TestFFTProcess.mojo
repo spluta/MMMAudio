@@ -11,26 +11,26 @@ comptime hopsize: Int = 512
 # pattern in SuperCollider, stringing together a bunch of
 # operations on the mags and phases.
 struct BinScramble(Copyable,Movable):
-    var swaps: List[Tuple[Int64,Int64]]
-    var nbins: Int64
-    var nscrambles: Int64
-    var scramble_range: Int64
+    var swaps: List[Tuple[Int,Int]]
+    var nbins: Int
+    var nscrambles: Int
+    var scramble_range: Int
 
-    fn __init__(out self, nbins: Int64, nscrambles: Int64):
+    fn __init__(out self, nbins: Int, nscrambles: Int):
         self.nbins = nbins
         self.nscrambles = nscrambles
-        self.swaps = List[Tuple[Int64,Int64]]()
+        self.swaps = List[Tuple[Int,Int]]()
         self.scramble_range = 10
         self.new_swaps()
 
     fn new_swaps(mut self) -> None:
         self.swaps.clear()
         for _ in range(self.nscrambles):
-            i = random.random_si64(0, self.nbins - 1)
+            i = random.random_ui64(0, self.nbins - 1)
             minj = max(i - self.scramble_range,0)
             maxj = min(i + self.scramble_range, self.nbins - 1)
-            j = random.random_si64(minj, maxj)
-            self.swaps.append((i,j))
+            j = random.random_ui64(minj, maxj)
+            self.swaps.append((Int(i),Int(j)))
 
     fn next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         for (i,j) in self.swaps:
@@ -45,7 +45,7 @@ struct BinScramble(Copyable,Movable):
 struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
     var world: World
     var m: Messenger
-    var bin: Int64
+    var bin: Int
     var bin_scramble: BinScramble
 
     fn __init__(out self, world: World):

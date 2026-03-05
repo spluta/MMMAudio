@@ -7,7 +7,7 @@ You can set the frequency of the input tone using the "freq" parameter.
 PanAz outputs a SIMD array with one channel per speaker. Since SIMD arrays must be a power of 2 in size, the `num_speakers` parameter must be set to a value below or equal to the size of the SIMD array (8 in this case). Any unused channels will be silent.
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 
 # instantiate and load the graph
 

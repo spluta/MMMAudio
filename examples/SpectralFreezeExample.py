@@ -14,29 +14,33 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_python.MMMAudio import MMMAudio
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton
+from mmm_python import *
+from PySide6.QtWidgets import *
 
-mmm_audio = MMMAudio(256, graph_name="SpectralFreezeExample", package_name="examples")
-mmm_audio.start_audio()
+def main():
+    mmm_audio = MMMAudio(256, graph_name="SpectralFreezeExample", package_name="examples")
+    mmm_audio.start_audio()
 
-app = QApplication([])
+    app = QApplication([])
 
-# Create the main window
-window = QWidget()
-window.setWindowTitle("Spectral Freeze Controller")
-window.resize(100, 100)
-# stop audio when window is closed
-window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
+    # Create the main window
+    window = QWidget()
+    window.setWindowTitle("Spectral Freeze Controller")
+    window.resize(100, 100)
+    # stop audio when window is closed
+    window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
 
-# Create layout
-layout = QVBoxLayout()
+    # Create layout
+    layout = QVBoxLayout()
 
-gatebutton = QPushButton("Freeze Gate")
-gatebutton.setCheckable(True)
-gatebutton.setChecked(False)
-gatebutton.clicked.connect(lambda checked: mmm_audio.send_bool("freeze_gate", checked))
-layout.addWidget(gatebutton)
-window.setLayout(layout)
-window.show()
-app.exec()
+    gatebutton = QPushButton("Freeze Gate")
+    gatebutton.setCheckable(True)
+    gatebutton.setChecked(False)
+    gatebutton.clicked.connect(lambda checked: mmm_audio.send_bool("freeze_gate", checked))
+    layout.addWidget(gatebutton)
+    window.setLayout(layout)
+    window.show()
+    app.exec()
+
+if __name__ == "__main__":
+    main()

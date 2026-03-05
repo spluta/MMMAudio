@@ -245,7 +245,7 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
 
             for i in range(self.window_size):
                 index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
-                self.passing_buffer[i] = ListInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
+                self.passing_buffer[i] = SpanInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
 
@@ -278,8 +278,8 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
            
             for i in range(self.window_size):
                 index = floor(phase * buffer.num_frames_f64) + i
-                self.st_passing_buffer[i][0] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
-                self.st_passing_buffer[i][1] = ListInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
+                self.st_passing_buffer[i][0] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
+                self.st_passing_buffer[i][1] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
 

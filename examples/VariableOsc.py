@@ -13,40 +13,42 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
+def main():
+    # instantiate and load the graph
+    mmm_audio = MMMAudio(128, graph_name="VariableOsc", package_name="examples")
+    mmm_audio.start_audio() 
 
-# instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="VariableOsc", package_name="examples")
-mmm_audio.start_audio() 
+    from mmm_python.GUI import Slider2D
+    from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
-from mmm_python.GUI import Slider2D
-from mmm_python.MMMAudio import MMMAudio
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
+    app = QApplication([])
+    app.quitOnLastWindowClosed = True 
 
-app = QApplication([])
-app.quitOnLastWindowClosed = True 
+    # Create the main window
+    window = QWidget()
+    window.setWindowTitle("Variable Oscillator Controller")
+    window.resize(300, 300)
+    # stop audio when window is closed
+    window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
 
-# Create the main window
-window = QWidget()
-window.setWindowTitle("Variable Oscillator Controller")
-window.resize(300, 300)
-# stop audio when window is closed
-window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
+    # Create layout
+    layout = QVBoxLayout()
 
-# Create layout
-layout = QVBoxLayout()
+    slider2d = Slider2D(250, 250)
 
-slider2d = Slider2D(250, 250)
+    def on_slider_change(x, y):
+        mmm_audio.send_float("x", x)  # map x from 0-1 to 20-2020 Hz
+        mmm_audio.send_float("y", y)  # map y from 0-1 to 0-1 amplitude
+    def slider_mouse_updown(is_down):
+        mmm_audio.send_bool("mouse_down", is_down)  # set amplitude to 0 when mouse is released
 
-def on_slider_change(x, y):
-    mmm_audio.send_float("x", x)  # map x from 0-1 to 20-2020 Hz
-    mmm_audio.send_float("y", y)  # map y from 0-1 to 0-1 amplitude
-def slider_mouse_updown(is_down):
-    mmm_audio.send_bool("mouse_down", is_down)  # set amplitude to 0 when mouse is released
+    slider2d.value_changed.connect(on_slider_change)
+    slider2d.mouse_updown.connect(slider_mouse_updown)
+    layout.addWidget(slider2d)
+    window.setLayout(layout)
+    window.show()
+    app.exec()
 
-slider2d.value_changed.connect(on_slider_change)
-slider2d.mouse_updown.connect(slider_mouse_updown)
-layout.addWidget(slider2d)
-window.setLayout(layout)
-window.show()
-app.exec()
+if __name__ == "__main__":
+    main()

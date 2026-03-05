@@ -6,6 +6,7 @@ def make_solo_graph(graph_name: str, package_name: str) -> str:
         string = string.replace("examples", package_name)
         string = string.replace("FeedbackDelays", graph_name)
         string = string.replace("PyInit_MMMAudioBridge", "PyInit_" + graph_name + "Bridge")
+        # string = string.replace("MMMAudioBridge", graph_name + "Bridge")
     with open(graph_name + "Bridge" + ".mojo", "w") as file:
         file.write(string)
 

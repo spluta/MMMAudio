@@ -12,7 +12,7 @@ struct TestDelay(Movable, Copyable):
     fn __init__(out self, world: World):
         self.world = world
         self.synth = Phasor(self.world)
-        self.delay = Delay[interp = Interp.lagrange4](self.world, Int64(4800))
+        self.delay = Delay[interp = Interp.lagrange4](self.world, Int(4800))
         self.freq = 0.5
         self.del_time = 0.5
         self.messenger = Messenger(world)

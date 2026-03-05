@@ -1,5 +1,4 @@
-from .MMMWorld_Module import MMMWorld, Interp, WindowType
-from .Buffer_Module import ListInterpolator
+from mmm_audio import *
 from math import exp, sin, sqrt, cos, pi
 
 struct Windows(Movable, Copyable):
@@ -10,7 +9,7 @@ struct Windows(Movable, Copyable):
     var sine: List[Float64]
     var kaiser: List[Float64]
     var pan2: List[SIMD[DType.float64, 2]]
-    comptime size: Int64 = 2048
+    comptime size: Int = 2048
     comptime size_f64: Float64 = 2048.0
     comptime mask: Int = 2047 # yep, gotta make sure this is size - 1
 
@@ -22,20 +21,20 @@ struct Windows(Movable, Copyable):
         self.kaiser = kaiser_window(self.size, 5.0)
         self.pan2 = pan2_window(256)
 
-    fn at_phase[window_type: Int64,interp: Int = Interp.none](self, world: World, phase: Float64, prev_phase: Float64 = 0.0) -> Float64:
+    fn at_phase[window_type: Int,interp: Int = Interp.none](self, world: World, phase: Float64, prev_phase: Float64 = 0.0) -> Float64:
         """Get window value at given phase (0.0 to 1.0) for specified window type."""
 
         @parameter
         if window_type == WindowType.hann:
-            return ListInterpolator.read[interp,True,self.mask](world,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
+            return SpanInterpolator.read[1,interp,True,self.mask](world,self.hann, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.hamming:
-            return ListInterpolator.read[interp,True,self.mask](world,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
+            return SpanInterpolator.read[1,interp,True,self.mask](world,self.hamming, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.blackman:
-            return ListInterpolator.read[interp,True,self.mask](world,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
+            return SpanInterpolator.read[1,interp,True,self.mask](world,self.blackman, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.kaiser:
-            return ListInterpolator.read[interp,True,self.mask](world,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
+            return SpanInterpolator.read[1,interp,True,self.mask](world,self.kaiser, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.sine:
-            return ListInterpolator.read[interp,True,self.mask](world,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
+            return SpanInterpolator.read[1,interp,True,self.mask](world,self.sine, phase * self.size_f64, prev_phase * self.size_f64)
         elif window_type == WindowType.rect:
             return 1.0 
         elif window_type == WindowType.tri:
@@ -45,7 +44,7 @@ struct Windows(Movable, Copyable):
             return 0.0
 
     @staticmethod
-    fn make_window[window_type: Int](size: Int64, beta: Float64 = 5.0) -> List[Float64]:
+    fn make_window[window_type: Int](size: Int, beta: Float64 = 5.0) -> List[Float64]:
         """Generate a window of specified type and size.
         
         Parameters:
@@ -77,7 +76,7 @@ struct Windows(Movable, Copyable):
             print("Windows.make_window: Unsupported window type")
             return List[Float64]()
 
-fn rect_window(size: Int64) -> List[Float64]:
+fn rect_window(size: Int) -> List[Float64]:
     """
     Generate a rectangular window of length size.
 
@@ -92,7 +91,7 @@ fn rect_window(size: Int64) -> List[Float64]:
         window.append(1.0)
     return window.copy()
 
-fn tri_window(size: Int64) -> List[Float64]:
+fn tri_window(size: Int) -> List[Float64]:
     """
     Generate a triangular window of length size.
     Args:
@@ -133,7 +132,7 @@ fn bessel_i0(x: Float64) -> Float64:
                      0.01647633 * (t ** 7) + 0.00392377 * (t ** 8))
         return result
 
-fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
+fn kaiser_window(size: Int, beta: Float64) -> List[Float64]:
     """
     Create a Kaiser window of length n with shape parameter beta.
 
@@ -170,7 +169,7 @@ fn kaiser_window(size: Int64, beta: Float64) -> List[Float64]:
 
     return window.copy()
 
-fn hann_window(size: Int64) -> List[Float64]:
+fn hann_window(size: Int) -> List[Float64]:
     """
     Generate a Hann window of length size.
     
@@ -188,7 +187,7 @@ fn hann_window(size: Int64) -> List[Float64]:
     
     return window.copy()
 
-fn hamming_window(size: Int64) -> List[Float64]:
+fn hamming_window(size: Int) -> List[Float64]:
     """
     Generate a Hamming window of length size.
 
@@ -205,7 +204,7 @@ fn hamming_window(size: Int64) -> List[Float64]:
 
     return window.copy()
 
-fn blackman_window(size: Int64) -> List[Float64]:
+fn blackman_window(size: Int) -> List[Float64]:
     """Generate a Blackman window of length size.
 
     Args:
@@ -221,7 +220,7 @@ fn blackman_window(size: Int64) -> List[Float64]:
         window.append(value)
     return window.copy()
 
-fn sine_window(size: Int64) -> List[Float64]:
+fn sine_window(size: Int) -> List[Float64]:
     """
     Generate a Sine window of length size.
 
@@ -238,7 +237,7 @@ fn sine_window(size: Int64) -> List[Float64]:
     return window.copy()
 
 # Create a compile-time function to generate values
-fn pan2_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
+fn pan2_window(size: Int) -> List[SIMD[DType.float64, 2]]:
     """
     Generate a SIMD[DType.float64, 2] quarter cosine window for panning. The first element of the SIMD vector is the multiplier for the left channel, and the second element is for the right channel. This allows any sample to be panned at one of `size` positions between left and right channels smoothly.
     
@@ -254,4 +253,3 @@ fn pan2_window(size: Int64) -> List[SIMD[DType.float64, 2]]:
         var angle = (pi / 2.0) * Float64(i) / Float64(size-1)
         table.append(cos(SIMD[DType.float64, 2](angle, (pi / 2.0) - angle)))
     return table^
-

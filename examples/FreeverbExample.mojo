@@ -1,14 +1,14 @@
 from mmm_audio import *
 
+comptime num_chans = 2
+
 struct FreeverbSynth(Copyable, Movable):
     var world: World 
-    var buffer: Buffer
-
-    var num_chans: Int64
+    var buffer: SIMDBuffer[num_chans]
 
     var play_buf: Play
 
-    var freeverb: Freeverb[2]
+    var freeverb: Freeverb[num_chans]
     var m: Messenger
 
     var room_size: Float64
@@ -20,14 +20,13 @@ struct FreeverbSynth(Copyable, Movable):
         self.world = world 
 
         # load the audio buffer 
-        self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.num_chans = self.buffer.num_chans  
+        self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
 
         # without printing this, the compiler wants to free the buffer for some reason
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
 
         self.play_buf = Play(self.world)
-        self.freeverb = Freeverb[2](self.world)
+        self.freeverb = Freeverb[num_chans](self.world)
 
         self.room_size = 0.9
         self.lpf_comb = 1000.0
@@ -44,9 +43,9 @@ struct FreeverbSynth(Copyable, Movable):
         self.m.update(self.added_space,"added_space")
         self.m.update(self.mix,"mix")
 
-        added_space_simd = SIMD[DType.float64, 2](self.added_space, self.added_space * 0.99)
-        out = self.play_buf.next[num_chans=2](self.buffer, 1.0, True)
-        out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.2 * self.mix + out * (1.0 - self.mix)
+        added_space_simd = SIMD[DType.float64, num_chans](self.added_space, self.added_space * 0.99)
+        out = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
+        out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.1 * self.mix + out * (1.0 - self.mix)
         return out
 
 

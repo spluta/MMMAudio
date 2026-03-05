@@ -1,8 +1,6 @@
 from python import PythonObject
 from python import Python
-from .Oscillators import Phasor
-from .Messenger_Module import *
-from .MMMWorld_Module import *
+from mmm_audio import *
 
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
     """A Mojo wrapper for a PyTorch MLP model using Python interop.

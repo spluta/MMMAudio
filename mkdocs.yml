@@ -89,10 +89,12 @@ nav:
     - Overview: contributing/index.md
     - Documentation Guide: contributing/documentation.md
     - Roadmap: contributing/Roadmap.md
+    - Testing: contributing/testing.md
 
 
 markdown_extensions:
   - admonition
+  - pymdownx.tilde
   - pymdownx.details
   - pymdownx.superfences
   - pymdownx.highlight:

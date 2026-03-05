@@ -1,4 +1,4 @@
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 mmm_audio = MMMAudio(128, graph_name="TestASR", package_name="examples.tests")
 mmm_audio.start_audio()
 
@@ -34,7 +34,7 @@ if True:
             time.sleep(0.01)
 
     # Start the thread
-    midi_thread = threading.Thread(target=start_midi, daemon=True)
+    midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
 
 # After you've pressed a MIDI key to test it: stop the thread:

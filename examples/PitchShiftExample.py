@@ -17,7 +17,7 @@ The graph allows you to set various parameters for the pitch shifter:
 - time_dispersion: Sets the amount of random variation in timing for each grain.
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 mmm_audio = MMMAudio(128, num_input_channels = 12, graph_name="PitchShiftExample", package_name="examples")
 mmm_audio.send_int("in_chan", 0) # set input channel to your input source
 mmm_audio.start_audio() # start the audio thread - or restart it where it left off

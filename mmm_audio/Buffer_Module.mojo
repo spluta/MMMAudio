@@ -1,10 +1,82 @@
-from python import PythonObject
-from python import Python
-from .functions import *
-from .MMMWorld_Module import MMMWorld, Interp
+from mmm_audio import *
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
-from .functions import linear_interp, quadratic_interp
+from .sound_file import *
+from pathlib import Path
+
+
+struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
+    """A multi-channel audio buffer for storing audio data.
+
+    Audio data is stored in the `data` variable as a `List[MFloat[Self.num_chans]]` where each `MFloat[Self.num_chans]` represents a single frame of audio data for all channels. For example, if `num_chans` is 2, each element of `data` would be an `MFloat[2]` where the first element is the sample value for the left channel and the second element is the sample value for the right channel.
+    """
+    var data: List[MFloat[Self.num_chans]]
+    var num_frames: Int
+    var num_frames_f64: Float64
+    var sample_rate: Float64
+    var duration: Float64
+
+    fn __init__(out self, data: List[MFloat[Self.num_chans]], sample_rate: Float64):
+        """Initialize a SIMDBuffer with the given audio data and sample rate.
+
+        Args:
+            data: A `List` of `List`s of `Float64` representing the audio data for each channel.
+            sample_rate: The sample rate of the audio data.
+        """
+
+        if len(data) > 1:
+            for chan in range(1,len(data)):
+                if len(data[chan]) != len(data[0]):
+                    print("SIMDBuffer::__init__ All channels must have the same number of frames")
+
+        self.data = data.copy()
+        self.sample_rate = sample_rate
+
+        self.num_frames = len(data) if self.num_chans > 0 else 0
+        self.num_frames_f64 = Float64(self.num_frames)
+        self.duration = self.num_frames_f64 / self.sample_rate
+
+    @staticmethod
+    fn zeros(num_frames: Int, sample_rate: Float64 = 48000.0) -> SIMDBuffer[Self.num_chans]:
+        """Initialize a SIMDBuffer with zeros.
+
+        Args:
+            num_frames: Number of frames in the buffer.
+            sample_rate: Sample rate of the buffer.
+        """
+
+        var data = [MFloat[Self.num_chans](0.0) for _ in range(num_frames)]
+
+        return SIMDBuffer(data, sample_rate)
+
+    @staticmethod
+    fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> SIMDBuffer[Self.num_chans]:
+        """
+        Initialize a SIMDBuffer by loading data from a WAV file using SciPy and NumPy.
+
+        Args:
+            file_name: Path to the WAV file to load.
+            num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
+            verbose: Whether to print verbose output.
+        """
+        if file_name != "":
+            try:
+                header = read_wav_header(file_name)
+                if verbose:
+                    print("Loading file into SIMDBuffer: ", file_name)
+                    print_wav_info(header)
+
+                data = read_wav_SIMDs[Self.num_chans](file_name, header, num_wavetables)
+                
+                return SIMDBuffer(data^, MFloat[](header.sample_rate))
+                
+            except err:
+                print("SIMDBuffer::__init__ Error loading file: ", file_name, " Error: ", err)
+                return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
+        else:
+            print("SIMDBuffer::__init__ No file_name provided")
+            return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
+
 
 struct Buffer(Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.
@@ -12,8 +84,8 @@ struct Buffer(Movable, Copyable):
     Audio data is stored in the `data` variable as a `List[List[Float64]]`, where each inner `List` represents a channel of audio samples.
     """
     var data: List[List[Float64]]
-    var num_chans: Int64 
-    var num_frames: Int64
+    var num_chans: Int 
+    var num_frames: Int
     var num_frames_f64: Float64
     var sample_rate: Float64
     var duration: Float64
@@ -40,7 +112,7 @@ struct Buffer(Movable, Copyable):
         self.duration = self.num_frames_f64 / self.sample_rate
 
     @staticmethod
-    fn zeros(num_frames: Int64, num_chans: Int64 = 1, sample_rate: Float64 = 48000.0) -> Buffer:
+    fn zeros(num_frames: Int, num_chans: Int = 1, sample_rate: Float64 = 48000.0) -> Buffer:
         """Initialize a Buffer with zeros.
 
         Args:
@@ -59,91 +131,44 @@ struct Buffer(Movable, Copyable):
         return Buffer(data, sample_rate)
 
     @staticmethod
-    fn load(filename: String, num_wavetables: Int64 = 1) -> Buffer:
+    fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> Buffer:
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
         Args:
-            filename: Path to the WAV file to load.
+            file_name: Path to the WAV file to load.
             num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
+            verbose: Whether to print verbose output.
         """
-        # load the necessary Python modules
-        try:
-            scipy = Python.import_module("scipy")
-        except:
-            print("Warning: Failed to import SciPy module")
-            scipy = PythonObject(None)
-        try:
-            np = Python.import_module("numpy")
-        except:
-            print("Warning: Failed to import NumPy module")
-            np = PythonObject(None)
 
         self_data = List[List[Float64]]()
 
-        if filename != "":
-            # Load the file if a filename is provided
+        if file_name != "":
+            # Load the file if a file_name is provided
             try:
-                py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
+                header = read_wav_header(file_name)
+                if verbose:
+                    print("Loading file into Buffer: ", file_name)
+                    print_wav_info(header)
 
-                self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
-
-                if num_wavetables > 1:
-                    # If num_wavetables is specified, calculate num_chans accordingly
-                    total_samples = py_data[1].shape[0]
-                    self_num_chans = num_wavetables
-                    self_num_frames = Int(Float64(Int(py=total_samples)) / Float64(num_wavetables))
-                else:
-                    self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
-                    if len(py_data[1].shape) == 1:
-                        # Mono file
-                        self_num_chans = 1
-                    else:
-                        # Multi-channel file
-                        self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
-
-                self_num_frames_f64 = Float64(self_num_frames)
+                data = read_wav_samples(file_name, header, num_wavetables)
                 
-                var data = py_data[1]  # Extract the actual sound data from the tuple
-                # Convert to float64 if it's not already
-                if data.dtype != np.float64:
-                    # If integer type, normalize to [-1.0, 1.0] range
-                    if np.issubdtype(data.dtype, np.integer):
-                        data = data.astype(np.float64) / np.iinfo(data.dtype).max
-                    else:
-                        data = data.astype(np.float64)
+                return Buffer(data^, MFloat[](header.sample_rate))
                 
-                # this returns a pointer to an interleaved array of floats
-                data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
-
-                # wavetables are stored in ordered channels, not interleaved
-                if num_wavetables > 1:
-                    for c in range(self_num_chans):
-                        channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
-                            channel_data.append(Float64(data_ptr[(c * Int64(self_num_frames)) + f]))
-                        self_data.append(channel_data^)
-                else:
-                    # normal multi-channel interleaved data
-                    for c in range(self_num_chans):
-                        channel_data = List[Float64]()
-                        for f in range(Int64(self_num_frames)):
-                            channel_data.append(Float64(data_ptr[(f * self_num_chans) + c]))
-                        self_data.append(channel_data^)
-
-                return Buffer(self_data, self_sample_rate)
             except err:
-                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                print("Buffer::__init__ Error loading file: ", file_name, " Error: ", err)
                 return Buffer.zeros(0,0,48000.0)
         else:
-            print("Buffer::__init__ No filename provided")
+            print("Buffer::__init__ No file_name provided")
             return Buffer.zeros(0,0,48000.0)
 
-struct ListInterpolator(Movable, Copyable):
+
+
+struct SpanInterpolator(Movable, Copyable):
     """
-    A collection of static methods for interpolating values from a `List[Float64]`.
+    A collection of static methods for interpolating values from a `List[Float64]` or `InlineArray[Float64]`.
     
-    `ListInterpolator` supports various interpolation methods including
+    `SpanInterpolator` supports various interpolation methods including
     
     * no interpolation (none)
     * linear interpolation
@@ -157,65 +182,67 @@ struct ListInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    fn idx_in_range(data: List[Float64], idx: Int64) -> Bool:
+    fn idx_in_range[num_chans: Int = 1](data: Span[MFloat[num_chans]], idx: Int) -> Bool:
         return idx >= 0 and idx < len(data)
 
     # Once structs are allowed to have static variables, the since table will be stored in here so that 
     # a reference to the MMMWorld is not needed for every read call.
     @always_inline
     @staticmethod
-    fn read[interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: World, data: List[Float64], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> Float64:
-        """Read a value from a List[Float64] using provided index and interpolation method, which is determined at compile time.
+    fn read[num_chans: Int = 1, interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans]], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> MFloat[num_chans]:
+        """Read a value from a Span[MFloat[num_chans]] using provided index and interpolation method, which is determined at compile time.
         
         Parameters:
+            num_chans: Number of channels in the data.
             interp: Interpolation method to use (from [Interp](MMMWorld.md#struct-interp) enum).
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
             world: Pointer to the MMMWorld instance.
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
             prev_f_idx: The previous floating-point index (used for [SincInterpolation](SincInterpolator.md)).
         """
         
         @parameter
         if interp == Interp.none:
-            return ListInterpolator.read_none[bWrap,mask](data, f_idx)
+            return SpanInterpolator.read_none[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.linear:
-            return ListInterpolator.read_linear[bWrap,mask](data, f_idx)
+            return SpanInterpolator.read_linear[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.quad:
-            return ListInterpolator.read_quad[bWrap,mask](data, f_idx)
+            return SpanInterpolator.read_quad[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.cubic:
-            return ListInterpolator.read_cubic[bWrap,mask](data, f_idx)
+            return SpanInterpolator.read_cubic[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.lagrange4:
-            return ListInterpolator.read_lagrange4[bWrap,mask](data, f_idx)
+            return SpanInterpolator.read_lagrange4[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.sinc:
-            return ListInterpolator.read_sinc[bWrap,mask](world,data, f_idx, prev_f_idx)
+            return SpanInterpolator.read_sinc[num_chans,bWrap,mask](world,data, f_idx, prev_f_idx)
         else:
-            print("ListInterpolator fn read:: Unsupported interpolation method")
+            print("SpanInterpolator fn read:: Unsupported interpolation method")
             return 0.0
 
     @always_inline
     @staticmethod
-    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with no interpolation.
+    fn read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with no interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
 
-        idx = Int64(f_idx)
-        return ListInterpolator.read_none[bWrap,mask](data, idx)
+        idx = Int(f_idx)
+        return SpanInterpolator.read_none[num_chans,bWrap,mask](data, idx)
     
     @always_inline
     @staticmethod
-    fn read_none[bWrap: Bool = True, mask: Int = 0](data: List[Float64], idx: Int64) -> Float64:
+    fn read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], idx: Int) -> MFloat[num_chans]:
         idx2 = idx
         @parameter
         if bWrap:
@@ -226,23 +253,24 @@ struct ListInterpolator(Movable, Copyable):
                 idx2 = idx2 % len(data)
             return data[idx2]
         else:
-            return data[idx2] if ListInterpolator.idx_in_range(data,idx2) else 0.0
-        
+            return data[idx2] if SpanInterpolator.idx_in_range(data,idx2) else 0.0
+
     @always_inline
     @staticmethod
-    fn read_linear[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with linear interpolation.
+    fn read_linear[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with linear interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
-        idx0: Int64 = Int64(f_idx)
-        idx1: Int64 = idx0 + 1
+        idx0: Int = Int(f_idx)
+        idx1: Int = idx0 + 1
         frac: Float64 = f_idx - Float64(idx0)
         @parameter
         if bWrap:
@@ -260,26 +288,27 @@ struct ListInterpolator(Movable, Copyable):
 
         else:
             # not wrapping
-            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
+            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
 
         return linear_interp(y0,y1,frac)
 
     @always_inline
     @staticmethod
-    fn read_quad[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with quadratic interpolation.
+    fn read_quad[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with quadratic interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
 
-        idx0 = Int64(f_idx)
+        idx0 = Int(f_idx)
         idx1 = idx0 + 1
         idx2 = idx0 + 2
         frac: Float64 = f_idx - Float64(idx0)
@@ -303,25 +332,26 @@ struct ListInterpolator(Movable, Copyable):
 
             return quadratic_interp(y0, y1, y2, frac)
         else:
-            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
+            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
             return quadratic_interp(y0, y1, y2, frac)
 
     @always_inline
     @staticmethod
-    fn read_cubic[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with cubic interpolation.
+    fn read_cubic[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with cubic interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths).
 
         Args:
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
-        idx1 = Int64(f_idx)
+        idx1 = Int(f_idx)
         idx0 = idx1 - 1
         idx2 = idx1 + 1
         idx3 = idx1 + 2
@@ -348,27 +378,28 @@ struct ListInterpolator(Movable, Copyable):
             y3 = data[idx3]
             return cubic_interp(y0, y1, y2, y3, frac)
         else:
-            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
-            y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
+            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data[idx3] if SpanInterpolator.idx_in_range(data, idx3) else 0.0
             return cubic_interp(y0, y1, y2, y3, frac)
 
     @always_inline
     @staticmethod
-    fn read_lagrange4[bWrap: Bool = True, mask: Int = 0](data: List[Float64], f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with lagrange4 interpolation.
+    fn read_lagrange4[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans]], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with lagrange4 interpolation.
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
         """
        
-        idx0 = Int64(f_idx)
+        idx0 = Int(f_idx)
         idx1 = idx0 + 1
         idx2 = idx0 + 2
         idx3 = idx0 + 3
@@ -400,26 +431,27 @@ struct ListInterpolator(Movable, Copyable):
             # print(idx0,idx1,idx2,idx3,idx4,y0,y1,y2,y3,y4)
             return lagrange4(y0, y1, y2, y3, y4, frac)
         else:
-            y0 = data[idx0] if ListInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if ListInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if ListInterpolator.idx_in_range(data, idx2) else 0.0
-            y3 = data[idx3] if ListInterpolator.idx_in_range(data, idx3) else 0.0
-            y4 = data[idx4] if ListInterpolator.idx_in_range(data, idx4) else 0.0
+            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data[idx3] if SpanInterpolator.idx_in_range(data, idx3) else 0.0
+            y4 = data[idx4] if SpanInterpolator.idx_in_range(data, idx4) else 0.0
             return lagrange4(y0, y1, y2, y3, y4, frac)
 
     @always_inline
     @staticmethod
-    fn read_sinc[bWrap: Bool = True, mask: Int = 0](world: World, data: List[Float64], f_idx: Float64, prev_f_idx: Float64) -> Float64:
-        """Read a value from a `List[Float64]` using provided index with [SincInterpolation](SincInterpolator.md).
+    fn read_sinc[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans]], f_idx: Float64, prev_f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans]]` using provided index with [SincInterpolation](SincInterpolator.md).
         
         Parameters:
+            num_chans: Number of channels in the data.
             bWrap: Whether to wrap indices that go out of bounds.
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
             world: Pointer to the MMMWorld instance.
-            data: The `List[Float64]` to read from.
+            data: The `Span[MFloat[num_chans]]` to read from.
             f_idx: The floating-point index to read at.
             prev_f_idx: The previous floating-point index.
         """
-        return world[].sinc_interpolator.sinc_interp[bWrap,mask](data, f_idx, prev_f_idx)
+        return world[].sinc_interpolator.sinc_interp[num_chans,bWrap,mask](data, f_idx, prev_f_idx)

@@ -1,11 +1,7 @@
-from .MMMWorld_Module import MMMWorld
+from mmm_audio import *
 from math import tanh, floor, pi, exp, log, cosh
-from .RisingBoolDetector_Module import RisingBoolDetector
-from .functions import clip, Li2
-from .Oversampling import *
 
-
-fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int64) -> SIMD[DType.float64, num_chans]:
+fn bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int) -> SIMD[DType.float64, num_chans]:
     """Simple bitcrusher function that reduces the bit depth of the input signal.
     
     Parameters:

@@ -35,8 +35,8 @@ struct MessengerExample(Copyable, Movable):
     var bools: List[Bool]
     var float: Float64
     var floats: List[Float64]
-    var int: Int64
-    var ints: List[Int64]
+    var int: Int
+    var ints: List[Int]
     var string: String
     var strings: List[String]
 

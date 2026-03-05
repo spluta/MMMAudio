@@ -10,7 +10,7 @@ struct TestImpulse(Movable, Copyable):
     var trig: SIMD[DType.bool, 2]
     var freqs: SIMD[DType.float64, 2]
     var messenger: Messenger
-    var ints: List[Int64]
+    var ints: List[Int]
     var phase_offsets: SIMD[DType.float64, 2]
 
     fn __init__(out self, world: World):

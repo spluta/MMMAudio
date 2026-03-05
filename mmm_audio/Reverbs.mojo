@@ -1,8 +1,5 @@
-from .MMMWorld_Module import *
-from .functions import *
+from mmm_audio import *
 from math import tanh
-from .Filters import *
-from .Delays import *
 from algorithm import vectorize
 from sys import simd_width_of
 

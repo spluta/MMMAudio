@@ -4,7 +4,7 @@ This example shows how to use the PaulStretch graph in MMM-Audio to stretch audi
 You can change the stretch factor by sending different float values to the "dur_mult" parameter.
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 
 mmm_audio = MMMAudio(2048, graph_name="PaulStretch", package_name="examples")
 mmm_audio.start_audio()

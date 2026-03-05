@@ -5,10 +5,10 @@ from mmm_audio import *
 # a graph can have as many synths as you want
 struct TestLatch(Movable, Copyable):
     var world: World
-    var osc: SinOsc
-    var lfo: SinOsc
-    var latch: Latch 
-    var dusty: Dust
+    var osc: SinOsc[]
+    var lfo: SinOsc[]
+    var latch: Latch[] 
+    var dusty: Dust[]
     var messenger: Messenger
 
     fn __init__(out self, world: World):

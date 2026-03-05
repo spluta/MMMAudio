@@ -48,6 +48,16 @@ There is a user_files directory/Mojo package where users can make their own grap
 For more information on running examples see [Examples Index](https://spluta.github.io/MMMAudio/examples/).
 ``.
 
+## VS Code + pixi: run Python line-by-line with Shift+Enter
+
+If you want to use [pixi](https://pixi.prefix.dev/latest/) as the environment manager and be able to press `Shift+Enter` in a `.py` file to execute the current line/selection in REPL mode, use these settings:
+
+- In workspace `.vscode/settings.json`:
+   - `python.defaultInterpreterPath`: `${workspaceFolder}/.pixi/envs/default/bin/python`
+   - `python.terminal.activateEnvironment`: `false`
+   - `python.REPL.sendToNativeREPL`: `false`
+- In VS Code keybindings, map `shift+enter` to `python.execSelectionInTerminal` for Python editors.
+
 ## User Directory
 
 An ideal place to put your own projects is a directory called user_files in the root of MMMAudio project. Git will not track this directory. 

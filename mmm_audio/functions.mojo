@@ -168,6 +168,7 @@ fn linexp[num_chans: Int, //
     Returns:
         The exponentially mapped samples in the output range.
     """
+    # should we be checking if inputs are valid?
     below_min: SIMD[DType.bool, num_chans] = input.lt(in_min)
     above_max: SIMD[DType.bool, num_chans] = input.gt(in_max)
     normalized = (input - in_min) / (in_max - in_min)
@@ -507,7 +508,7 @@ fn sanitize[
 
     return should_zero.select(0.0, x)
 
-fn random_uni_float64[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+fn rrand[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
     """Generates a random float64 sample from a uniform distribution.
 
     Parameters:
@@ -526,7 +527,7 @@ fn random_uni_float64[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], m
     return u
 
 @always_inline
-fn random_exp_float64[num_chans: Int, //](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+fn exprand[num_chans: Int, //](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
     """Generates a random float64 sample from an exponential distribution.
 
     Parameters:

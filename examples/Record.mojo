@@ -10,17 +10,17 @@ struct Record_Synth(Representable, Movable, Copyable):
     var is_playing: Float64
     var playback_speed: Float64
     var trig: Bool
-    var write_pos: Int64 
+    var write_pos: Int 
     var play_buf: Play
     var note_time: Float64
-    var num_frames: Int64
-    var input_chan: Int64
+    var num_frames: Int
+    var input_chan: Int
     var messenger: Messenger
 
     fn __init__(out self, world: World):
         self.world = world
         self.buf_dur = 10.0  # seconds
-        self.buffer = Recorder(self.world, Int64(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
+        self.buffer = Recorder(self.world, Int(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
         self.trig = False
@@ -45,7 +45,7 @@ struct Record_Synth(Representable, Movable, Copyable):
     
     fn stop_recording(mut self):
         self.note_time = min(time.perf_counter() - self.note_time, self.buf_dur)
-        self.num_frames = Int64(self.note_time*self.world[].sample_rate)
+        self.num_frames = Int(self.note_time*self.world[].sample_rate)
         self.note_time = Float64(self.num_frames) / self.world[].sample_rate
         self.is_recording = False
         self.is_playing = 1.0

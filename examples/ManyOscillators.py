@@ -2,7 +2,7 @@
 
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 mmm_audio = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 mmm_audio.start_audio()
 

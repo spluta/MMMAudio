@@ -63,7 +63,7 @@ class Scheduler:
         if self.thread is not None and self.thread.is_alive():
             return self.thread
 
-        self.thread = threading.Thread(target=run_event_loop, daemon=True)
+        self.thread = threading.Thread(target=run_event_loop, daemon=False)
 
         self.thread.start()
         

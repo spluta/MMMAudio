@@ -1,27 +1,27 @@
 from python import PythonObject
-from .Oscillators import OscBuffers
-from .Windows_Module import *
-from mmm_audio.Print_Module import Print
 import time
 from collections import Set
-from .SincInterpolator import SincInterpolator
-from .Messenger_Module import MessengerManager
+from mmm_audio import *
 
 comptime MFloat[N: Int = 1] = SIMD[DType.float64, N]
-comptime MInt[N: Int = 1] = SIMD[DType.int64, N]
+comptime MInt[N: Int = 1] = SIMD[DType.int, N]
 comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
-comptime World = LegacyUnsafePointer[mut=True, MMMWorld]
+comptime World = UnsafePointer[mut=True, MMMWorld, MutExternalOrigin]
 
-struct MMMWorld(Representable, Movable, Copyable):
+struct MMMWorld(Movable, Copyable):
     """The MMMWorld struct holds global audio processing parameters and state.
 
     In pretty much all usage, don't edit this struct.
     """
     var sample_rate: Float64
-    var block_size: Int64
-    var osc_buffers: OscBuffers
-    var num_in_chans: Int64
-    var num_out_chans: Int64
+    var block_size: Int
+    var osc_buffers: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin]
+    # windows
+    var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin]
+    var messenger_manager: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]
+    
+    var num_in_chans: Int
+    var num_out_chans: Int
 
     var sound_in: List[Float64]
 
@@ -32,24 +32,19 @@ struct MMMWorld(Representable, Movable, Copyable):
     var mouse_x: Float64
     var mouse_y: Float64
 
-    var block_state: Int64
+    var block_state: Int
     var top_of_block: Bool
-    
-    # windows
-    var windows: Windows
+
 
     var sinc_interpolator: SincInterpolator[4, 14]
 
-    var messengerManager: MessengerManager
-
-    # var pointer_to_self: World
     var last_print_time: Float64
-    var print_flag: Int64
-    var last_print_flag: Int64
+    var print_flag: Int
+    var last_print_flag: Int
 
     var print_counter: UInt16
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int64 = 64, num_in_chans: Int64 = 2, num_out_chans: Int64 = 2):
+    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin](), messenger_manager_ptr: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin] = UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]()):
         """Initializes the MMMWorld struct.
 
         Args:
@@ -57,6 +52,8 @@ struct MMMWorld(Representable, Movable, Copyable):
             block_size: The audio block size.
             num_in_chans: The number of input channels.
             num_out_chans: The number of output channels.
+            osc_buffers_ptr: A pointer to the OscBuffers struct, which holds precomputed oscillator waveforms.
+            windows_ptr: A pointer to the Windows struct, which holds precomputed window functions.
         """
         
         self.sample_rate = sample_rate
@@ -68,7 +65,8 @@ struct MMMWorld(Representable, Movable, Copyable):
         for _ in range(self.num_in_chans):
             self.sound_in.append(0.0)  # Initialize input buffer with zeros
 
-        self.osc_buffers = OscBuffers()
+        self.osc_buffers = osc_buffers_ptr
+        self.windows = windows_ptr
 
         self.os_multiplier = List[Float64]()  # Initialize the list of multipliers
         for i in range(5):  # Initialize multipliers for oversampling ratios
@@ -85,16 +83,15 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.print_flag = 0
         self.last_print_flag = 0
 
-        self.messengerManager = MessengerManager()
+        self.messenger_manager = messenger_manager_ptr
 
         self.print_counter = 0
 
         self.sinc_interpolator = SincInterpolator[4,14]()
-        self.windows = Windows()
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
-    fn set_channel_count(mut self, num_in_chans: Int64, num_out_chans: Int64):
+    fn set_channel_count(mut self, num_in_chans: Int, num_out_chans: Int):
         """Sets the number of input and output channels.
 
         Args:
@@ -106,9 +103,6 @@ struct MMMWorld(Representable, Movable, Copyable):
         self.sound_in = List[Float64]()
         for _ in range(self.num_in_chans):
             self.sound_in.append(0.0)  # Reinitialize input buffer with zeros
-
-    fn __repr__(self) -> String:
-        return "MMMWorld(sample_rate: " + String(self.sample_rate) + ", block_size: " + String(self.block_size) + ")"
 
     @always_inline
     fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
@@ -199,14 +193,8 @@ struct OscType:
     | OscType.triangle             | 1     |
     | OscType.saw                  | 2     |
     | OscType.square               | 3     |
-    | OscType.bandlimited_triangle | 4     |
-    | OscType.bandlimited_saw      | 5     |
-    | OscType.bandlimited_square.  | 6     |
     """
     comptime sine: Int = 0
     comptime triangle: Int = 1
     comptime saw: Int = 2
     comptime square: Int = 3
-    comptime bandlimited_triangle: Int = 4
-    comptime bandlimited_saw: Int = 5
-    comptime bandlimited_square: Int = 6

@@ -15,7 +15,7 @@ struct MelBandsExample(Movable, Copyable):
     var lags: List[Lag[]]
     var sines_vol: Float64
     var print_counter: Int
-    var update_modulus: Int64
+    var update_modulus: Int
 
     fn __init__(out self, world: World):
         self.world = world

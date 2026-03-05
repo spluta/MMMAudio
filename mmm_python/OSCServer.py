@@ -42,7 +42,7 @@ class OSCServer:
             return
             
         self.stop_flag.clear()
-        self.thread = threading.Thread(target=self._run_server, daemon=True)
+        self.thread = threading.Thread(target=self._run_server, daemon=False)
         self.thread.start()
         print("OSC Server thread started")
     

@@ -1,9 +1,7 @@
-from .functions import clip, linlin
-from .MMMWorld_Module import *
 from math import sqrt, floor, cos, pi, sin
 from bit import next_power_of_two
 from sys import simd_width_of
-from .functions import *
+from mmm_audio import *
 
 @always_inline
 fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
@@ -68,8 +66,16 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World
             index0 = i // num_simd
             index1 = i % num_simd
             
-            # should change this to use ListInterpolator when available for SIMD types
-            out += input[index0][index1] * world[].windows.pan2[Int(pan * 255.0)]
+            pan_mul = SpanInterpolator.read[
+                        interp=Interp.none,
+                        bWrap=False,
+                        mask=255
+                    ](
+                        world = world,
+                        data=world[].windows[].pan2,
+                        f_idx=pan * 255.0
+                    )
+            out += input[index0][index1] * pan_mul
     return out
 
 @always_inline
@@ -94,12 +100,20 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
-            # should change this to use ListInterpolator when available for SIMD types
-            out += input[i] * world[].windows.pan2[Int(pan * 255.0)]
+            pan_mul = SpanInterpolator.read[
+                        interp=Interp.none,
+                        bWrap=False,
+                        mask=255
+                    ](
+                        world = world,
+                        data=world[].windows[].pan2,
+                        f_idx=pan * 255.0
+                    )
+            out += input[i] * pan_mul
     return out
 
 @always_inline
-fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int64, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
+fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
     """
     Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
 

@@ -7,12 +7,11 @@ MMM_Audio can load commercial .wav files, designed for Vital or Serum, as waveta
 Also demonstrates how to use the PVoiceAllocator class to manage multiple voices for polyphonic MIDI input.
 """
 
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 mmm_audio = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 mmm_audio.start_audio() 
 
 # load a different wavetable if you like - these are just example paths - change to your own files
-
 # if the number of instances of the wave found in the wavetable file is different than the default 256, you may need to change the "wavetables_per_channel" parameter
 mmm_audio.send_int("wavetables_per_channel", 128) # set this to the number of waveforms in your wavetable file
 
@@ -23,7 +22,7 @@ mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Gr
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 14.wav'")
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 15.wav'")
 
-def midi_func():
+if True:
     import threading
     import mido
     import time
@@ -80,8 +79,6 @@ def midi_func():
 
             time.sleep(0.01)
     # Start the thread
-    midi_thread = threading.Thread(target=start_midi, daemon=True)
+    midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
 
-# you will need to run this function to start receiving midi
-midi_func()

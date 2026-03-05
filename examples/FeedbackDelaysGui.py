@@ -15,61 +15,66 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_python.GUI import Handle, ControlSpec
-from mmm_python.MMMAudio import MMMAudio
+from mmm_python import *
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
-mmm_audio = MMMAudio(128, graph_name="FeedbackDelaysGUI", package_name="examples")
 
-mmm_audio.start_audio() 
+def main():
+    mmm_audio = MMMAudio(128, graph_name="FeedbackDelaysGUI", package_name="examples")
 
-app = QApplication([])
+    mmm_audio.start_audio() 
 
-# Create the main window
-window = QWidget()
-window.setWindowTitle("Feedback Delay Controller")
-window.resize(300, 100)
-# stop audio when window is closed
-window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
+    app = QApplication([])
 
-# Create layout
-layout = QVBoxLayout()
+    # Create the main window
+    window = QWidget()
+    window.setWindowTitle("Feedback Delay Controller")
+    window.resize(300, 100)
+    # stop audio when window is closed
+    window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
 
-gatebutton = QCheckBox("play")
-gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("play", True if state == 2 else False))
-layout.addWidget(gatebutton)
+    # Create layout
+    layout = QVBoxLayout()
 
-gatebutton = QCheckBox("delay-input")
-gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("delay-input", True if state == 2 else False))
-layout.addWidget(gatebutton)
+    gatebutton = QCheckBox("play")
+    gatebutton.setChecked(True)
+    gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("play", True if state == 2 else False))
+    layout.addWidget(gatebutton)
 
-# Create a slider
-delaytimeslider = Handle("delay time",ControlSpec(0, 1.0, 0.5), 0.5, callback=lambda v: mmm_audio.send_float("delay_time", v))
-layout.addWidget(delaytimeslider)
+    gatebutton = QCheckBox("delay-input")
+    gatebutton.setChecked(True)
+    gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("delay-input", True if state == 2 else False))
+    layout.addWidget(gatebutton)
 
-feedbackslider = Handle("feedback",ControlSpec(-130, -0.1, 4), -6, callback=lambda v: mmm_audio.send_float("feedback", v))
-layout.addWidget(feedbackslider)
+    # Create a slider
+    delaytimeslider = Handle("delay time",ControlSpec(0, 1.0, 0.5), 0.5, callback=lambda v: mmm_audio.send_float("delay_time", v))
+    layout.addWidget(delaytimeslider)
 
-freqslider = Handle("ffreq",ControlSpec(20, 20000, 0.5), 8000, callback=lambda v: mmm_audio.send_float("ffreq", v))
-layout.addWidget(freqslider)
+    feedbackslider = Handle("feedback",ControlSpec(-130, -0.1, 4), -6, callback=lambda v: mmm_audio.send_float("feedback", v))
+    layout.addWidget(feedbackslider)
 
-qslider = Handle("q",ControlSpec(0.1, 10, 0.5), 1.0, callback=lambda v: mmm_audio.send_float("q", v))
-layout.addWidget(qslider)
+    freqslider = Handle("ffreq",ControlSpec(20, 20000, 0.5), 8000, callback=lambda v: mmm_audio.send_float("ffreq", v))
+    layout.addWidget(freqslider)
 
-mixslider = Handle("mix",ControlSpec(0.0, 1.0, 2), 0.2, callback=lambda v: mmm_audio.send_float("mix", v))
-layout.addWidget(mixslider)
+    qslider = Handle("q",ControlSpec(0.1, 10, 0.5), 1.0, callback=lambda v: mmm_audio.send_float("q", v))
+    layout.addWidget(qslider)
 
-gatebutton = QCheckBox("main")
-gatebutton.setChecked(True)
-gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("main", True if state == 2 else False))
-layout.addWidget(gatebutton)
+    mixslider = Handle("mix",ControlSpec(0.0, 1.0, 2), 0.2, callback=lambda v: mmm_audio.send_float("mix", v))
+    layout.addWidget(mixslider)
 
-# Set the layout for the main window
-window.setLayout(layout)
+    gatebutton = QCheckBox("main")
+    gatebutton.setChecked(True)
+    gatebutton.stateChanged.connect(lambda state: mmm_audio.send_bool("main", True if state == 2 else False))
+    layout.addWidget(gatebutton)
 
-# Show the window
-window.show()
+    # Set the layout for the main window
+    window.setLayout(layout)
 
-# Start the application's event loop
-app.exec()
+    # Show the window
+    window.show()
+
+    # Start the application's event loop
+    app.exec()
+
+if __name__ == "__main__":
+    main()

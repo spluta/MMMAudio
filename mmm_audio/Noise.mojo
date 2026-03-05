@@ -1,5 +1,5 @@
 from random import random_float64
-from .functions import *
+from mmm_audio import *
 
 struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate white noise samples.
@@ -21,7 +21,7 @@ struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
             A random value between -gain and gain.
         """
         # Generate random value between -1 and 1, then scale by gain
-        return random_uni_float64[Self.num_chans](-1.0, 1.0) * gain
+        return rrand[Self.num_chans](-1.0, 1.0) * gain
 
 struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
     """Generate pink noise samples.
@@ -60,7 +60,7 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
             The next pink noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_uni_float64[Self.num_chans](-1.0, 1.0)
+        var white = rrand[Self.num_chans](-1.0, 1.0)
 
         # Filter white noise to get pink noise (Voss-McCartney algorithm)
         self.b0 = self.b0 * 0.99886 + white * 0.0555179
@@ -99,7 +99,7 @@ struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
             The next brown noise sample scaled by gain.
         """
         # Generate white noise SIMD
-        var white = random_uni_float64[Self.num_chans](-1.0, 1.0)
+        var white = rrand[Self.num_chans](-1.0, 1.0)
 
         # Integrate white noise to get brown noise
         self.last_output += (white - self.last_output) * 0.02
@@ -140,7 +140,7 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
         if not self.is_initialized: 
             @parameter
             for i in range(Self.num_chans):
-                self.stored_output[i] = random_exp_float64(min[i], max[i])
+                self.stored_output[i] = exprand(min[i], max[i])
             self.is_initialized = True
             return self.stored_output
         
@@ -148,7 +148,7 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
         @parameter
         for i in range(Self.num_chans):
             if rising_edge[i]:
-                self.stored_output[i] = random_exp_float64(min[i], max[i])
+                self.stored_output[i] = exprand(min[i], max[i])
         self.last_trig = trig
         return self.stored_output
 

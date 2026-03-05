@@ -30,10 +30,9 @@ struct OscVoice(Movable, Copyable):
 struct WavetableOsc(Movable, Copyable):
     var world: World  
     var osc_voices: List[OscVoice]
-    var wavetables_per_channel: Int64
+    var wavetables_per_channel: Int
     var buffer: Buffer
     var file_name: String
-    var notes: List[List[Float64]]
     var messenger: Messenger
     var filter_cutoff: Float64
     var filter_resonance: Float64
@@ -48,7 +47,6 @@ struct WavetableOsc(Movable, Copyable):
         for i in range(8):
             self.osc_voices.append(OscVoice(self.world, "voice_"+String(i)))
         
-        self.notes = List[List[Float64]]()
         self.messenger = Messenger(self.world)
         self.filter_cutoff = 20000.0
         self.filter_resonance = 0.5

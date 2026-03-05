@@ -40,10 +40,8 @@ struct VariableOsc(Representable, Movable, Copyable):
         freq = self.lag.next(freq)
         freq = linexp(freq, 0.0, 1.0, 100, 10000)
 
-        # by defualt, next_interp will interpolate between the four default waveforms - sin, tri, square, saw
-
         # osc_frac = self.world[].mouse_x
         osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
-        sample = self.osc.next_vwt(freq, osc_frac = osc_frac)
+        sample = self.osc.next_basic_waveforms(freq, osc_frac = osc_frac)
 
         return sample * 0.1 * env

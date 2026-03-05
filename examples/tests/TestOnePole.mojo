@@ -5,20 +5,17 @@ from mmm_audio import *
 # a graph can have as many synths as you want
 struct TestOnePole[N: Int = 2](Movable, Copyable):
     var world: World
-    var noise: WhiteNoise[N]
-    var filt: OnePole[N]
+    var noise: WhiteNoise[Self.N]
+    var filt: OnePole[Self.N]
 
     fn __init__(out self, world: World):
         self.world = world
-        self.noise = WhiteNoise[N]()
-        self.filt = OnePole[N](world)
+        self.noise = WhiteNoise[Self.N]()
+        self.filt = OnePole[Self.N](world)
 
-    fn next(mut self) -> SIMD[DType.float64, self.N]:
+    fn next(mut self) -> SIMD[DType.float64, Self.N]:
         sample = self.noise.next()  # Get the next white noise sample
         self.world[].print(sample)  # Print the sample to the console
-        coef = SIMD[DType.float64, self.N](self.world[].mouse_x, 1-self.world[].mouse_x)  # Coefficient based on mouse X position
+        coef = SIMD[DType.float64, Self.N](self.world[].mouse_x, 1-self.world[].mouse_x)  # Coefficient based on mouse X position
         sample = self.filt.next(sample, coef)  # Get the next sample from the filter
         return sample * 0.1
-
-
-        

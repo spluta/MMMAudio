@@ -1,11 +1,9 @@
-from .MMMWorld_Module import *
+from mmm_audio import *
 from math import exp, sqrt, tan, pi, tanh, ceil, floor
 from bit import next_power_of_two
-from .functions import *
 
 from sys import simd_width_of
 from algorithm import vectorize
-from .Oversampling import Oversampling, Upsampler
 
 struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
@@ -89,25 +87,25 @@ struct SVFModes:
     This makes specifying a filter type more readable. For example,
     to specify a lowpass filter, use `SVFModes.lowpass`.
 
-    | Mode     | Value |
-    |----------|-------|
-    | lowpass  | 0     |
-    | bandpass | 1     |
-    | highpass | 2     |
-    | notch    | 3     |
-    | peak     | 4     |
-    | allpass  | 5     |
-    | bell     | 6     |
-    | lowshelf | 7     |
-    | highshelf| 8     |
+    | Mode          | Value |
+    |---------------|-------|
+    | lowpass       | 0     |
+    | bandpass      | 1     |
+    | highpass      | 2     |
+    | notch         | 3     |
+    | peak          | 4     |
+    | bell          | 5     |
+    | allpass       | 6     |
+    | lowshelf      | 7     |
+    | highshelf     | 8     |
     """
     comptime lowpass: Int64 = 0
     comptime bandpass: Int64 = 1
     comptime highpass: Int64 = 2
     comptime notch: Int64 = 3
     comptime peak: Int64 = 4
-    comptime allpass: Int64 = 5
-    comptime bell: Int64 = 6
+    comptime bell: Int64 = 5
+    comptime allpass: Int64 = 6
     comptime lowshelf: Int64 = 7
     comptime highshelf: Int64 = 8
 
@@ -141,21 +139,21 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("SVF")
 
     fn reset(mut self):
-        """Reset internal state of the filter."""
+        """Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream.""" 
         self.ic1eq = SIMD[DType.float64, Self.num_chans](0.0)
         self.ic2eq = SIMD[DType.float64, Self.num_chans](0.0)
 
     @doc_private
     @always_inline
-    fn _compute_coeficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
-        """Compute filter coeficients based on type and parameters.
+    fn _compute_coefficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+        """Compute filter coefficients based on type and parameters.
         
         Parameters:
-            filter_type: The type of filter to compute coeficients for.
+            filter_type: The type of filter to compute coefficients for.
 
         Args:
             frequency: The cutoff/center frequency of the filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
             gain_db: The gain in decibels for filters that use it.
 
         Returns:
@@ -184,15 +182,15 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         else:
             k = 1.0 / q
         
-        # Get mix coeficients based on filter type
-        var mix_coefs = self._get_mix_coeficients[filter_type](k, A)
+        # Get mix coefficients based on filter type
+        var mix_coefs = self._get_mix_coefficients[filter_type](k, A)
         
         return (g, k, mix_coefs[0], mix_coefs[1], mix_coefs[2])
 
     @doc_private
     @always_inline
-    fn _get_mix_coeficients[filter_type: Int64](self, k: SIMD[DType.float64, Self.num_chans], A: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
-        """Get mixing coeficients for different filter types"""
+    fn _get_mix_coefficients[filter_type: Int64](self, k: SIMD[DType.float64, Self.num_chans], A: SIMD[DType.float64, Self.num_chans]) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
+        """Get mixing coefficients for different filter types"""
         
         mc0 = SIMD[DType.float64, Self.num_chans](1.0)
         mc1 = SIMD[DType.float64, Self.num_chans](0.0)
@@ -207,10 +205,10 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
                 mc0[i], mc1[i], mc2[i] = 0.0, 1.0, 0.0
             elif filter_type == SVFModes.highpass:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -1.0
-            elif filter_type == SVFModes.notch:   
-                mc0[i], mc1[i], mc2[i] = 1.0, -k[i], 0.0
             elif filter_type == SVFModes.peak:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -k[i], -2.0
+            elif filter_type == SVFModes.notch:   
+                mc0[i], mc1[i], mc2[i] = 1.0, -k[i], 0.0
             elif filter_type == SVFModes.allpass:   
                 mc0[i], mc1[i], mc2[i] = 1.0, -2.0*k[i], 0.0
             elif filter_type == SVFModes.bell:  
@@ -230,19 +228,19 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         """Process one sample through the SVF filter of the given type.
         
         Parameters:
-            filter_type: The type of filter to apply. See `SVFModes` struct for options.
+            filter_type: The type of SVF filter to apply. See `SVFModes` struct for options.
 
         Args:
             input: The next input value to process.
             frequency: The cutoff/center frequency of the filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
             gain_db: The gain in decibels for filters that use it.
 
         Returns:
             The next sample of the filtered output.
         """
         
-        var coefs = self._compute_coeficients[filter_type](frequency, q, gain_db)
+        var coefs = self._compute_coefficients[filter_type](frequency, q, gain_db)
         var g = coefs[0]
         var k = coefs[1]
         var mix_a = coefs[2]
@@ -267,26 +265,28 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     
     @always_inline
     fn lpf(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF lowpass filter.
+        """
+        Process input through a SVF lowpass filter. Passes frequencies below the cutoff while attenuating frequencies above it.
         
         Args:
             input: The input signal to process.
             frequency: The cutoff frequency of the lowpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
 
         Returns:
-            The next SIMD sample of the filtered output.
+            The next sample of the filtered output.
         """
         return self.next[SVFModes.lowpass](input, frequency, q)
 
     @always_inline
     fn bpf(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF bandpass filter.
+        """
+        Process input through a SVF bandpass filter. Passes a band of frequencies centered at the cutoff while attenuating frequencies above and below.
         
         Args:
             input: The input signal to process.
             frequency: The center frequency of the bandpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The bandwidth of the filter.
 
         Returns:
             The next sample of the filtered output.
@@ -295,12 +295,13 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn hpf(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF highpass filter.
+        """
+        Process input through a SVF highpass filter. Passes frequencies above the cutoff while attenuating frequencies below it.
 
         Args:
             input: The input signal to process.
             frequency: The cutoff frequency of the highpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
 
         Returns:
             The next sample of the filtered output.
@@ -308,27 +309,14 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.highpass](input, frequency, q)
 
     @always_inline
-    fn notch(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF notch filter.
-        
-        Args:
-            input: The input signal to process.
-            frequency: The center frequency of the notch filter.
-            q: The resonance (Q factor) of the filter.
-        
-        Returns:
-            The next sample of the filtered output.
+    fn peak(mut self, input: SIMD[DType.float64, self.num_chans], frequency: SIMD[DType.float64, self.num_chans], q: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
         """
-        return self.next[SVFModes.notch](input, frequency, q)
-
-    @always_inline
-    fn peak(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF peak filter.
+        Process input through a SVF peak filter. Boosts or cuts a band of frequencies centered at the cutoff by an amount determined by q, leaving frequencies outside the band unaffected.
 
         Args:
             input: The input signal to process.
             frequency: The center frequency of the peak filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
 
         Returns:
             The next sample of the filtered output.
@@ -336,13 +324,29 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.peak](input, frequency, q)
 
     @always_inline
+    fn notch(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a SVF notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others. 
+
+        Args:
+            input: The input signal to process.
+            frequency: The center frequency of the notch filter.
+            q: The resonance of the filter.
+        
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[SVFModes.notch](input, frequency, q)
+
+    @always_inline
     fn allpass(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF allpass filter.
+        """
+        Process input through a SVF allpass filter. Passes all frequencies at equal amplitude while shifting their phase relationship around the cutoff frequency.
         
         Args:
             input: The input signal to process.
             frequency: The center frequency of the allpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
 
         Returns:
             The next sample of the filtered output.
@@ -351,13 +355,14 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn bell(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF bell filter (parametric EQ).
+        """
+        Process input through a SVF bell (peaking EQ) filter. Boosts or cuts a band of frequencies centered at the cutoff by a specified gain amount, leaving frequencies outside the band unaffected.
         
         Args:
             input: The input signal to process.
             frequency: The center frequency of the bell filter.
-            q: The resonance (Q factor) of the filter.
-            gain_db: The gain in decibels for the bell filter.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
 
         Returns:
             The next sample of the filtered output.
@@ -366,13 +371,14 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn lowshelf(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF low shelf filter.
+        """
+        Process input through a SVF lowshelf filter. Boosts or cuts all frequencies below the cutoff by a specified gain amount, leaving frequencies above unaffected.
 
         Args:
             input: The input signal to process.
             frequency: The cutoff frequency of the low shelf filter.
-            q: The resonance (Q factor) of the filter.
-            gain_db: The gain in decibels for the low shelf filter.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
 
         Returns:
             The next sample of the filtered output.
@@ -381,13 +387,14 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
     @always_inline
     fn highshelf(mut self, input: SIMD[DType.float64, Self.num_chans], frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
-        """SVF high shelf filter.
+        """
+        Process input through a SVF highshelf filter. Boosts or cuts all frequencies above the cutoff by a specified gain amount, leaving frequencies below unaffected.
 
         Args:
             input: The input signal to process.
             frequency: The cutoff frequency of the high shelf filter.
-            q: The resonance (Q factor) of the filter.
-            gain_db: The gain in decibels for the high shelf filter.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
 
         Returns:
             The next sample of the filtered output.
@@ -688,13 +695,13 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
 
     @doc_private
     @always_inline
-    fn lp4(mut self, sig: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans], q_val: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn lp4(mut self, sig: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
         """Process one sample through the 4-pole Moog Ladder lowpass filter.
 
         Args:
             sig: The input signal to process.
             freq: The cutoff frequency of the lowpass filter.
-            q_val: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
         
         Returns:
             The next sample of the filtered output.
@@ -702,7 +709,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         var cf = clip(freq, 0.0, self.nyquist * 0.6)
             
         # k is the feedback coefficient of the entire circuit
-        var k = 4.0 * q_val
+        var k = 4.0 * q
         
         var omegaWarp = tan(pi * cf * self.step_val)
         var g = omegaWarp / (1.0 + omegaWarp)
@@ -741,13 +748,13 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         return lp4
 
     @always_inline
-    fn next(mut self, sig: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans] = 100, q_val: SIMD[DType.float64, Self.num_chans] = 0.5) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, sig: SIMD[DType.float64, Self.num_chans], freq: SIMD[DType.float64, Self.num_chans] = 100, q: SIMD[DType.float64, Self.num_chans] = 0.5) -> SIMD[DType.float64, Self.num_chans]:
         """Process one sample through the Moog Ladder lowpass filter.
 
         Args:
             sig: The input signal to process.
             freq: The cutoff frequency of the lowpass filter.
-            q_val: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
 
         Returns:
             The next sample of the filtered output.
@@ -755,7 +762,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         
         @parameter
         if Self.os_index == 0:
-            return self.lp4(sig, freq, q_val)
+            return self.lp4(sig, freq, q)
         else:
             comptime times_oversampling = 2 ** Self.os_index
 
@@ -764,7 +771,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
                 # upsample the input
                 sig2 = self.upsampler.next(sig, i)
 
-                var lp4 = self.lp4(sig2, freq, q_val)
+                var lp4 = self.lp4(sig2, freq, q)
                 @parameter
                 if Self.os_index == 0:
                     return lp4
@@ -795,20 +802,6 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         self.coeffs = [MFloat[Self.num_chans](0.0) for _ in range(5)]
         self.sample_rate = world[].sample_rate
 
-    @doc_private
-    @always_inline
-    fn tf2s(mut self, b2: SIMD[DType.float64, Self.num_chans], b1: SIMD[DType.float64, Self.num_chans], b0: SIMD[DType.float64, self.num_chans], a1: SIMD[DType.float64, Self.num_chans], a0: SIMD[DType.float64, Self.num_chans], w1: SIMD[DType.float64, Self.num_chans], sample_rate: Float64) -> Tuple[SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans], SIMD[DType.float64, Self.num_chans]]:
-        var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
-        var csq = c*c
-        var d   = a0 + a1 * c + csq
-        var b0d = (b0 + b1 * c + b2 * csq)/d
-        var b1d = 2 * (b0 - b2 * csq)/d
-        var b2d = (b0 - b1 * c + b2 * csq)/d
-        var a1d = 2 * (a0 - csq)/d
-        var a2d = (a0 - a1*c + csq)/d
-
-        return (b0d, b1d, b2d, a1d, a2d)
-
     @always_inline
     fn lpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant lowpass filter.
@@ -816,7 +809,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         Args:
             input: The input signal to process.
             freq: The cutoff frequency of the lowpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
             gain: The output gain (clipped to 0.0-1.0 range).
 
         Returns:
@@ -829,7 +822,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         var b1 = 0.0
         var b0 = clip(gain, 0.0, 1.0)
 
-        b0d, b1d, b2d, a1d, a2d = self.tf2s(b2, b1, b0, a1, a0, wc, self.sample_rate)
+        b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
 
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
@@ -840,7 +833,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         Args:
             input: The input signal to process.
             freq: The cutoff frequency of the highpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
             gain: The output gain (clipped to 0.0-1.0 range).
 
         Returns:
@@ -856,7 +849,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         Args:
             input: The input signal to process.
             freq: The center frequency of the bandpass filter.
-            q: The resonance (Q factor) of the filter.
+            q: The resonance of the filter.
             gain: The output gain (clipped to 0.0-1.0 range).
 
         Returns:
@@ -869,7 +862,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         var b1 = clip(gain, 0.0, 1.0)
         var b0 = 0.0
 
-        b0d, b1d, b2d, a1d, a2d = self.tf2s(b2, b1, b0, a1, a0, wc, self.sample_rate)
+        b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
 
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
@@ -1000,3 +993,398 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         return self.iir.next(input, b0d, b1d, b2d, a1d, a2d)
 
+@doc_private
+@always_inline
+fn tf2s[num_chans: Int = 1](b2: SIMD[DType.float64, num_chans], b1: SIMD[DType.float64, num_chans], b0: SIMD[DType.float64, num_chans], a1: SIMD[DType.float64, num_chans], a0: SIMD[DType.float64, num_chans], w1: SIMD[DType.float64, num_chans], sample_rate: Float64) -> Tuple[SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans], SIMD[DType.float64, num_chans]]:
+    var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
+    var csq = c*c
+    var d   = a0 + a1 * c + csq
+    var b0d = (b0 + b1 * c + b2 * csq)/d
+    var b1d = 2 * (b0 - b2 * csq)/d
+    var b2d = (b0 - b1 * c + b2 * csq)/d
+    var a1d = 2 * (a0 - csq)/d
+    var a2d = (a0 - a1*c + csq)/d
+
+    return (b0d, b1d, b2d, a1d, a2d)
+
+@doc_private
+struct BiquadModes:
+    """Enumeration of different Biquad Filter modes.
+
+    This makes specifying a filter type more readable. For example,
+    to specify a lowpass filter, use `BiquadModes.lowpass`.
+
+    | Mode          | Value |
+    |---------------|-------|
+    | lowpass       | 0     |
+    | bandpass      | 1     |
+    | highpass      | 2     |
+    | notch         | 3     |
+    | bell          | 4     |
+    | allpass       | 5     |
+    | lowshelf      | 6     |
+    | highshelf     | 7     |
+    """
+    comptime lowpass: Int64 = 0
+    comptime bandpass: Int64 = 1
+    comptime highpass: Int64 = 2
+    comptime notch: Int64 = 3
+    comptime bell: Int64 = 4
+    comptime allpass: Int64 = 5
+    comptime lowshelf: Int64 = 6
+    comptime highshelf: Int64 = 7
+
+struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
+    """A Biquad filter struct.
+
+    To use the different modes, see the mode-specific methods.
+    
+    Based on [Robert Bristow-Johnson's Audio EQ Cookbook](https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html). 
+
+    Parameters:
+        num_chans: Number of SIMD channels to process in parallel.
+    """
+
+    # Transposed Direct Form II state
+    var s1: SIMD[DType.float64, Self.num_chans]
+    var s2: SIMD[DType.float64, Self.num_chans]
+
+    var sample_rate: Float64
+    
+    fn __init__(out self, world: World):
+        """Initialize the Biquad.
+        
+        Args:
+            world: Pointer to the MMMWorld.
+        """
+        self.s1 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.s2 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.sample_rate = world[].sample_rate
+
+    fn __repr__(self) -> String:
+        return String("Biquad")
+
+    fn reset(mut self):
+        """Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream.""" 
+        self.s1 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.s2 = SIMD[DType.float64, Self.num_chans](0.0)
+
+    @doc_private
+    @always_inline
+    fn _compute_coefficients[filter_type: Int64](self, frequency: SIMD[DType.float64, Self.num_chans], q: SIMD[DType.float64, Self.num_chans], gain_db: SIMD[DType.float64, Self.num_chans]) -> Tuple[
+        SIMD[DType.float64, Self.num_chans], #b0
+        SIMD[DType.float64, Self.num_chans], #b1
+        SIMD[DType.float64, Self.num_chans], #b2
+        SIMD[DType.float64, Self.num_chans], #a1
+        SIMD[DType.float64, Self.num_chans]  #a2
+        ]:
+        """Compute filter coefficients based on type and parameters.
+        
+        Parameters:
+            filter_type: The type of filter to compute coefficients for.
+
+        Args:
+            frequency: The cutoff/center frequency of the filter.
+            q: The resonance of the filter.
+            gain_db: The gain in decibels for filters that use it.
+
+        Returns:
+            A tuple containing (b0, b1, b2, a1, a2).
+        """
+        
+        # Compute A (gain factor)
+        var A: SIMD[DType.float64, Self.num_chans] = pow(SIMD[DType.float64, Self.num_chans](10.0), gain_db / 40.0)
+
+        # Compute normalized digital frequency
+        var w0: SIMD[DType.float64, Self.num_chans] = 2.0 * pi * frequency / self.sample_rate
+        var cosw0: SIMD[DType.float64, Self.num_chans] = cos(w0)
+        var sinw0: SIMD[DType.float64, Self.num_chans] = sin(w0)
+        
+        # Alpha term
+        var alpha: SIMD[DType.float64, Self.num_chans] = sinw0 / (2.0 * q)
+
+        # Unnormalized coefficients
+        var b0 = SIMD[DType.float64, Self.num_chans](0.0)
+        var b1 = SIMD[DType.float64, Self.num_chans](0.0)
+        var b2 = SIMD[DType.float64, Self.num_chans](0.0)
+        var a0 = SIMD[DType.float64, Self.num_chans](0.0)
+        var a1 = SIMD[DType.float64, Self.num_chans](0.0)
+        var a2 = SIMD[DType.float64, Self.num_chans](0.0)
+
+        @parameter
+        if filter_type == BiquadModes.lowpass:
+            b1 = (1.0 - cosw0) # doing this first saves some calculations
+            b0 = b1 * 0.5
+            b2 = b0
+            a0 = 1 + alpha
+            a1 = -2.0 * cosw0
+            a2 = 1 - alpha
+        elif filter_type == BiquadModes.highpass:
+            b0 = (1.0 + cosw0) * 0.5
+            b1 = -(1.0 + cosw0)
+            b2 = b0
+            a0 = 1 + alpha
+            a1 = -2.0 * cosw0
+            a2 = 1 - alpha
+        elif filter_type == BiquadModes.bandpass:
+            b0 = alpha
+            b1 = 0.0
+            b2 = -alpha
+            a0 = 1 + alpha
+            a1 = -2.0 * cosw0
+            a2 = 1 - alpha
+        elif filter_type == BiquadModes.notch:
+            b0 = 1.0
+            b1 = -2.0 * cosw0
+            b2 = 1.0
+            a0 = 1.0 + alpha
+            a1 = b1
+            a2 = 1 - alpha
+        elif filter_type == BiquadModes.allpass:
+            b0 = 1.0 - alpha
+            b1 = -2.0 * cosw0
+            b2 = 1.0 + alpha
+            a0 = b2
+            a1 = b1
+            a2 = b0
+        elif filter_type == BiquadModes.bell:
+            b0 = 1.0 + (alpha * A)
+            b1 = -2.0 * cosw0
+            b2 = 1.0 - (alpha * A)
+            a0 = 1.0 + (alpha / A)
+            a1 = -2.0 * cosw0
+            a2 = 1.0 - (alpha / A)
+        elif filter_type == BiquadModes.lowshelf:
+            var Ap1 = A + 1.0
+            var Am1 = A - 1.0
+            var twoSqrtA = 2.0 * sqrt(A) * alpha
+            
+            b0 =  A * (Ap1 - Am1 * cosw0 + twoSqrtA)
+            b1 =  2.0 * A * (Am1 - Ap1 * cosw0)
+            b2 =  A * (Ap1 - Am1 * cosw0 - twoSqrtA)
+            a0 =  (Ap1 + Am1 * cosw0 + twoSqrtA)
+            a1 =  -2.0 * (Am1 + Ap1 * cosw0)
+            a2 =  (Ap1 + Am1 * cosw0 - twoSqrtA)
+        elif filter_type == BiquadModes.highshelf:
+            var Ap1 = A + 1.0
+            var Am1 = A - 1.0
+            var twoSqrtA = 2.0 * sqrt(A) * alpha
+            
+            b0 = A * (Ap1 + Am1 * cosw0 + twoSqrtA)
+            b1 = -2.0 * A * (Am1 + Ap1 * cosw0)
+            b2 = A * (Ap1 + Am1 * cosw0 - twoSqrtA)
+            a0 = (Ap1 - Am1 * cosw0 + twoSqrtA)
+            a1 = 2.0 * (Am1 - Ap1 * cosw0)
+            a2 = (Ap1 - Am1 * cosw0 - twoSqrtA)
+
+        # Normalize so a0 == 1
+        b0 /= a0
+        b1 /= a0
+        b2 /= a0
+        a1 /= a0
+        a2 /= a0
+        
+        return (b0, b1, b2, a1, a2)
+
+    @doc_private
+    @always_inline
+    fn next[filter_type: Int64](
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans],
+        gain_db: SIMD[DType.float64, Self.num_chans] = SIMD[DType.float64, Self.num_chans](0.0)
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """Process one sample through the biquad filter of the given type.
+
+        Parameters:
+            filter_type: The type of biquad filter to process through. See `BiquadModes` struct for options.
+
+        Args:
+            input: The next input value to process.
+            frequency: The cutoff/center frequency of the filter.
+            q: The resonance of the filter.
+            gain_db: The gain in decibels for filters that use it.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        var coefs = self._compute_coefficients[filter_type](frequency, q, gain_db)
+        var b0 = coefs[0]
+        var b1 = coefs[1]
+        var b2 = coefs[2]
+        var a1 = coefs[3]
+        var a2 = coefs[4]
+
+        var y = b0 * input + self.s1
+        self.s1 = b1 * input - a1 * y + self.s2
+        self.s2 = b2 * input - a2 * y
+
+        return sanitize(y)
+    
+     
+    @always_inline
+    fn lpf(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad lowpass filter. Passes frequencies below the cutoff while attenuating frequencies above it.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.lowpass](input, frequency, q)
+
+    @always_inline
+    fn hpf(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad highpass filter. Passes frequencies above the cutoff while attenuating frequencies below it.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.highpass](input, frequency, q)
+
+    @always_inline
+    fn bpf(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad bandpass filter. Passes a band of frequencies centered at the cutoff while attenuating frequencies above and below.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The bandwidth of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.bandpass](input, frequency, q)
+
+    @always_inline
+    fn notch(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others. 
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.notch](input, frequency, q)
+
+    @always_inline
+    fn allpass(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad allpass filter. Passes all frequencies at equal amplitude while shifting their phase relationship around the cutoff frequency.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.allpass](input, frequency, q)
+
+    @always_inline
+    fn bell(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans],
+        gain_db: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad bell (peaking EQ) filter. Boosts or cuts a band of frequencies centered at the cutoff by a specified gain amount, leaving frequencies outside the band unaffected.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.bell](input, frequency, q, gain_db)
+
+    @always_inline
+    fn lowshelf(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans],
+        gain_db: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad lowshelf filter. Boosts or cuts all frequencies below the cutoff by a specified gain amount, leaving frequencies above unaffected.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.lowshelf](input, frequency, q, gain_db)
+
+    @always_inline
+    fn highshelf(
+        mut self,
+        input: SIMD[DType.float64, Self.num_chans],
+        frequency: SIMD[DType.float64, Self.num_chans],
+        q: SIMD[DType.float64, Self.num_chans],
+        gain_db: SIMD[DType.float64, Self.num_chans]
+    ) -> SIMD[DType.float64, Self.num_chans]:
+        """
+        Process input through a biquad highshelf filter. Boosts or cuts all frequencies above the cutoff by a specified gain amount, leaving frequencies below unaffected.
+
+        Args:
+            input: The input signal to process.
+            frequency: The cutoff frequency in Hz.
+            q: The resonance of the filter.
+            gain_db: The amount to boost/cut around the cutoff.
+
+        Returns:
+            The next sample of the filtered output.
+        """
+        return self.next[BiquadModes.highshelf](input, frequency, q, gain_db)

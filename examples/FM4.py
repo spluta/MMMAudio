@@ -78,3 +78,6 @@ def run_gui():
 run_gui()
 
 mmm_audio.stop_audio()
+
+import math
+pow(2, math.ceil(math.log(7)/math.log(2)))

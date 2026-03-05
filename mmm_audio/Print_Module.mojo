@@ -1,5 +1,4 @@
-from .MMMWorld_Module import MMMWorld
-from .Oscillators import Impulse
+from mmm_audio import *
 
 struct Print(Representable, Copyable, Movable):
     """

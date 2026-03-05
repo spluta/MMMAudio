@@ -1,9 +1,4 @@
-from memory import LegacyUnsafePointer
-from .Buffer_Module import *
-from .MMMWorld_Module import *
-from .Oscillators import Impulse
-from .functions import *
-from .Envelopes import Env
+from mmm_audio import *
 
 struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
     """
@@ -14,10 +9,10 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
     """
 
     var world: World
-    var write_head: Int64
-    var buf: Buffer
+    var write_head: Int
+    var buf: SIMDBuffer[Self.num_chans]
 
-    fn __init__(out self, world: World, num_frames: Int64, sample_rate: Float64):
+    fn __init__(out self, world: World, num_frames: Int, sample_rate: Float64):
         """
         Initialize the Recorder struct.
 
@@ -28,9 +23,9 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         self.world = world
         self.write_head = 0
-        self.buf = Buffer.zeros(num_frames, Self.num_chans, sample_rate)
+        self.buf = SIMDBuffer[Self.num_chans].zeros(num_frames, sample_rate)
 
-    fn replace_buffer(mut self, new_buf: Buffer):
+    fn replace_buffer(mut self, new_buf: SIMDBuffer[Self.num_chans]):
         """
         Replace the internal buffer with a new buffer. The new buffer must have the same number of channels as the existing buffer. Write head is reset to 0.
 
@@ -47,7 +42,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("RecordBuf")
     
     # Write SIMD input to buffer
-    fn write(mut self, input: SIMD[DType.float64, Self.num_chans], index: Int64):
+    fn write(mut self, input: SIMD[DType.float64, Self.num_chans], index: Int):
         """
         Write SIMD input to buffer at specified index. Used internally by write_next and write_previous, which will be more appropriate for most use cases.
 
@@ -59,8 +54,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         if index >= self.buf.num_frames:
             print("Recorder::write: Index out of bounds:", index)
 
-        for chan in range(Self.num_chans):
-            self.buf.data[chan][index] = input[chan]
+        self.buf.data[index] = input
 
     # write_next SIMD input to buffer at current write head and advance write head
     fn write_next(mut self, value: SIMD[DType.float64, Self.num_chans]):

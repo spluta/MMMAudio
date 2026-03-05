@@ -8,7 +8,7 @@ This example demonstrates a couple differnt concepts:
 """
 
 if True:
-    from mmm_python.MMMAudio import MMMAudio
+    from mmm_python import *
 
     # instantiate and load the graph
     mmm_audio = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
@@ -20,7 +20,7 @@ if True:
     from mmm_python.python_utils import midicps, linexp
 
     global scheduler
-    scheduler = mmm_audio.scheduler
+    scheduler = Scheduler()
 
     voice_seq = Pseq(list(range(8)))
     filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 5000, 100) for i in range(0, 101)])

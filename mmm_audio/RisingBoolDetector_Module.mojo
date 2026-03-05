@@ -1,3 +1,5 @@
+from mmm_audio import *
+
 struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
     """A simple rising edge detector for boolean triggers. Outputs a boolean True trigger when the input transitions from False to True.
     
@@ -28,7 +30,7 @@ struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
         return rising
 
 struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
-    """A simple rising edge detector for boolean triggers.
+    """A rising edge detector for boolean triggers.
     
     Parameters:
         num_chans: The size of the SIMD vector - defaults to 1.

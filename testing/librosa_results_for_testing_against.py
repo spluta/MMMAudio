@@ -2,6 +2,7 @@ import librosa
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+import os
 
 def mel_to_hz_librosa_results():
     mels = [100.0 * (i + 1) for i in range(8)]
@@ -58,8 +59,11 @@ def mel_bands_weights_results(n_mels: int, n_fft: int, sr: int):
     print("n_mels: ", n_mels)
     print("n_fft: ", n_fft)
     print("sr: ", sr)
+    
+    
 
-    with open(f"examples/tests/results_for_testing_against/librosa_mel_bands_weights_results_nmels={n_mels}_fftsize={n_fft}_sr={sr}.csv", "w") as f:
+    os.makedirs("testing/librosa_results", exist_ok=True)
+    with open(f"testing/librosa_results/librosa_mel_bands_weights_results_nmels={n_mels}_fftsize={n_fft}_sr={sr}.csv", "w") as f:
         for row in range(len(mel_weights)):
             for col in range(len(mel_weights[row])):
                 f.write(f"{mel_weights[row][col]}\n")

@@ -1,19 +1,18 @@
 # MMMAudio Roadmap
 
-## 1. Move to 26.1 or Mojo 1.0
+## ~~1. Move to 26.1 or Mojo 1.0~~
 
-This year Mojo should have a 1.0 release, probably some time in the summer. MMMAudio is currently pinned to Mojo 25.7.
+~~This year Mojo should have a 1.0 release, probably some time in the summer. MMMAudio is currently pinned to Mojo 25.7.~~
 
-## 2. Test Suite
+## ~~2. Test Suite~~
 
-With our move to Mojo 1.0, we need to develop a comprehensive test suite to make sure MMMAudio code is safe. 
+~~With our move to Mojo 1.0, we need to develop a comprehensive test suite to make sure MMMAudio code is safe.~~
 
 ## 3. Multi-MMMAudio in One Python Instance
 
 You can already run multiple instances of MMMAudio. Just run them in different Terminal instances or run one in your code editor and one in the Terminal. 
 
 However, with Python 3.14 and beyond, we should be able to run multiple audio engines within the same Python instance, and control them with the same Python control environment. So Python schedulers, like OSCServer and Scheduler could send messages to different audio engines, giving us true parallel audio, just as SuperCollider does it.
-
 
 ## 4. GPU-based dsp
 

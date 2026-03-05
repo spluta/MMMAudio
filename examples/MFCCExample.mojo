@@ -11,7 +11,7 @@ struct MFCCExample(Movable, Copyable):
     var fftproc: FFTProcess[MFCC[num_bands,num_coeffs,fft_size],fft_size,fft_size//2,WindowType.hann]
     var m: Messenger
     var print_counter: Int
-    var update_modulus: Int64
+    var update_modulus: Int
 
     fn __init__(out self, world: World):
         self.world = world

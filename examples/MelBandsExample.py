@@ -7,7 +7,7 @@ ma = MMMAudio(128, graph_name="MelBandsExample", package_name="examples")
 ma.start_audio()
 
 ma.send_float("viz_mul",300.0) # 300 is the default in Mojo also
-ma.send_float("sines_vol",-18.0) # db
+ma.send_float("sines_vol",-26.0) # db
 ma.send_float("mix",1.0) 
 ma.send_float("mix",0.0)
 ma.send_float("mix",0.7)

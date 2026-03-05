@@ -47,8 +47,6 @@ struct OleDusty(Representable, Movable, Copyable):
 
         out = self.dusty.next(linlin(self.world[].mouse_x, 0.0, 1.0, 1.0, 10.0))
 
-        # there is really no difference between ugens, synths, graphs
-        # thus there is no reason you can't process the output of a synth directly in the graph
         # the reson filter uses SIMD to run 2 filters in parallel, each processing a channel of the dusty synth
         out = self.reson.bpf(out, self.lag.next(freq), 10.0, 1.0)  # apply a bandpass filter to the output of the Dusty synth
 

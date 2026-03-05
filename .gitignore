@@ -1,4 +1,5 @@
 .DS_Store
+/*Bridge.mojo
 
 # user files
 mine/
@@ -221,9 +222,8 @@ __marimo__/
 doc_generation/docs_md
 site
 .vscode
-validation/outputs
+testing/librosa_results
 .venv-257
-examples/tests/results_for_testing_against
 venv0257
 mine.worktrees
 testing/librosa_results

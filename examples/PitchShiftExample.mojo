@@ -11,7 +11,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var grain_dur: Float64
     var pitch_dispersion: Float64
     var time_dispersion: Float64
-    var in_chan: Int64
+    var in_chan: Int
     var which_input: Float64
     var noise: WhiteNoise[]
      
@@ -28,12 +28,12 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.noise = WhiteNoise()
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.which_input, "which_input")
         self.messenger.update(self.in_chan, "in_chan")
 
         temp = self.world[].sound_in[self.in_chan]
-        input_sig = select(self.which_input, [SIMD[DType.float64, 2](temp, temp), SIMD[DType.float64, 2](temp, 0.0), SIMD[DType.float64, 2](0.0, temp)])
+        input_sig = select(self.which_input, [MFloat[2](temp, temp), MFloat[2](temp, 0.0), MFloat[2](0.0, temp)])
         
         self.messenger.update(self.shift,"pitch_shift")
         self.messenger.update(self.grain_dur,"grain_dur")

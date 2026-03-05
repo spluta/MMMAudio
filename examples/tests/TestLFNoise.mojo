@@ -3,15 +3,17 @@ from mmm_audio import *
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct TestLFNoise[num_osc: Int = 4](Movable, Copyable):
+comptime num_osc = 4
+
+struct TestLFNoise(Movable, Copyable):
     var world: World
-    var noise: LFNoise[num_osc, 1]
+    var noise: LFNoise[num_osc, Interp.none]
     var synth: Osc[num_osc]
-    var interp: Int64
+    var interp: Int
 
     fn __init__(out self, world: World):
         self.world = world
-        self.noise = LFNoise[num_osc, 1](self.world)
+        self.noise = LFNoise[num_osc, Interp.none](self.world)
         self.synth = Osc[num_osc](self.world)
         self.interp = 0
 

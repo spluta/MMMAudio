@@ -35,7 +35,7 @@ if True:
                 joystick.name,
                 joystick_function,
             ),
-            daemon=True,
+            daemon=False,
         )
         joystick_thread.start()
     else:
@@ -119,7 +119,7 @@ if True:
                 joystick.name,
                 joystick_function,
             ),
-            daemon=True,
+            daemon=False,
         )
         joystick_thread.start()
     else:

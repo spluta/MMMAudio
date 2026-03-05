@@ -6,7 +6,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     var freq: Float64
 
     var pan_osc: Phasor[1]
-    var num_speakers: Int64
+    var num_speakers: Int
     var width: Float64
     var messenger: Messenger
 

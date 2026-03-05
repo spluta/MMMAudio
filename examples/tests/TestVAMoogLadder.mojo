@@ -5,20 +5,20 @@ from mmm_audio import *
 # a graph can have as many synths as you want
 struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
     var world: World
-    var noise: WhiteNoise[N]
-    var filt0: VAMoogLadder[N, 0]
-    var filt2: VAMoogLadder[N, 2]
-    var filt4: VAMoogLadder[N, 4]
+    var noise: WhiteNoise[Self.N]
+    var filt0: VAMoogLadder[Self.N, 0]
+    var filt2: VAMoogLadder[Self.N, 2]
+    var filt4: VAMoogLadder[Self.N, 4]
     var m: Messenger
     var which: Float64
 
 
     fn __init__(out self, world: World):
         self.world = world
-        self.noise = WhiteNoise[N]()
-        self.filt0 = VAMoogLadder[N, 0](world)
-        self.filt2 = VAMoogLadder[N, 2](world)
-        self.filt4 = VAMoogLadder[N, 4](world)
+        self.noise = WhiteNoise[Self.N]()
+        self.filt0 = VAMoogLadder[Self.N, 0](world)
+        self.filt2 = VAMoogLadder[Self.N, 2](world)
+        self.filt4 = VAMoogLadder[Self.N, 4](world)
         self.m = Messenger(world)
         self.which = 0.0
 
@@ -29,7 +29,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
 
 
 
-    fn next(mut self) -> SIMD[DType.float64, self.N]:
+    fn next(mut self) -> SIMD[DType.float64, Self.N]:
         sample = self.noise.next()  # Get the next white noise sample
         freq = linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 24000.0)
         q = linexp(self.world[].mouse_y, 0.0, 1.0, 0.01, 1.04)

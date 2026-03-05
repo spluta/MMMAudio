@@ -1,7 +1,6 @@
-from .MMMWorld_Module import *
+from mmm_audio import *
 from complex import *
 import math as Math
-from random import random_float64
 
 @doc_private
 fn log2_int(n: Int) -> Int:

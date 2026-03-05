@@ -59,21 +59,21 @@ struct TrigSynth(Movable, Copyable):
     var world: World  # Pointer to the MMMWorld instance
 
     var voices: List[TrigSynthVoice]
-    var current_voice: Int64
+    var current_voice: Int
 
     # the following 5 variables are messengers (imported from .Messenger_Module.mojo)
     # messengers get their values from the MMMWorld message system when told to, usually once per block
     # they then store that value received internally, and you can access it as a normal variable
     var messenger: Messenger
 
-    var num_voices: Int64
+    var num_voices: Int
 
     var svf: SVF[]
     var filt_lag: Lag[]
     var filt_freq: Float64
     var bend_mul: Float64
 
-    fn __init__(out self, world: World, num_voices: Int64 = 8):
+    fn __init__(out self, world: World, num_voices: Int = 8):
         self.world = world
         self.num_voices = num_voices
         self.current_voice = 0

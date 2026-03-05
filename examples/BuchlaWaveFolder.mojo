@@ -20,7 +20,7 @@ struct BuchlaWaveFolder(Representable, Movable, Copyable):
     fn next(mut self) -> SIMD[DType.float64, 2]:
         amp = self.lag.next(self.world[].mouse_x * 39.0) + 1
 
-        sample = self.osc.next_vwt(40)
+        sample = self.osc.next_basic_waveforms(40)
         sample = buchla_wavefolder(sample, amp)
 
         return sample

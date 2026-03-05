@@ -24,7 +24,7 @@ struct BuchlaWaveFolder_AD(Representable, Movable, Copyable):
 
         freq = self.world[].mouse_y * 200 + 10
 
-        sample = self.osc.next_vwt(freq)
+        sample = self.osc.next_basic_waveforms(freq)
 
         sample = self.b259.next(sample, amp)
 

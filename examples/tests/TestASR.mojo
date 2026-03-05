@@ -6,7 +6,7 @@ from mmm_audio import *
 struct TestASR(Movable, Copyable):
     var world: World
     var env: ASREnv
-    var synth: Osc
+    var synth: Osc[]
     var messenger: Messenger
     var curves: SIMD[DType.float64, 2]
     var gate: Bool

@@ -5,7 +5,7 @@ from mmm_audio import *
 # a graph can have as many synths as you want
 struct TestPM(Movable, Copyable):
     var world: World
-    var mod: Osc
+    var mod: Osc[]
     var carrier: Osc[1, Interp.lagrange4]
     var c2: Osc[1, Interp.sinc]
     var lag: Lag[1]
@@ -18,7 +18,6 @@ struct TestPM(Movable, Copyable):
         self.lag = Lag[1](self.world, 0.2)
 
     fn next(mut self) -> SIMD[DType.float64, 2]:
-        freq = linexp(self.world[].mouse_x, 0.0, 1.0, 100.0, 1000.0)
         mod_mul = linexp(self.world[].mouse_y, 0.0, 1.0, 0.0001, 32.0)
         mod_signal = self.mod.next(50)
         mod_mul = self.lag.next(mod_mul)

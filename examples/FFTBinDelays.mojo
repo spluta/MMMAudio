@@ -9,7 +9,7 @@ comptime hop_size = window_size // 2
 struct BinDelaysWindow[window_size: Int](FFTProcessable):
     var world: World
     var delays: List[Delay[2, Interp.none]]
-    var delay_times: List[Int64]
+    var delay_times: List[Int]
     var feedback: List[Float64]
     var m: Messenger
     var one_samp: Float64
@@ -19,7 +19,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
         self.world = world
         self.one_samp = 1.0 / self.world[].sample_rate
         self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, Self.window_size // 2 + 1)]
-        self.delay_times = List[Int64]()
+        self.delay_times = List[Int]()
         self.feedback = List[Float64]()
         vals = [random_float64(0.0, 1.0) for _ in range(5)]
         for _ in range(0, Self.window_size // 2 + 1):

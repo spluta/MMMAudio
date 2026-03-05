@@ -7,14 +7,14 @@ struct TestEnv(Movable, Copyable):
     var world: World
     var env_params: EnvParams
     var env: Env
-    var synth: Osc
+    var synth: Osc[]
     var messenger: Messenger
-    var impulse: Impulse
+    var impulse: Impulse[]
     var mul: Float64
 
     fn __init__(out self, world: World):
         self.world = world
-        self.env_params = EnvParams(List[Float64](0, 1.0, 0.5, 0.5, 0.0), List[Float64](1, 1, 0.5, 4), List[Float64](2), True, 0.1)
+        self.env_params = EnvParams([0, 1.0, 0.5, 0.5, 0.0], [1, 1, 0.5, 4], [2], True, 0.1)
         self.env = Env(self.world)
         self.synth = Osc(self.world)
         self.messenger = Messenger(self.world)
