@@ -3,6 +3,37 @@ from testing import assert_equal, assert_almost_equal, assert_true
 from testing import TestSuite
 from math import inf, nan
 
+def test_sound_file_reader():
+    try:
+        # Quick one-liner to read audio
+        file = "resources/Shiverer.wav"
+        var scipy = Python.import_module("scipy")
+        var np = Python.import_module("numpy")
+        var result = scipy.io.wavfile.read(file)
+        var sample_rate = result[0]
+        var data = result[1]
+        print("Data type:", data.dtype)
+        if data.dtype == np.int16 or data.dtype == np.int32 or data.dtype == np.uint8:
+            data = data.astype(np.float64)/np.iinfo(result[1].dtype).max
+        else:
+            data = data.astype(np.float64)
+        
+        print("Sample rate:", sample_rate)
+        print("Shape:", data.shape)
+
+        header = read_wav_header(file)
+        print_wav_info(header)
+        wav = read_wav_SIMDs[2](file, header)
+        print(len(wav), len(data))
+        try:
+            for i in range(header.num_samples):
+                assert_almost_equal(wav[i][0], py_to_float64(data[i][0]), String(i))
+                assert_almost_equal(wav[i][1], py_to_float64(data[i][1]), String(i))
+        except err:
+            print("What happened: ", err)
+    except err:
+        print("Error reading WAV file: ", err)
+
 def test_cpsmidi_midicps():
     midi_notes = SIMD[DType.float64, 4](60.0, 69.0, 72.0, 81.0)
     frequencies = midicps(midi_notes)

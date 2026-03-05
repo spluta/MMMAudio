@@ -1,8 +1,8 @@
-from python import PythonObject
-from python import Python
 from mmm_audio import *
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
+from .sound_file import *
+from pathlib import Path
 
 
 struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
@@ -50,88 +50,31 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
         return SIMDBuffer(data, sample_rate)
 
     @staticmethod
-    fn load(filename: String, num_wavetables: Int = 1) -> SIMDBuffer[Self.num_chans]:
+    fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> SIMDBuffer[Self.num_chans]:
         """
         Initialize a SIMDBuffer by loading data from a WAV file using SciPy and NumPy.
 
         Args:
-            filename: Path to the WAV file to load.
+            file_name: Path to the WAV file to load.
             num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
+            verbose: Whether to print verbose output.
         """
-        # load the necessary Python modules
-        try:
-            scipy = Python.import_module("scipy")
-        except:
-            print("Warning: Failed to import SciPy module")
-            scipy = PythonObject(None)
-        try:
-            np = Python.import_module("numpy")
-        except:
-            print("Warning: Failed to import NumPy module")
-            np = PythonObject(None)
-
-        self_data = List[MFloat[Self.num_chans]]()
-
-        if filename != "":
-            # Load the file if a filename is provided
+        if file_name != "":
             try:
-                py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
+                header = read_wav_header(file_name)
+                if verbose:
+                    print("Loading file into SIMDBuffer: ", file_name)
+                    print_wav_info(header)
 
-                print(py_data)  # Print the loaded data for debugging
-
-                self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
-
-                if num_wavetables > 1:
-                    # If num_wavetables is specified, calculate num_chans accordingly
-                    total_samples = py_data[1].shape[0]
-                    self_num_chans = num_wavetables
-                    self_num_frames = Int(Float64(Int(py=total_samples)) / Float64(num_wavetables))
-                else:
-                    self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
-                    if len(py_data[1].shape) == 1:
-                        # Mono file
-                        self_num_chans = 1
-                    else:
-                        # Multi-channel file
-                        self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
-
-                self_num_frames_f64 = Float64(self_num_frames)
-
-                var data = py_data[1]  # Extract the actual sound data from the tuple
-                # Convert to float64 if it's not already
-                if data.dtype != np.float64:
-                    # If integer type, normalize to [-1.0, 1.0] range
-                    if np.issubdtype(data.dtype, np.integer):
-                        data = data.astype(np.float64) / np.iinfo(data.dtype).max
-                    else:
-                        data = data.astype(np.float64)
+                data = read_wav_SIMDs[Self.num_chans](file_name, header, num_wavetables)
                 
-                # this returns a pointer to an interleaved array of floats
-                data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
-
-                # wavetables are stored in ordered channels, not interleaved
-                if num_wavetables > 1:
-                    for f in range(self_num_frames):
-                        channel_data = MFloat[Self.num_chans]()
-                        for c in range(self_num_chans):
-                            channel_data[Int(c)] = Float64(data_ptr[(c * self_num_chans) + f])
-                        self_data.append(channel_data)
-                else:
-                    for f in range(self_num_frames):
-                        channel_data = MFloat[Self.num_chans]()
-                        for c in range(self_num_chans):
-                            channel_data[Int(c)] = Float64(data_ptr[(f * self_num_chans) + c])
-                        self_data.append(channel_data)
-
+                return SIMDBuffer(data^, MFloat[](header.sample_rate))
                 
-
-                print("SIMDBuffer initialized with file:", filename)  # Print the filename for debugging
-                return SIMDBuffer(self_data, self_sample_rate)
             except err:
-                print("SIMDBuffer::__init__ Error loading file: ", filename, " Error: ", err)
+                print("SIMDBuffer::__init__ Error loading file: ", file_name, " Error: ", err)
                 return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
         else:
-            print("SIMDBuffer::__init__ No filename provided")
+            print("SIMDBuffer::__init__ No file_name provided")
             return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
 
 
@@ -188,88 +131,35 @@ struct Buffer(Movable, Copyable):
         return Buffer(data, sample_rate)
 
     @staticmethod
-    fn load(filename: String, num_wavetables: Int = 1) -> Buffer:
+    fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> Buffer:
         """
         Initialize a Buffer by loading data from a WAV file using SciPy and NumPy.
 
         Args:
-            filename: Path to the WAV file to load.
+            file_name: Path to the WAV file to load.
             num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
+            verbose: Whether to print verbose output.
         """
-        # load the necessary Python modules
-        try:
-            scipy = Python.import_module("scipy")
-        except:
-            print("Warning: Failed to import SciPy module")
-            scipy = PythonObject(None)
-        try:
-            np = Python.import_module("numpy")
-        except:
-            print("Warning: Failed to import NumPy module")
-            np = PythonObject(None)
 
         self_data = List[List[Float64]]()
 
-        if filename != "":
-            # Load the file if a filename is provided
+        if file_name != "":
+            # Load the file if a file_name is provided
             try:
-                py_data = scipy.io.wavfile.read(filename)  # Read the WAV file using SciPy
+                header = read_wav_header(file_name)
+                if verbose:
+                    print("Loading file into Buffer: ", file_name)
+                    print_wav_info(header)
 
-                print(py_data)  # Print the loaded data for debugging
-
-                self_sample_rate = Float64(Int(py=py_data[0]))  # Sample rate is the first element of the tuple
-
-                if num_wavetables > 1:
-                    # If num_wavetables is specified, calculate num_chans accordingly
-                    total_samples = py_data[1].shape[0]
-                    self_num_chans = num_wavetables
-                    self_num_frames = Int(Float64(Int(py=total_samples)) / Float64(num_wavetables))
-                else:
-                    self_num_frames = Int(len(py_data[1]))  # num_frames is the length of the data array
-                    if len(py_data[1].shape) == 1:
-                        # Mono file
-                        self_num_chans = 1
-                    else:
-                        # Multi-channel file
-                        self_num_chans = Int(py=py_data[1].shape[1]) # Number of num_chans is the second dimension of the data array
-
-                self_num_frames_f64 = Float64(self_num_frames)
-                print("num_chans:", self_num_chans, "num_frames:", self_num_frames)  # Print the shape of the data array for debugging
-
-                var data = py_data[1]  # Extract the actual sound data from the tuple
-                # Convert to float64 if it's not already
-                if data.dtype != np.float64:
-                    # If integer type, normalize to [-1.0, 1.0] range
-                    if np.issubdtype(data.dtype, np.integer):
-                        data = data.astype(np.float64) / np.iinfo(data.dtype).max
-                    else:
-                        data = data.astype(np.float64)
+                data = read_wav_samples(file_name, header, num_wavetables)
                 
-                # this returns a pointer to an interleaved array of floats
-                data_ptr = data.__array_interface__["data"][0].unsafe_get_as_pointer[DType.float64]()
-
-                # wavetables are stored in ordered channels, not interleaved
-                if num_wavetables > 1:
-                    for c in range(self_num_chans):
-                        channel_data = List[Float64]()
-                        for f in range(Int(self_num_frames)):
-                            channel_data.append(Float64(data_ptr[(c * Int(self_num_frames)) + f]))
-                        self_data.append(channel_data^)
-                else:
-                    # normal multi-channel interleaved data
-                    for c in range(self_num_chans):
-                        channel_data = List[Float64]()
-                        for f in range(Int(self_num_frames)):
-                            channel_data.append(Float64(data_ptr[(f * self_num_chans) + c]))
-                        self_data.append(channel_data^)
-
-                print("Buffer initialized with file:", filename)  # Print the filename for debugging
-                return Buffer(self_data, self_sample_rate)
+                return Buffer(data^, MFloat[](header.sample_rate))
+                
             except err:
-                print("Buffer::__init__ Error loading file: ", filename, " Error: ", err)
+                print("Buffer::__init__ Error loading file: ", file_name, " Error: ", err)
                 return Buffer.zeros(0,0,48000.0)
         else:
-            print("Buffer::__init__ No filename provided")
+            print("Buffer::__init__ No file_name provided")
             return Buffer.zeros(0,0,48000.0)
 
 

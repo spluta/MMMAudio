@@ -22,7 +22,7 @@ mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Gr
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 14.wav'")
 mmm_audio.send_string("load_file", "'/Users/ted/dev/BVKER - Custom Wavetables/Growl/Growl 15.wav'")
 
-def midi_func():
+if True:
     import threading
     import mido
     import time
@@ -82,5 +82,3 @@ def midi_func():
     midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
 
-# you will need to run this function to start receiving midi
-midi_func()

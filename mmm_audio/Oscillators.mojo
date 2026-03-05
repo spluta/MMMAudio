@@ -945,21 +945,6 @@ struct OscBuffers(Movable, Copyable):
             self.buffers[1].append(8.0 / (3.141592653589793 * 3.141592653589793) * sample)
 
     @doc_private
-    fn init_square(mut self):
-        # Construct square wave from sine harmonics
-        # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
-        for i in range(OscBuffersSize):
-            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
-            var sample: Float64 = 0.0
-            
-            for n in range(1, 513):  # Using 512 harmonics
-                var harmonic = sin(Float64(2 * n - 1) * x) / Float64(2 * n - 1)
-                sample += harmonic
-            
-            # Scale by 4/π for correct amplitude
-            self.buffers[2].append(4.0 / 3.141592653589793 * sample)
-
-    @doc_private
     fn init_sawtooth(mut self):
         # Construct sawtooth wave from sine harmonics
         # Sawtooth formula: 2/pi * sum((-1)^(n+1) * sin(n*x) / n) for n=1 to 512
@@ -974,7 +959,22 @@ struct OscBuffers(Movable, Copyable):
                 sample += harmonic
             
             # Scale by 2/π for correct amplitude
-            self.buffers[3].append(2.0 / 3.141592653589793 * sample)
+            self.buffers[2].append(2.0 / 3.141592653589793 * sample)
+
+    @doc_private
+    fn init_square(mut self):
+        # Construct square wave from sine harmonics
+        # Square formula: 4/pi * sum(sin((2n-1)*x) / (2n-1)) for n=1 to 512
+        for i in range(OscBuffersSize):
+            var x = 2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize)
+            var sample: Float64 = 0.0
+            
+            for n in range(1, 513):  # Using 512 harmonics
+                var harmonic = sin(Float64(2 * n - 1) * x) / Float64(2 * n - 1)
+                sample += harmonic
+            
+            # Scale by 4/π for correct amplitude
+            self.buffers[3].append(4.0 / 3.141592653589793 * sample)
 
     @doc_private
     fn init_basic_waveforms(mut self):

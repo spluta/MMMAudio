@@ -27,7 +27,7 @@ struct Default_Synth(Representable, Movable, Copyable):
         osc = self.filt.next[filter_type=SVFModes.lowpass](osc, 2000.0, 1.0)
         osc2 = pan2(osc, self.pan)
 
-        return osc2 * 0.3
+        return osc2 * 0.1
 
 
 # there can only be one graph in an MMMAudio instance

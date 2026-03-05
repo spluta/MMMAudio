@@ -4,7 +4,7 @@ comptime num_chans = 2
 
 struct BufSynth(Movable, Copyable):
     var world: World
-    var buffer: SIMDBuffer[num_chans]
+    var buffer: SIMDBuffer[2]
     var num_chans: Int
 
     var play_buf: Play
@@ -20,7 +20,7 @@ struct BufSynth(Movable, Copyable):
         print("world memory location:", world)
 
         # load the audio buffer 
-        self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
+        self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
         # without printing this, the compiler wants to free the buffer for some reason

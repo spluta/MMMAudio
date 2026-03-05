@@ -8,12 +8,8 @@ mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMD", package_name="examples"
 mmm_audio.start_audio() 
 
 
-def midi_func():
-    import threading
-    import mido
-    import time
-    from mmm_python.python_utils import linexp, linlin, midicps, cpsmidi
-    from mmm_python.Patterns import PVoiceAllocator
+if True:
+    import threading, mido, time
 
     # find your midi devices
     print(mido.get_input_names())
@@ -67,6 +63,3 @@ def midi_func():
     # Start the thread
     midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
-
-# you will need to run this function to start receiving midi
-midi_func()
