@@ -261,6 +261,15 @@ class MMMAudio:
             print("Stopping audio...")
             self.audio_stopper.set()
         self.mouse_stopper.set()
+            self.audio_thread.join(timeout=2.0)
+            try:
+                self.input_stream.stop_stream()
+                self.input_stream.close()
+                self.output_stream.stop_stream()
+                self.output_stream.close()
+                self.p.terminate()
+            except Exception:
+                pass
 
     def send_bool(self, key: str, value: bool):
         """
