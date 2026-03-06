@@ -10,10 +10,6 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-# from .functions import ampdb
-
-sys.path.append(os.getcwd())
-from mmm_python import *
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Validate RMS output.")
@@ -69,8 +65,8 @@ else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 	scrun = True
 
-mojo_rms_db = [ampdb(float(val)) for val in mojo_rms]
-librosa_rms_db = [ampdb(float(val)) for val in librosa_rms]
+mojo_rms_db = [float(val) for val in mojo_rms]
+librosa_rms_db = [float(val) for val in librosa_rms]
 
 plt.figure(figsize=(12, 6))
 plt.plot(mojo_rms_db, label="MMMAudio RMS (dB)", alpha=0.7)
@@ -84,20 +80,20 @@ try:
             val = float(line.strip())
             sclang_rms.append(val)
 
-    sclang_rms_db = [ampdb(float(val)) for val in sclang_rms]
+    sclang_rms_db = [float(val) for val in sclang_rms]
     plt.plot(sclang_rms_db, label="FluCoMa RMS (dB)", alpha=0.7)
 except Exception as e:
     print("Error reading FluCoMa results:", e)
 
 mean_dev_librosa, std_dev_librosa = compare_analyses(mojo_rms, librosa_rms)
-print(f"MMMAudio vs Librosa RMS: Mean Deviation = {ampdb(float(mean_dev_librosa)):.2f} dB, Std Dev = {ampdb(float(std_dev_librosa)):.2f} dB")
+print(f"MMMAudio vs Librosa RMS: Mean Deviation = {float(mean_dev_librosa):.2f} dB, Std Dev = {float(std_dev_librosa):.2f} dB")
 
 try:
     mean_dev_flucoma, std_dev_flucoma = compare_analyses(mojo_rms, sclang_rms)
-    print(f"MMMAudio vs FluCoMa RMS: Mean Deviation = {ampdb(float(mean_dev_flucoma)):.2f} dB, Std Dev = {ampdb(float(std_dev_flucoma)):.2f} dB")
+    print(f"MMMAudio vs FluCoMa RMS: Mean Deviation = {float(mean_dev_flucoma):.2f} dB, Std Dev = {float(std_dev_flucoma):.2f} dB")
     
     mean_dev_lib_flu, std_dev_lib_flu = compare_analyses(librosa_rms, sclang_rms)
-    print(f"Librosa vs FluCoMa RMS: Mean Deviation = {ampdb(float(mean_dev_lib_flu)):.2f} dB, Std Dev = {ampdb(float(std_dev_lib_flu)):.2f} dB")
+    print(f"Librosa vs FluCoMa RMS: Mean Deviation = {float(mean_dev_lib_flu):.2f} dB, Std Dev = {float(std_dev_lib_flu):.2f} dB")
 except Exception as e:
     print("Error comparing FluCoMa results:", e)
 

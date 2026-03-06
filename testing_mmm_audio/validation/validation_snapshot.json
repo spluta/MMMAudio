@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-03-06T00:31:09.157465+00:00",
+  "created_at": "2026-03-06T01:00:42.154876+00:00",
   "scripts": {
     "MFCC_Validation.py": {
       "stats": [
@@ -45,18 +45,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa RMS",
-          "line": "MMMAudio vs Librosa RMS: Mean Deviation = -35.92 dB, Std Dev = -35.49 dB",
+          "line": "MMMAudio vs Librosa RMS: Mean Deviation = 0.02 dB, Std Dev = 0.02 dB",
           "values": [
-            -35.92,
-            -35.49
+            0.02,
+            0.02
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa RMS",
-          "line": "MMMAudio vs FluCoMa RMS: Mean Deviation = -35.29 dB, Std Dev = -35.67 dB",
+          "line": "MMMAudio vs FluCoMa RMS: Mean Deviation = 0.02 dB, Std Dev = 0.02 dB",
           "values": [
-            -35.29,
-            -35.67
+            0.02,
+            0.02
           ]
         }
       ]
