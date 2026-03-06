@@ -42,6 +42,7 @@ if not os.path.exists(flucoma_csv_path):
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 
+os.makedirs("./testing_mmm_audio/validation/validation_results", exist_ok=True)
 with open("./testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()
 
