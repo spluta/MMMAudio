@@ -17,13 +17,13 @@ comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
     var world: World
-    var yin: YIN[windowsize, minfreq, maxfreq]
+    var yin: YIN
     var freqs: List[Float64]
     var confs: List[Float64]
 
-    fn __init__(out self, world: World):
+    fn __init__(out self, world: World, sample_rate: Float64):
         self.world = world
-        self.yin = YIN[windowsize, minfreq, maxfreq](self.world)
+        self.yin = YIN(sample_rate, windowsize, minfreq, maxfreq)
         self.freqs = List[Float64]()
         self.confs = List[Float64]()
 
@@ -41,13 +41,13 @@ fn main():
     w[].sample_rate = buffer.sample_rate
     playBuf = Play(w)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(w))
+    analyzer = BufferedInput[Analyzer](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
         analyzer.next(sample)
     
-    pth = "testing/mojo_results/yin_mojo_results.csv"
+    pth = "testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

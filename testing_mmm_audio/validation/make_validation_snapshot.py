@@ -13,11 +13,13 @@ FLOAT_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 
 
 def repo_root() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def testing_dir() -> str:
-    return os.path.join(repo_root(), "testing")
+    rr = repo_root()
+    print(f"Repo root: {rr}")
+    return os.path.join(rr, "testing_mmm_audio", "validation")
 
 
 def snapshot_path() -> str:
@@ -26,6 +28,7 @@ def snapshot_path() -> str:
 
 def validation_scripts() -> list[str]:
     scripts = sorted(glob.glob(os.path.join(testing_dir(), "*_Validation.py")))
+    print(f"Found validation scripts: {[os.path.basename(s) for s in scripts]}")
     return [s for s in scripts if os.path.basename(s) not in {"run_all_validations.py"}]
 
 

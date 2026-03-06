@@ -1,7 +1,6 @@
 from mmm_audio import *
 from math import sin, log2, ceil, floor
 from sys import simd_width_of
-from .sound_file import *
 from pathlib import Path
 
 
@@ -140,8 +139,6 @@ struct Buffer(Movable, Copyable):
             num_wavetables: Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.
             verbose: Whether to print verbose output.
         """
-
-        self_data = List[List[Float64]]()
 
         if file_name != "":
             # Load the file if a file_name is provided

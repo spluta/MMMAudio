@@ -6,7 +6,7 @@ struct MelBandsExample(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var analyzer: FFTProcess[MelBands[num_bands,fft_size=1024],1024,512,WindowType.hann]
+    var analyzer: FFTProcess[MelBands,WindowType.hann]
     var m: Messenger
     var viz_mul: Float64
     var mix: Float64
@@ -21,8 +21,8 @@ struct MelBandsExample(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        p = MelBands[num_bands,fft_size=1024](self.world)
-        self.analyzer = FFTProcess[MelBands[num_bands,fft_size=1024],1024,512,WindowType.hann](self.world,p^)
+        p = MelBands(self.world[].sample_rate, num_bands, 20.0, 20000.0)
+        self.analyzer = FFTProcess[MelBands,WindowType.hann](self.world,p^, window_size=1024, hop_size=512)
         self.m = Messenger(self.world)
         self.viz_mul = 500.0
         self.mix = 1.0

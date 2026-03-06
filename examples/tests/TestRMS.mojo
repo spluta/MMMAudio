@@ -6,8 +6,7 @@ struct TestRMS(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    # samplerate of 48000 50 ms for the RMS = 2400 samples
-    var bi: BufferedInput[RMS,2400,2400]
+    var bi: BufferedInput[RMS]
     var m: Messenger
     var printer: Print
     var vol: Float64
@@ -17,7 +16,8 @@ struct TestRMS(Movable, Copyable):
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
         rms = RMS()
-        self.bi = BufferedInput[RMS,2400,2400](self.world,process=rms^)
+        # samplerate of 48000 50 ms for the RMS = 2400 samples
+        self.bi = BufferedInput[RMS](self.world,process=rms^,window_size=2400,hop_size=2400)
         self.m = Messenger(self.world)
         self.printer = Print(self.world)
         self.vol = 0.0

@@ -54,6 +54,7 @@ struct MMMWorld(Movable, Copyable):
             num_out_chans: The number of output channels.
             osc_buffers_ptr: A pointer to the OscBuffers struct, which holds precomputed oscillator waveforms.
             windows_ptr: A pointer to the Windows struct, which holds precomputed window functions.
+            messenger_manager_ptr: A pointer to the MessengerManager struct.
         """
         
         self.sample_rate = sample_rate

@@ -10,6 +10,7 @@ from .FFTProcess_Module import *
 from .FFTs import *
 from .Filters import *
 from .MLP_Module import *
+from .MedianFilter_Module import *
 from .Noise import *
 from .Oscillators import *
 from .Oversampling_Module import *
@@ -18,6 +19,7 @@ from .Player import *
 from .Recorder_Module import *
 from .Reverbs import *
 from .SincInterpolator_Module import *
+from .sound_file import *
 
 from .Messenger_Module import *
 from .Print_Module import *
