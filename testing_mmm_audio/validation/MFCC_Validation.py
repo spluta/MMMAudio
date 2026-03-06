@@ -28,21 +28,21 @@ def parse_args():
 args = parse_args()
 show_plots = args.show_plots
 
-os.makedirs("validation/outputs", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
-os.system("mojo run validation/MFCC_Validation.mojo")
+os.system("mojo run -I . ./testing_mmm_audio/validation/MFCC_Validation.mojo")
 print("mojo analysis complete")
 
-flucoma_csv_path = "validation/outputs/mfcc_flucoma_results.csv"
+flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/mfcc_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang validation/MFCC_Validation.scd")
+		os.system("sclang ./MFCC_Validation.scd")
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 
-with open("validation/outputs/mfcc_mojo_results.csv", "r") as f:
+with open("./testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()
 
 	windowsize = int(lines[0].strip().split(",")[1])
@@ -58,7 +58,7 @@ with open("validation/outputs/mfcc_mojo_results.csv", "r") as f:
 		if row:
 			mojo_results.append(row)
 
-with open("validation/outputs/mfcc_flucoma_results.csv", "r") as f:
+with open("./testing_mmm_audio/validation/flucoma_sc_results/mfcc_flucoma_results.csv", "r") as f:
 	reader = csv.reader(f)
 	flucoma_results = []
 	for row in reader:
@@ -70,7 +70,7 @@ if len(mojo_results) > 2:
 mojo_results = np.array(mojo_results).T
 flucoma_results = np.array(flucoma_results).T
 
-y, sr = librosa.load("resources/Shiverer.wav", sr=None)
+y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 librosa_results = librosa.feature.mfcc(
 	y=y,
 	sr=sr,
@@ -127,7 +127,7 @@ ax[0].set(title="Librosa", ylabel="MFCC")
 ax[1].set(title="FluCoMa", ylabel="MFCC")
 ax[2].set(title="MMMAudio", xlabel="Frame", ylabel="MFCC")
 plt.tight_layout()
-plt.savefig("validation/outputs/mfcc_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/mfcc_comparison.png")
 if show_plots:
 	plt.show()
 else:

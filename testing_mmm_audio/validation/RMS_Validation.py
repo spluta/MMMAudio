@@ -28,12 +28,12 @@ def parse_args():
 args = parse_args()
 show_plots = args.show_plots
 
-os.makedirs("validation/outputs", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
-os.system("mojo run validation/RMS_Validation.mojo")
+os.system("mojo run -I . ./testing_mmm_audio/validation/RMS_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/rms_mojo_results.csv", "r") as f:
+with open("./testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
@@ -45,7 +45,7 @@ with open("validation/outputs/rms_mojo_results.csv", "r") as f:
         val = float(line.strip())
         mojo_rms.append(val)
 
-y, sr = librosa.load("resources/Shiverer.wav", sr=None)
+y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 
 # Librosa RMS
 # center=False to match Mojo's BufferedInput behavior better
@@ -58,10 +58,10 @@ def compare_analyses(list1, list2):
     diff = np.array(list1) - np.array(list2)
     return np.mean(np.abs(diff)), np.std(diff)
 
-flucoma_csv_path = "validation/outputs/rms_flucoma_results.csv"
+flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/rms_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang validation/RMS_Validation.scd")
+		os.system("sclang ./RMS_Validation.scd")
 		scrun = True
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
@@ -77,7 +77,7 @@ plt.plot(mojo_rms_db, label="MMMAudio RMS (dB)", alpha=0.7)
 plt.plot(librosa_rms_db, label="librosa RMS (dB)", alpha=0.7)
 
 try:
-    with open("validation/outputs/rms_flucoma_results.csv", "r") as f:
+    with open("./testing_mmm_audio/validation/flucoma_sc_results/rms_flucoma_results.csv", "r") as f:
         lines = f.readlines()
         sclang_rms = []
         for line in lines:
@@ -104,7 +104,7 @@ except Exception as e:
 plt.legend()
 plt.ylabel("dB")
 plt.title("RMS Comparison")
-plt.savefig("validation/outputs/rms_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/rms_comparison.png")
 if show_plots:
     plt.show()
 else:

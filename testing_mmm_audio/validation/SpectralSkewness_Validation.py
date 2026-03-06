@@ -26,18 +26,18 @@ def parse_args():
 args = parse_args()
 show_plots = args.show_plots
 
-os.makedirs("validation/outputs", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
 def load_flucoma_spectral_shape(windowsize, hopsize):
-    output_path = "validation/outputs/spectral_shape_flucoma_results.csv"
-    settings_path = "validation/outputs/spectral_shape_settings.csv"
+    output_path = "./testing_mmm_audio/validation/flucoma_sc_results/spectral_shape_flucoma_results.csv"
+    settings_path = "./testing_mmm_audio/validation/flucoma_sc_results/spectral_shape_settings.csv"
 
     if not os.path.exists(output_path):
         try:
             with open(settings_path, "w") as f:
                 f.write(f"windowsize,{windowsize}\n")
                 f.write(f"hopsize,{hopsize}\n")
-            os.system("sclang validation/SpectralShape_Validation.scd")
+            os.system("sclang ./SpectralShape_Validation.scd")
         except Exception as e:
             print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 
@@ -67,10 +67,10 @@ def load_flucoma_spectral_shape(windowsize, hopsize):
         print("Error reading FluCoMa results:", e)
     return results
 
-os.system("mojo run validation/SpectralSkewness_Validation.mojo")
+os.system("mojo run -I . ./testing_mmm_audio/validation/SpectralSkewness_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/spectral_skewness_mojo_results.csv", "r") as f:
+with open("./testing_mmm_audio/validation/mojo_results/spectral_skewness_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
@@ -107,7 +107,7 @@ if flucoma_skewness:
 
 plt.legend()
 plt.title("Spectral Skewness Comparison")
-plt.savefig("validation/outputs/spectral_skewness_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/spectral_skewness_comparison.png")
 if show_plots:
     plt.show()
 else:

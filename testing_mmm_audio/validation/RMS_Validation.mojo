@@ -25,13 +25,13 @@ fn main():
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(w)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](w, Analyzer(w))
+    analyzer = BufferedInput[Analyzer](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
         analyzer.next(sample)
     
-    pth = "testing/mojo_results/rms_mojo_results.csv"
+    pth = "testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

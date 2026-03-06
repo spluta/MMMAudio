@@ -94,7 +94,7 @@ ax[0].set(title='Librosa')
 ax[1].set(title='FluCoMa')
 ax[2].set(title='MMMAudio')
 ax[0].label_outer()
-plt.savefig("validation/outputs/mel_bands_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/mel_bands_comparison.png")
 if show_plots:
     plt.show()
 else:

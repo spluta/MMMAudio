@@ -34,20 +34,20 @@ struct Analyzer(BufferedProcessable):
         return
 
 fn main():
-    w = MMMWorld()
-    world = LegacyUnsafePointer(to=w)
+    w = alloc[MMMWorld](1)
+    w.init_pointee_move(MMMWorld(44100.0))
 
     buffer = Buffer.load("resources/Shiverer.wav")
-    world[].sample_rate = buffer.sample_rate
-    playBuf = Play(world)
+    w[].sample_rate = buffer.sample_rate
+    playBuf = Play(w)
 
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize](world, Analyzer(world, world[].sample_rate))
+    analyzer = BufferedInput[Analyzer](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
         analyzer.next(sample)
     
-    pth = "validation/outputs/yin_mojo_results.csv"
+    pth = "testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

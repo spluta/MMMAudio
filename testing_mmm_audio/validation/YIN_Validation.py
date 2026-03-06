@@ -30,12 +30,12 @@ def parse_args():
 args = parse_args()
 show_plots = args.show_plots
 
-os.makedirs("validation/outputs", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
 
-os.system("mojo run validation/YIN_Validation.mojo")
+os.system("mojo run -I . ./testing_mmm_audio/validation/YIN_Validation.mojo")
 print("mojo analysis complete")
 
-with open("validation/outputs/yin_mojo_results.csv", "r") as f:
+with open("./testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv", "r") as f:
     lines = f.readlines()
     windowsize = int(lines[0].strip().split(",")[1])
     hopsize = int(lines[1].strip().split(",")[1])
@@ -49,7 +49,7 @@ with open("validation/outputs/yin_mojo_results.csv", "r") as f:
         freq, conf = line.strip().split(",")
         mojo_analysis.append((float(freq), float(conf)))
 
-y, sr = librosa.load("resources/Shiverer.wav", sr=None)
+y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 
 pitch = librosa.yin(y, fmin=minfreq, fmax=maxfreq, sr=sr, frame_length=windowsize, hop_length=hopsize)
 
@@ -101,10 +101,10 @@ def compare_analyses_confidence(list1, list2):
     
     return mean_diff, std_diff
 
-flucoma_csv_path = "validation/outputs/yin_flucoma_results.csv"
+flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/yin_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang validation/YIN_Validation.scd")
+		os.system("sclang ./YIN_Validation.scd")
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 else:
@@ -134,7 +134,7 @@ ax_conf.set_xlabel("Frame")
 l3 = ax_conf.plot([f[1] for f in mojo_analysis][:limit], label="MMMAudio YIN Confidence", color=color1, alpha=0.7)
 
 try:
-    with open("validation/outputs/yin_flucoma_results.csv", "r") as f:
+    with open("./testing_mmm_audio/validation/flucoma_sc_results/yin_flucoma_results.csv", "r") as f:
         lines = f.readlines()
         sclang_analysis = []
         # skip header
@@ -177,7 +177,7 @@ except Exception as e:
     print("Error comparing FluCoMa results:", e)
 
 plt.tight_layout()
-plt.savefig("validation/outputs/yin_comparison.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/yin_comparison.png")
 if show_plots:
     plt.show()
 else:
@@ -208,7 +208,7 @@ plt.ylabel('Count of Frames')
 plt.title('Histogram of Pitch Deviation (Semitones)')
 plt.legend()
 plt.xticks(bins)
-plt.savefig("validation/outputs/yin_deviation_histogram.png")
+plt.savefig("testing_mmm_audio/validation/validation_results/yin_deviation_histogram.png")
 if show_plots:
     plt.show()
 else:

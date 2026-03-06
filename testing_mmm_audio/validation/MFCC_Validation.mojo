@@ -20,17 +20,17 @@ struct MFCCTestSuite(FFTProcessable):
         self.data.append(self.mfcc.coeffs.copy())
 
 def main():
-    world = MMMWorld(sample_rate=44100)
-    w = LegacyUnsafePointer(to=world)
+    w = alloc[MMMWorld](1)
+    w.init_pointee_move(MMMWorld(44100.0))
     mfcc_ts = MFCCTestSuite(w)
-    fftprocess = FFTProcess[MFCCTestSuite,fftsize,hopsize,WindowType.hann](w, mfcc_ts^)
+    fftprocess = FFTProcess[MFCCTestSuite,WindowType.hann](w, mfcc_ts^, window_size=fftsize, hop_size=hopsize)
     buf = Buffer.load("resources/Shiverer.wav")
     for i in range(buf.num_frames):
         _ = fftprocess.next(buf.data[0][i])
 
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("validation/outputs/mfcc_mojo_results.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "w") as f:
         f.write("windowsize," + String(fftsize) + "\n")
         f.write("hopsize," + String(hopsize) + "\n")
         f.write("num_coeffs," + String(num_coeffs) + "\n")
