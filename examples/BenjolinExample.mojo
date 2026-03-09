@@ -82,7 +82,7 @@ struct Benjolin(Movable, Copyable):
         for _ in range(2):
             self.dctraps.append(DCTrap(self.world))
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         self.m.update(self.freq1,"freq1")
         self.m.update(self.freq2,"freq2")
@@ -139,7 +139,7 @@ struct Benjolin(Movable, Copyable):
         filter_output = select(self.filterType,self.filter_outputs) * dbamp(-12.0)
         filter_output = sanitize(filter_output)
 
-        output = SIMD[DType.float64, 2](0.0, 0.0)
+        output = MFloat[2](0.0, 0.0)
         output[0] = select(self.outSignalL,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
         output[1] = select(self.outSignalR,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
 
@@ -157,6 +157,6 @@ struct BenjolinExample(Movable, Copyable):
         self.world = world
         self.benjolin = Benjolin(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         return self.benjolin.next()  # Get the next sample from the Benjolin

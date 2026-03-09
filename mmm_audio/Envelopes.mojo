@@ -261,7 +261,7 @@ struct Env2(Representable, Movable, Copyable):
 
 
 # min_env is just a function, not a struct
-fn min_env[N: Int = 1](phase: SIMD[DType.float64, N] = 0.01, totaldur: SIMD[DType.float64, N] = 0.1, rampdur: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]:
+fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampdur: MFloat[N] = 0.001) -> MFloat[N]:
     """Simple envelope.
 
     Envelope that rises linearly from 0 to 1 over `rampdur` seconds, stays at 1 until `totaldur - rampdur`, 
@@ -283,13 +283,13 @@ fn min_env[N: Int = 1](phase: SIMD[DType.float64, N] = 0.01, totaldur: SIMD[DTyp
     dur_over_rise = totaldur / rampdur
     
     # Create condition masks
-    in_attack: SIMD[DType.bool, N] = phase < rise_ratio
-    in_release: SIMD[DType.bool, N] = phase > fall_threshold
+    in_attack: MBool[N] = phase < rise_ratio
+    in_release: MBool[N] = phase > fall_threshold
     
     # Compute envelope values for each segment
     attack_value = phase * dur_over_rise
     release_value = (1.0 - phase) * dur_over_rise
-    sustain_value = SIMD[DType.float64, N](1.0)
+    sustain_value = MFloat[N](1.0)
     
     # Use select to choose the appropriate value
     return in_attack.select(attack_value,
@@ -314,7 +314,7 @@ struct ASREnv(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("ASREnv")
     
-    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: SIMD[DType.float64, 2] = 1) -> Float64:
+    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
         """Simple ASR envelope generator.
         
         Args:
@@ -322,7 +322,7 @@ struct ASREnv(Representable, Movable, Copyable):
             sustain: (Float64): Sustain level (0 to 1).
             release: (Float64): Release time in seconds.
             gate: (Bool): Gate signal (True or False).
-            curve: (SIMD[DType.float64, 2]): Can pass a Float64 for equivalent curve on rise and fall or SIMD[DType.float64, 2] for different rise and fall curve. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
+            curve: (MFloat[2]): Can pass a Float64 for equivalent curve on rise and fall or MFloat[2] for different rise and fall curve. Positive values for convex "exponential" curves, negative for concave "logarithmic" curves.
         """
 
         if self.bool_changed.next(gate):

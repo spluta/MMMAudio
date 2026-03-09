@@ -39,7 +39,7 @@ struct TestDelayInterps(Movable, Copyable):
         self.which_delay = 0
         self.mouse_onoff = 0
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         self.m.update(self.lfo_freq,"lfo_freq")
         self.m.update(self.mix,"mix")
@@ -62,4 +62,4 @@ struct TestDelayInterps(Movable, Copyable):
         one_delay = select(self.which_delay,[none,linear,quadratic,cubic,lagrange4])
         sig = input * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
 
-        return SIMD[DType.float64, 2](sig, sig)
+        return MFloat[2](sig, sig)

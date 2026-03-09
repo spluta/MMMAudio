@@ -8,7 +8,7 @@ struct Windows(Movable, Copyable):
     var blackman: List[Float64]
     var sine: List[Float64]
     var kaiser: List[Float64]
-    var pan2: List[SIMD[DType.float64, 2]]
+    var pan2: List[MFloat[2]]
     comptime size: Int = 2048
     comptime size_f64: Float64 = 2048.0
     comptime mask: Int = 2047 # yep, gotta make sure this is size - 1
@@ -70,7 +70,7 @@ struct Windows(Movable, Copyable):
         elif window_type == WindowType.tri:
             return tri_window(size)
         elif window_type == WindowType.pan2:
-            print("Windows.make_window: pan2 window requires SIMD[DType.float64, 2] output, use pan2_window() function instead.")
+            print("Windows.make_window: pan2 window requires MFloat[2] output, use pan2_window() function instead.")
             return List[Float64]()
         else:
             print("Windows.make_window: Unsupported window type")
@@ -237,9 +237,9 @@ fn sine_window(size: Int) -> List[Float64]:
     return window.copy()
 
 # Create a compile-time function to generate values
-fn pan2_window(size: Int) -> List[SIMD[DType.float64, 2]]:
+fn pan2_window(size: Int) -> List[MFloat[2]]:
     """
-    Generate a SIMD[DType.float64, 2] quarter cosine window for panning. The first element of the SIMD vector is the multiplier for the left channel, and the second element is for the right channel. This allows any sample to be panned at one of `size` positions between left and right channels smoothly.
+    Generate a MFloat[2] quarter cosine window for panning. The first element of the SIMD vector is the multiplier for the left channel, and the second element is for the right channel. This allows any sample to be panned at one of `size` positions between left and right channels smoothly.
     
     Args:
         size: Length of the window.
@@ -247,9 +247,9 @@ fn pan2_window(size: Int) -> List[SIMD[DType.float64, 2]]:
     Returns:
         List containing the quarter cosine window values.
     """
-    var table = List[SIMD[DType.float64, 2]]()
+    var table = List[MFloat[2]]()
 
     for i in range(size):
         var angle = (pi / 2.0) * Float64(i) / Float64(size-1)
-        table.append(cos(SIMD[DType.float64, 2](angle, (pi / 2.0) - angle)))
+        table.append(cos(MFloat[2](angle, (pi / 2.0) - angle)))
     return table^

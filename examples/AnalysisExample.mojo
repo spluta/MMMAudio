@@ -49,7 +49,7 @@ struct AnalysisExample(Movable, Copyable):
         self.m = Messenger(self.world)
         self.which = 0.0
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         
         self.m.update(self.freq,"freq")
         self.m.update(self.which,"which")

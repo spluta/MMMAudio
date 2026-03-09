@@ -17,12 +17,12 @@ struct TestDelay(Movable, Copyable):
         self.del_time = 0.5
         self.messenger = Messenger(world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.freq,"freq")
         # self.messenger.update(self.del_time,"del_time")
         self.del_time = self.world[].mouse_x * 0.11
 
         trig = self.messenger.notify_trig("trig")
-        sample = self.synth.next_impulse(self.freq, 0.0, SIMD[DType.bool, 1](fill=trig))  # Get the next sample from the synth
+        sample = self.synth.next_impulse(self.freq, 0.0, MBool[1](fill=trig))  # Get the next sample from the synth
         delay = self.delay.next(sample, self.del_time)  # Process the sample through the delay line
-        return SIMD[DType.float64, 2](sample, delay) * 0.2  # Get the next sample from the synth
+        return MFloat[2](sample, delay) * 0.2  # Get the next sample from the synth

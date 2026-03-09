@@ -10,7 +10,7 @@ struct TestSplay(Movable, Copyable):
     var osc: List[Osc[2]]
     var freqs: List[Float64]
     var mult: Float64
-    var samples: List[SIMD[DType.float64, 2]]
+    var samples: List[MFloat[2]]
     var splay: SplayN[num_output_channels]
 
     fn __init__(out self, world: World):
@@ -18,10 +18,10 @@ struct TestSplay(Movable, Copyable):
         self.osc = [Osc[2](self.world) for _ in range(num_osc)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(num_osc)]
         self.mult = 0.2 / Float64(num_osc)
-        self.samples = [SIMD[DType.float64, 2](0.0) for _ in range(num_osc)]
+        self.samples = [MFloat[2](0.0) for _ in range(num_osc)]
         self.splay = SplayN[num_channels = num_output_channels](self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, num_output_channels]:
+    fn next(mut self) -> MFloat[num_output_channels]:
         for i in range(num_osc):
              self.samples[i] = self.osc[i].next(self.freqs[i])
 

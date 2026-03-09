@@ -13,9 +13,9 @@ struct TestOnePole[N: Int = 2](Movable, Copyable):
         self.noise = WhiteNoise[Self.N]()
         self.filt = OnePole[Self.N](world)
 
-    fn next(mut self) -> SIMD[DType.float64, Self.N]:
+    fn next(mut self) -> MFloat[Self.N]:
         sample = self.noise.next()  # Get the next white noise sample
         self.world[].print(sample)  # Print the sample to the console
-        coef = SIMD[DType.float64, Self.N](self.world[].mouse_x, 1-self.world[].mouse_x)  # Coefficient based on mouse X position
+        coef = MFloat[Self.N](self.world[].mouse_x, 1-self.world[].mouse_x)  # Coefficient based on mouse X position
         sample = self.filt.next(sample, coef)  # Get the next sample from the filter
         return sample * 0.1

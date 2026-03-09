@@ -73,7 +73,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
     @always_inline
-    fn read[N: Int](mut self, var delay_samps: MInt[N]) -> SIMD[DType.float64, self.num_chans]:
+    fn read[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
       """Reads into the delay line at an exact sample delay and no interpolation.
 
       Args:
@@ -89,13 +89,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         out = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, Float64(idx[0]))
         return out
       else:
-        out = SIMD[DType.float64, Self.num_chans](0.0)
+        out = MFloat[Self.num_chans](0.0)
         for chan in range(Self.num_chans):
           out[chan] = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, Float64(idx[chan%N]))[chan]
         return out
 
     @always_inline
-    fn read[N: Int](mut self, var delay_time: MFloat[N]) -> SIMD[DType.float64, self.num_chans]:
+    fn read[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
       """Reads into the delay line.
 
       Args:
@@ -106,7 +106,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
       """
       delay_time = min(delay_time, self.max_delay_time)
         
-      out = SIMD[DType.float64, self.num_chans](0.0)
+      out = MFloat[self.num_chans](0.0)
 
       if N == 1:
         @parameter
@@ -141,13 +141,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
       return out
 
     @always_inline
-    fn write(mut self, input: SIMD[DType.float64, self.num_chans]):
+    fn write(mut self, input: MFloat[self.num_chans]):
       """Writes a single sampleinto the delay line."""
 
         self.delay_line.write_previous(input)
 
     @always_inline
-    fn next[N: Int](mut self, input: SIMD[DType.float64, self.num_chans], delay_samps: MInt[N]) -> SIMD[DType.float64, self.num_chans]:
+    fn next[N: Int](mut self, input: MFloat[self.num_chans], delay_samps: MInt[N]) -> MFloat[self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it. This version uses an integer lookup into the delay line and no interpolation.
 
         Args:
@@ -164,7 +164,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         return out
 
     @always_inline
-    fn next[N: Int](mut self, input: SIMD[DType.float64, self.num_chans], var delay_time: MFloat[N]) -> SIMD[DType.float64, self.num_chans]:
+    fn next[N: Int](mut self, input: MFloat[self.num_chans], var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it.
 
         Args:
@@ -200,7 +200,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
 
 
-fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], decaytime: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+fn calc_feedback[num_chans: Int = 1](delaytime: MFloat[num_chans], decaytime: MFloat[num_chans]) -> MFloat[num_chans]:
       """Calculate the feedback coefficient for a Comb filter or Allpass line based on desired delay time and decay time.
       
       Parameters:
@@ -212,12 +212,12 @@ fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], 
       
       comptime log001: Float64 = log(0.001)
 
-      zero: SIMD[DType.bool, num_chans] = delaytime.eq(0) or decaytime.eq(0)
-      dec_pos: SIMD[DType.bool, num_chans] = decaytime.ge(0)
+      zero: MBool[num_chans] = delaytime.eq(0) or decaytime.eq(0)
+      dec_pos: MBool[num_chans] = decaytime.ge(0)
 
       absret = exp(log001 * delaytime / abs(decaytime))
 
-      return zero.select(SIMD[DType.float64, num_chans](0.0), dec_pos.select(absret, -absret))
+      return zero.select(MFloat[num_chans](0.0), dec_pos.select(absret, -absret))
 
 struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     """
@@ -231,7 +231,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
 
     var world: World
     var delay: Delay[Self.num_chans, Self.interp]
-    var fb: SIMD[DType.float64, Self.num_chans]
+    var fb: MFloat[Self.num_chans]
 
     fn __init__(out self, world: World, max_delay: Float64 = 1.0):
       """Initialize the Comb filter.
@@ -242,9 +242,9 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
       """
         self.world = world
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
-        self.fb = SIMD[DType.float64, Self.num_chans](0.0)
+        self.fb = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans] = 0.0, feedback: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans] = 0.0, feedback: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter.
         
         Args:
@@ -263,7 +263,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
 
         return out  # Return the delayed sample
 
-    fn next_decaytime(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], decay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+    fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter with decay time calculation.
         
         Args:
@@ -288,7 +288,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     var world: World
     var delay: Delay[Self.num_chans, Self.interp] # Delay line without automatic feedback
     var one_pole: OnePole[Self.num_chans]
-    var fb: SIMD[DType.float64, Self.num_chans]
+    var fb: MFloat[Self.num_chans]
 
     fn __init__(out self, world: World, max_delay: Float64 = 1.0):
       """Initialize the LP_Comb filter.
@@ -301,10 +301,10 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
         self.world = world
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
         self.one_pole = OnePole[Self.num_chans](self.world)
-        self.fb = SIMD[DType.float64, Self.num_chans](0.0)
+        self.fb = MFloat[Self.num_chans](0.0)
 
     @always_inline
-    fn next(mut self, input: SIMD[DType.float64, Self.num_chans], delay_time: SIMD[DType.float64, Self.num_chans] = 0.0, feedback: SIMD[DType.float64, Self.num_chans] = 0.0, lp_freq: SIMD[DType.float64, Self.num_chans] = 0.0) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback: MFloat[Self.num_chans] = 0.0, lp_freq: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the comb filter.
 
         Args:
@@ -348,7 +348,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         self.world = world
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
 
-    fn next(mut self, input: SIMD[DType.float64, Self.num_chans], delay_time: SIMD[DType.float64, Self.num_chans] = 0.0, feedback_coef: SIMD[DType.float64, Self.num_chans] = 0.0) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the allpass comb filter.
 
         Args:
@@ -368,7 +368,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         
         return output
 
-    fn next_decaytime(mut self, input: SIMD[DType.float64, self.num_chans], delay_time: SIMD[DType.float64, self.num_chans], decay_time: SIMD[DType.float64, self.num_chans]) -> SIMD[DType.float64, self.num_chans]:
+    fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the allpass comb filter with decay time calculation.
         
         Args:
@@ -396,7 +396,7 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
     var world: World
     var delay: Delay[Self.num_chans, Self.interp]
     var dc: DCTrap[Self.num_chans]
-    var fb: SIMD[DType.float64, Self.num_chans]
+    var fb: MFloat[Self.num_chans]
     var tanh_ad: TanhAD[Self.num_chans, Self.os_index]
 
     fn __init__(out self, world: World, max_delay: Float64 = 1.0):
@@ -410,10 +410,10 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
         self.world = world
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
         self.dc = DCTrap[Self.num_chans](self.world)
-        self.fb = SIMD[DType.float64, Self.num_chans](0.0)
+        self.fb = MFloat[Self.num_chans](0.0)
         self.tanh_ad = TanhAD[Self.num_chans, Self.os_index](self.world)
 
-    fn next(mut self, input: SIMD[DType.float64, Self.num_chans], delay_time: SIMD[DType.float64, Self.num_chans], feedback: SIMD[DType.float64, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans], feedback: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample or SIMD vector through the feedback delay.
         
         Args:

@@ -39,7 +39,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         return String("RecordBuf")
     
     # Write SIMD input to buffer
-    fn write(mut self, input: SIMD[DType.float64, Self.num_chans], index: Int):
+    fn write(mut self, input: MFloat[Self.num_chans], index: Int):
         """
         Write SIMD input to buffer at specified index. Used internally by write_next and write_previous, which will be more appropriate for most use cases.
 
@@ -54,7 +54,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.buf.data[index] = input
 
     # write_next SIMD input to buffer at current write head and advance write head
-    fn write_next(mut self, value: SIMD[DType.float64, Self.num_chans]):
+    fn write_next(mut self, value: MFloat[Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and advance write head forward. This is the correct option in most use cases.
         
@@ -64,7 +64,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.write(value, self.write_head)
         self.write_head = (self.write_head + 1) % self.buf.num_frames
     
-    fn write_previous(mut self, value: SIMD[DType.float64, Self.num_chans]):
+    fn write_previous(mut self, value: MFloat[Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and move write head backward. This is useful for things like delay lines, which write backwards through a buffer so they can interpolate forwards.
 

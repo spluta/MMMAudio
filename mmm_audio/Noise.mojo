@@ -11,7 +11,7 @@ struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
         """Initialize the WhiteNoise struct."""
         pass  # No initialization needed for white noise
 
-    fn next(self, gain: SIMD[DType.float64, Self.num_chans] = SIMD[DType.float64, Self.num_chans](1.0)) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next white noise sample.
 
         Args:
@@ -32,25 +32,25 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
         num_chans: Number of SIMD channels.
     """
 
-    var b0: SIMD[DType.float64, Self.num_chans]
-    var b1: SIMD[DType.float64, Self.num_chans]
-    var b2: SIMD[DType.float64, Self.num_chans]
-    var b3: SIMD[DType.float64, Self.num_chans]
-    var b4: SIMD[DType.float64, Self.num_chans]
-    var b5: SIMD[DType.float64, Self.num_chans]
-    var b6: SIMD[DType.float64, Self.num_chans]
+    var b0: MFloat[Self.num_chans]
+    var b1: MFloat[Self.num_chans]
+    var b2: MFloat[Self.num_chans]
+    var b3: MFloat[Self.num_chans]
+    var b4: MFloat[Self.num_chans]
+    var b5: MFloat[Self.num_chans]
+    var b6: MFloat[Self.num_chans]
 
     fn __init__(out self):
         """Initialize the PinkNoise struct."""
-        self.b0 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b1 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b2 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b3 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b4 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b5 = SIMD[DType.float64, Self.num_chans](0.0)
-        self.b6 = SIMD[DType.float64, Self.num_chans](0.0)
+        self.b0 = MFloat[Self.num_chans](0.0)
+        self.b1 = MFloat[Self.num_chans](0.0)
+        self.b2 = MFloat[Self.num_chans](0.0)
+        self.b3 = MFloat[Self.num_chans](0.0)
+        self.b4 = MFloat[Self.num_chans](0.0)
+        self.b5 = MFloat[Self.num_chans](0.0)
+        self.b6 = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, gain: SIMD[DType.float64, Self.num_chans] = SIMD[DType.float64, Self.num_chans](1.0)) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next pink noise sample.
 
         Args:
@@ -83,13 +83,13 @@ struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
         num_chans: Number of SIMD channels.
     """
 
-    var last_output: SIMD[DType.float64, Self.num_chans]
+    var last_output: MFloat[Self.num_chans]
 
     fn __init__(out self):
         """Initialize the BrownNoise struct."""
-        self.last_output = SIMD[DType.float64, Self.num_chans](0.0)
+        self.last_output = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, gain: SIMD[DType.float64, Self.num_chans] = SIMD[DType.float64, Self.num_chans](1.0)) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next brown noise sample.
 
         Args:
@@ -112,17 +112,17 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
         num_chans: Number of SIMD channels.
     """
 
-    var stored_output: SIMD[DType.float64, Self.num_chans]
-    var last_trig: SIMD[DType.bool, Self.num_chans]
+    var stored_output: MFloat[Self.num_chans]
+    var last_trig: MBool[Self.num_chans]
     var is_initialized: Bool
 
     fn __init__(out self):
         """Initialize the TExpRand struct."""
-        self.stored_output = SIMD[DType.float64, Self.num_chans](0.0)
-        self.last_trig = SIMD[DType.bool, Self.num_chans](fill=False)
+        self.stored_output = MFloat[Self.num_chans](0.0)
+        self.last_trig = MBool[Self.num_chans](fill=False)
         self.is_initialized = False
 
-    fn next(mut self, min: SIMD[DType.float64, Self.num_chans], max: SIMD[DType.float64, Self.num_chans], trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Output the exponentially distributed random value.
 
         The value is repeated until a new trigger is received, at which point a new value is generated.
@@ -144,7 +144,7 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
             self.is_initialized = True
             return self.stored_output
         
-        rising_edge: SIMD[DType.bool, Self.num_chans] = trig & ~self.last_trig
+        rising_edge: MBool[Self.num_chans] = trig & ~self.last_trig
         @parameter
         for i in range(Self.num_chans):
             if rising_edge[i]:
@@ -159,17 +159,17 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
         num_chans: Number of SIMD channels.
     """
 
-    var stored_output: SIMD[DType.float64, Self.num_chans]
-    var last_trig: SIMD[DType.bool, Self.num_chans]
+    var stored_output: MFloat[Self.num_chans]
+    var last_trig: MBool[Self.num_chans]
     var is_initialized: Bool
 
     fn __init__(out self):
         """Initialize the TRand struct."""
-        self.stored_output = SIMD[DType.float64, Self.num_chans](0.0)
-        self.last_trig = SIMD[DType.bool, Self.num_chans](fill=False)
+        self.stored_output = MFloat[Self.num_chans](0.0)
+        self.last_trig = MBool[Self.num_chans](fill=False)
         self.is_initialized = False
 
-    fn next(mut self, min: SIMD[DType.float64, Self.num_chans], max: SIMD[DType.float64, Self.num_chans], trig: SIMD[DType.bool, Self.num_chans]) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Output uniformly distributed random value.
 
         The value is repeated until a new trigger is received, at which point a new value is generated.
@@ -191,7 +191,7 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
             self.is_initialized = True
             return self.stored_output
 
-        rising_edge: SIMD[DType.bool, Self.num_chans] = trig & ~self.last_trig
+        rising_edge: MBool[Self.num_chans] = trig & ~self.last_trig
         @parameter
         for i in range(Self.num_chans):
             if rising_edge[i]:

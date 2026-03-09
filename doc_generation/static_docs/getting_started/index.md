@@ -153,7 +153,7 @@ To make a new MMMAudio project, a good approach is to copy and paste a `.mojo` a
        
        In the example below, the file "MyMojoFile.mojo" contains struct `MyMojoFile`. 
        This struct must have a `.next` function with no input arguments that outputs 
-       a `SIMD[DType.float64, N]` vector of any size (typically N=2) or just a Float64.
+       a `MFloat[N]` vector of any size (typically N=2) or just a Float64.
 
     2) The `package_name` corresponds to the folder containing your files:  
        - Files in `MMMAudio/mine` use `package_name="mine"`  

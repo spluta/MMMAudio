@@ -17,11 +17,11 @@ struct TestPM(Movable, Copyable):
         self.c2 = Osc[1, Interp.sinc](self.world)
         self.lag = Lag[1](self.world, 0.2)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         mod_mul = linexp(self.world[].mouse_y, 0.0, 1.0, 0.0001, 32.0)
         mod_signal = self.mod.next(50)
         mod_mul = self.lag.next(mod_mul)
         sample = self.carrier.next(100, mod_signal * mod_mul)
         sample2 = self.c2.next(100, mod_signal * mod_mul)
         # return (sample-sample2)
-        return SIMD[DType.float64, 2](sample * 0.1, sample2 * 0.1)
+        return MFloat[2](sample * 0.1, sample2 * 0.1)

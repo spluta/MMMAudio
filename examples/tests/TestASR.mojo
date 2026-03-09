@@ -8,7 +8,7 @@ struct TestASR(Movable, Copyable):
     var env: ASREnv
     var synth: Osc[]
     var messenger: Messenger
-    var curves: SIMD[DType.float64, 2]
+    var curves: MFloat[2]
     var gate: Bool
 
     fn __init__(out self, world: World):
@@ -16,10 +16,10 @@ struct TestASR(Movable, Copyable):
         self.env = ASREnv(self.world)
         self.synth = Osc(self.world)
         self.messenger = Messenger(self.world)
-        self.curves = SIMD[DType.float64, 2](1.0, 1.0)
+        self.curves = MFloat[2](1.0, 1.0)
         self.gate = False
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.curves,"curves")
         self.messenger.update(self.gate,"gate")
 

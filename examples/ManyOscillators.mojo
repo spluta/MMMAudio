@@ -12,7 +12,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     var world: World # pointer to the MMMWorld
     var osc1: Osc[interp=Interp.linear] # first oscillator
     var osc2: Osc[interp=Interp.linear] # second oscillator
-    var osc_freqs: SIMD[DType.float64, 2] # frequencies for the two oscillators
+    var osc_freqs: MFloat[2] # frequencies for the two oscillators
     var pan2_osc: Osc[1] # LFO for panning
     var pan2_freq: Float64 # frequency for the panning LFO
     var vol_osc: Osc[] # LFO for volume
@@ -37,7 +37,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
 
         self.vol_osc = Osc[](self.world)
         self.vol_osc_freq = rrand(0.05, 0.2)
-        self.osc_freqs = SIMD[DType.float64, 2](
+        self.osc_freqs = MFloat[2](
             center_freq + rrand(1.0, 5.0),
             center_freq - rrand(1.0, 5.0)
         )
@@ -46,7 +46,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
         return String("StereoBeatingSines")
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         # calling .next on both oscillators gets both of their next samples
         temp = self.osc1.next(self.osc_freqs[0]) + self.osc2.next(self.osc_freqs[1])
 
@@ -82,7 +82,7 @@ struct ManyOscillators(Copyable, Movable):
             self.synths.append(StereoBeatingSines(self.world, exprand(100.0, 1000.0)))
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         if self.messenger.notify_update(self.num_pairs,"num_pairs"):
             if len(self.synths) != Int(self.num_pairs):
@@ -96,7 +96,7 @@ struct ManyOscillators(Copyable, Movable):
                         _ = self.synths.pop()
 
         # sum all the stereo outs from the N synths
-        sum = SIMD[DType.float64, 2](0.0, 0.0)
+        sum = MFloat[2](0.0, 0.0)
         for i in range(len(self.synths)):
             sum += self.synths[i].next()
 

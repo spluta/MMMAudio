@@ -20,7 +20,7 @@ struct OscVoice(Movable, Copyable):
         self.messenger = Messenger(world, name_space)
         self.world = world
 
-    fn next(mut self, ref buffer: Buffer) -> SIMD[DType.float64, 1]:
+    fn next(mut self, ref buffer: Buffer) -> MFloat[1]:
         self.messenger.update(self.gate, "gate")
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.wubb_rate, "wubb_rate")
@@ -58,7 +58,7 @@ struct WavetableOsc(Movable, Copyable):
     fn loadBuffer(mut self):
         self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.wavetables_per_channel, "wavetables_per_channel")
         if self.messenger.notify_update(self.file_name, "load_file"):
             self.loadBuffer()

@@ -20,7 +20,7 @@ struct TestSelect(Movable, Copyable):
         self.printers[0] = Print(self.world)
         self.printers[1] = Print(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.vs, "vs")
         self.messenger.update(self.which,"which")
 
@@ -30,4 +30,4 @@ struct TestSelect(Movable, Copyable):
         val2 = select(self.which,[11.1,12.2,13.3,14.4,15.5,16.6,17.7,18.8])
         self.printers[1].next(val2, "selected value in [11..18]: ")
 
-        return SIMD[DType.float64, 2](0.0, 0.0)
+        return MFloat[2](0.0, 0.0)

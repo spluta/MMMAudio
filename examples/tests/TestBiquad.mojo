@@ -18,11 +18,11 @@ struct TestBiquad(Movable, Copyable):
         for i in range(2):
             self.filts.append(Biquad[1](self.world))
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.cutoff, "cutoff")
         self.messenger.update(self.q, "q")
         var sample = self.noise.next()
-        var outs = SIMD[DType.float64, 2](0.0, 0.0)
-        outs[0] = self.filts[0].lpf(sample, SIMD[DType.float64, 1](self.cutoff), SIMD[DType.float64, 1](self.q))[0]
-        outs[1] = self.filts[1].hpf(sample, SIMD[DType.float64, 1](self.cutoff), SIMD[DType.float64, 1](self.q))[0]
+        var outs = MFloat[2](0.0, 0.0)
+        outs[0] = self.filts[0].lpf(sample, MFloat[1](self.cutoff), MFloat[1](self.q))[0]
+        outs[1] = self.filts[1].hpf(sample, MFloat[1](self.cutoff), MFloat[1](self.q))[0]
         return outs * 0.2

@@ -22,7 +22,7 @@ struct SpectralFluxOnsetsExample(Movable, Copyable):
         self.impulse_vol = 0.5
         self.onsetcounter = 0
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         
         self.m.update(self.onsets.thresh,"thresh")
         self.m.update(self.impulse_vol,"impulse_vol")
@@ -44,4 +44,4 @@ struct SpectralFluxOnsetsExample(Movable, Copyable):
         impulse = self.impulse_vol if self.onsets.state else 0.0
         
         # left channel: audio, right channel: impulses
-        return SIMD[DType.float64, 2](audio, impulse)
+        return MFloat[2](audio, impulse)

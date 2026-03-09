@@ -18,7 +18,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.lag = Lag[2](self.world, 0.5)  # Initialize Lag with a default time constant
 
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         var sample = self.playBuf.next[num_chans=2,interp=Interp.linear](self.buf, 1.0, True)  # Read samples from the buffer
 
@@ -27,10 +27,10 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         # this is a version with the 2 value SIMD vector as input each delay with have its own del_time
         var del_time = self.lag.next(
-            self.world[].mouse_x * SIMD[DType.float64, 2](1.0, 0.9)
+            self.world[].mouse_x * MFloat[2](1.0, 0.9)
         )
 
-        var feedback = SIMD[DType.float64, 2](self.world[].mouse_y * 2.0, self.world[].mouse_y * 2.1)
+        var feedback = MFloat[2](self.world[].mouse_y * 2.0, self.world[].mouse_y * 2.1)
 
         sample = self.delays.next(sample, del_time, feedback)*0.5
 
@@ -51,5 +51,5 @@ struct FeedbackDelays(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("FeedbackDelays")
 
-    fn next(mut self: FeedbackDelays) -> SIMD[DType.float64, 2]:
+    fn next(mut self: FeedbackDelays) -> MFloat[2]:
         return self.delay_synth.next()  # Return the combined output sample

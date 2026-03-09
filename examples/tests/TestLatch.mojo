@@ -19,7 +19,7 @@ struct TestLatch(Movable, Copyable):
         self.dusty = Dust(self.world)
         self.messenger = Messenger(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         freq = self.lfo.next(0.1) * 200 + 300
         freq = self.latch.next(freq,self.dusty.next(0.5) > 0.0)
         sample = self.osc.next(freq)  # Get the next sample from the synth

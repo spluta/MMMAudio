@@ -56,7 +56,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         self.in_list = [0.0]
 
     @always_inline
-    fn next(mut self, input: SIMD[DType.float64, self.num_chans], room_size: SIMD[DType.float64, self.num_chans] = 0.0, lp_comb_lpfreq: SIMD[DType.float64, self.num_chans] = 1000.0, added_space: SIMD[DType.float64, self.num_chans] = 0.0) -> SIMD[DType.float64, self.num_chans]:
+    fn next(mut self, input: MFloat[self.num_chans], room_size: MFloat[self.num_chans] = 0.0, lp_comb_lpfreq: MFloat[self.num_chans] = 1000.0, added_space: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the freeverb.
 
         Args:

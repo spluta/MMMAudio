@@ -7,27 +7,27 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     var m: Messenger
     var bin: Int
     var freeze_gate: Bool
-    var stored_phases: List[SIMD[DType.float64, 2]]
-    var stored_mags: List[SIMD[DType.float64, 2]]
+    var stored_phases: List[MFloat[2]]
+    var stored_mags: List[MFloat[2]]
 
     fn __init__(out self, world: World, namespace: Optional[String] = None):
         self.world = world
         self.bin = (Self.window_size // 2) + 1
         self.m = Messenger(world, namespace)
         self.freeze_gate = False
-        self.stored_phases = [SIMD[DType.float64, 2](0.0) for _ in range(Self.window_size)]
-        self.stored_mags = [SIMD[DType.float64, 2](0.0) for _ in range(Self.window_size)]
+        self.stored_phases = [MFloat[2](0.0) for _ in range(Self.window_size)]
+        self.stored_mags = [MFloat[2](0.0) for _ in range(Self.window_size)]
     fn get_messages(mut self) -> None:
         self.m.update(self.freeze_gate, "freeze_gate")
 
-    fn next_stereo_frame(mut self, mut mags: List[SIMD[DType.float64, 2]], mut phases: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
         if not self.freeze_gate:
             # self.stored_phases = phases.copy()
             self.stored_mags = mags.copy()
         else:
             mags = self.stored_mags.copy()
         for i in range(Self.window_size):
-            phases[i] += SIMD[DType.float64, 2](random_float64(0, two_pi), random_float64(0, two_pi))
+            phases[i] += MFloat[2](random_float64(0, two_pi), random_float64(0, two_pi))
             
 
 struct SpectralFreeze[window_size: Int](Movable, Copyable):
@@ -53,7 +53,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         self.freeze_gate = False
         self.asr = ASREnv(self.world)
 
-    fn next(mut self, sample: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]:
+    fn next(mut self, sample: MFloat[2]) -> MFloat[2]:
         self.m.update(self.freeze_gate, "freeze_gate")
         env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
         freeze = self.freeze.next_stereo(sample)

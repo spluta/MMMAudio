@@ -28,8 +28,8 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
     """
     var result: List[ComplexSIMD[DType.float64, Self.num_chans]]
     var reversed: List[ComplexSIMD[DType.float64, Self.num_chans]]   
-    var mags: List[SIMD[DType.float64, Self.num_chans]]
-    var phases: List[SIMD[DType.float64, Self.num_chans]]
+    var mags: List[MFloat[Self.num_chans]]
+    var phases: List[MFloat[Self.num_chans]]
     var w_ms: List[ComplexSIMD[DType.float64, Self.num_chans]]
     var bit_reverse_lut: List[Int]
     var packed_freq: List[ComplexSIMD[DType.float64, Self.num_chans]]
@@ -53,15 +53,15 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         self.window_size = window_size
         self.result = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=window_size // 2)
         self.reversed = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=window_size)
-        self.mags = List[SIMD[DType.float64, Self.num_chans]](capacity=window_size // 2 + 1)
-        self.phases = List[SIMD[DType.float64, Self.num_chans]](capacity=window_size // 2 + 1)
+        self.mags = List[MFloat[Self.num_chans]](capacity=window_size // 2 + 1)
+        self.phases = List[MFloat[Self.num_chans]](capacity=window_size // 2 + 1)
         for _ in range(window_size // 2):
             self.result.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
         for _ in range(window_size):
             self.reversed.append(ComplexSIMD[DType.float64, Self.num_chans](0.0, 0.0))
         for _ in range(window_size//2 + 1):
-            self.mags.append(SIMD[DType.float64, Self.num_chans](0.0))
-            self.phases.append(SIMD[DType.float64, Self.num_chans](0.0))
+            self.mags.append(MFloat[Self.num_chans](0.0))
+            self.phases.append(MFloat[Self.num_chans](0.0))
         self.w_ms = List[ComplexSIMD[DType.float64, Self.num_chans]](capacity=self.log_n // 2)
         for i in range(self.log_n // 2):
             self.w_ms.append(ComplexSIMD[DType.float64, Self.num_chans](
@@ -99,7 +99,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             n >>= 1
         return result
 
-    fn fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]]):
+    fn fft(mut self, input: List[MFloat[Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the internal `mags` and `phases` lists.
@@ -113,7 +113,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             self.mags[i] = self.result[i].norm()
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
-    fn fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]], mut mags: List[SIMD[DType.float64, Self.num_chans]], mut phases: List[SIMD[DType.float64, Self.num_chans]]):
+    fn fft(mut self, input: List[MFloat[Self.num_chans]], mut mags: List[MFloat[Self.num_chans]], mut phases: List[MFloat[Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the provided lists.
@@ -130,7 +130,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
     @doc_private
-    fn _compute_fft(mut self, input: List[SIMD[DType.float64, Self.num_chans]]):
+    fn _compute_fft(mut self, input: List[MFloat[Self.num_chans]]):
         for i in range(self.window_size // 2):
             var real_part = input[2 * i]
             var imag_part = input[2 * i + 1]
@@ -165,9 +165,9 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
                 # DC components
                 var X_even_0 = (self.result[0].re + self.result[0].re) * 0.5  # Real part
                 var X_odd_0 = (self.result[0].im + self.result[0].im) * 0.5   # Imag part
-                self.unpacked[0] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 + X_odd_0, SIMD[DType.float64, Self.num_chans](0.0))
+                self.unpacked[0] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 + X_odd_0, MFloat[Self.num_chans](0.0))
                 if self.window_size > 1:
-                    self.unpacked[self.window_size // 2] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 - X_odd_0, SIMD[DType.float64, Self.num_chans](0.0))
+                    self.unpacked[self.window_size // 2] = ComplexSIMD[DType.float64, Self.num_chans](X_even_0 - X_odd_0, MFloat[Self.num_chans](0.0))
             elif k < self.window_size // 2:
                 var Gk = self.result[k]
                 var Gk_conj = self.result[self.window_size // 2 - k].conj()
@@ -186,7 +186,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         for i in range(self.window_size):
             self.result[i] = self.unpacked[i]
 
-    fn ifft(mut self, mut output: List[SIMD[DType.float64, Self.num_chans]]):
+    fn ifft(mut self, mut output: List[MFloat[Self.num_chans]]):
         """Compute the inverse FFT using the internal magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -207,7 +207,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         
         self._compute_inverse_fft(output)
 
-    fn ifft(mut self, mags: List[SIMD[DType.float64, Self.num_chans]], phases: List[SIMD[DType.float64, Self.num_chans]], mut output: List[SIMD[DType.float64, Self.num_chans]]):
+    fn ifft(mut self, mags: List[MFloat[Self.num_chans]], phases: List[MFloat[Self.num_chans]], mut output: List[MFloat[Self.num_chans]]):
         """Compute the inverse FFT using the provided magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -231,12 +231,12 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         self._compute_inverse_fft(output)
 
     @doc_private
-    fn _compute_inverse_fft(mut self, mut output: List[SIMD[DType.float64, Self.num_chans]]):
+    fn _compute_inverse_fft(mut self, mut output: List[MFloat[Self.num_chans]]):
         for k in range(1, self.window_size // 2):  # k=1 to size//2-1
             self.result[self.window_size - k] = self.result[k].conj()
 
-        self.result[0] = ComplexSIMD[DType.float64, Self.num_chans](self.result[0].re, SIMD[DType.float64, Self.num_chans](0.0))
-        self.result[self.window_size // 2] = ComplexSIMD[DType.float64, Self.num_chans](self.result[self.window_size // 2].re, SIMD[DType.float64, Self.num_chans](0.0))
+        self.result[0] = ComplexSIMD[DType.float64, Self.num_chans](self.result[0].re, MFloat[Self.num_chans](0.0))
+        self.result[self.window_size // 2] = ComplexSIMD[DType.float64, Self.num_chans](self.result[self.window_size // 2].re, MFloat[Self.num_chans](0.0))
         
         #  this should be a variable, but it won't let me make it one!
         for i in range(self.window_size):

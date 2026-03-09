@@ -56,7 +56,7 @@ struct MessengerExample(Copyable, Movable):
         self.ints = [0, 0]
         self.string = ""
         self.strings = ["", ""]
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         
         if self.m.notify_update(self.bool,"bool"):
@@ -90,7 +90,7 @@ struct MessengerExample(Copyable, Movable):
         if self.m.notify_trig("trig"):
             print("Received trig")
 
-        out = SIMD[DType.float64, 2](0.0, 0.0)
+        out = MFloat[2](0.0, 0.0)
         for i in range(2):
             out[i] = self.tones[i].next()
 

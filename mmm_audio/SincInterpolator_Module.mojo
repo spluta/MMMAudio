@@ -134,7 +134,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         var sinc_crossfade = octave - octave_floor
         
         var layer_clamped = min(layer, self.max_layer)
-        selector: SIMD[DType.bool, 1] = (layer >= self.max_layer)
+        selector: MBool[1] = (layer >= self.max_layer)
         sinc_crossfade = selector.select(0.0, sinc_crossfade)
         layer = layer_clamped
         
@@ -147,8 +147,8 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         
         sinc1 = self.spaced_sinc[num_chans, bWrap, mask](data, index_floor, frac, spacing1)
         
-        sel0: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=(sinc_crossfade == 0.0))
-        sel1: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](fill=(layer < 12))
+        sel0: MBool[num_chans] = MBool[num_chans](fill=(sinc_crossfade == 0.0))
+        sel1: MBool[num_chans] = MBool[num_chans](fill=(layer < 12))
         sinc2 = sel0.select(0.0, sel1.select(self.spaced_sinc[num_chans,bWrap,mask](data, index_floor, frac, spacing2),0.0))
         
         return sinc1 + sinc_crossfade * (sinc2 - sinc1)
@@ -351,7 +351,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
 #         var sinc_crossfade = octave - octave_floor
         
 #         var layer_clamped = min(layer, self.max_layer)
-#         selector: SIMD[DType.bool, 1] = (layer >= self.max_layer)
+#         selector: MBool[1] = (layer >= self.max_layer)
 #         sinc_crossfade = selector.select(0.0, sinc_crossfade)
 #         layer = layer_clamped
         

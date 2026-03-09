@@ -29,7 +29,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
 
 
 
-    fn next(mut self) -> SIMD[DType.float64, Self.N]:
+    fn next(mut self) -> MFloat[Self.N]:
         sample = self.noise.next()  # Get the next white noise sample
         freq = linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 24000.0)
         q = linexp(self.world[].mouse_y, 0.0, 1.0, 0.01, 1.04)

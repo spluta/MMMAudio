@@ -116,11 +116,11 @@ with open('mmm_audio/windows_waveforms.mojo', 'w') as f:
         f.write(']\n\n')
     
     # Write pan2 window
-    f.write('comptime pan2_window: InlineArray[SIMD[DType.float64, 2], 256] = [\n')
+    f.write('comptime pan2_window: InlineArray[MFloat[2], 256] = [\n')
     values_per_line = 5
     for i in range(0, len(pan2_window), values_per_line):
         chunk = pan2_window[i:i + values_per_line]
-        line = ', '.join(f'SIMD[DType.float64, 2]({left:.17g}, {right:.17g})' for left, right in chunk)
+        line = ', '.join(f'MFloat[2]({left:.17g}, {right:.17g})' for left, right in chunk)
         if i + values_per_line < len(pan2_window):
             f.write(f'    {line},\n')
         else:

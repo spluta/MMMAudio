@@ -18,13 +18,13 @@ struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
         self.overdrive = TanhAD[Self.num_chans](world)
         self.lag = Lag(world)
 
-    fn next(mut self) -> SIMD[DType.float64, Self.num_chans]:
+    fn next(mut self) -> MFloat[Self.num_chans]:
         sample = self.osc.next(self.world[].mouse_y * 40.0 + 20)  # Get the next white noise sample
         gain = self.lag.next(self.world[].mouse_x * (20.0)) + 1.0
 
         sample2 = self.clip.next(sample*gain) 
         # sample = self.overdrive.next(sample*gain)
-        return SIMD[DType.float64, self.num_chans](sample, sample2)*0.5
+        return MFloat[self.num_chans](sample, sample2)*0.5
 
 
         

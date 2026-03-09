@@ -23,7 +23,7 @@ struct MFCCExample(Movable, Copyable):
         self.print_counter = 0
         self.update_modulus = 50
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         
         self.m.update(self.update_modulus,"update_modulus")
         flute = self.playBuf.next(self.buffer)
@@ -44,4 +44,4 @@ struct MFCCExample(Movable, Copyable):
                 # print the results
             self.print_counter += 1
         
-        return SIMD[DType.float64, 2](flute, flute)
+        return MFloat[2](flute, flute)

@@ -40,7 +40,7 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.m.update(self.amp_env_params.curves,"amp_curves")
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         self.m.update(self.cfreq,"c_freq")
         self.m.update(self.mfreq,"m_freq")

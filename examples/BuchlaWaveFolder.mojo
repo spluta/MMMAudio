@@ -17,7 +17,7 @@ struct BuchlaWaveFolder(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         amp = self.lag.next(self.world[].mouse_x * 39.0) + 1
 
         sample = self.osc.next_basic_waveforms(40)

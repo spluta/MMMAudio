@@ -35,7 +35,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         for i in range(0, len(mags)):
             read = self.delays[i].read(Float64(self.delay_times[i]) * self.one_samp)
-            write = SIMD[DType.float64, 2](mags[i] + read[0] * self.feedback[i], phases[i] + read[1] * self.feedback[i])
+            write = MFloat[2](mags[i] + read[0] * self.feedback[i], phases[i] + read[1] * self.feedback[i])
             self.delays[i].write(write)
             mags[i] = read[0]
             phases[i] = read[1]

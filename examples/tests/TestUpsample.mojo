@@ -14,11 +14,11 @@ struct TestUpsample(Movable, Copyable):
         self.upsampler = Upsampler[1, times_oversample](world)
         self.messenger = Messenger(world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         sample = self.osc.next(self.world[].mouse_y * 200.0 + 20.0, osc_type = OscType.triangle)
         sample2 = 0.0
         for i in range(times_oversample):
             sample2 = self.upsampler.next(sample, i)
 
-        return SIMD[DType.float64, 2](sample, sample2) * 0.2
+        return MFloat[2](sample, sample2) * 0.2

@@ -21,7 +21,7 @@ trait BufferedProcessable(Movable, Copyable):
     fn next_window(mut self, mut samples: List[Float64]) -> None:
         return None
 
-    fn next_stereo_window(mut self, mut samples: List[SIMD[DType.float64, 2]]) -> None:
+    fn next_stereo_window(mut self, mut samples: List[MFloat[2]]) -> None:
         return None
     
     fn get_messages(mut self) -> None:

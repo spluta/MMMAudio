@@ -28,7 +28,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.m.update(self.x, "x")
         self.m.update(self.y, "y")
         self.m.update(self.is_down, "mouse_down")
@@ -36,12 +36,12 @@ struct VariableOsc(Representable, Movable, Copyable):
         env = self.asr.next(0.05, 1, 0.05, self.is_down)
 
         # freq = self.world[].mouse_y
-        freq = SIMD[DType.float64, 2](1-self.y, self.y)
+        freq = MFloat[2](1-self.y, self.y)
         freq = self.lag.next(freq)
         freq = linexp(freq, 0.0, 1.0, 100, 10000)
 
         # osc_frac = self.world[].mouse_x
-        osc_frac = SIMD[DType.float64, 2](1-self.x, self.x)
+        osc_frac = MFloat[2](1-self.x, self.x)
         sample = self.osc.next_basic_waveforms(freq, osc_frac = osc_frac)
 
         return sample * 0.1 * env

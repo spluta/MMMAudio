@@ -55,7 +55,7 @@ struct TorchSynth(Movable, Copyable):
         self.dc2 = DCTrap(self.world)
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.model.model_input[0] = self.world[].mouse_x
         self.model.model_input[1] = self.world[].mouse_y
 
@@ -106,7 +106,7 @@ struct TorchSynth(Movable, Copyable):
         osc2 = self.dc2.next(osc2)
         self.fb = osc2
 
-        return SIMD[DType.float64, 2](osc1, osc2) * 0.1
+        return MFloat[2](osc1, osc2) * 0.1
 
 
 # THE GRAPH
@@ -120,5 +120,5 @@ struct TorchMlp(Movable, Copyable):
 
         self.torch_synth = TorchSynth(self.world)  # Initialize the TorchSynth with the world instance
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         return self.torch_synth.next()

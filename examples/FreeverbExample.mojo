@@ -36,14 +36,14 @@ struct FreeverbSynth(Copyable, Movable):
         self.m = Messenger(self.world)
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         self.m.update(self.room_size,"room_size")
         self.m.update(self.lpf_comb,"lpf_comb")
         self.m.update(self.added_space,"added_space")
         self.m.update(self.mix,"mix")
 
-        added_space_simd = SIMD[DType.float64, num_chans](self.added_space, self.added_space * 0.99)
+        added_space_simd = MFloat[num_chans](self.added_space, self.added_space * 0.99)
         out = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
         out = self.freeverb.next(out, self.room_size, self.lpf_comb, added_space_simd) * 0.1 * self.mix + out * (1.0 - self.mix)
         return out
@@ -61,6 +61,6 @@ struct FreeverbExample(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Freeverb_Graph")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
-        #return SIMD[DType.float64, 2](0.0)
+    fn next(mut self) -> MFloat[2]:
+        #return MFloat[2](0.0)
         return self.freeverb_synth.next()  # Return the combined output sample

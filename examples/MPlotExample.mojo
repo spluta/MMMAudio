@@ -19,7 +19,7 @@ struct MPlotExample(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("MPlotExample")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         if self.m.notify_update(self.path, "load_sound"):
             self.buf = Buffer.load(self.path)

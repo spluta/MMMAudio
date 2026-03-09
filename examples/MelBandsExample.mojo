@@ -40,7 +40,7 @@ struct MelBandsExample(Movable, Copyable):
 
         self.freqs = MelBands.mel_frequencies(num_bands,20.0,20000.0)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         
         self.m.update(self.viz_mul,"viz_mul")
         self.m.update(self.mix,"mix")

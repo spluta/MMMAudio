@@ -23,7 +23,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Default")
 
-    fn next(mut self) -> SIMD[DType.float64, 8]:
+    fn next(mut self) -> MFloat[8]:
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.num_speakers, "num_speakers")
         self.messenger.update(self.width, "width")
@@ -32,9 +32,9 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         panned = pan_az[8](self.osc.next(self.freq, osc_type=2), self.pan_osc.next(0.1), self.num_speakers, self.width) * 0.1
 
         if self.num_speakers == 2:
-            return SIMD[DType.float64, 8](panned[0], panned[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+            return MFloat[8](panned[0], panned[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
         else:
-            return SIMD[DType.float64, 8](panned[0], panned[2], panned[1], 0.0, panned[6], panned[3], panned[5], panned[4])
+            return MFloat[8](panned[0], panned[2], panned[1], 0.0, panned[6], panned[3], panned[5], panned[4])
 
 
 # there can only be one graph in an MMMAudio instance
@@ -50,7 +50,7 @@ struct PanAzExample(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("PanAzExample")
 
-    fn next(mut self) -> SIMD[DType.float64, 8]:
+    fn next(mut self) -> MFloat[8]:
 
         sample = self.synth.next()  # Get the next sample from the synth
 

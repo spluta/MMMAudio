@@ -40,7 +40,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.main = True
 
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
 
         self.m.update(self.play,"play")
         self.m.update(self.feedback,"feedback")
@@ -52,10 +52,10 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.m.update(self.main,"main")
 
         var sample = self.playBuf.next[num_chans=2](self.buf, 1 if self.play else 0)  # Read samples from the buffer
-        deltime = self.delay_time_lag.next(SIMD[DType.float64, 2](self.delaytime_m, self.delaytime_m * 0.9))
+        deltime = self.delay_time_lag.next(MFloat[2](self.delaytime_m, self.delaytime_m * 0.9))
 
 
-        fb = SIMD[DType.float64, 2](dbamp(self.feedback), dbamp(self.feedback) * 0.9)
+        fb = MFloat[2](dbamp(self.feedback), dbamp(self.feedback) * 0.9)
 
         delays = self.delays.next(sample * self.gate_lag.next(1 if self.delay_input else 0), deltime, fb)
         delays = self.svf.lpf(delays, self.ffreq, self.q)
@@ -79,5 +79,5 @@ struct FeedbackDelaysGUI(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("FeedbackDelays")
 
-    fn next(mut self: FeedbackDelaysGUI) -> SIMD[DType.float64, 2]:
+    fn next(mut self: FeedbackDelaysGUI) -> MFloat[2]:
         return self.delay_synth.next()  # Return the combined output sample

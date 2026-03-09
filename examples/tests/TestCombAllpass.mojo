@@ -27,7 +27,7 @@ struct TestCombAllpass(Movable, Copyable):
         self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
         self.delay_time = 0.1
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.which, "which_fx")
         self.messenger.update(self.delay_time, "delay_time")
 
@@ -41,4 +41,4 @@ struct TestCombAllpass(Movable, Copyable):
 
         filt = select(self.which, [comb0, allpass0, comb1, allpass1, lp_comb])
 
-        return SIMD[DType.float64, 2](sample, filt)
+        return MFloat[2](sample, filt)

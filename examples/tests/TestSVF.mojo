@@ -21,10 +21,10 @@ struct TestSVF(Movable, Copyable):
         for i in range(2):
             self.filts[i] = Biquad(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.freq,"freq")
         sample = self.osc.next(self.freq) 
-        outs = SIMD[DType.float64, 2](0.0,0.0)
+        outs = MFloat[2](0.0,0.0)
         self.cutoff = linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 20000.0)
         self.messenger.update(self.res,"res")
         outs[0] = self.filts[0].lpf(sample, self.cutoff, self.res)

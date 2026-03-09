@@ -35,42 +35,42 @@ def test_sound_file_reader():
         print("Error reading WAV file: ", err)
 
 def test_cpsmidi_midicps():
-    midi_notes = SIMD[DType.float64, 4](60.0, 69.0, 72.0, 81.0)
+    midi_notes = MFloat[4](60.0, 69.0, 72.0, 81.0)
     frequencies = midicps(midi_notes)
     recovered_midi = cpsmidi(frequencies)
     assert_almost_equal(midi_notes,recovered_midi,"Test: cpsmidi and midicps inversion failed")
 
 def test_linear_interp():
-    a = SIMD[DType.float64, 4](0.0, 10.0, 20.0, 30.0)
-    b = SIMD[DType.float64, 4](10.0, 20.0, 30.0, 40.0)
-    t = SIMD[DType.float64, 4](0.0, 0.5, 1.0, 0.25)
+    a = MFloat[4](0.0, 10.0, 20.0, 30.0)
+    b = MFloat[4](10.0, 20.0, 30.0, 40.0)
+    t = MFloat[4](0.0, 0.5, 1.0, 0.25)
     result = linear_interp(a, b, t)
-    expected = SIMD[DType.float64, 4](0.0, 15.0, 30.0, 32.5)
+    expected = MFloat[4](0.0, 15.0, 30.0, 32.5)
     assert_almost_equal(result, expected, "Test: lerp function failed")
 
 def test_sanitize():
     nan = nan[DType.float64]()
     pos_inf = inf[DType.float64]()
     neg_inf = -inf[DType.float64]()
-    values = SIMD[DType.float64, 4](1.0, nan, pos_inf, neg_inf)
+    values = MFloat[4](1.0, nan, pos_inf, neg_inf)
     sanitized = sanitize(values)
-    expected = SIMD[DType.float64, 4](1.0, 0.0, 0.0, 0.0)
+    expected = MFloat[4](1.0, 0.0, 0.0, 0.0)
     assert_almost_equal(sanitized, expected, "Test: sanitize function failed: ")
 
 def test_mel_to_hz():
     """Compare mel_to_hz against librosa's implementation."""
-    librosa_results = SIMD[DType.float64, 8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
-    mels = SIMD[DType.float64, 8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
-    mmm_results = SIMD[DType.float64, 8]()
+    librosa_results = MFloat[8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
+    mels = MFloat[8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
+    mmm_results = MFloat[8]()
     for i in range(8):
         mmm_results[i] = MelBands.mel_to_hz(mels[i])
     assert_almost_equal(mmm_results, librosa_results, "Test: mel_to_hz function failed")
 
 def test_hz_to_mel():
     """Compare hz_to_mel against librosa's implementation."""
-    librosa_results = SIMD[DType.float64, 8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
-    hz_values = SIMD[DType.float64, 8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
-    mmm_results = SIMD[DType.float64, 8]()
+    librosa_results = MFloat[8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
+    hz_values = MFloat[8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
+    mmm_results = MFloat[8]()
     for i in range(8):
         mmm_results[i] = MelBands.hz_to_mel(hz_values[i])
     assert_almost_equal(mmm_results, librosa_results, "Test: hz_to_mel function failed")
@@ -80,8 +80,8 @@ def test_diff():
     expected = List[Float64]([1.5, 1.5, 3.0, 3.0])
     result = diff(arr)
 
-    result_simd = SIMD[DType.float64, 4](result[0], result[1], result[2], result[3])
-    expected_simd = SIMD[DType.float64, 4](expected[0], expected[1], expected[2], expected[3])
+    result_simd = MFloat[4](result[0], result[1], result[2], result[3])
+    expected_simd = MFloat[4](expected[0], expected[1], expected[2], expected[3])
     assert_almost_equal(result_simd, expected_simd, "Test: diff function failed")
 
 def test_linspace():
@@ -89,8 +89,8 @@ def test_linspace():
     stop = 1.0
     num = 8
     result = linspace(start, stop, num)
-    result_simd = SIMD[DType.float64, 8](result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7])
-    expected = SIMD[DType.float64, 8](0.0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1.0)
+    result_simd = MFloat[8](result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7])
+    expected = MFloat[8](0.0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1.0)
     assert_almost_equal(result_simd, expected, "Test: linspace function failed")
 
 def test_mel_frequencies():
@@ -98,20 +98,20 @@ def test_mel_frequencies():
     fmin = 20.0
     fmax = 20000.0
     result = MelBands.mel_frequencies(num_mel_bins, fmin, fmax)
-    result_simd = SIMD[DType.float64, 32]()
+    result_simd = MFloat[32]()
     for i in range(32):
         result_simd[i] = result[i]
-    expected = SIMD[DType.float64, 32](20.0, 145.31862602399627, 270.63725204799255, 395.95587807198876, 521.274504095985, 646.5931301199813, 771.9117561439776, 897.2303821679739, 1023.526754399107, 1164.733656827089, 1325.421622361244, 1508.2782803824396, 1716.3620486443097, 1953.15328765427, 2222.6125123704865, 2529.2466348500357, 2878.184345807327, 3275.2618958971248, 3727.120711479871, 4241.318477567799, 4826.455545899264, 5492.318782413196, 6250.04526008295, 7112.308534997669, 8093.530621301341, 9210.123210432963, 10480.762169244366, 11926.699908187227, 13572.120844166513, 15444.545903449043, 17575.292830248403, 19999.999999999996)
+    expected = MFloat[32](20.0, 145.31862602399627, 270.63725204799255, 395.95587807198876, 521.274504095985, 646.5931301199813, 771.9117561439776, 897.2303821679739, 1023.526754399107, 1164.733656827089, 1325.421622361244, 1508.2782803824396, 1716.3620486443097, 1953.15328765427, 2222.6125123704865, 2529.2466348500357, 2878.184345807327, 3275.2618958971248, 3727.120711479871, 4241.318477567799, 4826.455545899264, 5492.318782413196, 6250.04526008295, 7112.308534997669, 8093.530621301341, 9210.123210432963, 10480.762169244366, 11926.699908187227, 13572.120844166513, 15444.545903449043, 17575.292830248403, 19999.999999999996)
     assert_almost_equal(result_simd, expected, "Test: mel_frequencies function failed")
 
 def test_fft_frequencies():
     sample_rate = 44100.0
     n_fft = 512
     result = RealFFT.fft_frequencies(sample_rate, n_fft)
-    result_simd = SIMD[DType.float64, 8]()
+    result_simd = MFloat[8]()
     for i in range(8):
         result_simd[i] = result[i]
-    expected = SIMD[DType.float64, 8](0.0, 86.1328125, 172.265625, 258.3984375, 344.53125, 430.6640625, 516.796875, 602.9296875)
+    expected = MFloat[8](0.0, 86.1328125, 172.265625, 258.3984375, 344.53125, 430.6640625, 516.796875, 602.9296875)
     assert_almost_equal(result_simd, expected, "Test: fft_frequencies function failed")
 
 def test_dct():

@@ -54,7 +54,7 @@ struct Record_Synth(Representable, Movable, Copyable):
         print("Recorded duration:", self.note_time, "seconds")
         print("Recording stopped. Now playing.")
 
-    fn next(mut self) -> SIMD[DType.float64, 1]:
+    fn next(mut self) -> MFloat[1]:
         if self.messenger.notify_update(self.input_chan,"set_input_chan"):
             if self.input_chan < 0 and self.input_chan >= self.world[].num_in_chans:
                 print("Input channel out of range, resetting to 0")
@@ -99,5 +99,5 @@ struct Record(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Record")
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         return self.synth.next()

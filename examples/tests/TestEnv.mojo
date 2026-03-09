@@ -21,7 +21,7 @@ struct TestEnv(Movable, Copyable):
         self.impulse = Impulse(self.world)
         self.mul = 0.1
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.mul, "mul")
         trig = self.impulse.next_bool(1.0)
         self.env_params.time_warp = linexp(self.world[].mouse_x, 0.0, 1.0, 0.1, 10.0)

@@ -4,7 +4,7 @@ from sys import simd_width_of
 from mmm_audio import *
 
 @always_inline
-fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
+fn pan2(samples: Float64, pan: Float64) -> MFloat[2]:
     """
     Simple constant power panning function.
 
@@ -13,35 +13,35 @@ fn pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]:
         pan: Float64 - Pan value from -1.0 (left) to 1.0 (right).
 
     Returns:
-        Stereo output as SIMD[DType.float64, 2].
+        Stereo output as MFloat[2].
     """
 
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
-    var gains = SIMD[DType.float64, 2](-pan2, pan2)
+    var gains = MFloat[2](-pan2, pan2)
 
     samples_out = samples * sqrt((1 + gains) * 0.5)
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn pan_stereo(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]:
+fn pan_stereo(samples: MFloat[2], pan: Float64) -> MFloat[2]:
     """
     Simple constant power panning function for stereo samples.
 
     Args:
-        samples: SIMD[DType.float64, 2] - Stereo input sample.
+        samples: MFloat[2] - Stereo input sample.
         pan: Float64 - Pan value from -1.0 (left) to 1.0 (right).
 
     Returns:
-        Stereo output as SIMD[DType.float64, 2].
+        Stereo output as MFloat[2].
     """
     var pan2 = clip(pan, -1.0, 1.0)  # Ensure pan is set and clipped before processing
-    var gains = SIMD[DType.float64, 2](-pan2, pan2)
+    var gains = MFloat[2](-pan2, pan2)
 
     samples_out = samples * sqrt((1 + gains) * 0.5)
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World) -> SIMD[DType.float64, 2]:
+fn splay[num_simd: Int](input: List[MFloat[num_simd]], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -52,14 +52,14 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World
         world: Pointer to MMMWorld containing the pan_window.
 
     Returns:
-        Stereo output as SIMD[DType.float64, 2].
+        Stereo output as MFloat[2].
     """
     num_input_channels = len(input) * num_simd
-    out = SIMD[DType.float64, 2](0.0)
+    out = MFloat[2](0.0)
 
     for i in range(num_input_channels):
         if num_input_channels == 1:
-            out = input[0][0] * SIMD[DType.float64, 2](0.7071, 0.7071)
+            out = input[0][0] * MFloat[2](0.7071, 0.7071)
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
@@ -79,7 +79,7 @@ fn splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: World
     return out
 
 @always_inline
-fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: World) -> SIMD[DType.float64, 2]:
+fn splay[num_input_channels: Int](input: MFloat[num_input_channels], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -90,13 +90,13 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
         world: Pointer to MMMWorld containing the pan_window.
     
     Returns:
-        Stereo output as SIMD[DType.float64, 2].
+        Stereo output as MFloat[2].
     """
-    out = SIMD[DType.float64, 2](0.0)
+    out = MFloat[2](0.0)
 
     for i in range(num_input_channels):
         if num_input_channels == 1:
-            out = input[0] * SIMD[DType.float64, 2](0.7071, 0.7071)
+            out = input[0] * MFloat[2](0.7071, 0.7071)
         else:
             pan = Float64(i) / Float64(num_input_channels - 1)
 
@@ -113,7 +113,7 @@ fn splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels]
     return out
 
 @always_inline
-fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]:
+fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> MFloat[simd_out_size]:
     """
     Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
 
@@ -128,7 +128,7 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
         orientation: Orientation offset of the speaker array (default is 0.5).
 
     Returns:
-        SIMD[DType.float64, simd_out_size]: The panned output sample for each speaker.
+        MFloat[simd_out_size]: The panned output sample for each speaker.
     """
 
     var rwidth = 1.0 / width
@@ -139,14 +139,14 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
     var aligned_pos_const = width * 0.5 + orientation
     var constant = pan * 2.0 * aligned_pos_fac + aligned_pos_const
 
-    out = SIMD[DType.float64, simd_out_size](0.0)
+    out = MFloat[simd_out_size](0.0)
 
     comptime simd_width: Int = simd_width_of[DType.float64]() * 2
 
     @parameter
     fn process_speakers[simd_width: Int](i: Int) unified {mut}:
         # Create index vector
-        var indices = SIMD[DType.float64, simd_width]()
+        var indices = MFloat[simd_width]()
         for j in range(simd_width):
             indices[j] = i + j
         
@@ -155,8 +155,8 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
         pos = (pos - frange * floor(rrange * pos)) * pi
         
         # Compute chan_amp with conditional
-        var mask: SIMD[DType.bool, simd_width] = pos.lt(pi)
-        sig = mask.select(sin(pos), SIMD[DType.float64, simd_width](0.0)) * sample
+        var mask: MBool[simd_width] = pos.lt(pi)
+        sig = mask.select(sin(pos), MFloat[simd_width](0.0)) * sample
         for j in range(simd_width):
             out[Int(i + j)] = sig[j]
 
@@ -176,7 +176,7 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     """
     var output: List[Float64]  # Output list for stereo output
     var world: World
-    var mul_list: List[SIMD[DType.float64, Self.num_channels]]
+    var mul_list: List[MFloat[Self.num_channels]]
 
     fn __init__(out self, world: World):
         """
@@ -188,13 +188,13 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
         self.output = [0.0, 0.0]  # Initialize output list for stereo output
         self.world = world
 
-        js = SIMD[DType.float64, self.num_channels](0.0, 1.0)
+        js = MFloat[self.num_channels](0.0, 1.0)
         @parameter
         if self.num_channels > 2:
             for j in range(self.num_channels):
                 js[j] = Float64(j)
 
-        self.mul_list = [SIMD[DType.float64, self.num_channels](0.0) for _ in range(self.pan_points)]
+        self.mul_list = [MFloat[self.num_channels](0.0) for _ in range(self.pan_points)]
         for i in range(self.pan_points):
             pan = Float64(i) * Float64(self.num_channels - 1) / Float64(self.pan_points - 1)
 
@@ -211,16 +211,16 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
                 self.mul_list[i][j] = cos(d[j] * pi_over_2)
 
     @always_inline
-    fn next[num_simd: Int](mut self, input: List[SIMD[DType.float64, num_simd]]) -> SIMD[DType.float64, self.num_channels]:
+    fn next[num_simd: Int](mut self, input: List[MFloat[num_simd]]) -> MFloat[self.num_channels]:
         """Evenly distributes multiple input channels to num_channels of output channels.
 
         Args:
             input: List of input samples from multiple channels.
 
         Returns:
-            SIMD[DType.float64, self.num_channels]: The panned output sample for each output channel.
+            MFloat[self.num_channels]: The panned output sample for each output channel.
         """
-        out = SIMD[DType.float64, self.num_channels](0.0)
+        out = MFloat[self.num_channels](0.0)
 
         in_len = len(input) * num_simd
         if in_len == 0:

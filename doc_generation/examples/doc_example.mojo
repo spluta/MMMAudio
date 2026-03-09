@@ -96,9 +96,9 @@ struct AudioBuffer:
             self.data[index] = value
 
 
-fn generate_sine_wave[N: Int = 1](frequency: SIMD[DType.float64, N], 
-                                  phase: SIMD[DType.float64, N], 
-                                  sample_rate: Float64 = 44100.0) -> SIMD[DType.float64, N]:
+fn generate_sine_wave[N: Int = 1](frequency: MFloat[N], 
+                                  phase: MFloat[N], 
+                                  sample_rate: Float64 = 44100.0) -> MFloat[N]:
     """Generate sine wave samples at specified frequency and phase.
     
     This function generates sine wave samples using SIMD operations for optimal
@@ -121,19 +121,19 @@ fn generate_sine_wave[N: Int = 1](frequency: SIMD[DType.float64, N],
         sample = generate_sine_wave(440.0, 0.0)
         
         # Generate 4 different frequencies simultaneously
-        freqs = SIMD[DType.float64, 4](440.0, 880.0, 1320.0, 1760.0)
-        phases = SIMD[DType.float64, 4](0.0, 0.0, 0.0, 0.0)
+        freqs = MFloat[4](440.0, 880.0, 1320.0, 1760.0)
+        phases = MFloat[4](0.0, 0.0, 0.0, 0.0)
         samples = generate_sine_wave[4](freqs, phases)
     """
     var angular_freq = 2.0 * pi * frequency / sample_rate
     return sin(phase + angular_freq)
 
 
-fn linear_interpolate[N: Int = 1](x0: SIMD[DType.float64, N], 
-                                  y0: SIMD[DType.float64, N],
-                                  x1: SIMD[DType.float64, N], 
-                                  y1: SIMD[DType.float64, N],
-                                  x: SIMD[DType.float64, N]) -> SIMD[DType.float64, N]:
+fn linear_interpolate[N: Int = 1](x0: MFloat[N], 
+                                  y0: MFloat[N],
+                                  x1: MFloat[N], 
+                                  y1: MFloat[N],
+                                  x: MFloat[N]) -> MFloat[N]:
     """Perform linear interpolation between two points using SIMD operations.
     
     This function implements vectorized linear interpolation using the formula:
@@ -160,11 +160,11 @@ fn linear_interpolate[N: Int = 1](x0: SIMD[DType.float64, N],
         result = linear_interpolate(0.0, 1.0, 1.0, 2.0, 0.5)  # Returns 1.5
         
         # Vectorized interpolation of 4 points
-        x0_vec = SIMD[DType.float64, 4](0.0, 1.0, 2.0, 3.0)
-        y0_vec = SIMD[DType.float64, 4](1.0, 2.0, 3.0, 4.0)
-        x1_vec = SIMD[DType.float64, 4](1.0, 2.0, 3.0, 4.0)
-        y1_vec = SIMD[DType.float64, 4](2.0, 3.0, 4.0, 5.0)
-        x_vec = SIMD[DType.float64, 4](0.5, 1.5, 2.5, 3.5)
+        x0_vec = MFloat[4](0.0, 1.0, 2.0, 3.0)
+        y0_vec = MFloat[4](1.0, 2.0, 3.0, 4.0)
+        x1_vec = MFloat[4](1.0, 2.0, 3.0, 4.0)
+        y1_vec = MFloat[4](2.0, 3.0, 4.0, 5.0)
+        x_vec = MFloat[4](0.5, 1.5, 2.5, 3.5)
         
         results = linear_interpolate[4](x0_vec, y0_vec, x1_vec, y1_vec, x_vec)
     """
@@ -174,8 +174,8 @@ fn linear_interpolate[N: Int = 1](x0: SIMD[DType.float64, N],
     return y0 + dy * t
 
 
-fn apply_gain[N: Int = 1](mut signal: SIMD[DType.float64, N], 
-                          gain: SIMD[DType.float64, N]):
+fn apply_gain[N: Int = 1](mut signal: MFloat[N], 
+                          gain: MFloat[N]):
     """Apply gain to audio signal in-place using SIMD operations.
     
     This function multiplies the input signal by the specified gain values.
@@ -190,18 +190,18 @@ fn apply_gain[N: Int = 1](mut signal: SIMD[DType.float64, N],
         
     Examples:
         # Apply 6dB gain boost (linear gain ≈ 2.0)
-        var audio = SIMD[DType.float64, 1](0.5)
+        var audio = MFloat[1](0.5)
         apply_gain(audio, 2.0)  # audio is now 1.0
         
         # Apply different gains to multiple channels
-        var multichannel = SIMD[DType.float64, 4](0.1, 0.2, 0.3, 0.4)
-        var gains = SIMD[DType.float64, 4](1.0, 2.0, 0.5, 1.5)
+        var multichannel = MFloat[4](0.1, 0.2, 0.3, 0.4)
+        var gains = MFloat[4](1.0, 2.0, 0.5, 1.5)
         apply_gain[4](multichannel, gains)
     """
     signal = signal * gain
 
 
-fn generate_white_noise[N: Int = 1](amplitude: SIMD[DType.float64, N] = 1.0) -> SIMD[DType.float64, N]:
+fn generate_white_noise[N: Int = 1](amplitude: MFloat[N] = 1.0) -> MFloat[N]:
     """Generate white noise with specified amplitude.
     
     This function generates uniformly distributed white noise in the range
@@ -221,10 +221,10 @@ fn generate_white_noise[N: Int = 1](amplitude: SIMD[DType.float64, N] = 1.0) -> 
         noise = generate_white_noise(0.1)  # Quiet noise
         
         # Generate multiple noise samples with different amplitudes
-        amplitudes = SIMD[DType.float64, 4](0.1, 0.2, 0.3, 0.4)
+        amplitudes = MFloat[4](0.1, 0.2, 0.3, 0.4)
         noise_samples = generate_white_noise[4](amplitudes)
     """
-    var result = SIMD[DType.float64, N](0.0)
+    var result = MFloat[N](0.0)
     
     for i in range(N):
         # Generate random value in [-1, 1] range

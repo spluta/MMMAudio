@@ -90,7 +90,7 @@ struct TrigSynth(Movable, Copyable):
         self.bend_mul = 1.0
 
     @always_inline
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.filt_freq, "filt_freq")
         if self.messenger.notify_update(self.bend_mul, "bend_mul"):
             # if bend_mul changes, update all the voices
@@ -123,6 +123,6 @@ struct MidiSequencer(Representable, Movable, Copyable):
     fn __repr__(self) -> String:
         return String("Midi_Sequencer")
 
-    fn next(mut self: MidiSequencer) -> SIMD[DType.float64, 2]: 
+    fn next(mut self: MidiSequencer) -> MFloat[2]: 
         return self.trig_synth.next()  # Return the combined output sample
 
