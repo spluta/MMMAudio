@@ -10,8 +10,8 @@ struct ComplexFFTProcessor[T: ComplexFFTProcessable, window_size: Int = 1024](Bu
     var world: World
     var process: Self.T
 
-    var fft: RealFFT[Self.window_size, 1]
-    var fft2: RealFFT[Self.window_size, 2]
+    var fft: RealFFT[1]
+    var fft2: RealFFT[2]
     var mags: List[Float64]
     var phases: List[Float64]
     var st_mags: List[SIMD[DType.float64,2]]
@@ -21,8 +21,8 @@ struct ComplexFFTProcessor[T: ComplexFFTProcessable, window_size: Int = 1024](Bu
     fn __init__(out self, world: World, var process: Self.T):
         self.world = world
         self.process = process^
-        self.fft = RealFFT[Self.window_size, 1]()
-        self.fft2 = RealFFT[Self.window_size, 2]()
+        self.fft = RealFFT[1](Self.window_size)
+        self.fft2 = RealFFT[2](Self.window_size)
         self.mags = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.st_mags = List[SIMD[DType.float64,2]](length=(Self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
@@ -67,7 +67,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
     var world: World
-    var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape]
+    var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.input_window_shape, Self.output_window_shape]
 
     fn __init__(out self, world: World, var process: Self.T):
         """Initializes a `FFTProcess` struct.
@@ -80,7 +80,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_
             An initialized `FFTProcess` struct.
         """
         self.world = world
-        self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.window_size, Self.hop_size, Self.input_window_shape, Self.output_window_shape](self.world, process=ComplexFFTProcessor[Self.T, Self.window_size](self.world, process=process^))
+        self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.input_window_shape, Self.output_window_shape](self.world, process=ComplexFFTProcessor[Self.T, Self.window_size](self.world, process=process^), window_size=Self.window_size, hop_size=Self.hop_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.

@@ -226,7 +226,9 @@ testing/librosa_results
 .venv-257
 venv0257
 mine.worktrees
-*.o
-testing/outputs
+testing/librosa_results
 testing/mojo_results
 testing/validation_results
+testing_mmm_audio/validation/librosa_results
+testing_mmm_audio/validation/mojo_results
+testing_mmm_audio/validation/validation_results

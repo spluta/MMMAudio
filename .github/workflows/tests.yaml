@@ -31,17 +31,17 @@ jobs:
 
       - name: Create Librosa Results for Testing Against
         run: |
-          python testing/librosa_results_for_testing_against.py
+          python testing_mmm_audio/validation/librosa_results_for_testing_against.py
 
       - name: Run UnitTests.mojo
         id: run-tests
         run: |
-          mojo testing/UnitTests.mojo
+          mojo testing_mmm_audio/UnitTests.mojo
 
       - name: Test Building Mojo Files
         run: |
-          python testing/test_build_mojo_files.py
+          python testing_mmm_audio/test_build_mojo_files.py
         
       - name: Validate Against Snapshots
         run: |
-          python testing/validate_against_snapshot.py
+          python testing_mmm_audio/validation/validate_against_snapshot.py

@@ -7,7 +7,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var pitch: Float64
     var pitch_conf: Float64
     var sr: Float64
-    var yin: YIN[Self.window_size, 50, 5000]
+    var yin: YIN
 
     fn __init__(out self, world: World):
         self.world = world
@@ -16,7 +16,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.pitch = 0.0
         self.pitch_conf = 0.0
         self.rms = 0.0
-        self.yin = YIN[Self.window_size, 50, 5000](world)
+        self.yin = YIN(self.sr,Self.window_size,min_freq=50.0, max_freq=5000.0)
 
     fn next_window(mut self, mut frame: List[Float64]):
         self.yin.next_window(frame)
@@ -35,7 +35,7 @@ struct AnalysisExample(Movable, Copyable):
     var buffer: Buffer
     var playBuf: Play
     var freq: Float64
-    var analyzer: BufferedInput[CustomAnalysis[1024],1024,512,WindowType.rect]
+    var analyzer: BufferedInput[CustomAnalysis[1024],WindowType.rect]
     var m: Messenger
     var which: Float64
 
@@ -44,7 +44,7 @@ struct AnalysisExample(Movable, Copyable):
         self.osc = Osc[2](self.world)
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        self.analyzer = BufferedInput[CustomAnalysis[1024],1024,512,WindowType.rect](self.world, CustomAnalysis[1024](self.world))
+        self.analyzer = BufferedInput[CustomAnalysis[1024],WindowType.rect](self.world, CustomAnalysis[1024](self.world), window_size=1024, hop_size=512)
         self.freq = 440.0
         self.m = Messenger(self.world)
         self.which = 0.0

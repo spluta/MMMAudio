@@ -7,13 +7,13 @@ comptime hopsize: Int = 512
 
 struct Analyzer(BufferedProcessable):
     var world: World
-    var fft: RealFFT[windowsize]
+    var fft: RealFFT[]
     var centroids: List[Float64]
     var sample_rate: Float64
 
     fn __init__(out self, world: World, sample_rate: Float64):
         self.world = world
-        self.fft = RealFFT[windowsize]()
+        self.fft = RealFFT[](windowsize)
         self.centroids = List[Float64]()
         self.sample_rate = sample_rate
 
@@ -26,17 +26,18 @@ struct Analyzer(BufferedProcessable):
         return
 
 fn main():
-    world = alloc[MMMWorld](1) 
-    world.init_pointee_move(MMMWorld(44100.0))
+    w = alloc[MMMWorld](1)
+    w.init_pointee_move(MMMWorld(44100.0))
 
     buffer = Buffer.load("resources/Shiverer.wav")
-    playBuf = Play(world)
-    analyzer = BufferedInput[Analyzer,windowsize,hopsize,WindowType.hann](world, Analyzer(world,world[].sample_rate))
+    playBuf = Play(w)
+    analyzer = BufferedInput[Analyzer,WindowType.hann](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
+
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
         analyzer.next(sample)
     
-    pth = "testing/mojo_results/spectral_centroid_mojo_results.csv"
+    pth = "testing_mmm_audio/validation/mojo_results/spectral_centroid_mojo_results.csv"
     try:
         with open(pth, "w") as f:
             f.write("windowsize,",windowsize,"\n")

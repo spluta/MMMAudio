@@ -1,7 +1,10 @@
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QPushButton, QLabel, QHBoxLayout
-from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QSlider, QPushButton, QLabel, QHBoxLayout, QMainWindow, QWidget, QVBoxLayout, QSizePolicy
+from PySide6.QtCore import Qt, Signal, QSize
 from PySide6.QtGui import QPainter, QPen, QBrush
 from PySide6.QtCore import QPointF
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from matplotlib import colors as mcolors
 
 from .python_utils import clip, linlin
 
@@ -171,4 +174,223 @@ class Slider2D(QWidget):
         if event.button() == Qt.LeftButton:
             self.mouse_updown.emit(False)
         
+
+class MPlot(QWidget):
+    def __init__(self, points, mouse_callback=None, xlabel=None, ylabel=None, parent=None):
+        super().__init__(parent)
+        self.mouse_callback = mouse_callback
+        self._pressed_button = None
+        self._modifiers = set()
+        self._points = points
+
+        self.fig = Figure(figsize=(5, 4), dpi=100)
+        self.canvas = FigureCanvas(self.fig)
+        self.canvas.setFocusPolicy(Qt.StrongFocus)
+        self.canvas.setFocus()
+        self.ax = self.fig.add_subplot(111)
+        self.ax.set_aspect("equal", adjustable="box")
+
+        self._scatter = self.ax.scatter(points[:, 0], points[:, 1], s=4, zorder=1)
+        self._highlight_color = mcolors.to_rgba("orange")
+        self._highlight_index = None
+        self._highlight_marker = self.ax.scatter(
+            [],
+            [],
+            s=30,
+            color=self._highlight_color,
+            edgecolors="black",
+            linewidths=0.5,
+            zorder=3,
+            animated=True,  # excluded from normal draws; we blit it ourselves
+        )
+        self._bg = None  # cached background for blitting
     
+        if xlabel:
+            self.ax.set_xlabel(xlabel)
+        if ylabel:
+            self.ax.set_ylabel(ylabel)
+
+        self.canvas.mpl_connect("draw_event", self._on_draw)
+        self.canvas.mpl_connect("motion_notify_event", self._on_motion)
+        self.canvas.mpl_connect("button_press_event", self._on_press)
+        self.canvas.mpl_connect("button_release_event", self._on_release)
+        self.canvas.mpl_connect("key_press_event", self._on_key_press)
+        self.canvas.mpl_connect("key_release_event", self._on_key_release)
+        self.canvas.mpl_connect("scroll_event", self._on_scroll)
+
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.canvas)
+        policy = self.sizePolicy()
+        policy.setHeightForWidth(True)
+        self.setSizePolicy(policy)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return width
+
+    def sizeHint(self):
+        return QSize(500, 500)
+
+    def _on_motion(self, event):
+        # event.xdata, event.ydata are in data coords; None if outside axes
+        if self._pressed_button is None:
+            return
+        self._emit_point(event, is_dragging=True)
+
+    def _on_press(self, event):
+        if event.inaxes != self.ax:
+            return
+        self._pressed_button = event.button
+        self._emit_point(event, is_dragging=False)
+
+    def _on_release(self, event):
+        if event.button == self._pressed_button:
+            self._pressed_button = None
+
+    def _on_scroll(self, event):
+        if event.inaxes != self.ax:
+            return
+        self._emit_point(event, is_dragging=False)
+
+    def _on_key_press(self, event):
+        self._update_modifiers(event, pressed=True)
+
+    def _on_key_release(self, event):
+        self._update_modifiers(event, pressed=False)
+
+    def _update_modifiers(self, event, pressed):
+        if not event.key:
+            return
+        keys = event.key.split("+")
+        for key in keys:
+            if pressed:
+                self._modifiers.add(key)
+            else:
+                self._modifiers.discard(key)
+
+    def _emit_point(self, event, is_dragging):
+        if event.inaxes != self.ax or event.xdata is None or event.ydata is None:
+            return
+        key = self._modifiers_from_event(event)
+        button = event.button if event.button is not None else self._pressed_button
+        step = getattr(event, "step", None)
+        step = step if step != 0 else None
+        dblclick = getattr(event, "dblclick", False)
+        if self.mouse_callback:
+            self.mouse_callback(
+                self,
+                event.xdata,
+                event.ydata,
+                button,
+                is_dragging,
+                key,
+                dblclick,
+                step,
+            )
+
+    def _modifiers_from_event(self, event):
+        gui_event = getattr(event, "guiEvent", None)
+        if gui_event is not None:
+            mods = gui_event.modifiers()
+            names = []
+            if mods & Qt.ShiftModifier:
+                names.append("shift")
+            if mods & Qt.ControlModifier:
+                names.append("cmd")
+            if mods & Qt.AltModifier:
+                names.append("alt")
+            if mods & Qt.MetaModifier:
+                names.append("ctrl")
+            return "+".join(names) if names else None
+        if self._modifiers:
+            return "+".join(sorted(self._modifiers))
+        return None
+
+    def _on_draw(self, event):
+        """Cache the background (without the animated highlight) after every full redraw."""
+        self._bg = self.canvas.copy_from_bbox(self.ax.bbox)
+        # Re-blit the highlight if one is active so it reappears after a resize/zoom
+        if self._highlight_index is not None:
+            self.ax.draw_artist(self._highlight_marker)
+            self.canvas.blit(self.ax.bbox)
+
+    def highlight_index(self, idx):
+        if idx is None or idx < 0 or idx >= len(self._points):
+            return
+        self._highlight_index = idx
+        self._highlight_marker.set_offsets(self._points[idx])
+        if self._bg is not None:
+            # Fast path: restore static background, paint only the orange dot
+            self.canvas.restore_region(self._bg)
+            self.ax.draw_artist(self._highlight_marker)
+            self.canvas.blit(self.ax.bbox)
+        else:
+            # Fallback before the first full draw has happened
+            self.canvas.draw_idle()
+
+
+class MWaveform(QWidget):
+    def __init__(self, wave, slice_points, parent=None):
+        super().__init__(parent)
+        self._slice_points = slice_points
+        self._wave_length = len(wave)
+
+        fig = Figure(figsize=(6, 3), dpi=100)
+        self.canvas = FigureCanvas(fig)
+        self.ax = fig.add_subplot(111)
+
+        self.ax.plot(wave, color="black", linewidth=0.6, alpha=0.85)
+
+        if slice_points is not None and len(slice_points) > 0:
+            self.ax.vlines(
+                slice_points,
+                ymin=wave.min(),
+                ymax=wave.max(),
+                color="steelblue",
+                linewidth=0.6,
+                alpha=0.6,
+                zorder=2,
+            )
+
+        # Create a persistent highlight Polygon (animated=True excludes it from normal draws)
+        self._slice_highlight = self.ax.axvspan(
+            0, 1, color="orange", alpha=0.25, zorder=3, animated=True, visible=False
+        )
+        self._bg = None  # cached background for blitting
+
+        self.ax.set_xlabel("Samples")
+        self.ax.set_ylabel("Amplitude")
+
+        self.canvas.mpl_connect("draw_event", self._on_draw)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.canvas)
+
+    def _on_draw(self, event):
+        """Cache the static background after every full redraw."""
+        self._bg = self.canvas.copy_from_bbox(self.ax.bbox)
+        if self._slice_highlight.get_visible():
+            self.ax.draw_artist(self._slice_highlight)
+            self.canvas.blit(self.ax.bbox)
+
+    def highlight(self, start_frame, num_frames):
+        if num_frames <= 0 or self._wave_length <= 0:
+            return
+
+        start_frame = int(max(0, start_frame))
+        end_frame = int(min(start_frame + num_frames, self._wave_length))
+        if start_frame >= end_frame:
+            return
+
+        # axvspan returns a Rectangle — update its position and width in-place
+        self._slice_highlight.set_x(start_frame)
+        self._slice_highlight.set_width(end_frame - start_frame)
+        self._slice_highlight.set_visible(True)
+
+        if self._bg is not None:
+            self.canvas.restore_region(self._bg)
+            self.ax.draw_artist(self._slice_highlight)
+            self.canvas.blit(self.ax.bbox)
+        else:
+            self.canvas.draw_idle()

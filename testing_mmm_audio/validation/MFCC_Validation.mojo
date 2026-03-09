@@ -8,11 +8,11 @@ comptime min_freq: Float64 = 20.0
 comptime max_freq: Float64 = 20000.0
 
 struct MFCCTestSuite(FFTProcessable):
-    var mfcc: MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize]
+    var mfcc: MFCC
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: World):
-        self.mfcc = MFCC[num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize](w)
+    fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
+        self.mfcc = MFCC[](w[].sample_rate,num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize)
         self.data = List[List[Float64]]()
 
     fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
@@ -20,18 +20,17 @@ struct MFCCTestSuite(FFTProcessable):
         self.data.append(self.mfcc.coeffs.copy())
 
 def main():
-    w = alloc[MMMWorld](1) 
+    w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
-
     mfcc_ts = MFCCTestSuite(w)
-    fftprocess = FFTProcess[MFCCTestSuite,fftsize,hopsize,WindowType.hann](w, mfcc_ts^)
+    fftprocess = FFTProcess[MFCCTestSuite,WindowType.hann](w, mfcc_ts^, window_size=fftsize, hop_size=hopsize)
     buf = Buffer.load("resources/Shiverer.wav")
     for i in range(buf.num_frames):
         _ = fftprocess.next(buf.data[0][i])
 
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    with open("testing/mojo_results/mfcc_mojo_results.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "w") as f:
         f.write("windowsize," + String(fftsize) + "\n")
         f.write("hopsize," + String(hopsize) + "\n")
         f.write("num_coeffs," + String(num_coeffs) + "\n")

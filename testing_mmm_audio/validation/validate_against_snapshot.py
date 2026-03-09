@@ -12,11 +12,11 @@ FLOAT_RE = re.compile(r"[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?")
 
 
 def repo_root() -> str:
-    return os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 
 
 def testing_dir() -> str:
-    return os.path.join(repo_root(), "testing")
+    return os.path.join(repo_root(), "testing_mmm_audio", "validation")
 
 
 def snapshot_path() -> str:

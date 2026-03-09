@@ -1,0 +1,217 @@
+{
+  "created_at": "2026-03-06T01:00:42.154876+00:00",
+  "scripts": {
+    "MFCC_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa",
+          "line": "MMMAudio vs Librosa: Mean Difference = 3.801564, Std Dev = 5.258730",
+          "values": [
+            3.801564,
+            5.25873
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa",
+          "line": "MMMAudio vs FluCoMa: Mean Difference = 23.017341, Std Dev = 55.332058",
+          "values": [
+            23.017341,
+            55.332058
+          ]
+        }
+      ]
+    },
+    "MelBands_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa",
+          "line": "MMMAudio vs Librosa: Mean Difference = 0.062942, Std Dev = 0.276505",
+          "values": [
+            0.062942,
+            0.276505
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa",
+          "line": "MMMAudio vs FluCoMa: Mean Difference = 0.174934, Std Dev = 0.785834",
+          "values": [
+            0.174934,
+            0.785834
+          ]
+        }
+      ]
+    },
+    "RMS_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa RMS",
+          "line": "MMMAudio vs Librosa RMS: Mean Deviation = 0.02 dB, Std Dev = 0.02 dB",
+          "values": [
+            0.02,
+            0.02
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa RMS",
+          "line": "MMMAudio vs FluCoMa RMS: Mean Deviation = 0.02 dB, Std Dev = 0.02 dB",
+          "values": [
+            0.02,
+            0.02
+          ]
+        }
+      ]
+    },
+    "SpectralCentroid_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa Spectral Centroid",
+          "line": "MMMAudio vs Librosa Spectral Centroid: Mean Dev = 184.17 Hz (2.16 semitones), Std Dev = 286.12 Hz (2.74 semitones)",
+          "values": [
+            184.17,
+            2.16,
+            286.12,
+            2.74
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Centroid",
+          "line": "MMMAudio vs FluCoMa Spectral Centroid: Mean Dev = 60.46 Hz (0.66 semitones), Std Dev = 66.10 Hz (0.63 semitones)",
+          "values": [
+            60.46,
+            0.66,
+            66.1,
+            0.63
+          ]
+        }
+      ]
+    },
+    "SpectralCrest_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Crest",
+          "line": "MMMAudio vs FluCoMa Spectral Crest: Mean Dev = 0.8195 dB, Std Dev = 0.0691 dB",
+          "values": [
+            0.8195,
+            0.0691
+          ]
+        }
+      ]
+    },
+    "SpectralFlatness_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa Spectral Flatness",
+          "line": "MMMAudio vs Librosa Spectral Flatness: Mean Dev = 59.2830 dB, Std Dev = 10.3923 dB",
+          "values": [
+            59.283,
+            10.3923
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Flatness",
+          "line": "MMMAudio vs FluCoMa Spectral Flatness: Mean Dev = 0.9818 dB, Std Dev = 0.8982 dB",
+          "values": [
+            0.9818,
+            0.8982
+          ]
+        }
+      ]
+    },
+    "SpectralKurtosis_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Kurtosis",
+          "line": "MMMAudio vs FluCoMa Spectral Kurtosis: Mean Dev = 2.084884, Std Dev = 3.022694",
+          "values": [
+            2.084884,
+            3.022694
+          ]
+        }
+      ]
+    },
+    "SpectralRolloff_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa Spectral Rolloff",
+          "line": "MMMAudio vs Librosa Spectral Rolloff: Mean Dev = 1407.8272, Std Dev = 2013.2615",
+          "values": [
+            1407.8272,
+            2013.2615
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Rolloff",
+          "line": "MMMAudio vs FluCoMa Spectral Rolloff: Mean Dev = 452.2334, Std Dev = 596.6222",
+          "values": [
+            452.2334,
+            596.6222
+          ]
+        }
+      ]
+    },
+    "SpectralSkewness_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Skewness",
+          "line": "MMMAudio vs FluCoMa Spectral Skewness: Mean Dev = 0.128886, Std Dev = 0.154829",
+          "values": [
+            0.128886,
+            0.154829
+          ]
+        }
+      ]
+    },
+    "SpectralSpread_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa Spectral Spread",
+          "line": "MMMAudio vs Librosa Spectral Spread: Mean Dev = 352.5770, Std Dev = 458.4868",
+          "values": [
+            352.577,
+            458.4868
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Spectral Spread",
+          "line": "MMMAudio vs FluCoMa Spectral Spread: Mean Dev = 190.2303, Std Dev = 161.7656",
+          "values": [
+            190.2303,
+            161.7656
+          ]
+        }
+      ]
+    },
+    "YIN_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs Librosa YIN",
+          "line": "MMMAudio vs Librosa YIN: Mean Dev = 98.05 Hz (5.83 semitones), Std Dev = 185.87 Hz (10.23 semitones)",
+          "values": [
+            98.05,
+            5.83,
+            185.87,
+            10.23
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa YIN",
+          "line": "MMMAudio vs FluCoMa YIN: Mean Dev = 77.97 Hz (4.42 semitones), Std Dev = 168.07 Hz (8.59 semitones)",
+          "values": [
+            77.97,
+            4.42,
+            168.07,
+            8.59
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Confidence",
+          "line": "MMMAudio vs FluCoMa Confidence: Mean Dev = 0.0726, Std Dev = 0.1040",
+          "values": [
+            0.0726,
+            0.104
+          ]
+        }
+      ]
+    }
+  }
+}
