@@ -15,7 +15,6 @@ fn main() raises:
     files = ["user_files/wave_file/Shivererf32.wav", "user_files/wave_file/Shivererf64.wav", "user_files/wave_file/ShivererI16.wav", "user_files/wave_file/ShivererI24.wav", "user_files/wave_file/ShivererI32.wav", "user_files/wave_file/ShivererU8.wav"]
     
     for file in files:
-        
         try:
             # Quick one-liner to read audio
             var scipy = Python.import_module("scipy")

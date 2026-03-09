@@ -198,6 +198,8 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         f_idx = (Float64(self.delay_line.write_head) + delay_samps) % Float64(self.delay_line.buf.num_frames)
         return f_idx
 
+
+
 fn calc_feedback[num_chans: Int = 1](delaytime: SIMD[DType.float64, num_chans], decaytime: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
       """Calculate the feedback coefficient for a Comb filter or Allpass line based on desired delay time and decay time.
       

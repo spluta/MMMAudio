@@ -508,6 +508,12 @@ fn sanitize[
 
     return should_zero.select(0.0, x)
 
+fn random_uni_float64[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    return rrand(min, max)
+
+fn random_exp_float64[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+    return exprand(min, max)
+
 fn rrand[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
     """Generates a random float64 sample from a uniform distribution.
 
@@ -527,7 +533,7 @@ fn rrand[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DTyp
     return u
 
 @always_inline
-fn exprand[num_chans: Int, //](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
+fn exprand[num_chans: Int](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]:
     """Generates a random float64 sample from an exponential distribution.
 
     Parameters:
