@@ -198,3 +198,70 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
                 self.stored_output[i] = random_float64(min[i], max[i])
         self.last_trig = trig
         return self.stored_output
+
+struct LFSRNoise[num_chans: Int = 1](Copyable, Movable):
+    """Generate noise using a Linear Feedback Shift Register (LFSR).
+
+    Based on [Josiah Sytsma's LFSR implementation](https://www.mjsyts.com/development/lfsr-noise-part-3).
+    
+    Parameters:
+        num_chans: Number of SIMD channels.
+    """
+
+    var state:                  SIMD[DType.uint32, Self.num_chans]
+    var width:                  SIMD[DType.uint32, Self.num_chans]
+    var mask:                   SIMD[DType.uint32, Self.num_chans]
+    var phase:                  SIMD[DType.float64, Self.num_chans]
+    var freq_mul:               Float64
+    var rising_bool_detector:   RisingBoolDetector[Self.num_chans]
+    var world:                  World
+
+    fn __init__(out self, world: World):
+        self.world                = world
+        self.freq_mul             = 1.0 / self.world[].sample_rate
+        self.state                = SIMD[DType.uint32, Self.num_chans](1)
+        self.phase                = SIMD[DType.float64, Self.num_chans](0.0)
+        self.width                = SIMD[DType.uint32, Self.num_chans](0)
+        self.mask                 = SIMD[DType.uint32, Self.num_chans](0)
+        self.rising_bool_detector = RisingBoolDetector[Self.num_chans]()
+
+    @doc_private
+    @always_inline
+    fn step(mut self):
+        self.state = self.state.eq(0).select(SIMD[DType.uint32, Self.num_chans](1), self.state)
+        var lsb0 = self.state & 1
+        var lsb1 = (self.state >> 1) & 1
+        var fb   = lsb0 ^ lsb1
+        self.state = (self.state >> 1) | (fb << (self.width - 1))
+        self.state &= self.mask
+
+    @always_inline
+    fn next(mut self, freq: SIMD[DType.float64, Self.num_chans] = 1.0, width: SIMD[DType.uint32, Self.num_chans] = 15, trig: Bool = False) -> SIMD[DType.float64, Self.num_chans]:
+        """Generate the next LFSR noise sample.
+
+        Args:
+            freq: Frequency at which to step the LFSR in Hz.
+            width: Width of the LFSR in bits (3-32).
+            trig: Trigger signal to reset state when switching from False to True.
+
+        Returns:
+            The next LFSR noise sample.
+        """
+        self.width = clip(width, SIMD[DType.uint32, Self.num_chans](3), SIMD[DType.uint32, Self.num_chans](32))
+        self.mask = (self.width.eq(32)).select(
+            SIMD[DType.uint32, Self.num_chans](0xFFFFFFFF),
+            (SIMD[DType.uint32, Self.num_chans](1) << self.width) - 1
+        )
+        var trig_mask = SIMD[DType.bool, Self.num_chans](fill=trig)
+        var resets = self.rising_bool_detector.next(trig_mask)
+        var clamped_freq = clip(freq, SIMD[DType.float64, Self.num_chans](0.0), SIMD[DType.float64, Self.num_chans](self.world[].sample_rate))
+        var incremented_phase = self.phase + (clamped_freq * self.freq_mul)
+        var wrapped: SIMD[DType.bool, Self.num_chans] = (incremented_phase >= 1.0)
+        var old_state = self.state
+        self.step()
+        self.state = wrapped.select(self.state, old_state)
+        self.phase = wrapped.select(incremented_phase - 1.0, incremented_phase)
+        self.state = resets.select(SIMD[DType.uint32, Self.num_chans](1), self.state)
+        self.phase = resets.select(SIMD[DType.float64, Self.num_chans](0.0), self.phase)
+        var out = (self.state & 1).cast[DType.float64]() * 2.0 - 1.0
+        return out
