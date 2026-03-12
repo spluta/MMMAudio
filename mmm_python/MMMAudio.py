@@ -37,6 +37,8 @@ class MMMAudio:
     while the main process can send commands and parameter changes.
     """
 
+    instances = []
+
     def __init__(
         self,
         blocksize: int = 64,
@@ -88,6 +90,8 @@ class MMMAudio:
         # Sample rate will be set when process initializes
         self.sample_rate = Value(ctypes.c_int, 0)
 
+        MMMAudio.instances.append(self)
+
         signal.signal(signal.SIGINT, self._signal_handler)
 
         self.start_process()
@@ -95,8 +99,9 @@ class MMMAudio:
     def _signal_handler(self, signum, frame):
         """Handle Ctrl+C signal"""
         print("\nReceived Ctrl+C, stopping audio...")
-        self.stop_audio()
-        self.stop_process()
+        for instance in MMMAudio.instances:
+            instance.stop_audio()
+            instance.stop_process()
         sys.exit(0)
         
     def start_process(self):
