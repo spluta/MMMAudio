@@ -62,6 +62,7 @@ def gui():
 
     def shutdown_audio():
         ma.stop_audio()
+        ma.stop_process()
 
     app.aboutToQuit.connect(shutdown_audio)
     main.closeEvent = lambda event: (shutdown_audio(), event.accept())

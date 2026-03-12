@@ -1,4 +1,3 @@
-import signal
 import asyncio
 import threading
 import time
@@ -13,14 +12,7 @@ class Scheduler:
         self.running = False
         self.routines = []
 
-        signal.signal(signal.SIGINT, self._signal_handler)
-
         self.start_thread()
-
-    def _signal_handler(self, signum, frame):
-        """Handle Ctrl+C signal"""
-        print("\nReceived Ctrl+C, stopping routines...")
-        self.stop_routs()
 
     async def tc_sleep(self, delay, result=None):
         """Coroutine that completes after a given time (in seconds).

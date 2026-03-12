@@ -2,6 +2,8 @@
 MMMAudio with Dedicated Process
 Runs audio processing in a separate process on its own CPU core
 """
+import sys
+
 import pyaudio
 import numpy as np
 import ctypes
@@ -94,6 +96,8 @@ class MMMAudio:
         """Handle Ctrl+C signal"""
         print("\nReceived Ctrl+C, stopping audio...")
         self.stop_audio()
+        self.stop_process()
+        sys.exit(0)
         
     def start_process(self):
         """Start the audio process"""
