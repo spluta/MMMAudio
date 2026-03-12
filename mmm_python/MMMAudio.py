@@ -11,7 +11,7 @@ from typing import Optional, Tuple, List
 from enum import IntEnum
 import mojo.importer
 
-import pyautogui
+import signal
 
 
 class AudioCommand(IntEnum):
@@ -86,7 +86,14 @@ class MMMAudio:
         # Sample rate will be set when process initializes
         self.sample_rate = Value(ctypes.c_int, 0)
 
+        signal.signal(signal.SIGINT, self._signal_handler)
+
         self.start_process()
+
+    def _signal_handler(self, signum, frame):
+        """Handle Ctrl+C signal"""
+        print("\nReceived Ctrl+C, stopping audio...")
+        self.stop_audio()
         
     def start_process(self):
         """Start the audio process"""

@@ -2,7 +2,7 @@ from mmm_audio import *
 
 comptime fft_size: Int = 1024
 
-struct SpectralFluxOnsetsExample(Movable, Copyable):
+struct SpectralFluxOnsetExample(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
