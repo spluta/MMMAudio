@@ -1,11 +1,14 @@
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
 from mmm_python import *
 
-mmm_audio = MMMAudio(128, graph_name="TestLFSRNoise", package_name="examples.tests")
-mmm_audio.start_audio()
-
-app = QApplication([])
-
 def run_gui():
+    mmm_audio = MMMAudio(128, graph_name="TestLFSRNoise", package_name="examples.tests")
+    mmm_audio.start_audio()
+    app = QApplication([])
     window = QWidget()
     window.setWindowTitle("TestLFSRNoise")
     window.resize(300, 400)
@@ -25,10 +28,10 @@ def run_gui():
     mmm_audio.send_float("width", 15.0)
 
     window.setLayout(layout)
+    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
     window.show()
     window.raise_()
     app.exec()
 
-run_gui()
-
-mmm_audio.stop_audio()
+if __name__ == "__main__":
+    run_gui()

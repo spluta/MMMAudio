@@ -96,13 +96,18 @@ class MMMAudio:
 
         self.start_process()
 
-    def _signal_handler(self, signum, frame):
+    def exit_all(self):
         """Handle Ctrl+C signal"""
         print("\nReceived Ctrl+C, stopping audio...")
         for instance in MMMAudio.instances:
             instance.stop_audio()
             instance.stop_process()
         sys.exit(0)
+
+    def _signal_handler(self, signum, frame):
+        """Handle Ctrl+C signal"""
+        print("\nReceived Ctrl+C, stopping audio...")
+        self.exit_all()
         
     def start_process(self):
         """Start the audio process"""

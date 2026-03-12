@@ -34,7 +34,7 @@ def main():
     window.setWindowTitle("Benjolin")
     window.resize(300, 100)
     # stop audio when window is closed
-    window.closeEvent = lambda event: (mmm_audio.stop_audio(), event.accept())
+    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
 
     # Create layout
     layout = QVBoxLayout()
