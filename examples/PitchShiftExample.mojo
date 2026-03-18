@@ -5,7 +5,7 @@ from mmm_audio import *
 struct PitchShiftExample(Representable, Movable, Copyable):
     var world: World
 
-    var pitch_shift: PitchShift[num_chans=2, overlaps=4]
+    var pitch_shift: PitchShift[num_chans=2]
     var messenger: Messenger
     var shift: Float64
     var grain_dur: Float64
@@ -14,10 +14,13 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var in_chan: Int
     var which_input: Float64
     var noise: WhiteNoise[]
+    var overlaps: Int
+    var added_delay_low: Float64
+    var added_delay_high: Float64
      
     fn __init__(out self, world: World):
         self.world = world
-        self.pitch_shift = PitchShift[num_chans=2, overlaps=4](self.world, 1.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
+        self.pitch_shift = PitchShift[num_chans=2](self.world, 2.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
         self.messenger = Messenger(self.world)
         self.shift = 1.0
         self.grain_dur = 0.2
@@ -26,23 +29,26 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.in_chan = 0
         self.which_input = 0.0
         self.noise = WhiteNoise()
+        self.overlaps = 4
+        self.added_delay_low = 0.0
+        self.added_delay_high = 0.0
 
     @always_inline
     fn next(mut self) -> MFloat[2]:
-        self.messenger.update(self.which_input, "which_input")
         self.messenger.update(self.in_chan, "in_chan")
 
         temp = self.world[].sound_in[self.in_chan]
-        input_sig = select(self.which_input, [MFloat[2](temp, temp), MFloat[2](temp, 0.0), MFloat[2](0.0, temp)])
+        input_sig = MFloat[2](temp, temp)
         
         self.messenger.update(self.shift,"pitch_shift")
         self.messenger.update(self.grain_dur,"grain_dur")
         self.messenger.update(self.pitch_dispersion,"pitch_dispersion")
         self.messenger.update(self.time_dispersion,"time_dispersion")
+        self.messenger.update(self.overlaps,"overlaps")
+        self.messenger.update(self.added_delay_low,"added_delay_low")
+        self.messenger.update(self.added_delay_high,"added_delay_high")
 
-        # shift = linexp(self.world[].mouse_y, 0.0, 1.0, 0.25, 4.0)
-        # grain_dur = linexp(self.world[].mouse_x, 0.0, 1.0, 0.05, 0.3)
-        out = self.pitch_shift.next(input_sig, self.grain_dur, self.shift, self.pitch_dispersion, self.time_dispersion)
+        out = self.pitch_shift.next(input_sig, self.grain_dur, self.overlaps, self.shift, self.pitch_dispersion, self.time_dispersion, self.added_delay_low, self.added_delay_high)
 
         return out
 

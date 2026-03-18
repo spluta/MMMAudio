@@ -10,7 +10,7 @@ struct Play(Representable, Movable, Copyable):
     Plays back audio from a Buffer with variable rate, interpolation, looping, and triggering capabilities.
     """
     var impulse: Phasor[1]  # Current phase of the buf
-    var done: Bool
+    var active: Bool
     var world: World
     var rising_bool_detector: RisingBoolDetector[1]
     var start_frame: Int 
@@ -26,7 +26,7 @@ struct Play(Representable, Movable, Copyable):
 
         self.world = world
         self.impulse = Phasor(world)
-        self.done = True
+        self.active = False
         self.rising_bool_detector = RisingBoolDetector()
 
         self.start_frame = 0
@@ -68,7 +68,7 @@ struct Play(Representable, Movable, Copyable):
         # Check for Trigger and if so, Update Values
         # ==========================================
         if self.rising_bool_detector.next(trig) and buf.num_frames_f64 > 0.0:
-            self.done = False  # Reset done flag on trigger
+            self.active = True
             self.start_frame = start_frame  # Set start frame
             self.phase_offset = Float64(self.start_frame) / buf.num_frames_f64
             if num_frames < 0:
@@ -76,8 +76,8 @@ struct Play(Representable, Movable, Copyable):
             else:
                 self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
         
-        if self.done:
-            return out  # Return zeros if done
+        if not self.active:
+            return out  # Return zeros if not active
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
@@ -97,7 +97,7 @@ struct Play(Representable, Movable, Copyable):
             phase = self.impulse.phase
             # [TODO] I feel like it might not be necessary to check *all* these?
             if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_phase_point:
-                self.done = True  # Set done flag if phase is out of bounds
+                self.active = False
                 return 0.0
             else:
                 return self.get_sample[num_chans,interp, bWrap](buf, prev_phase)
@@ -141,7 +141,7 @@ struct Play(Representable, Movable, Copyable):
         # Check for Trigger and if so, Update Values
         # ==========================================
         if self.rising_bool_detector.next(trig) and buf.num_frames_f64 > 0.0:
-            self.done = False  # Reset done flag on trigger
+            self.active = True  # Set active flag on trigger
             self.start_frame = start_frame  # Set start frame
             self.phase_offset = Float64(self.start_frame) / buf.num_frames_f64
             if num_frames < 0:
@@ -149,8 +149,8 @@ struct Play(Representable, Movable, Copyable):
             else:
                 self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
         
-        if self.done:
-            return out  # Return zeros if done
+        if not self.active:
+            return out  # Return zeros if not active
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
@@ -168,7 +168,7 @@ struct Play(Representable, Movable, Copyable):
             phase = self.impulse.phase
             # [TODO] I feel like it might not be necessary to check *all* these?
             if phase >= 1.0 or phase < 0.0 or eor or phase >= self.reset_phase_point:
-                self.done = True  # Set done flag if phase is out of bounds
+                self.active = False  # Set active flag to False if phase is out of bounds
                 return 0.0
             else:
                 return self.get_sample[num_chans,interp, bWrap](buf, prev_phase, start_chan)
@@ -199,7 +199,7 @@ struct Play(Representable, Movable, Copyable):
 struct Grain(Representable, Movable, Copyable):
     """A single grain for granular synthesis.
 
-    Used as part of the TGrains struct for triggered granular synthesis.
+    Used as part of the TGrains and the PitchShift structs for triggered granular synthesis.
     """
     var world: World  # Pointer to the MMMWorld instance
 
@@ -359,33 +359,86 @@ struct Grain(Representable, Movable, Copyable):
         
         return sample
 
-struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
+trait Polyable(Movable, Copyable):
+    fn do_the_poly(mut self, trig: Bool, mut trigger_grain: Int):
+        ...
+
+struct Poly(Movable, Copyable):
+    """Manages voice allocation for polyphonic Synths like TGrains and PitchShift. Keeps track of which voices are active and tells the parent struct which voice to trigger. Also tells the parent struct when all voices are active and a new voice needs to be added to the voices list.
+    """
+    var active: List[Bool]
+    var size: Int
+
+    fn __init__(out self, size: Int):
+        self.active = [False for _ in range(size)]
+        self.size = size
+
+    fn update_active(mut self, ref active_list: List[Bool]):
+        list_len = min(self.size, len(active_list))
+        for i in range(list_len):
+            self.active[i] = active_list[i]
+
+    fn next(mut self, list_len: Int) -> Tuple[Int, Bool]:
+        found = False
+        counter = 0
+        while not found and counter < self.size:
+            if not self.active[counter]:
+                found = True
+            else:
+                counter += 1
+        if found:
+            self.active[counter] = True
+            return (counter, False)  
+        else:
+            self.active.append(True)
+            self.size += 1
+            counter = len(self.active) - 1
+            return (counter, True) 
+
+struct TGrains(Polyable):
     """
     Triggered granular synthesis. Each trigger starts a new grain.
-
-    Parameters:
-        max_grains: Maximum number of overlapping grains.
     """
     var grains: List[Grain]  
     var counter: Int 
     var rising_bool_detector: RisingBoolDetector[1]
     var trig: Bool
+    var world: World
+    var poly: Poly
+    var active_list: List[Bool]
 
-    fn __init__(out self, world: World):
+    fn __init__(out self, num_grains: Int, world: World):
         """
 
         Args:
+            num_grains: Number of grains to initialize.
             world: Pointer to the MMMWorld instance.
         """
+        self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
-        for _ in range(Self.max_grains):
+        for _ in range(num_grains):
             self.grains.append(Grain(world))  
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
-    
-    fn __repr__(self) -> String:
-        return String("TGrains")
+        self.poly = Poly(num_grains)
+        self.active_list = [False for _ in range(num_grains)]
+
+    fn do_the_poly(mut self, trig: Bool, mut trigger_grain: Int):
+        # 1) the object needs to flip a Bool to True when a voice is complete
+        # here we check which grains are active and create a list of their active states
+        for i in range(len(self.grains)):
+            self.active_list[i] = self.grains[i].play_buf.active
+        
+        # 2) pass the Poly the list of active voices
+        self.poly.update_active(self.active_list)
+        # 3) when getting a trigger, check Poly for a free voice or if we need to add a voice to the list of voices
+        if self.rising_bool_detector.next(trig):
+            trigger_grain, add_voice_bool = self.poly.next(len(self.active_list))
+            # add a voice if there are no inactive voices in the list
+            if add_voice_bool:
+                self.grains.append(Grain(self.world))
+                self.active_list.append(True)
 
     @always_inline
     fn next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
@@ -417,17 +470,16 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
         Returns:
             List of output samples for all channels.
         """
-
-        if self.rising_bool_detector.next(trig):
-            self.counter += 1  # Increment the counter on trigger
-            if self.counter >= Self.max_grains:
-                self.counter = 0  # Reset counter if it exceeds the number of grains
+        trigger_grain = -1
+        self.do_the_poly(trig, trigger_grain)
 
         out = MFloat[2](0.0, 0.0)
-        @parameter
-        for i in range(Self.max_grains):
-            b = i == self.counter and self.rising_bool_detector.state
-            out += self.grains[i].next_pan2[num_playback_chans, WindowType.hann, bWrap=bWrap](buffer, rate, False, b, start_frame, duration, pan, gain)
+        for i in range(len(self.grains)):
+            if i == trigger_grain:
+                out += self.grains[i].next_pan2[num_playback_chans, win_type, bWrap=bWrap](buffer, rate, False, True, start_frame, duration, pan, gain)
+            else:
+                if self.poly.active[i]:  # Only process grains that are active
+                    out += self.grains[i].next_pan2[num_playback_chans, win_type, bWrap=bWrap](buffer, rate, False, False, start_frame, duration, pan, gain)
 
         return out
 
@@ -464,27 +516,26 @@ struct TGrains[max_grains: Int = 5](Representable, Movable, Copyable):
             Output samples for all channels as a SIMD vector.
         """
 
-        if self.rising_bool_detector.next(trig):
-            self.counter += 1  # Increment the counter on trigger
-            if self.counter >= Self.max_grains:
-                self.counter = 0  # Reset counter if it exceeds the number of grains
+        trigger_grain = -1
+        self.do_the_poly(trig, trigger_grain)
 
         out = MFloat[num_simd_chans](0.0)
-        @parameter
-        for i in range(Self.max_grains):
-            b = i == self.counter and self.rising_bool_detector.state
-            out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, b, start_frame, duration, buf_chan, pan, gain)
+        for i in range(len(self.grains)):
+            if i == trigger_grain:
+                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, True, start_frame, duration, buf_chan, pan, gain)
+            else:
+                if self.poly.active[i]:  # Only process grains that are active
+                    out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, False, start_frame, duration, buf_chan, pan, gain)
 
         return out
 
 
-struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowType.hann](Movable, Copyable):
+struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Polyable):
     """
     An N channel granular pitchshifter. Each channel is processed in parallel.
 
     Parameters:
         num_chans: Number of input/output channels.
-        overlaps: Number of overlapping grains (default is 4).
         win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
 
     Args:
@@ -497,70 +548,95 @@ struct PitchShift[num_chans: Int = 1, overlaps: Int = 4, win_type: Int = WindowT
     var rising_bool_detector: RisingBoolDetector[1]
     var trig: Bool
     var recorder: Recorder[Self.num_chans]
-    var impulse: Dust[1]
-    var pitch_ratio: Float64
+    var dust: Dust[1]
+    var pitch_ratios: List[Float64]
+    var poly: Poly
+    var active_list: List[Bool]
 
-    fn __init__(out self, world: World, buf_dur: Float64 = 1.0):
+    fn __init__(out self, world: World, buf_dur: Float64 = 2.0):
         """ 
 
         Args:
             world: pointer to the MMMWorld instance.
+            overlaps: Number of overlapping grains (default is 4).
             buf_dur: duration of the internal buffer in seconds.
         """
         self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
-        for _ in range(Self.overlaps+2):
+        num_grains = 6
+        for _ in range(num_grains):
             self.grains.append(Grain(world)) 
             
         self.counter = 0  
         self.trig = False  
         self.rising_bool_detector = RisingBoolDetector()
         self.recorder = Recorder[Self.num_chans](world, Int(buf_dur * world[].sample_rate), world[].sample_rate)
-        self.impulse = Dust(world)
-        self.pitch_ratio = 1.0
+        self.dust = Dust(world)
+        self.pitch_ratios = [1.0 for _ in range(num_grains)]
+        self.poly = Poly(num_grains)
+        self.active_list = [False for _ in range(num_grains)]
     
-    fn __repr__(self) -> String:
-        return String("TGrains")
+    fn do_the_poly(mut self, trig: Bool, mut trigger_grain: Int):
+        # 1) the object needs to flip a Bool to True when a voice is complete
+        # here we check which grains are active and create a list of their active states
+        for i in range(len(self.grains)):
+            self.active_list[i] = self.grains[i].play_buf.active
+        
+        # 2) pass the Poly the list of active voices
+        self.poly.update_active(self.active_list)
+        # 3) when getting a trigger, check Poly for a free voice or if we need to add a voice to the list of voices
+        if self.rising_bool_detector.next(trig):
+            trigger_grain, add_voice_bool = self.poly.next(len(self.active_list))
+            # print("Triggering grain ", trigger_grain, " with pitch ratio ", self.pitch_ratios[trigger_grain])
+            # add a voice if there are no inactive voices in the list
+            if add_voice_bool:
+                self.grains.append(Grain(self.world))
+                self.active_list.append(True)
+                self.pitch_ratios.append(1.0)
 
     @always_inline
-    fn next(mut self, in_sig: MFloat[Self.num_chans], grain_dur: Float64 = 0.2, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, gain: Float64 = 1.0) -> MFloat[Self.num_chans]:
+    fn next(mut self, in_sig: MFloat[Self.num_chans], grain_dur: Float64 = 0.2, overlaps: Int = 4, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, added_delay_low: Float64 = 0.0, added_delay_high: Float64 = 0.0, gain: Float64 = 1.0) -> MFloat[Self.num_chans]:
         """Generate the next set of grains for pitch shifting.
 
         Args:
             in_sig: Input signal to be pitch shifted.
             grain_dur: Duration of each grain in seconds.
+            overlaps: Number of overlapping grains (default is 4).
             pitch_ratio: Pitch shift ratio (1.0 = no shift, 2.0 = one octave up, 0.5 = one octave down, etc).
             pitch_dispersion: Amount of random variation in pitch ratio.
-            time_dispersion: Amount of random variation in grain triggering time.
+            time_dispersion: Amount of random variation in grain triggering time. Value between 0.0 and 1.0, where 0.0 is no variation and 1.0 is maximum variation of up to the grain duration.
+            added_delay_low: Minimum amount of delay to add to the start of each grain in seconds.
+            added_delay_high: Maximum amount of delay to add to the start of each grain in seconds. (Maximum added delay should be set so that it does not exceed the internal buffer size when combined with the grain duration and time dispersion).
             gain: Amplitude scaling factor for the output.
         """
 
-        self.recorder.write_next(in_sig)  # Write the input signal into the buffer
-        comptime overlaps_plus_2 = Self.overlaps + 2
+        self.recorder.write_next(in_sig)
 
-        trig_rate = Self.overlaps / grain_dur
-        trig = self.rising_bool_detector.next(
-            self.impulse.next_bool(trig_rate*(1-time_dispersion), trig_rate*(1+time_dispersion), trig = MBool[1](fill=True))
-            )
-        if trig:
-            self.counter = (self.counter + 1) % overlaps_plus_2  # Cycle through 6 grains
+        time_dispersion2 = clip(time_dispersion, 0.0, 0.999)
+
+        trig_rate = Float64(overlaps) / grain_dur
+        trig = self.dust.next_bool(trig_rate*(1-time_dispersion2), trig_rate*(1+time_dispersion2), trig = MBool[1](fill=True))
+
+        trigger_grain = -1
+        self.do_the_poly(trig, trigger_grain)
 
         out = MFloat[Self.num_chans](0.0)
 
-        @parameter
-        for i in range(overlaps_plus_2):
+        for i in range(len(self.grains)):
             start_frame = 0
             
             if trig:
-                self.pitch_ratio = pitch_ratio * linexp(random_float64(-pitch_dispersion, pitch_dispersion), -1.0, 1.0, 0.25, 4.0)
-                if self.pitch_ratio <= 1.0:
-                    start_frame = Int(self.recorder.write_head)
+                self.pitch_ratios[i] = pitch_ratio * linexp(clip(random_float64(-pitch_dispersion, pitch_dispersion), -1.0, 1.0), -1.0, 1.0, 0.25, 4.0)
+                added_delay = random_float64(added_delay_low, added_delay_high)
+                if self.pitch_ratios[i] <= 1.0:
+                    start_frame = Int(self.recorder.write_head - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
                 else:
-                    start_frame = Int(Float64(self.recorder.write_head) - ((grain_dur * self.world[].sample_rate) * (self.pitch_ratio-1.0))) % Int(self.recorder.buf.num_frames)
-                
-            if i == self.counter:
-                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, True, start_frame, grain_dur, 0.0, gain)
+                    start_frame = Int(Float64(self.recorder.write_head) - ((grain_dur * self.world[].sample_rate) * (self.pitch_ratios[i]-1.0)) - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
+
+            if i == trigger_grain:
+                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratios[i], False, True, start_frame, grain_dur, 0.0, gain)
             else:
-                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratio, False, False, start_frame, grain_dur, 0.0, gain)
+                if self.poly.active[i]:
+                    out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratios[i], False, False, start_frame, grain_dur, 0.0, gain)
 
         return out

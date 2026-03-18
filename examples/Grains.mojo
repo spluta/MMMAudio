@@ -9,10 +9,12 @@ struct Grains(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]
     
-    var tgrains: TGrains[10] # set the number of simultaneous grains by setting the max_grains parameter here
-    var tgrains2: TGrains[10] 
+    var tgrains: TGrains # set the number of simultaneous grains by setting the max_grains parameter here
+    var tgrains2: TGrains 
     var impulse: Phasor[1]  
     var start_frame: Float64
+    var m: Messenger
+    var max_trig_rate: Float64
      
     fn __init__(out self, world: World):
         self.world = world  
@@ -20,17 +22,18 @@ struct Grains(Movable, Copyable):
         # buffer uses numpy to load a buffer into an N channel array
         self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
 
-        self.tgrains = TGrains[10](self.world)  
-        self.tgrains2 = TGrains[10](self.world)
+        self.tgrains = TGrains(10, self.world)  
+        self.tgrains2 = TGrains(10, self.world)
         self.impulse = Phasor[1](self.world)
-
+        self.m = Messenger(world)
+        self.max_trig_rate = 20.0
 
         self.start_frame = 0.0 
 
     @always_inline
     fn next(mut self) -> MFloat[num_simd_chans]:
-
-        imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, 20.0)
+        self.m.update(self.max_trig_rate, "max_trig_rate")
+        imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, self.max_trig_rate)  # Map mouse Y to a trigger frequency between 1 Hz and max_trig_rate
         var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
 
         start_frame = Int(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, Float64(self.buffer.num_frames) - 1.0))

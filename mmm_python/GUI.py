@@ -9,6 +9,14 @@ from matplotlib import colors as mcolors
 from .python_utils import clip, linlin
 
 class ControlSpec:
+    """
+    Defines the range and response curve for a control parameter.
+    
+    Args:
+        min: Minimum value of the control parameter.
+        max: Maximum value of the control parameter.
+        exp: Exponent for the response curve. 1.0 = linear, >1.0 = logarithmic, <1.0 = exponential.
+    """
     def __init__(self, min: float = 0.0, max: float = 1.0, exp: float = 1.0):
         if min >= max:
             raise ValueError("ControlSpec min must be less than max")
