@@ -5,7 +5,6 @@ from mmm_audio import *
 struct TrigSynthVoice(Movable, Copyable):
     var world: World  # Pointer to the MMMWorld instance
 
-    var env_params: EnvParams
     var env: Env
 
     var mod: Osc[]
@@ -25,8 +24,8 @@ struct TrigSynthVoice(Movable, Copyable):
         self.car = Osc[1, Interp.linear, 0](self.world)
         self.sub = Osc(self.world)
 
-        self.env_params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
         self.env = Env(self.world)
+        self.env.params = EnvParams([0.0, 1.0, 0.75, 0.75, 0.0], [0.01, 0.1, 0.2, 0.5], [1.0])
 
         self.bend_mul = 1.0
 
@@ -44,7 +43,7 @@ struct TrigSynthVoice(Movable, Copyable):
         else:
             bend_freq = self.note[0] * self.bend_mul
             var mod_value = self.mod.next(bend_freq * 1.5, osc_type=OscType.sine)  # Modulator frequency is 3 times the carrier frequency
-            var env = self.env.next(self.env_params, make_note)  # Trigger the envelope if trig is True
+            var env = self.env.next(make_note)  # Trigger the envelope if trig is True
 
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
             var car_value = self.car.next(bend_freq, mod_value * mod_mult, osc_type=OscType.sine)  

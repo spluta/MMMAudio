@@ -5,7 +5,6 @@ from mmm_audio import *
 # a graph can have as many synths as you want
 struct TestEnv(Movable, Copyable):
     var world: World
-    var env_params: EnvParams
     var env: Env
     var synth: Osc[]
     var messenger: Messenger
@@ -14,8 +13,8 @@ struct TestEnv(Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world
-        self.env_params = EnvParams([0, 1.0, 0.5, 0.5, 0.0], [1, 1, 0.5, 4], [2], True, 0.1)
         self.env = Env(self.world)
+        self.env.params = EnvParams([0, 1.0, 0.5, 0.5, 0.0], [1, 1, 0.5, 4], [2], True, 0.1)
         self.synth = Osc(self.world)
         self.messenger = Messenger(self.world)
         self.impulse = Impulse(self.world)
@@ -24,10 +23,10 @@ struct TestEnv(Movable, Copyable):
     fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.mul, "mul")
         trig = self.impulse.next_bool(1.0)
-        self.env_params.time_warp = linexp(self.world[].mouse_x, 0.0, 1.0, 0.1, 10.0)
-        self.env_params.curves[0] = linlin(self.world[].mouse_y, 0.0, 1.0, 4.0, 4.0)
-        # self.env_params.curves[0] = self.messenger.get_val("curve", 1)
-        env = self.env.next(self.env_params, trig)  # get the next value of the envelope
+        self.env.params.time_warp = linexp(self.world[].mouse_x, 0.0, 1.0, 0.1, 10.0)
+        self.env.params.curves[0] = linlin(self.world[].mouse_y, 0.0, 1.0, 4.0, 4.0)
+        # self.env.params.curves[0] = self.messenger.get_val("curve", 1)
+        env = self.env.next(trig)  # get the next value of the envelope
 
         self.world[].print(self.env.rising_bool_detector.state, self.env.is_active, self.env.sweep.phase, self.env.sweep.phase, self.env.trig_point, self.env.last_asr)
 
