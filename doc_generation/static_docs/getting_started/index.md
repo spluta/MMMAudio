@@ -14,27 +14,7 @@ git clone https://github.com/spluta/MMMAudio.git
 
 or [grab the latest release](https://github.com/spluta/MMMAudio/releases).
 
-## 2. Setup the Python Virtual Environment (On Windows, follow the instructions under 2b. first, then come back here to get Python correctly configured)
-
-`cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and 3.13.  If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
-
-depending on your system set up, you may need to explicitly specify the Python version here, eg: 'python3.13 -m venv venv'
-
-```shell
-python -m venv venv 
-source venv/bin/activate
-
-pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib PySide6
-```
-
-install modular's max/mojo library
-the main branch is tied to Mojo 0.26.1.
-
-```shell
-pip install mojo==0.26.1
-```
-
-### 2a. Further Setup of the Environment on MacOS (Apple Silicon Only - Mojo Does not and will not work on Intel Macs)
+## 2a. Installing portaudio and hidapi on MacOS (Apple Silicon Only - Mojo Does not and will not work on Intel Macs) and Linux
 
 Use your package manager to install `portaudio` and `hidapi` as system-wide c libraries. On MacOS this is:
 
@@ -43,19 +23,63 @@ brew install portaudio
 brew install hidapi
 ```
 
+On linux:
+```shell
+sudo apt update
+sudo apt install libportaudio2 portaudio19-dev
+sudo apt install libhidapi-hidraw0 libhidapi-dev
+sudo apt install pulseaudio
+```
+
 MMMAudio uses `pyAudio` (`portaudio`) for audio input/output and `hid` for HID control.
 
-Then install `pyaduio` and `hid` in your virtual environment with your `venv` activated:
+## 2b.1. Option 1 - Setup with pixi (On Windows, follow the instructions under 2w. first, then come back here to get Python correctly configured)
+
+### 1 Install pixi with homebrew or curl.
+
+### 2 In the MMMAudio directory, type:
 
 ```shell
-pip install hid pyaudio
+pixi install
 ```
+
+This should install all relevant packages.
+
+### 3 Edit the .vscode/settings.json file to have the following:
+```
+{
+    "search.useIgnoreFiles": true, 
+    "python.defaultInterpreterPath": "${workspaceFolder}/.pixi/envs/default/bin/python", 
+    "python.terminal.activateEnvironment": false,
+    "python.REPL.sendToNativeREPL": false,
+    "python-envs.defaultEnvManager": "ms-python.python:system"
+}
+```
+
+### 4 In View -> Command Palette -> Python: Select Interpreter, choose `.pixi/envs/default/bin/python`. For me, this only appeared after I quit and restarted VSCode.
+
+You should be good to go.
+
+## 2b.2. Option 2 - Setup the Python Virtual Environment (On Windows, follow the instructions under 2w. first, then come back here to get Python correctly configured)
+
+`cd` into the root of the downloaded repository, set up your virtual environment, and install required libraries. this should work with python 3.12 and above.  If you find it does or doesn't work with other versions [let us know](https://github.com/spluta/MMMAudio/issues).
+
+### 1 depending on your system set up, you may need to explicitly specify the Python version here, eg: 'python3.13 -m venv venv'
+
+```shell
+python -m venv venv 
+source venv/bin/activate
+
+pip install numpy scipy librosa pyautogui torch mido python-osc python-rtmidi matplotlib PySide6 mojo==0.26.1 hid pyaudio
+```
+
+### 2 In View -> Command Palette -> Python: Select Interpreter, choose `venv/bin/python`. 
 
 if you have trouble installing/running `pyaudio`, try this:
 1. [do this](https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed/68296168#68296168)
 2. Then this uninstall and reinstall `pyaudio` (`hidapi` may be the same).
 
-### 2b. Setup the Environment on Windows/WSL2 with Ubuntu
+### 2w. Setup the Environment on Windows/WSL2 with Ubuntu
 
 Here are some hints to get the audio samples running under Windows/WSL2. 
 I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
@@ -114,6 +138,8 @@ Check also that PortAudio detects PulseAudio
 pactl info
 ```
 
+Go back to 2b.1 or 2b.2 to create your virtual environment and choose your interpreter
+
 Now run your MMMAudio script WITHOUT running pulseaudio --start and enjoy the sound:
 ```shell
 python3 examples/DefaultGraph.py
@@ -123,11 +149,15 @@ python3 examples/DefaultGraph.py
 
 The best way to run MMMAudio is in REPL mode in your editor. 
 
-to set up the python REPL correctly in VSCode: with the entire directory loaded into a workspace, go to View->Command Palette->Select Python Interpreter. Make sure to select the version of python that is in your venv directory, not the system-wide version. Then it should just work. 
+to set up the python REPL correctly in VSCode: with the entire directory loaded into a workspace, go to View->Command Palette->Select Python Interpreter. Make sure to select the version of python that is in your pixi or venv directory, not the system-wide version. Then it should just work. 
 
 Before you run the code in a new REPL, make sure to close all terminal instances in the current workspace. This will ensure that a fresh REPL environment is created.
 
+Most examples run by selecting code in the file and pressing shift-return to execute the code. If your interpeter is not opened in the terminal, it should open a new one, load the virtual environment, and run the code. 
+
 Some examples are designed to run a complete script. These are all marked. In these cases, the script can be run by pressing the "play" button on the top right of VSCode or just running the script `python example.py` from inside your virtual environment.
+
+VS Code has issues with lots of text sometimes. If your code gets garbled as it is sent to the terminal, it is a VS Code problem. Try an earlier version of the editor.
 
 Go to the [Examples](../examples/index.md) page to run an example!
 
