@@ -458,6 +458,7 @@ fn midicps[
     frequency = Float64(reference_frequency) * 2.0 ** ((midi_note_number - reference_midi_note) / 12.0)
     return frequency
 
+
 @always_inline
 fn cpsmidi[
     num_chans: Int, //

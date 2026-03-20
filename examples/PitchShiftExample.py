@@ -8,19 +8,24 @@ A couple of settings in the .py file are important:
 - num_input_channels: This can be set to any value, but it should be at least as high as the input channel you want to use.
 - in_chan: This should be set to the input channel number of your microphone input source (0-indexed).
 """
+import sys
+from pathlib import Path
 
-if True:
-    from mmm_python import *
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from mmm_python import *
+
+def main():
+
     mmm_audio = MMMAudio(128, num_input_channels = 12, graph_name="PitchShiftExample", package_name="examples")
     mmm_audio.send_int("in_chan", 0) # set input channel to your input source
     mmm_audio.start_audio() # start the audio thread - or restart it where it left off
 
-if True:
     app = QApplication([])
 
     # Create the main window
     window = QWidget()
-    window.setWindowTitle("Feedback Delay Controller")
+    window.setWindowTitle("Pitch Shift Controller")
     window.resize(300, 100)
     # stop audio when window is closed
     window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
@@ -49,6 +54,12 @@ if True:
     overlaps_slider = Handle("overlaps", ControlSpec(1, 16, 1), 4, callback=lambda v: mmm_audio.send_int("overlaps", int(v)), run_callback_on_init=True)
     layout.addWidget(overlaps_slider)
 
+    fb_perc_slider = Handle("feedback", ControlSpec(0.0, 1.0, 1), 0, callback=lambda v: mmm_audio.send_float("fb_perc", v), run_callback_on_init=True)
+    layout.addWidget(fb_perc_slider)
+
     window.setLayout(layout)
     window.show()
     app.exec()
+
+if __name__ == "__main__":
+    main()

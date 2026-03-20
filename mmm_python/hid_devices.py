@@ -4,6 +4,7 @@ import time
 from .hid_parse_defs import *
 from . import hid_parse_defs as _hid_parse_defs
 import inspect
+import threading
 
 class Joystick:
     """Connect a Joystick to control parameters. This class supports Logitech Extreme 3D Pro and Thrustmaster joysticks, whose HID reports were parse manually. See the `parse_report` method for the report format for these joysticks. Yours will probably be something like that!
@@ -29,6 +30,8 @@ class Joystick:
         self.throttle = 0
         self.joystick_button = 0
         self.buttons = [0] * 16  # 16 buttons
+        self.thread = None
+        self.stop_event = threading.Event()
 
         # auto-discover parser functions in hid_parse_defs.py and map name -> callable(self, data, combined)
         self.joystick_fn_dict = {}
@@ -40,7 +43,9 @@ class Joystick:
     def connect(self):
         """Connect to the joystick"""
         try:
-            self.device = hid.Device(self.vendor_id, self.product_id)
+            self.device = hid.device()
+            self.device.open(self.vendor_id, self.product_id)
+            # self.device.set_nonblocking(True)
             print(f"Connected to: {self.name}")
             return True
         except Exception as e:
@@ -49,10 +54,13 @@ class Joystick:
     
     def disconnect(self):
         """Disconnect from the joystick"""
-        if self.device:
+        try:
+            self.stop_reading()  # Stop reading thread if it's running
             self.device.close()
             print("Disconnected")
-    
+        except Exception as e:
+            print(f"Failed to disconnect: {e}")
+
     def parse_report(self, data):
         """Parse the 8-byte HID report from Logitech Extreme 3D Pro or Thrustmaster joystick"""
 
@@ -70,11 +78,10 @@ class Joystick:
             print(f"Joystick parsing not implemented for: {self.name}")
 
 
-    def read_continuous(self, name: str, function: Callable[..., None], duration: Optional[float] = None):
+    def read_continuous(self, function: Callable[..., None], duration: Optional[float] = None):
         """Read joystick data continuously.
         
         Args:
-            name: Joystick name
             function: Function to call with joystick data
             duration: Duration to read data (in seconds). If None, read indefinitely.
         """
@@ -82,17 +89,16 @@ class Joystick:
             print("Device not connected")
             return
         
-        self.name = name
         start_time = time.time()
             
         try:
-            while True:
+            while not self.stop_event.is_set():
                 # Check duration limit
                 if duration and (time.time() - start_time) > duration:
                     break
                 
                 # Read data with timeout
-                data = self.device.read(9, 10)
+                data = self.device.read(64, timeout_ms=1000)
 
                 if data:
                     self.parse_report(data)
@@ -103,6 +109,37 @@ class Joystick:
                 
         except KeyboardInterrupt:
             print("\nStopped by user")
+
+    def start_reading(self, function: Callable[..., None], duration: Optional[float] = None):
+        if not self.device:
+            print("Device not connected. Call connect() first.")
+            return False
+        
+        """Start reading joystick data in a separate thread."""
+        # Prevent multiple threads
+        if self.thread is not None and self.thread.is_alive():
+            print("Reading thread already running")
+            return
+        
+        # Reset stop event for new session
+        self.stop_event.clear()
+        
+        self.thread = threading.Thread(
+            target=self.read_continuous,
+            args=(function, duration),
+            daemon=True
+        )
+        self.thread.start()
+
+    def stop_reading(self):
+        """Stop the reading thread."""
+        self.stop_event.set()
+        if self.thread is not None:
+            self.thread.join(timeout=2.0)  # Add timeout to prevent hanging
+            if self.thread.is_alive():
+                print("Warning: Thread did not stop cleanly")
+            self.thread = None
+        
 
 def list_hid_devices():
     print("Available HID devices:")

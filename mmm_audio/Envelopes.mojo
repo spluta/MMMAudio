@@ -179,11 +179,12 @@ fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampd
     return in_attack.select(attack_value,
            in_release.select(release_value, sustain_value))
 
-struct ASREnv(Representable, Movable, Copyable):
+struct ASREnv(Movable, Copyable):
     """Simple ASR envelope generator."""
-    var sweep: Sweep[1]  # Sweep for tracking time
-    var bool_changed: Changed  # Track the last trigger state
-    var freq: Float64  # Frequency for the envelope
+    var sweep: Sweep[1] 
+    var bool_changed: Changed  
+    var freq: Float64 
+    var is_active: Bool  
 
     fn __init__(out self, world: World):
         """Initialize the ASREnv struct.
@@ -192,12 +193,10 @@ struct ASREnv(Representable, Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
         self.sweep = Sweep(world)
-        self.bool_changed = Changed()  # Initialize last trigger state
-        self.freq = 0.0  # Initialize frequency
+        self.bool_changed = Changed() 
+        self.freq = 0.0  
+        self.is_active = False
 
-    fn __repr__(self) -> String:
-        return String("ASREnv")
-    
     fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
         """Simple ASR envelope generator.
         
@@ -211,12 +210,15 @@ struct ASREnv(Representable, Movable, Copyable):
 
         if self.bool_changed.next(gate):
             if gate:
+                self.is_active = True
                 self.freq = 1.0 / attack
             else:
                 self.freq = -1.0 / release
 
         _ = self.sweep.next(self.freq, gate)
+        
         self.sweep.phase = clip(self.sweep.phase, 0.0, 1.0)
+        self.is_active = self.sweep.phase > 0.0 or gate
 
         if gate:
             return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])

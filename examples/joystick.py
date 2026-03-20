@@ -4,10 +4,7 @@ The Joystick example shows how to connect a joystick or other hid device and pri
 Right now, it only supports Logitech Extreme 3D Pro and Thrustmaster joysticks, but you can modify the `parse_report` method in `mmm_python/hid_devices.py` to support your own joystick by examining its HID report format. If you do so, please consider contributing the code back to the repository!
 """
 
-import threading
-from os import name
-
-from mmm_python.hid_devices import Joystick
+from mmm_python import *
 
 if True:
     joystick = Joystick(
@@ -28,16 +25,7 @@ if True:
     if joystick.connect():
         print(f"Connected to {joystick.name}")
 
-        # Start reading joystick data in a separate thread - call the joystick_function whenever new data is read
-        joystick_thread = threading.Thread(
-            target=joystick.read_continuous,
-            args=(
-                joystick.name,
-                joystick_function,
-            ),
-            daemon=False,
-        )
-        joystick_thread.start()
+        joystick.start_reading(joystick_function)
     else:
         print(
             f"Could not connect to {joystick.name}. Make sure the device is plugged in and drivers are installed."

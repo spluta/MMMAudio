@@ -22,7 +22,7 @@ if True:
     global scheduler
     scheduler = Scheduler()
 
-    voice_seq = Pseq(list(range(8)))
+    voice_seq = Pseq(list(range(4)))
     filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 5000, 100) for i in range(0, 101)])
     mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
 
@@ -36,9 +36,9 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        voice = "voice_" + str(voice_seq.next())
+        voice = voice_seq.next()
         mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
-        mmm_audio.send_floats(voice +".note", [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
+        mmm_audio.send_floats("note"+str(voice), [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         
         i = (i + 1) % count_to
@@ -49,7 +49,7 @@ async def trig_synth(wait):
             mult_seq = Pseq(list(range(1, count_to + 1)))
 
 # start the routine with the scheduler
-rout = scheduler.sched(trig_synth(0.1))
+rout = scheduler.sched(trig_synth(0.05))
 rout.cancel() # stop just this routine
 
 # stop all routines

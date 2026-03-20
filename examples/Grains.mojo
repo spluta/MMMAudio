@@ -22,8 +22,8 @@ struct Grains(Movable, Copyable):
         # buffer uses numpy to load a buffer into an N channel array
         self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
 
-        self.tgrains = TGrains(10, self.world)  
-        self.tgrains2 = TGrains(10, self.world)
+        self.tgrains = TGrains(10, 100, world)  
+        self.tgrains2 = TGrains(10, 100, world)
         self.impulse = Phasor[1](self.world)
         self.m = Messenger(world)
         self.max_trig_rate = 20.0

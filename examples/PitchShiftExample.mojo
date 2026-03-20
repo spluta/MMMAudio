@@ -17,6 +17,9 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var overlaps: Int
     var added_delay_low: Float64
     var added_delay_high: Float64
+    var fb: MFloat[2]
+    var fb_perc: Float64
+    var dc_trap: DCTrap[2]
      
     fn __init__(out self, world: World):
         self.world = world
@@ -32,14 +35,14 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.overlaps = 4
         self.added_delay_low = 0.0
         self.added_delay_high = 0.0
+        self.fb = MFloat[2](0.0, 0.0)
+        self.fb_perc = 0.0
+        self.dc_trap = DCTrap[2](world)
 
     @always_inline
     fn next(mut self) -> MFloat[2]:
         self.messenger.update(self.in_chan, "in_chan")
 
-        temp = self.world[].sound_in[self.in_chan]
-        input_sig = MFloat[2](temp, temp)
-        
         self.messenger.update(self.shift,"pitch_shift")
         self.messenger.update(self.grain_dur,"grain_dur")
         self.messenger.update(self.pitch_dispersion,"pitch_dispersion")
@@ -47,8 +50,13 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.messenger.update(self.overlaps,"overlaps")
         self.messenger.update(self.added_delay_low,"added_delay_low")
         self.messenger.update(self.added_delay_high,"added_delay_high")
+        self.messenger.update(self.fb_perc,"fb_perc")
 
+        temp = self.world[].sound_in[self.in_chan]
+        input_sig = MFloat[2](temp, temp) + (self.fb * self.fb_perc)
+        
         out = self.pitch_shift.next(input_sig, self.grain_dur, self.overlaps, self.shift, self.pitch_dispersion, self.time_dispersion, self.added_delay_low, self.added_delay_high)
+        self.fb = self.dc_trap.next(out)
 
         return out
 
