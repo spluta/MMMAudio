@@ -1,17 +1,17 @@
-from .RisingBoolDetector_Module import RisingBoolDetector
-
 trait PolyObject(Movable, Copyable):
     fn check_active(mut self) -> Bool:
-        ...
-    fn make_inactive(mut self):
+        """Checks if the voice is active. The PolyObject will need to have a way to determine if it is active or not. This is usually done by checking if the envelope is active.
+        """
         ...
 
-    # set_played is helpful in polyphonic synths where multiple voices can be triggered at the same time
+    # set_trigger
     fn set_trigger(mut self, trigger: Bool):
+        # self.trigger = trigger - usually it is just this
         pass
     
     # set_gate is helpful in polyphonic synths with ASR or ADSR envelopes
     fn set_gate(mut self, gate: Bool):
+        # self.gate = gate - usually it is just this
         pass
 
 struct Poly(Movable, Copyable):

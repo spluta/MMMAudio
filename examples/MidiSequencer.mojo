@@ -17,8 +17,6 @@ struct TrigSynthVoice(PolyObject):
     fn check_active(mut self) -> Bool:
         return self.env.is_active
 
-    fn make_inactive(mut self):
-        self.env.is_active = False
 
     # Poly will use this function to trigger the voice.
     fn set_trigger(mut self, trigger: Bool):

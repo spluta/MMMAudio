@@ -14,9 +14,6 @@ struct OscVoice(PolyObject):
 
     fn check_active(mut self) -> Bool:
         return self.env.is_active
-
-    fn make_inactive(mut self):
-        self.env.is_active = False
     
     # Poly will use this function to release the voice when it receives a note off message for the note that this voice is playing. 
     fn set_gate(mut self, gate: Bool):

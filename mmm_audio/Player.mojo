@@ -211,9 +211,6 @@ struct Grain(PolyObject):
     fn check_active(mut self) -> Bool:
         return self.play_buf.active
 
-    fn make_inactive(mut self):
-        self.play_buf.active = False
-
     fn set_trigger(mut self, trigger: Bool):
         self.trigger = trigger
     # ------------------------------------------------
