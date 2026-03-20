@@ -1,3 +1,5 @@
+from mmm_audio import *
+
 trait PolyObject(Movable, Copyable):
     fn check_active(mut self) -> Bool:
         """Checks if the voice is active. The PolyObject will need to have a way to determine if it is active or not. This is usually done by checking if the envelope is active.
@@ -116,7 +118,7 @@ struct Poly(Movable, Copyable):
         """Calls set_gate(True) on the PolyObject at the given index and remembers the voice by the given key.
 
         Args:
-            poly_objects: A list of structs conforming to the PolyObject trait. 
+            poly_objects: A list of structs conforming to the PolyObject trait.
             key: The key to remember the voice by. This could be a MIDI note number, for example.
             active_list_index: The index of the voice in the active_list that is playing the PolyObject corresponding to the key.
         """
