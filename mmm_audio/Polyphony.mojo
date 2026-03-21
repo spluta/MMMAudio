@@ -147,10 +147,9 @@ struct Poly(Movable, Copyable):
     Poly can be used with two different patterns of PolyObject, depending on the needs of the synth:
 
         1) Triggered PolyObjects: In this pattern, the PolyObject has a `set_trigger` function that takes a boolean trigger. Poly calls this function in `next_trigger`. This sets the PolyObject to trigger the subsequent time its `next` function is called. 
-        2) Gated PolyObjects: In this pattern, the PolyObject has a `set_gate` function that takes a boolean gate. Poly calls this function in `find_voice_and_open_gate` and `close_gate` to open and close the synth's envelope. This works for PolyObjects that have gated control, like an ASR or ADSR envelope.
+        2) Gated PolyObjects: In this pattern, the PolyObject has a `set_gate` function that takes a boolean gate. Poly calls this function in `find_voice_and_open_gate` and `close_gate` to open and close the synth's envelope. This works for PolyObjects that have gated control, like an ASR or ADSR envelope. As of now, Gated PolyObjects are only supported in PolyM, not in Poly.
 
     Synths receiving messages from Python will likely want to use the PolyM struct, which has an internal Messenger and functions that are designed to receive multiple messages per block from Python.
-
     """
     var active_list: List[Bool]
     var active_dict: Dict[String, Int]
