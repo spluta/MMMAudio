@@ -5,9 +5,10 @@ This example uses SIMDBuffer instead of Buffer to load the wavetable. This allow
 This example also uses Mojo-side Poly vs PVoiceAllocator.
 """
 
-from mmm_python import *
-mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMD", package_name="examples")
-mmm_audio.start_audio() 
+if True:
+    from mmm_python import *
+    mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMD", package_name="examples")
+    mmm_audio.start_audio() 
 
 
 if True:
@@ -21,6 +22,22 @@ if True:
 
     message_seq = Pseq(list(range(10))) # up to 10 messages per block
 
+    # just intonation ratios for a chromatic scale based on C major
+    just_offset = [
+    0.0,       # C
+    0.1173,    # C#
+    0.0391,    # D
+    0.1564,    # Eb
+   -0.1369,    # E
+   -0.0196,    # F
+   -0.0978,    # F#
+    0.0196,    # G
+    0.1369,    # Ab
+   -0.1564,    # A
+    0.1760,    # Bb
+   -0.1173     # B
+    ]
+
     # Create stop event
     global stop_event
     stop_event = threading.Event()
@@ -31,15 +48,16 @@ if True:
                     return
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
-                    print(msg)
                     if msg.type == "note_on":
                         msg_num = message_seq.next() 
-                        print(f"Note On: {msg.note} Velocity: {msg.velocity}")
-                        mmm_audio.send_ints("note"+str(msg_num), [msg.note, msg.velocity])  
+                        midi_note = msg.note+just_offset[msg.note % 12]
+                        print(f"Note On: {midi_note} Velocity: {msg.velocity}")
+                        mmm_audio.send_floats("poly."+str(msg_num), [midi_note, (msg.velocity)])  
                     if msg.type == "note_off":
                         msg_num = message_seq.next() 
-                        print(f"Note Off: {msg.note} Velocity: {msg.velocity}")
-                        mmm_audio.send_ints("note"+str(msg_num), [msg.note, 0])  
+                        midi_note = msg.note+just_offset[msg.note % 12]
+                        print(f"Note Off: {midi_note} Velocity: {msg.velocity}")
+                        mmm_audio.send_floats("poly."+str(msg_num), [midi_note, 0.0])  
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices

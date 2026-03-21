@@ -56,7 +56,7 @@ def main():
                 if msg.type in ["note_on", "control_change", "pitchwheel"]:
                     if msg.type == "note_on":
                         voice = voice_seq.next()
-                        mmm_audio.send_floats("note"+str(voice), [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
+                        mmm_audio.send_floats("poly."+str(voice), [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
                     elif msg.type == "control_change":
                         if msg.control == 34:  # Mod wheel
                             # on the desired cc, scale the value exponentially from 100 to 4000

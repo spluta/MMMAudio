@@ -69,7 +69,7 @@ struct MidiSequencer(Movable, Copyable):
     var filt_lag: Lag[]
     var filt_freq: Float64
     var bend_mul: Float64
-    var poly: Poly[]
+    var poly: PolyM
 
     fn __init__(out self, world: World, num_voices: Int = 8):
         self.world = world
@@ -84,21 +84,17 @@ struct MidiSequencer(Movable, Copyable):
         self.filt_lag = Lag(self.world, 0.1)
         self.filt_freq = 1000.0
         self.bend_mul = 1.0
-        self.poly = Poly(initial_num_voices=num_voices, max_voices=64, world=world)
+        self.poly = PolyM(initial_num_voices=num_voices, max_voices=64, world=world, name_space="poly")
 
     @always_inline
     fn next(mut self) -> MFloat[2]:
         var out = 0.0
-        self.poly.reset(self.voices) # reset poly at the top of each block - only necessary if multiple voices can be triggered at once.
-        # can receive up to num_messages each audio block
-        for i in range(Self.num_messages):
-            note = [0.0, 0.0]
-            trig = self.messenger.notify_update(note, "note"+String(i))
 
-            # if we received a trig, find and play a free voice
-            if trig:
-                free_voice = self.poly.find_voice_and_trigger(self.voices, trig) # get the index of the free voice and trigger the PolyObject
-                self.voices[free_voice].note = note^
+        # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
+        fn call_back(mut voice: TrigSynthVoice, mut note: List[Float64]):
+            voice.note = [note[0], note[1]]
+        # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
+        self.poly.next_trigger(self.voices, call_back=call_back)
 
         # add the values of the voices that are not being triggered 
         for i in range(len(self.voices)):
