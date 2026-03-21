@@ -91,8 +91,8 @@ struct MidiSequencer(Movable, Copyable):
         var out = 0.0
 
         # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
-        fn call_back(mut voice: TrigSynthVoice, mut note: List[Float64]):
-            voice.note = [note[0], note[1]]
+        fn call_back(mut voice: TrigSynthVoice, mut vals: List[Float64]):
+            voice.note = [vals[0], vals[1]]
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
         self.poly.next_trigger(self.voices, call_back=call_back)
 

@@ -74,10 +74,10 @@ struct WavetableOscSIMD(Movable, Copyable):
 
         # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
         # the kinds of messages the Messenger can receive are defined by the type of the `note` argument in the callback function
-        fn callback(mut poly_object: OscVoice, mut note: List[MFloat[1]]):
-            if note[1] > 0: # the call_back will be called for both note on and note off messages
-                poly_object.freq = midicps(Float64(note[0]))
-                poly_object.vol = note[1] / 127.0
+        fn callback(mut poly_object: OscVoice, mut vals: List[MFloat[1]]):
+            if vals[1] > 0: # the call_back will be called for both note on and note off messages
+                poly_object.freq = midicps(Float64(vals[0]))
+                poly_object.vol = vals[1] / 127.0
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]
         # for next_gate, the first value in the list is the note to trigger and the second value is the velocity or volume of the note, where 0 denotes a note off message. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
         self.poly.next_gate(self.voices, call_back=callback)

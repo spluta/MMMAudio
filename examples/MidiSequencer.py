@@ -49,7 +49,7 @@ async def trig_synth(wait):
             mult_seq = Pseq(list(range(1, count_to + 1)))
 
 # start the routine with the scheduler
-rout = scheduler.sched(trig_synth(0.01))
+rout = scheduler.sched(trig_synth(0.03))
 rout.cancel() # stop just this routine
 
 # stop all routines
