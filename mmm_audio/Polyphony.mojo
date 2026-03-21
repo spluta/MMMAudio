@@ -2,31 +2,42 @@ from mmm_audio import *
 
 trait PolyObject(Movable, Copyable):
     fn check_active(mut self) -> Bool:
-        """Checks if the voice is active. The PolyObject will need to have a way to determine if it is active or not. This is usually done by checking if the envelope is active.
+        """A required, user defind function to check if the voice is active. This is usually done by checking if the envelope is active or if a Play object is still playing. This function is used internally by Poly to keep track of which voices are active and which are not.
         """
         ...
 
     # set_trigger
     fn set_trigger(mut self, trigger: Bool):
-        # self.trigger = trigger - usually it is just this
+        """Necessary for triggered PolyObjects. This function is used internally by Poly to set the PolyObject to triggered. That way, the PolyObject can open its own envelope or trigger other parameters in the subsequent `next` call."""
+        # self.trigger = trigger # usually it is just this
         pass
     
     # set_gate is helpful in polyphonic synths with ASR or ADSR envelopes
     fn set_gate(mut self, gate: Bool):
-        # self.gate = gate - usually it is just this
+        """Necessary for gated PolyObjects. This function is used internally by Poly to open and close the gate of the PolyObject."""
+        # self.gate = gate # usually it is just this
         pass
 
 struct Poly(Movable, Copyable):
-    """Manages voice allocation for polyphonic Synths. Keeps track of which voices are active and tells the parent struct which voice to trigger. Also tells the parent struct when all voices are active and a new voice needs to be added to the voices list.
+    """Manages voice allocation for polyphonic Synths. Keeps track of which voices in a list of PolyObjects are inactive/active and triggers or controls the gate for PolyObjects as they are allocated. Also adds new voices to the List[PolyObject], when the list is full.
 
     Poly can be used with two different patterns of PolyObject, depending on the needs of the synth:
 
-        1) Triggered PolyObjects: In this pattern, the PolyObject has a `set_trigger` function that takes a boolean trigger. Poly calls this function in `find_free_voice_and_trigger` to set the PolyObject to trigger the next time its `next` function is called. Poly also has a `reset` function that sets all voices to not triggered at the after each sample or top of each block.
-        2) Gated PolyObjects: In this pattern, the PolyObject has a set_gate function that takes a boolean gate. Poly calls this function in `find_free_voice_and_open` and `close_voice` to open and close the synth's envelope. This works for PolyObjects that need a gate to control the duration of the sound, like an ASR or ADSR envelope.
+        1) Triggered PolyObjects: In this pattern, the PolyObject has a `set_trigger` function that takes a boolean trigger. Poly calls this function in `find_voice_and_trigger` to set the PolyObject to trigger the subsequent time its `next` function is called. 
+        2) Gated PolyObjects: In this pattern, the PolyObject has a set_gate function that takes a boolean gate. Poly calls this function in `find_voice_and_open_gate` and `close_gate` to open and close the synth's envelope. This works for PolyObjects that have gated control, like an ASR or ADSR envelope.
 
-    Poly can also be configured to only look for triggers at the top of each block or every sample. When triggering samples with messages from Python, the program should only look for triggers at the top of each block. When triggering samples with Impulse or Dust generators or other audio-rate triggers, look for triggers every sample.
+    The `reset` function must be called before calling `find_voice_and_trigger` or `find_voice_and_open_gate` in the audio loop. This function resets the triggered state of all voices, so the order of operations in the audio loop should be:
+
+    reset
+    find_voice_and_trigger - call as many of these as needed in each audio loop
+
+    reset
+    find_voice_and_open_gate - call as many of these as needed in each audio loop
+    close_gate - call as many of these as needed in each audio loop
+
+    Poly can be controlled by audio-rate triggers or by control-rate triggers, like those sent from Python. When triggering samples with messages from Python, the program should only look for triggers at the top of each block. When triggering samples with Impulse or Dust generators or other audio-rate triggers, look for triggers every sample.
     
-    When configured to only look for triggers at the top of each block, run the `reset` function with `only_top_of_block=True` (the default) and only call `find_free_voice_and_open` or `find_free_voice_and_trigger` when a trigger is received from Python. To run Poly on each sample, run the `reset` function with `only_top_of_block=False` and call `find_free_voice` or `find_free_voice_and_trigger` on each sample.
+    When configured to only look for triggers at the top of each block, run the `reset` function with `only_top_of_block=True` (the default) and only call `find_voice_and_open_gate` or `find_voice_and_trigger` when a trigger is received from Python. To run Poly on each sample, run the `reset` function with `only_top_of_block=False` and call `find_voice_and_open_gate` or `find_voice_and_trigger` on each sample.
 
     """
     var active_list: List[Bool]
@@ -39,7 +50,7 @@ struct Poly(Movable, Copyable):
         """
         Args:
             initial_num_voices (Int): the number of voices to start with. This can be changed later by the Poly object itself if more voices need to be added.
-            max_voices (Int): the maximum number of voices that can be allocated.
+            max_voices (Int): the maximum number of voices that can be allocated. Poly will not allocate more than this number of voices.
             world (World): A pointer to the MMMWorld instance.
         """
         self.active_list = [False for _ in range(initial_num_voices)]
@@ -49,7 +60,7 @@ struct Poly(Movable, Copyable):
         self.world = world
 
     fn reset[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T]):
-        """Checks which voices are active and sets all voices to not triggered.
+        """Must be called before any subsequent calls to find_free_voice or find_voice_and_open_gate. This function resets the triggered state of all voices at the beginning of each block or every sample, depending on the only_top_of_block parameter.
 
         Params:
             only_top_of_block: If True, Poly will only check which voices are active at the top of each block and reset the triggers after the first sample of the block. If False, it will check every sample. 
@@ -71,9 +82,10 @@ struct Poly(Movable, Copyable):
                 self.active_list[i] = poly_objects[i].check_active()
                 poly_objects[i].set_trigger(False)
 
-    fn find_free_voice[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
+    @doc_private
+    fn _find_free_voice[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
         """
-        Finds the next available inactive voice. If all voices are active and a new voice needs to be added, it adds a new voice to the poly_objects list. This function will not trigger the voice. Instead, it should be combined with open_voice and close_voice to open and close the voice's gate.
+        Finds the next available inactive voice. If all voices are active and a new voice needs to be added, it adds a new voice to the poly_objects list. This function will not trigger the voice. Instead, it should be combined with open_voice and close_gate to open and close the voice's gate.
 
         Args:
             poly_objects: A list of structs conforming to the PolyObject trait. Poly manages this list and grows it as needed if the number of voices allocated is exceeded.
@@ -114,7 +126,8 @@ struct Poly(Movable, Copyable):
             counter = list_len  # this is the index of the next voice to be added 
             return (counter, True) 
 
-    fn open_voice[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
+    @doc_private
+    fn _open_voice[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
         """Calls set_gate(True) on the PolyObject at the given index and remembers the voice by the given key.
 
         Args:
@@ -125,7 +138,33 @@ struct Poly(Movable, Copyable):
         poly_objects[active_list_index].set_gate(True)
         self.active_dict[key] = active_list_index
 
-    fn close_voice[T: PolyObject](mut self, mut poly_objects: List[T], key: Int):
+    fn find_voice_and_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
+        """Finds the next available inactive voice and triggers it. If all voices are active and a new voice needs to be added, it adds a new voice to the poly_objects list. This will also call the `set_trigger(True)` method on the PolyObject, so the PolyObject is triggered the next time its `next` function is called.
+        """
+        trigger_grain = self._find_free_voice(poly_objects, trig)
+
+        if trigger_grain != -1:
+            poly_objects[trigger_grain].set_trigger(True)
+            # print("triggering voice:", trigger_grain, end="\n")
+
+        return trigger_grain
+
+    fn find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
+        """Finds the next available inactive voice and opens its gate. If all voices are active and a new voice needs to be added, it adds a new voice to the poly_objects list. Also, stores a key/value pair with the provided key and the index of the voice found voice as the value. This allows the close_gate function to close the correct voice when it is given the same key.
+
+        Args:
+            poly_objects: A list of structs conforming to the PolyObject trait. Poly manages this list and grows it as needed if the number of voices allocated is exceeded.
+            trig: The trigger for the next voice. This should be a boolean that goes from False to True when a new note or sound is triggered.
+            key: The key to remember the voice by. This could be a MIDI note number, for example.
+        Returns:
+            Int: the index of the voice that will be used. This is the index of the voice in the poly_objects list. Returns -1 if no voice should be triggered.
+        """
+        trigger_grain = self._find_free_voice(poly_objects, trig)
+        if trigger_grain != -1:
+            self._open_voice(poly_objects, key, trigger_grain)
+        return trigger_grain
+
+    fn close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int):
         """Calls set_gate(False) on the PolyObject that is being played for the given key and forgets that voice.
 
         Args:
@@ -136,20 +175,3 @@ struct Poly(Movable, Copyable):
         active_list_index = self.active_dict.pop(key, -1)
         if active_list_index != -1:
             poly_objects[active_list_index].set_gate(False)
-
-    fn find_free_voice_and_open[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
-        trigger_grain = self.find_free_voice(poly_objects, trig)
-        if trigger_grain != -1:
-            self.open_voice(poly_objects, key, trigger_grain)
-        return trigger_grain
-
-    fn find_free_voice_and_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
-        """Finds the next available inactive voice and triggers it. If all voices are active and a new voice needs to be added, it adds a new voice to the poly_objects list. This will also set the chosen PolyObject to triggered by calling the set_triggered function for that PolyObject. When the `next` function is called on the PolyObject, it will be triggered for one sample, so it will open its envelope and become active.
-        """
-        trigger_grain = self.find_free_voice(poly_objects, trig)
-
-        if trigger_grain != -1:
-            poly_objects[trigger_grain].set_trigger(True)
-            # print("triggering voice:", trigger_grain, end="\n")
-
-        return trigger_grain

@@ -97,7 +97,7 @@ struct MidiSequencer(Movable, Copyable):
 
             # if we received a trig, find and play a free voice
             if trig:
-                free_voice = self.poly.find_free_voice_and_trigger(self.voices, trig) # get the index of the free voice and trigger the PolyObject
+                free_voice = self.poly.find_voice_and_trigger(self.voices, trig) # get the index of the free voice and trigger the PolyObject
                 self.voices[free_voice].note = note^
 
         # add the values of the voices that are not being triggered 

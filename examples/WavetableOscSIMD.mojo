@@ -85,13 +85,13 @@ struct WavetableOscSIMD(Movable, Copyable):
             if trig:
                 if note[1] > 0: # if the velocity is greater than 0, trigger the note on
                     print(note[0], note[1])
-                    free_voice = self.poly.find_free_voice_and_open(self.voices, trig, Int(note[0])) # get the index of the free voice
+                    free_voice = self.poly.find_voice_and_open_gate(self.voices, trig, Int(note[0])) # get the index of the free voice
                     
                     self.voices[free_voice].freq = midicps(Float64(note[0]))
                     self.voices[free_voice].vol = note[1] / 127.0
                 else: # if the velocity is 0, trigger the note off for that note
                     # close the gate for the voice that is playing and forget that is was playing
-                    self.poly.close_voice(self.voices, Int(note[0])) 
+                    self.poly.close_gate(self.voices, Int(note[0])) 
         
         # add the output of all the voices that were not triggered
         for ref voice in self.voices:

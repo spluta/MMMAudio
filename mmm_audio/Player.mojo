@@ -411,7 +411,7 @@ struct TGrains(Movable, Copyable):
             List of output samples for all channels.
         """
         self.poly.reset[only_top_of_block=False](self.grains)
-        _ = self.poly.find_free_voice_and_trigger(self.grains, trig)
+        _ = self.poly.find_voice_and_trigger(self.grains, trig)
 
         out = MFloat[2](0.0, 0.0)
         for i in range(len(self.grains)):
@@ -453,7 +453,7 @@ struct TGrains(Movable, Copyable):
             Output samples for all channels as a SIMD vector.
         """
         self.poly.reset[only_top_of_block=False](self.grains)
-        _ = self.poly.find_free_voice_and_trigger(self.grains, trig)
+        _ = self.poly.find_voice_and_trigger(self.grains, trig)
 
         out = MFloat[num_simd_chans](0.0)
         for i in range(len(self.grains)):
@@ -526,7 +526,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
         trig = self.dust.next_bool(trig_rate*(1-time_dispersion2), trig_rate*(1+time_dispersion2), trig = MBool[1](fill=True))
 
         self.poly.reset[only_top_of_block=False](self.grains)
-        _ = self.poly.find_free_voice_and_trigger(self.grains, trig)
+        _ = self.poly.find_voice_and_trigger(self.grains, trig)
 
         out = MFloat[Self.num_chans](0.0)
 
