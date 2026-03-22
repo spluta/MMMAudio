@@ -15,7 +15,15 @@ trait PolyObject(Movable, Copyable):
     # set_gate is helpful in polyphonic synths with ASR or ADSR envelopes
     fn set_gate(mut self, gate: Bool):
         """Necessary for gated PolyObjects. This function is used internally by Poly to open and close the gate of the PolyObject."""
-        # self.gate = gate # usually it is just this
+        # usually it is just this
+        # self.gate = False
+        pass
+
+    fn reset_env(mut self):
+        """Necessary for gate PolyObjects that use gated envelopes.
+        """
+        # usually you just need a new env
+        # self.env = ASREnv(self.world)
         pass
 
 struct PolyM(Movable, Copyable):
@@ -29,7 +37,7 @@ struct PolyM(Movable, Copyable):
     var world: World
 
     fn __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
-        self.poly = Poly(initial_num_voices=initial_num_voices, max_voices=max_voices, num_messages=num_messages)
+        self.poly = Poly(initial_num_voices=initial_num_voices, max_voices=max_voices)
         self.m = Messenger(world, name_space)
         self.num_messages = num_messages
         self.world = world
@@ -64,7 +72,8 @@ struct PolyM(Movable, Copyable):
             if trig:
                 if vals[1] > 0: # if the velocity is greater than 0, trigger the note on
                     free_voice = self.poly.find_voice_and_open_gate(poly_objects, trig, String(vals[0])) # get the index of the free voice
-                    call_back(poly_objects[free_voice], vals)
+                    if free_voice != -1:
+                        call_back(poly_objects[free_voice], vals)
                 else: # if the velocity is 0, trigger the note off for that note
                     # close the gate for the voice that is playing and forget that is was playing
                     freed_voice = self.poly.close_gate(poly_objects, String(vals[0]))
@@ -81,7 +90,8 @@ struct PolyM(Movable, Copyable):
             if trig:
                 if vals[1] > 0: # if the velocity is greater than 0, trigger the note on
                     free_voice = self.poly.find_voice_and_open_gate(poly_objects, trig, String(vals[0])) # get the index of the free voice
-                    call_back(poly_objects[free_voice], vals)
+                    if free_voice != -1:
+                        call_back(poly_objects[free_voice], vals)
                 else: # if the velocity is 0, trigger the note off for that note
                     # close the gate for the voice that is playing and forget that is was playing
                     freed_voice = self.poly.close_gate(poly_objects, String(vals[0]))
@@ -140,8 +150,34 @@ struct PolyM(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], val)
 
+struct PolyGatedSigs(Movable, Copyable):
+    """A niche struct for managing polyphonic synths with gated controls that are signals."""
+    var poly: Poly
+    var rbds: List[RisingBoolDetector[]]
+    var fbds: List[RisingBoolDetector[]]
+    var num_gates: Int
 
-# I think there could be a PolyGate struct that is designed specifically for the next_gate pattern on signals. I think this will be a separate struct because, like the PolyM struct, it has a lot of internal functionality that is specific to itself.
+    fn __init__(out self, initial_num_voices: Int, max_voices: Int, num_gates: Int, world: World):
+        self.poly = Poly(initial_num_voices=initial_num_voices, max_voices=max_voices)
+        self.rbds = [RisingBoolDetector() for _ in range(num_gates)]
+        self.fbds = [RisingBoolDetector() for _ in range(num_gates)]
+        self.num_gates = num_gates
+
+    fn next[T: PolyObject](mut self, mut poly_objects: List[T], gate_sigs: List[Bool]):
+        """This function is designed to be used with polyphonic synths that have gated controls that are signals.
+
+        Args:
+            poly_objects: A list of structs conforming to the PolyObject trait. This function calls the set_gate function for each PolyObject to open and close the gates as needed.
+            gate_sigs: A list of boolean signals that control the gates of the voices. Each signal corresponds to a different gate, so the length of the gate_sigs list should be the same as the number of gates in the synth. When a signal goes from False to True, the corresponding gate will be opened for a new voice. When a signal goes from True to False, the corresponding gate will be closed for the voice that is currently playing with that gate.
+        """
+        self.poly._reset(poly_objects)
+        for i in range(len(gate_sigs)):
+            rbd_out = self.rbds[i].next(gate_sigs[i])
+            fbd_out = self.fbds[i].next(not gate_sigs[i])
+            if rbd_out:
+                free_voice = self.poly.find_voice_and_open_gate(poly_objects, rbd_out, String(i))
+            if fbd_out:
+                _ = self.poly.close_gate(poly_objects, String(i))
 
 struct Poly(Movable, Copyable):
     """Manages voice allocation for polyphonic Synths. Keeps track of which voices in a list of PolyObjects are inactive/active and triggers or controls the gate for PolyObjects as they are allocated. Also adds new voices to the List[PolyObject], when the list is full.
@@ -157,9 +193,8 @@ struct Poly(Movable, Copyable):
     var active_dict: Dict[String, Int]
     var max_voices: Int
     var messages: List[String]
-    var num_messages: Int
 
-    fn __init__(out self, initial_num_voices: Int, max_voices: Int, num_messages: Int = 10):
+    fn __init__(out self, initial_num_voices: Int, max_voices: Int):
         """
         Args:
             initial_num_voices (Int): the number of voices to start with. This can be changed later by the Poly object itself if more voices need to be added.
@@ -170,7 +205,6 @@ struct Poly(Movable, Copyable):
         self.active_dict = Dict[String, Int]()
         self.max_voices = max_voices
         self.messages = List[String]()
-        self.num_messages = num_messages
 
     fn next_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
         """This convenience function acheives all functionality of a triggered PolyObject synth in one function. Upon receiving a trigger, it will find a free voice and call the `set_trigger(True)` method on that voice's PolyObject. The next time that PolyObject's `next` function is called, it will be triggered. On the next sample, the `set_trigger` method will be called with False to reset the trigger. An optional call_back function can be provided for further control of the PolyObject.
@@ -221,12 +255,14 @@ struct Poly(Movable, Copyable):
         if trig:
             list_len = len(self.active_list)
             trigger_grain, add_voice_bool = self._find_voice(list_len)
-            # print(trigger_grain, end=" ")
             if add_voice_bool:
                 if list_len < self.max_voices:
-                    # print("\n new voice added:", trigger_grain, end="\n")
                     self.active_list.append(True)
-                    poly_objects.append(poly_objects[0].copy())
+                    temp = poly_objects[0].copy() # copy the first voice
+                    temp.reset_env() # reset the env of the new voice so that it doesn't just start playing when it's copied if the first voice is already active
+                    temp.set_gate(False) 
+
+                    poly_objects.append(temp^) 
                 else:
                     trigger_grain = -1
                     print("Max polyphony reached, cannot add more voices.")
@@ -268,7 +304,6 @@ struct Poly(Movable, Copyable):
 
         if trigger_grain != -1:
             poly_objects[trigger_grain].set_trigger(True)
-            # print("triggering voice:", trigger_grain, end="\n")
 
         return trigger_grain
 
@@ -279,6 +314,7 @@ struct Poly(Movable, Copyable):
             poly_objects: A list of structs conforming to the PolyObject trait. Poly manages this list and grows it as needed if the number of voices allocated is exceeded.
             trig: The trigger for the next voice. This should be a boolean that goes from False to True when a new note or sound is triggered.
             key: The key to remember the voice by. This could be a MIDI note number, for example.
+        
         Returns:
             Int: the index of the voice that will be used. This is the index of the voice in the poly_objects list. Returns -1 if no voice should be triggered.
         """
@@ -293,6 +329,9 @@ struct Poly(Movable, Copyable):
         Args:
             poly_objects: A list of structs conforming to the PolyObject trait.
             key: The key in the active_dict that corresponds to the voice that needs to be released.
+
+        Returns:
+            Int: the index of the voice that was released. This is the index of the voice in the poly_objects list. Returns -1 if no voice was released.
         """
 
         active_list_index = self.active_dict.pop(key, -1)

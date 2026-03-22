@@ -1,8 +1,6 @@
 
 from mmm_audio import *
 
-# there can only be one graph in an MMMAudio instance
-# a graph can have as many synths as you want
 struct TestASR(Movable, Copyable):
     var world: World
     var env: ASREnv

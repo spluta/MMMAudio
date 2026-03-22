@@ -249,7 +249,7 @@ class PVoiceAllocator:
     
 class PolyPal:
     """
-    A helper class for communication with a MMMAudio synth that uses the Poly object.
+    A helper class for communication with a MMMAudio synth that uses the PolyM object.
 
     Has send_float, send_floats, send_int, and send_ints methods.
     """

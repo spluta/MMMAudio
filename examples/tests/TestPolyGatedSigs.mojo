@@ -1,0 +1,67 @@
+
+from mmm_audio import *
+
+struct PGSVoice(PolyObject):
+    var world: World
+    var env: ASREnv
+    var synth: Osc[]
+    var messenger: Messenger
+    var curves: MFloat[2]
+    var gate: Bool
+    var freq: MFloat[]
+    var pan: MFloat[]
+
+    fn check_active(self) -> Bool:
+        return self.env.is_active
+    
+    fn set_gate(mut self, gate: Bool):
+        self.gate = gate
+        if gate:
+            self.freq = exprand(100., 1000.)
+            self.pan = rrand(-1., 1.)
+
+    fn reset_env(mut self):
+        self.env = ASREnv(self.world)
+
+    fn __init__(out self, world: World):
+        self.world = world
+        self.env = ASREnv(self.world)
+        self.synth = Osc(self.world)
+        self.messenger = Messenger(self.world)
+        self.curves = MFloat[2](1.0, 1.0)
+        self.gate = False
+        self.freq = 0.0
+        self.pan = 0.0
+
+
+    fn next(mut self) -> MFloat[2]:
+        env = self.env.next(0.01, 1, 0.7, self.gate, self.curves)
+        sample = self.synth.next(self.freq)
+        return env * pan2(sample, self.pan) * 0.1
+
+
+struct TestPolyGatedSigs(Movable, Copyable):
+    comptime num_gates: Int = 8
+
+    var psg_voices: List[PGSVoice]
+    var world: World
+    var gates: List[Dust[]]
+    var poly_gated_sigs: PolyGatedSigs
+    var gated_sigs: List[Bool]
+
+    fn __init__(out self, world: World):
+        self.psg_voices = [PGSVoice(world) for _ in range(self.num_gates)]
+        self.world = world
+        self.gates = [Dust(self.world) for _ in range(self.num_gates)]
+        self.poly_gated_sigs = PolyGatedSigs(initial_num_voices=6, max_voices=16, num_gates=self.num_gates, world=self.world)
+        self.gated_sigs = [False for _ in range(Self.num_gates)]
+    
+    fn next(mut self) -> MFloat[2]:
+        for i in range(Self.num_gates):
+            if self.gates[i].next_bool(0.5, 2.0): self.gated_sigs[i] = not self.gated_sigs[i]
+
+        self.poly_gated_sigs.next(self.psg_voices, self.gated_sigs)
+        out = MFloat[2](0.0, 0.0)
+        for ref voice in self.psg_voices:
+            out += voice.next()
+        return out

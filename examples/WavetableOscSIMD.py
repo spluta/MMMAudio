@@ -5,13 +5,19 @@ This example uses SIMDBuffer instead of Buffer to load the wavetable. This allow
 This example also uses Mojo-side Poly vs PVoiceAllocator.
 """
 
-if True:
-    from mmm_python import *
+import sys
+from pathlib import Path
+
+# In order to do this, it needs to add the parent directory to the path
+# (the next line here) so that it can find the mmm_src and mmm_utils packages.
+# If you want to run it line by line in a REPL, skip this line!
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from mmm_python import *
+
+def main():
     mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMD", package_name="examples")
     mmm_audio.start_audio() 
 
-
-if True:
     import threading, mido, time
 
     # find your midi devices
@@ -72,3 +78,6 @@ if True:
     # Start the thread
     midi_thread = threading.Thread(target=start_midi, daemon=False)
     midi_thread.start()
+
+if __name__ == "__main__":
+    main()

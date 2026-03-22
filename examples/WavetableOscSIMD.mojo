@@ -19,6 +19,10 @@ struct OscVoice(PolyObject):
     fn set_gate(mut self, gate: Bool):
         self.gate = gate
 
+    # necessary to ensure a fresh env when the voice is copied by Poly
+    fn reset_env(mut self):
+        self.env = ASREnv(self.world)
+
     fn __init__(out self, world: World, name_space: String = ""):
         self.osc = Osc[1,Interp.sinc,0](world)
         self.tri = LFTri(world)
@@ -33,7 +37,7 @@ struct OscVoice(PolyObject):
 
     fn next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
         osc_frac = self.tri.next(self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
-        return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2) * self.vol
+        return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.7,self.gate,2) * self.vol
 
 struct WavetableOscSIMD(Movable, Copyable):
     comptime wavetables_per_channel = 8
@@ -60,7 +64,7 @@ struct WavetableOscSIMD(Movable, Copyable):
         self.filter_cutoff = 20000.0
         self.filter_resonance = 0.5
         self.moog_filter = VAMoogLadder[1,1](self.world)
-        self.poly = PolyM(8, 64, world, "poly")
+        self.poly = PolyM(8, 16, world, "poly")
 
     fn __repr__(self) -> String:
         return String("Default")
