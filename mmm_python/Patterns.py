@@ -12,6 +12,8 @@ Classes:
 from random import choice, randint
 from typing import Optional
 
+import mmm_audio
+
 class Pseq:
     """
     Sequential pattern that cycles through a list of values.
@@ -244,3 +246,39 @@ class PVoiceAllocator:
                 return (True, counter)
             counter += 1
         return (False, -1)    
+    
+class PolyPal:
+    """
+    A helper class for communication with a MMMAudio synth that uses the Poly object.
+
+    Has send_float, send_floats, send_int, and send_ints methods.
+    """
+
+    def __init__(self, mmm_audio, name_space, num_voices):
+        self.name_space = name_space
+        self.seq = Pseq(list(range(num_voices)))
+        self.mmm_audio = mmm_audio
+
+    def send_floats(self, values):
+        """
+        Send a list of floats to the synth."""
+
+        self.mmm_audio.send_floats(f"{self.name_space}.{self.seq.next()}", values)
+
+    def send_float(self, value):
+        """
+        Send a single float to the synth."""
+
+        self.mmm_audio.send_float(f"{self.name_space}.{self.seq.next()}", value)
+
+    def send_int(self, value):
+        """
+        Send a single int to the synth."""
+
+        self.mmm_audio.send_int(f"{self.name_space}.{self.seq.next()}", value)
+
+    def send_ints(self, values):
+        """
+        Send a list of ints to the synth."""
+
+        self.mmm_audio.send_ints(f"{self.name_space}.{self.seq.next()}", values)

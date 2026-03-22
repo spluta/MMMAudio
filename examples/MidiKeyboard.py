@@ -43,7 +43,7 @@ def main():
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
-    voice_seq = Pseq(list(range(4)))
+    poly_pal = PolyPal(mmm_audio, "poly", 10)
 
     # Create stop event
     global stop_event
@@ -55,8 +55,7 @@ def main():
                     return
                 if msg.type in ["note_on", "control_change", "pitchwheel"]:
                     if msg.type == "note_on":
-                        voice = voice_seq.next()
-                        mmm_audio.send_floats("poly."+str(voice), [midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
+                        poly_pal.send_floats([midicps(msg.note), msg.velocity / 127.0])  # note freq and velocity scaled 0 to 1
                     elif msg.type == "control_change":
                         if msg.control == 34:  # Mod wheel
                             # on the desired cc, scale the value exponentially from 100 to 4000

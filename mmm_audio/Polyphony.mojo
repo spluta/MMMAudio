@@ -19,7 +19,9 @@ trait PolyObject(Movable, Copyable):
         pass
 
 struct PolyM(Movable, Copyable):
-    """A Poly implementation that has an internal Messenger for handling messages from Python. It is designed to be used with the `next_gate` and `next_trigger` functions, each of which conform to a specific pattern of messages from Python. The `next_gate` function is designed to be used with messages that have a note and velocity, where the note is used to trigger the voice and the velocity is used to control the volume or turn the gate off. The `next_trigger` function is designed to be used with messages that simply trigger a voice.
+    """A Poly implementation that has an internal Messenger for handling messages from Python. It is designed to be used with the `next_gate` and `next_trigger` functions, each of which conform to a specific pattern of messages from Python. The `next_gate` function is designed to be used with messages that have a note and velocity, where the note is used to open and close the voice's gate and the velocity is used to control the volume or turn the gate off. The `next_trigger` function is designed to be used with messages that simply trigger a voice.
+
+    PolyM is designed to be paired with the PolyPal class in Python. Give them the same name_space and num_messages arguments, and the messages sent from Python with PolyPal will be correctly received by the PolyM object.
     """
     var poly: Poly
     var m: Messenger

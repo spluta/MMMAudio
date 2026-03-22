@@ -22,7 +22,7 @@ if True:
     global scheduler
     scheduler = Scheduler()
 
-    voice_seq = Pseq(list(range(4)))
+    poly_pal = PolyPal(mmm_audio, "poly", 10)
     filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 5000, 100) for i in range(0, 101)])
     mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
 
@@ -36,9 +36,8 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        voice = voice_seq.next()
         mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
-        mmm_audio.send_floats("poly."+str(voice), [fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
+        poly_pal.send_floats([fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         
         i = (i + 1) % count_to

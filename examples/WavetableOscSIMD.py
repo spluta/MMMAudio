@@ -20,7 +20,8 @@ if True:
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 
-    message_seq = Pseq(list(range(10))) # up to 10 messages per block
+    # PolyPal correctly formats messages to be sent to a Synth that uses a Poly object
+    poly_pal = PolyPal(mmm_audio, "poly", 10)
 
     # just intonation ratios for a chromatic scale based on C major
     just_offset = [
@@ -49,15 +50,13 @@ if True:
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
                     if msg.type == "note_on":
-                        msg_num = message_seq.next() 
                         midi_note = msg.note+just_offset[msg.note % 12]
                         print(f"Note On: {midi_note} Velocity: {msg.velocity}")
-                        mmm_audio.send_floats("poly."+str(msg_num), [midi_note, (msg.velocity)])  
+                        poly_pal.send_floats([midi_note, (msg.velocity)])  
                     if msg.type == "note_off":
-                        msg_num = message_seq.next() 
                         midi_note = msg.note+just_offset[msg.note % 12]
                         print(f"Note Off: {midi_note} Velocity: {msg.velocity}")
-                        mmm_audio.send_floats("poly."+str(msg_num), [midi_note, 0.0])  
+                        poly_pal.send_floats([midi_note, 0.0])  
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices
