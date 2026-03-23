@@ -8,20 +8,32 @@ from sklearn.neighbors import KDTree
 import librosa
 import numpy as np
 import pickle
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 def main():
+
+    # parameters for analysis
     d = {
-        # "path":"/Users/ted/Documents/_TEACHING/_materials/flucoma/FluCoMa-Pedagogical-Materials-repo/media/Nicol-LoopE-M.wav",
-        "path": "/Users/ted/Desktop/all_flucoma.wav",
-        "thresh":68.0,
-        "min_slice_len":0.1,# in seconds
+        "path": "resources/Shiverer.wav",
+        # threshold for spectral flux onset detection, lower is more sensitive, higher is less sensitive
+        "thresh":0.01,
+        # minimum length of slices in seconds
+        "min_slice_len":0.1,
+        # window size and hop size used for all analyses
         "window_size":1024,
-        "hop_size":512
+        "hop_size":512,
+        # num mfcc coefficients to compute (including 0th), we will discard the 0th coefficient later
+        "num_coeffs": 14
     }
+
+    # use librosa to load audio file to get sample rate and samples for plotting waveform
     y, sr = librosa.load(d["path"], sr=None)
+    
+    # slice using spectral flux
     slice_points = MBufAnalysis.spectral_flux_onsets(d)
-    print(slice_points.dtype)
+
+    print(len(slice_points))
+
     slice_points = np.insert(slice_points, 0, 0) # add start of file as first slice point
     slice_points = np.append(slice_points, len(y)) # add end of file as last slice point
     data = np.ndarray((len(slice_points)-1, 13)) # create array to hold slice features
@@ -33,16 +45,14 @@ def main():
         d["start_frame"] = start
         d["num_frames"] = end - start
         mfccs = MBufAnalysis.mfcc(d)
-        data[i] = mfccs.mean()
+        # remove 0th coefficient and take mean across time axis to get one feature vector per slice
+        data[i] = mfccs[:, 1:].mean(axis=0)
 
-    with open("mfcc.pkl", "wb") as f:
-        pickle.dump(data, f)
-
-    # data_norm = MinMaxScaler().fit_transform(data)
+    data = StandardScaler().fit_transform(data)
 
     print("data shape:", data.shape)
 
-    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.7,n_epochs=200).fit_transform(data)
+    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.1,n_epochs=200).fit_transform(data)
 
     kdtree = KDTree(data_umap)
 
@@ -89,6 +99,7 @@ def main():
 
     def shutdown_audio():
         ma.stop_audio()
+        ma.stop_process()
 
     app.aboutToQuit.connect(shutdown_audio)
     main.closeEvent = lambda event: (shutdown_audio(), event.accept())
