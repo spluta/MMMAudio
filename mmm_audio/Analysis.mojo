@@ -1204,6 +1204,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     """
     var num_mags: Int
     var num_mags_f64: Float64
+    var num_mags_reciprocal: Float64
     var prev_mags: List[Float64]
     var flux: Float64
     var positive_only: Bool
@@ -1217,6 +1218,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         """
         self.num_mags = num_mags
         self.num_mags_f64 = Float64(self.num_mags)
+        self.num_mags_reciprocal = 1.0 / self.num_mags_f64
         self.prev_mags = List[Float64](length=self.num_mags, fill=0.0)
         self.flux = 0.0
         self.positive_only = positive_only
@@ -1254,15 +1256,15 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         if self.positive_only:
             for i in range(self.num_mags):
                 var diff = mags[i] - self.prev_mags[i]
-                self.flux += max(0.0, diff)
+                self.flux += max(0.0, diff) * self.num_mags_reciprocal
                 self.prev_mags[i] = mags[i]
         else:
             for i in range(self.num_mags):
                 var diff = mags[i] - self.prev_mags[i]
-                self.flux += diff * diff
+                self.flux += diff * diff * self.num_mags_reciprocal
                 self.prev_mags[i] = mags[i]
             
-        return self.flux / self.num_mags_f64
+        return self.flux
 
 trait GetBoolFeaturable:
     fn get_features(self) -> List[Bool]:...

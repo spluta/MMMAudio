@@ -12,16 +12,17 @@ from sklearn.preprocessing import MinMaxScaler
 
 def main():
     d = {
-        # "path":"/Users/ted/Documents/_TEACHING/_materials/flucoma/FluCoMa-Pedagogical-Materials-repo/media/Nicol-LoopE-M.wav",
         "path": "/Users/ted/Desktop/all_flucoma.wav",
-        "thresh":68.0,
+        "thresh":0.1,
         "min_slice_len":0.1,# in seconds
         "window_size":1024,
-        "hop_size":512
+        "hop_size":512,
+        "num_coeffs": 14
     }
     y, sr = librosa.load(d["path"], sr=None)
     slice_points = MBufAnalysis.spectral_flux_onsets(d)
-    print(slice_points.dtype)
+    print(len(slice_points))
+
     slice_points = np.insert(slice_points, 0, 0) # add start of file as first slice point
     slice_points = np.append(slice_points, len(y)) # add end of file as last slice point
     data = np.ndarray((len(slice_points)-1, 13)) # create array to hold slice features
@@ -33,7 +34,7 @@ def main():
         d["start_frame"] = start
         d["num_frames"] = end - start
         mfccs = MBufAnalysis.mfcc(d)
-        data[i] = mfccs.mean()
+        data[i] = mfccs[:, 1:].mean(axis=0)
 
     with open("mfcc.pkl", "wb") as f:
         pickle.dump(data, f)
@@ -89,6 +90,7 @@ def main():
 
     def shutdown_audio():
         ma.stop_audio()
+        ma.stop_process()
 
     app.aboutToQuit.connect(shutdown_audio)
     main.closeEvent = lambda event: (shutdown_audio(), event.accept())
