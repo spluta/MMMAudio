@@ -8,19 +8,30 @@ from sklearn.neighbors import KDTree
 import librosa
 import numpy as np
 import pickle
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 
 def main():
+
+    # parameters for analysis
     d = {
-        "path": "/Users/ted/Desktop/all_flucoma.wav",
-        "thresh":0.1,
-        "min_slice_len":0.1,# in seconds
+        "path": "resources/Shiverer.wav",
+        # threshold for spectral flux onset detection, lower is more sensitive, higher is less sensitive
+        "thresh":0.01,
+        # minimum length of slices in seconds
+        "min_slice_len":0.1,
+        # window size and hop size used for all analyses
         "window_size":1024,
         "hop_size":512,
+        # num mfcc coefficients to compute (including 0th), we will discard the 0th coefficient later
         "num_coeffs": 14
     }
+
+    # use librosa to load audio file to get sample rate and samples for plotting waveform
     y, sr = librosa.load(d["path"], sr=None)
+    
+    # slice using spectral flux
     slice_points = MBufAnalysis.spectral_flux_onsets(d)
+
     print(len(slice_points))
 
     slice_points = np.insert(slice_points, 0, 0) # add start of file as first slice point
@@ -34,16 +45,14 @@ def main():
         d["start_frame"] = start
         d["num_frames"] = end - start
         mfccs = MBufAnalysis.mfcc(d)
+        # remove 0th coefficient and take mean across time axis to get one feature vector per slice
         data[i] = mfccs[:, 1:].mean(axis=0)
 
-    with open("mfcc.pkl", "wb") as f:
-        pickle.dump(data, f)
-
-    # data_norm = MinMaxScaler().fit_transform(data)
+    data = StandardScaler().fit_transform(data)
 
     print("data shape:", data.shape)
 
-    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.7,n_epochs=200).fit_transform(data)
+    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.1,n_epochs=200).fit_transform(data)
 
     kdtree = KDTree(data_umap)
 
