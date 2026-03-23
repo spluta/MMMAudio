@@ -1153,6 +1153,13 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
 
         self.dct.process(self.db_bands, self.coeffs)
 
+    @staticmethod
+    fn buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+        mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
+        return MBufAnalysis.fft_process[WindowType.hann](mfcc, buf, chan, start_frame, num_frames, fft_size, hop_size)
+
 struct DCT(Movable,Copyable):
     """Compute the Discrete Cosine Transform (DCT)."""
 
@@ -1269,7 +1276,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
 trait GetBoolFeaturable:
     fn get_features(self) -> List[Bool]:...
 
-struct SpectralFluxOnsets[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable):
+struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
     """Spectral Flux Onset analysis.
     """
     var world: World
@@ -1280,12 +1287,12 @@ struct SpectralFluxOnsets[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable
     var filter_size: Int
     var filter: MedianFilter
     var prev_flux: Float64
-    var fftp: FFTProcess[SpectralFlux,WindowType.hann,WindowType.hann]
+    var fftp: FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann]
 
     fn get_features(self) -> List[Bool]:
         return [self.state]
 
-    fn __init__(out self, world: World, num_mags: Int, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
+    fn __init__(out self, world: World, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
         self.world = world
         self.thresh = 0.5
         self.state = False
@@ -1294,8 +1301,8 @@ struct SpectralFluxOnsets[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable
         self.filter_size = filter_size
         self.filter = MedianFilter(filter_size)
         self.prev_flux = 0.0
-        sfp = SpectralFlux(num_mags=num_mags, positive_only=True)
-        self.fftp = FFTProcess[SpectralFlux,WindowType.hann,WindowType.hann](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
+        sfp = SpectralFlux(num_mags=(window_size // 2) + 1, positive_only=True)
+        self.fftp = FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
 
     fn next(mut self, input: SIMD[DType.float64,1]) -> Bool:
 
@@ -1322,5 +1329,23 @@ struct SpectralFluxOnsets[num_chans: Int = 1](Movable,Copyable,GetBoolFeaturable
                 self.current_slice_length_samps = 0
 
         return self.state
+    
+    @staticmethod
+    fn buf_analysis(world: World, buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, thresh: Float64 = 0.5, min_slice_len: Float64 = 1.0, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5) raises -> List[Int]:
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+
+        # run the analysis
+        sf_onsets = SpectralFluxOnsets(world,window_size,hop_size,filter_size)
+        sf_onsets.thresh = thresh
+        sf_onsets.min_slice_len = min_slice_len
+
+        onsets = List[Int]()
+
+        for i in range(buf.num_frames):
+            if sf_onsets.next(buf.data[chan][i]):
+                onsets.append(i)
+        
+        return onsets^
 
 

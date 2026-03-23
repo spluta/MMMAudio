@@ -27,79 +27,12 @@ trait BufferedProcessable(Movable, Copyable):
     fn get_messages(mut self) -> None:
         return None
 
-struct BufferedInput[T: BufferedProcessable, input_window_shape: Int = WindowType.hann](Movable, Copyable):
+struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable, Copyable):
     """Buffers input samples and hands them over to be processed in 'windows'.
 
     Parameters:
         T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
-        input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
-    """
-    var world: World
-    var window_size: Int
-    var hop_size: Int
-    var input_buffer: List[Float64]
-    var passing_buffer: List[Float64]
-    var input_buffer_write_head: Int
-    var hop_counter: Int
-    var process: Self.T
-    var input_attenuation_window: List[Float64]
-
-    fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int, hop_start: Int = 0):
-        """Initializes a BufferedInput struct.
-
-        Args:
-            world: A pointer to the MMMWorld.
-            process: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
-            window_size: The size of the window to process. This will determine how many samples are passed to the user defined struct's `.next_window()` method on each call.
-            hop_size: The number of samples between each processed window.
-            hop_start: The initial value of the hop counter. Default is 0. This can be used to offset the processing start time, if for example, you need to offset the start time of the first frame. This can be useful when separating windows into separate `BufferedInput`s, and therefore separate audio streams, so that each window could be routed or processed with different FX chains.
-
-        Returns:
-            An initialized `BufferedInput` struct.
-        """
-        
-        self.world = world
-        self.window_size = window_size
-        self.hop_size = hop_size
-        self.input_buffer_write_head = 0
-        self.hop_counter = hop_start
-        self.process = process^
-        self.input_buffer = List[Float64](length=self.window_size * 2, fill=0.0)
-        self.passing_buffer = List[Float64](length=self.window_size, fill=0.0)
-
-        self.input_attenuation_window = Windows.make_window[Self.input_window_shape](self.window_size)
-
-    fn next(mut self, input: Float64) -> None:
-        """Process the next input sample and return the next output sample.
-        
-        This function is called in the audio processing loop for each input sample. It buffers the input samples,
-        and internally here calls the user defined struct's `.next_window()` method every `hop_size` samples.
-
-        Args:
-            input: The next input sample to process.
-        """
-        if self.world[].top_of_block:
-            self.process.get_messages()
-    
-        self.input_buffer[self.input_buffer_write_head] = input
-        self.input_buffer[self.input_buffer_write_head + self.window_size] = input
-        self.input_buffer_write_head = (self.input_buffer_write_head + 1) % self.window_size
-        
-        if self.hop_counter == 0:
-
-            for i in range(self.window_size):
-                self.passing_buffer[i] = self.input_buffer[self.input_buffer_write_head + i] * self.input_attenuation_window[i]
-
-            self.process.next_window(self.passing_buffer)
-    
-        self.hop_counter = (self.hop_counter + 1) % self.hop_size
-
-
-struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable, Copyable):
-    """Buffers input samples and hands them over to be processed in 'windows'.
-
-    Parameters:
-        T: A user defined struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.
+        output: A boolean specifying whether this BufferedProcess will be outputting audio. It can be useful to set this to `false` if you only want to analyze the input audio in windows without outputting any audio.
         input_window_shape: Window shape to apply to the input samples before passing them to the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
         output_window_shape: Window shape to apply to the output samples after processing by the user defined struct. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
     """
@@ -181,6 +114,10 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
 
             self.process.next_window(self.passing_buffer)
 
+            @parameter
+            if not Self.output:
+                return 0.0
+
             for i in range(self.window_size):
                 self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
@@ -220,6 +157,10 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
+            @parameter
+            if not Self.output:
+                return 0.0
+
             for i in range(self.window_size):
                 self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
 
@@ -252,6 +193,10 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
                 self.passing_buffer[i] = SpanInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
+
+            @parameter
+            if not Self.output:
+                return 0.0
 
             for i in range(self.window_size):
                 self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
@@ -286,6 +231,9 @@ struct BufferedProcess[T: BufferedProcessable, input_window_shape: Int = WindowT
                 self.st_passing_buffer[i][1] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
+            @parameter
+            if not Self.output:
+                return 0.0
 
             for i in range(self.window_size):
                 self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]

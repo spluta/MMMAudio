@@ -6,7 +6,7 @@ from os import abort
 from mmm_audio import *
 
 @export
-fn PyInit_MBufAnalysisBridge() -> PythonObject:
+fn PyInit_MBufAnalysis() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MBufAnalysisBridge")
         m.def_function[MBufAnalysisBridge.rms]("rms")
@@ -88,7 +88,7 @@ struct MBufAnalysisBridge:
         max_freq = getFloat64(py_dict, "max_freq", 20000.0)
         
         mel_bands = MelBands(ap.buf.sample_rate, num_bands, min_freq, max_freq, window_size)
-        result = MBufAnalysisBridge.fft_process[WindowType.hann](mel_bands, ap, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process[WindowType.hann](mel_bands, ap, window_size=window_size, hop_size=hop_size)
 
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
@@ -105,7 +105,7 @@ struct MBufAnalysisBridge:
         mfcc = MFCC(ap.buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq)
         window_size = getInt(py_dict, "window_size", 1024)
         hop_size = getInt(py_dict, "hop_size", window_size // 2)
-        result = MBufAnalysisBridge.fft_process[WindowType.hann](mfcc, ap, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process[WindowType.hann](mfcc, ap, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -120,7 +120,7 @@ struct MBufAnalysisBridge:
         rms = RMS()
         window_size = getInt(py_dict, "window_size", 1024)
         hop_size = getInt(py_dict, "hop_size", window_size // 2)
-        result = MBufAnalysisBridge.buffered_process(rms, analysis_params, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.buffered_process(rms, analysis_params, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -144,7 +144,7 @@ struct MBufAnalysisBridge:
         yin = YIN(ap.buf.sample_rate, window_size, min_freq=min_freq, max_freq=max_freq)
 
         # run the analysis
-        result = MBufAnalysisBridge.buffered_process(yin,ap, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.buffered_process(yin,ap, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -159,7 +159,7 @@ struct MBufAnalysisBridge:
 
         # # run the analysis
         sc = SpectralCentroid(analysis_params.buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
-        result = MBufAnalysisBridge.fft_process[WindowType.hann](sc, analysis_params)
+        result = MBufAnalysis.fft_process[WindowType.hann](sc, analysis_params)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -178,11 +178,11 @@ struct MBufAnalysisBridge:
         w.init_pointee_move(MMMWorld(analysis_params.buf.sample_rate))
 
         # run the analysis
-        sf_onsets = SpectralFluxOnsets[1](w,(window_size // 2) + 1,window_size,hop_size,filter_size)
+        sf_onsets = SpectralFluxOnsets(w,window_size,hop_size,filter_size)
         sf_onsets.thresh = thresh
         sf_onsets.min_slice_len = min_slice_len
 
-        onsets = List[Int64]()
+        onsets = List[Int]()
 
         for i in range(analysis_params.buf.num_frames):
             samp = analysis_params.buf.data[analysis_params.chan][i]
@@ -191,52 +191,15 @@ struct MBufAnalysisBridge:
 
         # return it as a numpy array
         return MBufAnalysisBridge.list_to_numpy(onsets)
-
+    
     @staticmethod
-    fn list_to_numpy(list: List[Int64]) raises -> PythonObject:
+    fn list_to_numpy(list: List[Int]) raises -> PythonObject:
         np = Python.import_module("numpy")
         shape = Python.tuple(Int(len(list)))
         nparray = np.zeros(shape=shape,dtype=np.int64)
         for i in range(len(list)):
             nparray[i] = list[i]
         return nparray
-
-    # [TODO]: add windowing
-    @staticmethod
-    fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int64 = analysis_params.start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
-        while frame < analysis_params.start_frame + analysis_params.num_frames:
-            for i in range(window_size):
-                if frame + i < analysis_params.buf.num_frames:
-                    window_samps[i] = analysis_params.buf.data[analysis_params.chan][frame + i]
-                else:
-                    window_samps[i] = 0.0
-            analyzer.next_window(window_samps)
-            result.append(analyzer.get_features())
-            frame += hop_size
-        return result^
-
-    @staticmethod
-    fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int64 = analysis_params.start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
-        fft = RealFFT(window_size)
-        window_func = Windows.make_window[input_win](window_size)
-        while frame < analysis_params.start_frame + analysis_params.num_frames:
-            for i in range(window_size):
-                if frame + i < analysis_params.buf.num_frames:
-                    window_samps[i] = analysis_params.buf.data[analysis_params.chan][frame + i] * window_func[i]
-                else:
-                    window_samps[i] = 0.0
-            # apply window function
-            fft.fft(window_samps)
-            analyzer.next_frame(fft.mags,fft.phases)
-            result.append(analyzer.get_features())
-            frame += hop_size
-        return result^
 
     @staticmethod
     fn matrix_to_numpy(list: List[List[Float64]]) raises -> PythonObject:
@@ -247,6 +210,58 @@ struct MBufAnalysisBridge:
             for j in range(len(list[i])):
                 nparray[i][j] = list[i][j]
         return nparray
+
+struct MBufAnalysis:
+
+    # [TODO]: add windowing
+    @staticmethod
+    fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        return MBufAnalysis.buffered_process(analyzer, analysis_params.buf, analysis_params.chan, analysis_params.start_frame, analysis_params.num_frames, window_size, hop_size)
+
+    # [TODO]: add windowing
+    @staticmethod
+    fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        result = List[List[Float64]]()
+        frame: Int64 = start_frame
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+        window_samps = List[Float64](length=window_size,fill=0.0)
+        while frame < start_frame + num_frames:
+            for i in range(window_size):
+                if frame + i < buf.num_frames:
+                    window_samps[i] = buf.data[chan][frame + i]
+                else:
+                    window_samps[i] = 0.0
+            analyzer.next_window(window_samps)
+            result.append(analyzer.get_features())
+            frame += hop_size
+        return result^
+
+    @staticmethod
+    fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        return MBufAnalysis.fft_process[input_win](analyzer, analysis_params.buf, analysis_params.chan, analysis_params.start_frame, analysis_params.num_frames, window_size, hop_size)
+    
+    @staticmethod
+    fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        result = List[List[Float64]]()
+        frame: Int64 = start_frame
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+        window_samps = List[Float64](length=window_size,fill=0.0)
+        fft = RealFFT(window_size)
+        window_func = Windows.make_window[input_win](window_size)
+        while frame < start_frame + num_frames:
+            for i in range(window_size):
+                if frame + i < buf.num_frames:
+                    window_samps[i] = buf.data[chan][frame + i] * window_func[i]
+                else:
+                    window_samps[i] = 0.0
+            # apply window function
+            fft.fft(window_samps)
+            analyzer.next_frame(fft.mags,fft.phases)
+            result.append(analyzer.get_features())
+            frame += hop_size
+        return result^
 
     # @staticmethod
     # fn custom(py_path: PythonObject) raises -> PythonObject:
