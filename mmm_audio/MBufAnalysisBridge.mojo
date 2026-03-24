@@ -6,7 +6,7 @@ from os import abort
 from mmm_audio import *
 
 @export
-fn PyInit_MBufAnalysis() -> PythonObject:
+fn PyInit_MBufAnalysisBridge() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MBufAnalysisBridge")
         m.def_function[MBufAnalysisBridge.rms]("rms")
@@ -213,7 +213,7 @@ struct MBufAnalysisBridge:
 
 struct MBufAnalysis:
 
-    # [TODO]: add windowing
+    # # [TODO]: add windowing
     @staticmethod
     fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
         return MBufAnalysis.buffered_process(analyzer, analysis_params.buf, analysis_params.chan, analysis_params.start_frame, analysis_params.num_frames, window_size, hop_size)
