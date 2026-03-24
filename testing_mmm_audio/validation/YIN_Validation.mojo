@@ -45,7 +45,7 @@ fn main():
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
-        analyzer.next(sample)
+        _ = analyzer.next(sample)
     
     pth = "testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv"
     try:

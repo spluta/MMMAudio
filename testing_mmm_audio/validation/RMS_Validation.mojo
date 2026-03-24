@@ -25,11 +25,11 @@ fn main():
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(w)
 
-    analyzer = BufferedInput[Analyzer](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
+    analyzer = BufferedInput[Analyzer,False](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
-        analyzer.next(sample)
+        _ = analyzer.next(sample)
     
     pth = "testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv"
     try:
