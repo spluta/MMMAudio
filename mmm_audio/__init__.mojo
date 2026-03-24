@@ -9,6 +9,7 @@ from .Envelopes import *
 from .FFTProcess_Module import *
 from .FFTs import *
 from .Filters import *
+from .MBufAnalysisBridge import *
 from .MLP_Module import *
 from .MedianFilter_Module import *
 from .Noise import *

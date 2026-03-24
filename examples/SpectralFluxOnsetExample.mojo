@@ -6,7 +6,7 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var onsets: SpectralFluxOnsets[1]
+    var onsets: SpectralFluxOnsets
     var m: Messenger
     var impulse_vol: Float64
     var onsetcounter: Int64
@@ -15,7 +15,7 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        self.onsets = SpectralFluxOnsets[1](self.world,(fft_size//2) + 1)
+        self.onsets = SpectralFluxOnsets(self.world,(fft_size//2) + 1)
         self.onsets.thresh = 67.0
         self.onsets.min_slice_len = 0.3
         self.m = Messenger(self.world)

@@ -65,9 +65,10 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_
         hop_size: The number of samples between each processed spectral frame.
         input_window_shape: Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
+        ifft: Bool specifying whether to perform the inverse FFT after processing. Defaults to True.
     """
     var world: World
-    var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.input_window_shape, Self.output_window_shape]
+    var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], True, Self.input_window_shape, Self.output_window_shape]
 
     fn __init__(out self, world: World, var process: Self.T):
         """Initializes a `FFTProcess` struct.
@@ -80,7 +81,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_
             An initialized `FFTProcess` struct.
         """
         self.world = world
-        self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], Self.input_window_shape, Self.output_window_shape](self.world, process=ComplexFFTProcessor[Self.T, Self.window_size](self.world, process=process^), window_size=Self.window_size, hop_size=Self.hop_size)
+        self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.window_size], True, Self.input_window_shape, Self.output_window_shape](self.world, process=ComplexFFTProcessor[Self.T, Self.window_size](self.world, process=process^), window_size=Self.window_size, hop_size=Self.hop_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
