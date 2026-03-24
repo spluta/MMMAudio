@@ -25,7 +25,7 @@ fn main():
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(w)
 
-    analyzer = BufferedProcess[Analyzer,False,WindowType.rect](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
+    analyzer = BufferedProcess[Analyzer,False,WindowType.rect,WindowType.rect](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
