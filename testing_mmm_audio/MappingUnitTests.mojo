@@ -6,6 +6,24 @@ from pathlib import Path
 
 # this should be more algorithmic
 
+def test_cpsmidi_midicps():
+    midi_notes = MFloat[4](60.0, 69.0, 72.0, 81.0)
+    frequencies = midicps(midi_notes)
+    var cwd = Path()
+    Python.add_to_path(cwd.path)
+    mmm_python = Python.import_module("mmm_python.functions")
+    py_answer = List[Float64]()
+    for i in range(len(midi_notes)):
+        py_answer.append(py_to_float64(mmm_python.midicps(midi_notes[i])))
+        assert_almost_equal(frequencies[i], py_answer[i], "Test: midicps mismatch at index " + String(i))
+    recovered_midi = cpsmidi(frequencies)
+    assert_almost_equal(midi_notes,recovered_midi,"Test: cpsmidi and midicps inversion failed")
+    py_answer = List[Float64]()
+    for i in range(len(py_answer)):
+        py_answer.append(py_to_float64(mmm_python.cpsmidi(py_answer[i])))
+        assert_almost_equal(midi_notes[i], py_answer[i], "Test: cpsmidi and midicps inversion failed")
+
+
 def test_linlin():
     x = MFloat[4](0.0, 0.5, 1.0, 1.5)
     result = linlin(x, 0.0, 1.0, -1.0, 1.0)
