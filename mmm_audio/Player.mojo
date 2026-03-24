@@ -362,7 +362,7 @@ struct TGrains(Movable, Copyable):
     var counter: Int 
     var trig: Bool
     var world: World
-    var poly: Poly
+    var poly: PolyTriggerSig
 
     fn __init__(out self, num_grains: Int, max_grains: Int, world: World):
         """
@@ -378,7 +378,7 @@ struct TGrains(Movable, Copyable):
             self.grains.append(Grain(world))  
         self.counter = 0  
         self.trig = False  
-        self.poly = Poly(num_grains, max_grains)  # Initialize the Poly struct
+        self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
     @always_inline
     fn next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
@@ -410,7 +410,7 @@ struct TGrains(Movable, Copyable):
         Returns:
             List of output samples for all channels.
         """
-        _ = self.poly.next_trigger(self.grains, trig)
+        _ = self.poly.next(self.grains, trig)
 
         out = MFloat[2](0.0, 0.0)
         for i in range(len(self.grains)):
@@ -451,7 +451,7 @@ struct TGrains(Movable, Copyable):
         Returns:
             Output samples for all channels as a SIMD vector.
         """
-        _ = self.poly.next_trigger(self.grains, trig)
+        _ = self.poly.next(self.grains, trig)
 
         out = MFloat[num_simd_chans](0.0)
         for i in range(len(self.grains)):
@@ -479,7 +479,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
     var recorder: Recorder[Self.num_chans]
     var dust: Dust[1]
     var pitch_ratios: List[Float64]
-    var poly: Poly
+    var poly: PolyTriggerSig
 
     fn __init__(out self, world: World, buf_dur: Float64 = 2.0, num_grains: Int = 6, max_grains: Int = 12):
         """ 
@@ -498,7 +498,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
         self.recorder = Recorder[Self.num_chans](world, Int(buf_dur * world[].sample_rate), world[].sample_rate)
         self.dust = Dust(world)
         self.pitch_ratios = [1.0 for _ in range(num_grains)]
-        self.poly = Poly(num_grains, max_grains)  # Initialize the Poly struct
+        self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
     @always_inline
     fn next(mut self, in_sig: MFloat[Self.num_chans], grain_dur: Float64 = 0.2, overlaps: Int = 4, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, added_delay_low: Float64 = 0.0, added_delay_high: Float64 = 0.0, gain: Float64 = 1.0) -> MFloat[Self.num_chans]:
@@ -523,7 +523,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
         trig_rate = Float64(overlaps) / grain_dur
         trig = self.dust.next_bool(trig_rate*(1-time_dispersion2), trig_rate*(1+time_dispersion2), trig = MBool[1](fill=True))
 
-        _ = self.poly.next_trigger(self.grains, trig)
+        _ = self.poly.next(self.grains, trig)
 
         out = MFloat[Self.num_chans](0.0)
 

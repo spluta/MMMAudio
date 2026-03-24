@@ -13,7 +13,7 @@ from sklearn.preprocessing import MinMaxScaler
 def main():
     d = {
         # "path":"/Users/ted/Documents/_TEACHING/_materials/flucoma/FluCoMa-Pedagogical-Materials-repo/media/Nicol-LoopE-M.wav",
-        "path": "/Users/ted/Desktop/all_flucoma.wav",
+        "path": "/Users/sam/Library/Application Support/SuperCollider/sounds/analogSynthSounds/drums/manyHits.wav",
         "thresh":68.0,
         "min_slice_len":0.1,# in seconds
         "window_size":1024,

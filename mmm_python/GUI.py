@@ -6,7 +6,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from matplotlib import colors as mcolors
 
-from .python_utils import clip, linlin
+from .functions import clip, linlin
 
 class ControlSpec:
     """

@@ -40,20 +40,20 @@ struct PGSVoice(PolyObject):
         return env * pan2(sample, self.pan) * 0.1
 
 
-struct TestPolyGatedSigs(Movable, Copyable):
+struct TestPolyGateS(Movable, Copyable):
     comptime num_gates: Int = 8
 
     var psg_voices: List[PGSVoice]
     var world: World
     var gates: List[Dust[]]
-    var poly_gated_sigs: PolyGatedSigs
+    var poly_gated_sigs: PolyGateSig
     var gated_sigs: List[Bool]
 
     fn __init__(out self, world: World):
         self.psg_voices = [PGSVoice(world) for _ in range(self.num_gates)]
         self.world = world
         self.gates = [Dust(self.world) for _ in range(self.num_gates)]
-        self.poly_gated_sigs = PolyGatedSigs(initial_num_voices=6, max_voices=16, num_gates=self.num_gates, world=self.world)
+        self.poly_gated_sigs = PolyGateSig(initial_num_voices=6, max_voices=16, num_gates=self.num_gates)
         self.gated_sigs = [False for _ in range(Self.num_gates)]
     
     fn next(mut self) -> MFloat[2]:

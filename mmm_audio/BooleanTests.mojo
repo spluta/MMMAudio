@@ -64,3 +64,32 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
             self.state = ~self.state
 
         return self.state
+
+struct Changed(Representable, Movable, Copyable):
+    """Detect changes in a Bool value."""
+    var last_val: Bool  # Store the last value
+
+    fn __init__(out self, initial: Bool = False):
+        """Initialize the Changed struct.
+
+        Args:
+            initial: The initial value to compare against.
+        """
+        self.last_val = initial  # Initialize last value
+
+    fn __repr__(self) -> String:
+        return String("Changed")
+
+    fn next(mut self, val: Bool) -> Bool:
+        """Check if the value has changed.
+        
+        Args:
+            val: The current value to check.
+        
+        Returns:
+            True if the value has changed since the last check, False otherwise.
+        """
+        if val != self.last_val:
+            self.last_val = val  # Update last value
+            return True
+        return False

@@ -1,7 +1,7 @@
 """An example showing how to record audio input from a microphone to a buffer and play it back using MIDI note messages."""
 
 if True:
-    from mmm_python.MMMAudio import *
+    from mmm_python import *
     list_audio_devices()
 
     # set your audio input and output devices here:
@@ -27,7 +27,6 @@ if True:
     import mido
     import time
     import threading
-    from mmm_python.python_utils import *
 
     # find your midi devices
     mido.get_input_names()

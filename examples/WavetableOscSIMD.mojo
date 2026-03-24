@@ -51,7 +51,7 @@ struct WavetableOscSIMD(Movable, Copyable):
     var filter_cutoff: Float64
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
-    var poly: PolyM
+    var poly: PolyGate
 
     fn __init__(out self, world: World):
         self.world = world
@@ -64,7 +64,7 @@ struct WavetableOscSIMD(Movable, Copyable):
         self.filter_cutoff = 20000.0
         self.filter_resonance = 0.5
         self.moog_filter = VAMoogLadder[1,1](self.world)
-        self.poly = PolyM(8, 16, world, "poly")
+        self.poly = PolyGate(8, 16, world, "poly")
 
     fn __repr__(self) -> String:
         return String("Default")
@@ -84,7 +84,7 @@ struct WavetableOscSIMD(Movable, Copyable):
                 poly_object.vol = vals[1] / 127.0
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]
         # for next_gate, the first value in the list is the note to trigger and the second value is the velocity or volume of the note, where 0 denotes a note off message. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
-        self.poly.next_gate(self.voices, call_back=callback)
+        self.poly.next(self.voices, call_back=callback)
         
         # add the output of all the voices
         var out = 0.0

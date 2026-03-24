@@ -14,7 +14,7 @@ We are able to send:
 """
 
 from mmm_python import *
-from mmm_python.python_utils import midicps
+from mmm_python.functions import midicps
 
 a = MMMAudio(128, graph_name="MessengerExample", package_name="examples")
 

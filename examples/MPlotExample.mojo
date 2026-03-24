@@ -13,7 +13,7 @@ struct MPlotExample(Representable, Movable, Copyable):
         self.play = Play(self.world)
         self.m = Messenger(self.world)
         self.play_data = List[Int](length=2, fill=0)
-        self.path = String("resources/Shiverer.wav")
+        self.path = String("/Users/sam/Library/Application Support/SuperCollider/sounds/analogSynthSounds/drums/manyHits.wav")
         self.buf = Buffer.load(self.path)
 
     fn __repr__(self) -> String:

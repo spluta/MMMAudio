@@ -23,7 +23,7 @@ from .sound_file import *
 
 from .Messenger_Module import *
 from .Print_Module import *
-from .RisingBoolDetector_Module import *
+from .BooleanTests import *
 from .Windows_Module import *
 from .functions import *
 from .FFT_Processes import *

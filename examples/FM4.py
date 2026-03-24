@@ -1,11 +1,27 @@
+import sys
+from pathlib import Path
+
+# This example is able to run by pressing the "play" button in VSCode
+# that executes the whole file.
+# In order to do this, it needs to add the parent directory to the path
+# (the next line here) so that it can find the mmm_src and mmm_utils packages.
+# If you want to run it line by line in a REPL, skip this line!
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from mmm_python import *
 
-mmm_audio = MMMAudio(128, graph_name="FM4", package_name="examples")
-mmm_audio.start_audio()
+
+
+from mmm_python.GUI import Handle, ControlSpec
+from mmm_python import *
+from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
+
 
 app = QApplication([])
 
-def run_gui():
+def main():
+    mmm_audio = MMMAudio(128, graph_name="FM4", package_name="examples")
+    mmm_audio.start_audio()
 
     sliders = []
     # Create the main window
@@ -67,6 +83,7 @@ def run_gui():
 
     # window.closeEvent = lambda event: (app.quit())
     # Set the layout for the main window
+    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
     window.setLayout(main_layout)
     # Show the window
     window.show()
@@ -75,9 +92,6 @@ def run_gui():
     # Start the application's event loop
     app.exec()
 
-run_gui()
+if __name__ == "__main__":
+    main()
 
-mmm_audio.stop_audio()
-
-import math
-pow(2, math.ceil(math.log(7)/math.log(2)))

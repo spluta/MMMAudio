@@ -69,7 +69,7 @@ struct MidiSequencer(Movable, Copyable):
     var filt_lag: Lag[]
     var filt_freq: Float64
     var bend_mul: Float64
-    var poly: PolyM
+    var poly: PolyTrigger
 
     fn __init__(out self, world: World, num_voices: Int = 8):
         self.world = world
@@ -84,7 +84,7 @@ struct MidiSequencer(Movable, Copyable):
         self.filt_lag = Lag(self.world, 0.1)
         self.filt_freq = 1000.0
         self.bend_mul = 1.0
-        self.poly = PolyM(initial_num_voices=num_voices, max_voices=64, world=world, name_space="poly")
+        self.poly = PolyTrigger(initial_num_voices=num_voices, max_voices=64, world=world, name_space="poly")
 
     @always_inline
     fn next(mut self) -> MFloat[2]:
@@ -94,7 +94,7 @@ struct MidiSequencer(Movable, Copyable):
         fn call_back(mut voice: TrigSynthVoice, mut vals: List[Float64]):
             voice.note = [vals[0], vals[1]]
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
-        self.poly.next_trigger(self.voices, call_back=call_back)
+        self.poly.next(self.voices, call_back=call_back)
 
         # add the values of the voices that are not being triggered 
         for i in range(len(self.voices)):

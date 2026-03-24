@@ -1,34 +1,5 @@
 from mmm_audio import *
 
-struct Changed(Representable, Movable, Copyable):
-    """Detect changes in a Bool value."""
-    var last_val: Bool  # Store the last value
-
-    fn __init__(out self, initial: Bool = False):
-        """Initialize the Changed struct.
-
-        Args:
-            initial: The initial value to compare against.
-        """
-        self.last_val = initial  # Initialize last value
-
-    fn __repr__(self) -> String:
-        return String("Changed")
-
-    fn next(mut self, val: Bool) -> Bool:
-        """Check if the value has changed.
-        
-        Args:
-            val: The current value to check.
-        
-        Returns:
-            True if the value has changed since the last check, False otherwise.
-        """
-        if val != self.last_val:
-            self.last_val = val  # Update last value
-            return True
-        return False
-
 @always_inline
 fn dbamp[width: Int, //](db: MFloat[width]) -> MFloat[width]:
     """Converts decibel values to amplitude.
@@ -119,6 +90,16 @@ fn select[num_chans: Int](index: Float64, vals: List[MFloat[num_chans]]) -> MFlo
     v1 = vals[(index_int + 1) % len(vals)]
     return linear_interp(v0, v1, index_mix)
 
+fn check_reversed[dtype: DType, num_chans: Int](
+    in_min: SIMD[dtype, num_chans],
+    in_max: SIMD[dtype, num_chans]
+) -> Tuple[SIMD[dtype, num_chans], SIMD[dtype, num_chans], MBool[num_chans]]:
+    
+    ins_reversed: MBool[num_chans] = in_min.gt(in_max)
+    in_min2 = ins_reversed.select(in_max, in_min)
+    in_max2 = ins_reversed.select(in_min, in_max)
+    return (in_min2, in_max2, ins_reversed)
+
 @always_inline
 fn linlin[
     dtype: DType, num_chans: Int, //
@@ -138,17 +119,59 @@ fn linlin[
         out_min: The minimum of the output range.
         out_max: The maximum of the output range.
     """
-    output = input
 
-    # Create masks for the conditions
-    below_min: MBool[num_chans] = output.lt(in_min)
-    above_max: MBool[num_chans] = output.gt(in_max)
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
 
-    scaled = (input - in_min) / (in_max - in_min) * (out_max - out_min) + out_min
+    normalized = (input - in_min2) / (in_max2 - in_min2)
 
-    # Use select to choose the right value based on conditions
-    return below_min.select(out_min,
-       above_max.select(out_max, scaled))
+    out_min2, out_max2, _ = check_reversed(out_min, out_max)
+
+    result = out_min2 + normalized * (out_max2 - out_min2)
+    return clip(result, out_min2, out_max2)
+
+@always_inline
+fn expexp[num_chans: Int, //](
+    input: MFloat[num_chans], 
+    in_min: MFloat[num_chans], 
+    in_max: MFloat[num_chans], 
+    out_min: MFloat[num_chans], 
+    out_max: MFloat[num_chans]) -> MFloat[num_chans]:
+    """
+    Exponential-to-exponential transform.
+    
+    Args:
+        input: Input value to transform (exponential scale).
+        in_min: Minimum of input range (exponential).
+        in_max: Maximum of input range (exponential).
+        out_min: Minimum of output range (exponential).
+        out_max: Maximum of output range (exponential).
+    
+    Returns:
+        Exponentially scaled output value.
+    """
+    
+    mask = (input.le(0.0)) | (in_min.le(0.0)) | (in_max.le(0.0)) | (out_min.le(0.0)) | (out_max.le(0.0)) | (input.lt(0.0))
+
+    if any(mask):
+        print("An expexp value is out of bounds. Retrurning out_min.")
+        return out_min
+    
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
+    input2 = clip(input, in_min2, in_max2)
+
+    # Logarithmic normalization to 0-1 (exp → lin)
+    in_ratio = in_max2 / in_min2
+    normalized = math.log(input2 / in_min2) / math.log(in_ratio)
+    
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
+
+    normalized = outs_reversed.select(1 - normalized, normalized)
+
+    # Exponential mapping to output (lin → exp)
+    out_ratio = out_max2 / out_min2
+    result = out_min2 * pow(out_ratio, normalized)
+    
+    return clip(result, out_min2, out_max2)
 
 @always_inline
 fn linexp[num_chans: Int, //
@@ -168,14 +191,58 @@ fn linexp[num_chans: Int, //
     Returns:
         The exponentially mapped samples in the output range.
     """
-    # should we be checking if inputs are valid?
-    below_min: MBool[num_chans] = input.lt(in_min)
-    above_max: MBool[num_chans] = input.gt(in_max)
-    normalized = (input - in_min) / (in_max - in_min)
-    exponential_scaled = out_min * pow(out_max / out_min, normalized)
+    mask = (out_min.le(0.0)) | (out_max.le(0.0))
+    if any(mask):
+        print("linexp error: out_min and out_max must be greater than 0. Returning input.")
+        return input
 
-    return below_min.select(out_min,
-        above_max.select(out_max, exponential_scaled))
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
+    input2 = clip(input, in_min2, in_max2)
+    
+    normalized = (input2 - in_min2) / (in_max2 - in_min2)
+
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
+    normalized = outs_reversed.select(1 - normalized, normalized)
+
+    ratio = out_max2 / out_min2
+    result = out_min2 * pow(ratio, normalized)
+    return clip(result, out_min2, out_max2)
+
+def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans]) -> MFloat[num_chans]:
+    """
+    Exponential-to-linear transform (inverse of linexp).
+    
+    Args:
+        input: Input value to transform (exponential scale).
+        in_min: Minimum of input range (exponential).
+        in_max: Maximum of input range (exponential).
+        out_min: Minimum of output range (linear).
+        out_max: Maximum of output range (linear).
+    
+    Returns:
+        Linearly scaled output value
+    """
+
+    mask = (input.le(0.0)) | (in_min.le(0.0)) | (in_max.le(0.0))
+
+    if any(mask):
+        print("An explin value is out of bounds. Retrurning input.")
+        return input
+    
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
+    input2 = clip(input, in_min2, in_max2)
+    # Apply logarithmic scaling to normalize to 0-1
+    ratio = in_max2 / in_min2
+    normalized = math.log(input2 / in_min2) / math.log(ratio)
+    
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
+
+    normalized = outs_reversed.select(1 - normalized, normalized)
+
+    # Map to output range
+    result = out_min2 + normalized * (out_max2 - out_min2)
+    
+    return clip(result, out_min2, out_max2)
 
 @always_inline
 fn lincurve[num_chans: Int, //
@@ -196,30 +263,68 @@ fn lincurve[num_chans: Int, //
     Returns:
         The curved mapped samples in the output range.
     """
-    # Handle zero curve values to avoid NaN
-    curve_zero: MBool[num_chans] = curve == 0.0
+    curve_zero: MBool[num_chans] = curve.eq(0.0)
     temp_curve: MFloat[num_chans] = curve_zero.select(0.0001, curve)
 
-    # Create condition masks
-    below_min: MBool[num_chans] = input.lt(in_min)
-    above_max: MBool[num_chans] = input.gt(in_max)
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
 
-    # Compute exponential curve parameters for all elements
+    input2 = clip(input, in_min2, in_max2)
+    normalized = (input2 - in_min2) / (in_max2 - in_min2)
+
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
+
+    normalized = outs_reversed.select(1 - normalized, normalized)
+    temp_curve = outs_reversed.select(-temp_curve, temp_curve)
+
     grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)  # e^curve
-    a = (out_max - out_min) / (1.0 - grow)
-    b = out_min + a
+    curved = (grow ** normalized - 1) / (grow - 1)
 
-    # Scale input to 0-1 range
-    scaled = (input - in_min) / (in_max - in_min)
+    return clip(out_min2 + curved * (out_max2 - out_min2), out_min2, out_max2)
 
-    # Apply exponential curve
-    curved_result = b - (a * pow(grow, scaled))
+fn curvelin[num_chans: Int, //](
+    input: MFloat[num_chans],
+    in_min: MFloat[num_chans],
+    in_max: MFloat[num_chans],
+    out_min: MFloat[num_chans],
+    out_max: MFloat[num_chans],
+    curve: MFloat[num_chans] = 0
+) -> MFloat[num_chans]:
+    """
+    Curve-to-linear transform (inverse of lincurve).
+    
+    Args:
+        input: Input value to transform (from curved space).
+        in_min: Minimum of input range (curved).
+        in_max: Maximum of input range (curved).
+        out_min: Minimum of output range (linear).
+        out_max: Maximum of output range (linear).
+        curve: Curve parameter (-10 to 10 typical range)
+               curve = 0: linear
+               curve > 0: undoes exponential curve
+               curve < 0: undoes logarithmic curve.
+    
+    Returns:
+        Linearized output value.
+    
+    """
+    
+    curve_zero: MBool[num_chans] = curve.eq(0.0)
+    temp_curve: MFloat[num_chans] = curve_zero.select(0.0001, curve)
 
-    # Use select to choose the right value based on conditions
-    result = below_min.select(out_min,
-                above_max.select(out_max, curved_result))
+    in_min2, in_max2, _ = check_reversed(in_min, in_max)
+    input2 = clip(input, in_min2, in_max2)
 
-    return result
+    normalized = (input2 - in_min2) / (in_max2 - in_min2)
+
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
+
+    normalized = outs_reversed.select(1 - normalized, normalized)
+
+    grow = pow(MFloat[num_chans](2.71828182845904523536), curve)
+    linearized = log(normalized * (grow - 1) + 1) / curve
+
+    answer = out_min2 + linearized * (out_max2 - out_min2)
+    return clip(answer, out_min2, out_max2)
 
 fn py_to_float64(py_float: PythonObject) raises -> Float64:
     return Float64(py=py_float)
@@ -509,12 +614,6 @@ fn sanitize[
 
     return should_zero.select(0.0, x)
 
-fn random_uni_float64[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
-    return rrand(min, max)
-
-fn random_exp_float64[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
-    return exprand(min, max)
-
 fn rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
     """Generates a random float64 sample from a uniform distribution.
 
@@ -552,6 +651,89 @@ fn exprand[num_chans: Int](min: MFloat[num_chans], max: MFloat[num_chans]) -> MF
         u[i] = random_float64()
     u = linexp(u, 0.0, 1.0, min, max)
     return u
+
+fn sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
+    """Returns the sign of x: -1 if negative, 1 if positive, and 0 if zero.
+    
+    Parameters:
+        num_chans: Number of channels in the SIMD vector. This parameter is inferred by the values passed to the function.
+
+    Args:
+        x: The input SIMD vector.
+
+    Returns:
+        A SIMD vector containing the sign of each element in x.
+    """
+    pmask:MBool[num_chans] = x.gt(0.0)
+    nmask:MBool[num_chans] = x.lt(0.0)
+
+    return pmask.select(MFloat[num_chans](1.0), nmask.select(MFloat[num_chans](-1.0), MFloat[num_chans](0.0)))
+
+fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
+    """Create evenly spaced values between start and stop.
+    
+    Args:
+        start: The starting value.
+        stop: The ending value.
+        num: Number of samples to generate.
+    
+    Returns:
+        A List of Float64 values evenly spaced between start and stop.
+    """
+    var result = List[Float64](length=num, fill=0.0)
+    if num == 1:
+        result[0] = start
+        return result^
+    
+    var step = (stop - start) / Float64(num - 1)
+    for i in range(num):
+        result[i] = start + Float64(i) * step
+    return result^
+
+fn diff(arr: List[Float64]) -> List[Float64]:
+    """Compute differences between consecutive elements.
+    
+    Args:
+        arr: Input list of Float64 values.
+    
+    Returns:
+        A new list with length len(arr) - 1 containing differences.
+    """
+    var result = List[Float64](length=len(arr) - 1, fill=0.0)
+    for i in range(len(arr) - 1):
+        result[i] = arr[i + 1] - arr[i]
+    return result^
+
+fn subtract_outer(a: List[Float64], b: List[Float64]) -> List[List[Float64]]:
+    """Compute outer subtraction: a[i] - b[j] for all i, j.
+    
+    Args:
+        a: First input list (will be rows).
+        b: Second input list (will be columns).
+    
+    Returns:
+        A 2D list where result[i][j] = a[i] - b[j].
+    """
+    var result = List[List[Float64]](length=len(a), fill=List[Float64]())
+    for i in range(len(a)):
+        result[i] = List[Float64](length=len(b), fill=0.0)
+        for j in range(len(b)):
+            result[i][j] = a[i] - b[j]
+    return result^
+
+def coin[num_chans:Int](p: MFloat[num_chans]) -> MBool[num_chans]:
+    """Return True with probability p, False otherwise.
+    
+    Args:
+        p: Probability of returning True (between 0 and 1).
+    
+    Returns:
+        True with probability p, False otherwise.
+    """
+    q = clip(p, 0.0, 1.0) 
+    rands = rrand(MFloat[num_chans](0.0), MFloat[num_chans](1.0))
+    coins = rands.lt(q)
+    return coins
 
 @doc_private
 fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: List[Float64]) -> MFloat[num_chans]:
@@ -678,72 +860,3 @@ fn Li2[num_chans: Int](x: MFloat[num_chans]) -> MFloat[num_chans]:
     var q = horner[num_chans](z, Q)
 
     return r + s * y * p / q
-
-fn sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
-    """Returns the sign of x: -1 if negative, 1 if positive, and 0 if zero.
-    
-    Parameters:
-        num_chans: Number of channels in the SIMD vector. This parameter is inferred by the values passed to the function.
-
-    Args:
-        x: The input SIMD vector.
-
-    Returns:
-        A SIMD vector containing the sign of each element in x.
-    """
-    pmask:MBool[num_chans] = x.gt(0.0)
-    nmask:MBool[num_chans] = x.lt(0.0)
-
-    return pmask.select(MFloat[num_chans](1.0), nmask.select(MFloat[num_chans](-1.0), MFloat[num_chans](0.0)))
-
-fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
-    """Create evenly spaced values between start and stop.
-    
-    Args:
-        start: The starting value.
-        stop: The ending value.
-        num: Number of samples to generate.
-    
-    Returns:
-        A List of Float64 values evenly spaced between start and stop.
-    """
-    var result = List[Float64](length=num, fill=0.0)
-    if num == 1:
-        result[0] = start
-        return result^
-    
-    var step = (stop - start) / Float64(num - 1)
-    for i in range(num):
-        result[i] = start + Float64(i) * step
-    return result^
-
-fn diff(arr: List[Float64]) -> List[Float64]:
-    """Compute differences between consecutive elements.
-    
-    Args:
-        arr: Input list of Float64 values.
-    
-    Returns:
-        A new list with length len(arr) - 1 containing differences.
-    """
-    var result = List[Float64](length=len(arr) - 1, fill=0.0)
-    for i in range(len(arr) - 1):
-        result[i] = arr[i + 1] - arr[i]
-    return result^
-
-fn subtract_outer(a: List[Float64], b: List[Float64]) -> List[List[Float64]]:
-    """Compute outer subtraction: a[i] - b[j] for all i, j.
-    
-    Args:
-        a: First input list (will be rows).
-        b: Second input list (will be columns).
-    
-    Returns:
-        A 2D list where result[i][j] = a[i] - b[j].
-    """
-    var result = List[List[Float64]](length=len(a), fill=List[Float64]())
-    for i in range(len(a)):
-        result[i] = List[Float64](length=len(b), fill=0.0)
-        for j in range(len(b)):
-            result[i][j] = a[i] - b[j]
-    return result^

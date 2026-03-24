@@ -26,7 +26,7 @@ if True:
     import threading
     import mido
     import time
-    from mmm_python.python_utils import linexp, linlin, midicps, cpsmidi
+    from mmm_python.functions import linexp, linlin, midicps, cpsmidi
     from mmm_python.Patterns import PVoiceAllocator
 
     # find your midi devices

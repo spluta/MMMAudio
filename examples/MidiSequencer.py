@@ -6,6 +6,7 @@ This example demonstrates a couple differnt concepts:
 - How to create a coroutine to schedule note triggers using the MMMAudio scheduler.
 
 """
+from mmm_python import *
 
 if True:
     from mmm_python import *
@@ -17,7 +18,7 @@ if True:
     from mmm_python.Patterns import Pseq, Pxrand
     import numpy as np
     import asyncio
-    from mmm_python.python_utils import midicps, linexp
+    from mmm_python.functions import midicps, linexp
 
     global scheduler
     scheduler = Scheduler()
@@ -36,7 +37,7 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
+        mmm_audio.send_float("filt_freq", mprint(filter_seq.next())) # update filter frequency before each note
         poly_pal.send_floats([fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         
@@ -48,7 +49,7 @@ async def trig_synth(wait):
             mult_seq = Pseq(list(range(1, count_to + 1)))
 
 # start the routine with the scheduler
-rout = scheduler.sched(trig_synth(0.05))
+rout = scheduler.sched(trig_synth(0.04))
 rout.cancel() # stop just this routine
 
 # stop all routines

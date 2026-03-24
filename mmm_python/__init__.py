@@ -1,5 +1,5 @@
 from mmm_python.MMMAudio import *
-from mmm_python.python_utils import *
+from mmm_python.functions import *
 from mmm_python.Patterns import *
 import asyncio
 from asyncio import sleep
