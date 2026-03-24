@@ -297,3 +297,58 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         for i in range(count):
             freqs[i] = Float64(min_b + i) * binHz
         return freqs^
+
+    @staticmethod
+    fn buf_analysis[input_window_shape: Int = WindowType.hann](buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) -> Tuple[List[List[Float64]], List[List[Float64]]]:
+        """Compute the Short-Time Fourier Transform (STFT) of a buffer.
+
+        Parameters:
+            input_window_shape: The type of window to apply to each frame before computing the FFT.
+
+        Args:
+            buf: The input audio buffer to analyze.
+            chan: The channel index to analyze from the buffer.
+            start_frame: The starting frame index in the buffer to begin analysis.
+            num_frames: The number of frames to analyze from the starting frame.
+            window_size: The size of the FFT window.
+            hop_size: The hop size between successive windows.
+
+        Returns:
+            A tuple containing two lists of lists of Float64 representing the magnitudes and phases of the STFT for each frame and frequency bin.
+        """
+        fftanalysis = FFTAnalysis()
+        try:
+            magsphss = MBufAnalysis.fft_process(fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size)
+            nframes = len(magsphss)
+            nmags = len(magsphss[0]) // 2
+            mags = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
+            phss = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
+            for frame_idx, frame in enumerate(magsphss):
+                for i in range(nmags):
+                    mags[frame_idx][i] = frame[i]
+                    phss[frame_idx][i] = frame[nmags + i]
+            return mags^, phss^
+        except e:
+            abort(String(e))
+
+@doc_private
+struct FFTAnalysis(FFTProcessable, GetFloat64Featurable):
+    var mags: List[Float64]
+    var phss: List[Float64]
+
+    fn __init__(out self):
+        self.mags = List[Float64]()
+        self.phss = List[Float64]()
+
+    fn next_frame(mut self, mags: List[Float64], phases: List[Float64]):
+        self.mags = mags.copy()
+        self.phss = phases.copy()
+    
+    fn get_features(self) -> List[Float64]:
+        nmags = len(self.mags)
+        features = List[Float64](length=nmags * 2, fill=0.0)
+        for i in range(nmags):
+            features[i] = self.mags[i]
+        for i in range(nmags):
+            features[nmags + i] = self.phss[i]
+        return features^
