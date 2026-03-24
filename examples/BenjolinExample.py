@@ -61,7 +61,7 @@ def main():
     window.show()
 
     # Start the application's event loop
-    app.exec()
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

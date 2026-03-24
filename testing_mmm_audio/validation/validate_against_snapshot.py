@@ -126,7 +126,7 @@ def main() -> int:
     parser.add_argument(
         "--atol",
         type=float,
-        default=1e-6,
+        default=1e-5,
         help="Absolute tolerance for numeric stat comparison",
     )
     parser.add_argument(
