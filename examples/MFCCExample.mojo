@@ -8,7 +8,7 @@ struct MFCCExample(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var fftproc: FFTProcess[MFCC,WindowType.hann]
+    var fftproc: FFTProcess[MFCC,False,WindowType.hann]
     var m: Messenger
     var print_counter: Int
     var update_modulus: Int
@@ -18,7 +18,7 @@ struct MFCCExample(Movable, Copyable):
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
         p = MFCC(sr=self.world[].sample_rate, num_bands=num_bands, num_coeffs=num_coeffs, min_freq=20.0, max_freq=20000.0, fft_size=fft_size)
-        self.fftproc = FFTProcess[MFCC,WindowType.hann](self.world,p^, window_size=fft_size, hop_size=fft_size//2)
+        self.fftproc = FFTProcess[MFCC,False,WindowType.hann](self.world,p^, window_size=fft_size, hop_size=fft_size//2)
         self.m = Messenger(self.world)
         self.print_counter = 0
         self.update_modulus = 50

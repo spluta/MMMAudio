@@ -37,7 +37,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
 
     comptime hop_size = Self.window_size // 4
     var world: World
-    var freeze: FFTProcess[SpectralFreezeWindow[Self.window_size],WindowType.hann,WindowType.hann]
+    var freeze: FFTProcess[SpectralFreezeWindow[Self.window_size],ifft=True,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann]
     var m: Messenger
     var freeze_gate: Bool
     var asr: ASREnv
@@ -46,8 +46,9 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         self.world = world
         self.freeze = FFTProcess[
                 SpectralFreezeWindow[Self.window_size],
-                WindowType.hann,
-                WindowType.hann
+                ifft=True,
+                input_window_shape=WindowType.hann,
+                output_window_shape=WindowType.hann
             ](self.world,process=SpectralFreezeWindow[Self.window_size](self.world, namespace),window_size=Self.window_size,hop_size=Self.hop_size)
         self.m = Messenger(self.world, namespace)
         self.freeze_gate = False

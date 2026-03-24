@@ -39,7 +39,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var world: World
     var buffer: Buffer
     var playBuf: Play
-    var fftlowpass: BufferedProcess[FFTLowPass[window_size],WindowType.sine,WindowType.sine]
+    var fftlowpass: BufferedProcess[FFTLowPass[window_size],True,WindowType.sine,WindowType.sine]
     var m: Messenger
     var ps: List[Print]
     var which: Float64
@@ -48,7 +48,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],WindowType.sine,WindowType.sine](self.world,process=FFTLowPass[window_size](self.world),window_size=window_size,hop_size=hop_size)
+        self.fftlowpass = BufferedProcess[FFTLowPass[window_size],True,WindowType.sine,WindowType.sine](self.world,process=FFTLowPass[window_size](self.world),window_size=window_size,hop_size=hop_size)
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0

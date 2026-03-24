@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 @doc_private
-struct FFTProcessor[T: FFTProcessable](BufferedProcessable):
+struct FFTProcessor[T: FFTProcessable, ifft: Bool = True](BufferedProcessable):
     """This is a private struct that the user doesn't *need* to see or use. This is the
     connective tissue between FFTProcess (which the user *does* see and uses to
     create spectral processes) and BufferedProcess. To learn how this whole family of structs 
@@ -33,12 +33,15 @@ struct FFTProcessor[T: FFTProcessable](BufferedProcessable):
     fn next_window(mut self, mut input: List[Float64]) -> None:
         self.fft.fft(input)
         self.process.next_frame(self.fft.mags,self.fft.phases)
-        self.fft.ifft(input)
+        if Self.ifft:
+            self.fft.ifft(input)
     
     fn next_stereo_window(mut self, mut input: List[SIMD[DType.float64,2]]) -> None:
         self.fft2.fft(input)
         self.process.next_stereo_frame(self.fft2.mags,self.fft2.phases)
-        self.fft2.ifft(input)
+        @parameter
+        if Self.ifft:
+            self.fft2.ifft(input)
 
     @doc_private
     fn get_messages(mut self) -> None:
@@ -58,18 +61,19 @@ trait FFTProcessable(Movable,Copyable):
     fn get_messages(mut self) -> None:
         return None
 
-struct FFTProcess[T: FFTProcessable, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
+struct FFTProcess[T: FFTProcessable, ifft: Bool = True,input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
     """Create an FFTProcess for audio manipulation in the frequency domain.
 
     Parameters:
         T: A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
+        ifft: A boolean specifying whether to perform an IFFT after processing in the frequency domain. Set to `false` if you only want to analyze the magnitudes and phases without converting back to the time domain.
         input_window_shape: Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
         output_window_shape: Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.
     """
     var world: World
     var window_size: Int
     var hop_size: Int
-    var buffered_process: BufferedProcess[FFTProcessor[Self.T], Self.input_window_shape, Self.output_window_shape]
+    var buffered_process: BufferedProcess[FFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape]
 
     fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int):
         """Initializes a `FFTProcess` struct.
@@ -86,8 +90,8 @@ struct FFTProcess[T: FFTProcessable, input_window_shape: Int = WindowType.hann, 
         self.world = world
         self.window_size = window_size
         self.hop_size = hop_size
-        p = FFTProcessor[Self.T](self.world, process=process^, window_size=self.window_size)
-        self.buffered_process = BufferedProcess[FFTProcessor[Self.T],Self.input_window_shape, Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
+        p = FFTProcessor[Self.T, Self.ifft](self.world, process=process^, window_size=self.window_size)
+        self.buffered_process = BufferedProcess[FFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
     fn next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.

@@ -46,7 +46,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
 struct FFTBinDelays(Movable, Copyable):
     var world: World
     var buffer: Buffer
-    var fft_bin_delays: FFTProcess[BinDelaysWindow[window_size],WindowType.sine,WindowType.sine]
+    var fft_bin_delays: FFTProcess[BinDelaysWindow[window_size],True,WindowType.sine,WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
     var play: Play
@@ -57,6 +57,7 @@ struct FFTBinDelays(Movable, Copyable):
 
         self.fft_bin_delays = FFTProcess[
                 BinDelaysWindow[window_size],
+                True,
                 WindowType.sine,
                 WindowType.sine
             ](self.world,process=BinDelaysWindow[window_size](self.world), window_size=window_size, hop_size=hop_size)
