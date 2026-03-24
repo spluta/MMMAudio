@@ -132,13 +132,13 @@ struct Env(Representable, Movable, Copyable):
         while segment < len(self.times) - 1 and phase >= self.times[segment + 1]:
             segment += 1
             
-
-        if self.params.values[segment] == self.params.values[segment + 1]:
-            out = self.params.values[segment]
-        elif self.params.values[segment] < self.params.values[segment + 1]:
-            out = lincurve(phase, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
-        else:
-            out = lincurve(phase, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], -1 * self.params.curves[segment % len(self.params.curves)])
+        # this should now work correctly with the fixed lincurve function that can handle reversed curves
+        # if self.params.values[segment] == self.params.values[segment + 1]:
+        #     out = self.params.values[segment]
+        # elif self.params.values[segment] < self.params.values[segment + 1]:
+        out = lincurve(phase, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
+        # else:
+        #     out = lincurve(phase, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], -1 * self.params.curves[segment % len(self.params.curves)])
 
         return out
     

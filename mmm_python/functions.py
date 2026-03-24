@@ -35,6 +35,7 @@ def linlin(value: float, in_min: float, in_max: float, out_min: float, out_max: 
 
     if out_min > out_max:
         out_min, out_max = out_max, out_min
+        normalized = 1 - normalized
         
     result = out_min + normalized * (out_max - out_min)
     return clip(result, out_min, out_max)
@@ -55,17 +56,21 @@ def linexp(value: float, in_min: float, in_max: float, out_min: float, out_max: 
     """
     if out_min <= 0 or out_max <= 0:
         raise ValueError("Output range must be positive for exponential scaling")
-
+    value = clip(value, in_min, in_max)
     if in_min > in_max:
         in_min, in_max = in_max, in_min
     normalized = (value - in_min) / (in_max - in_min)
 
-    if out_min > out_max:
+    flip = out_min > out_max
+    if flip:
         out_min, out_max = out_max, out_min
-        normalized = 1 - normalized
 
     ratio = out_max / out_min
     result = out_min * (ratio ** normalized)
+
+    if flip:
+        result = out_min * out_max / result
+    
     return clip(result, out_min, out_max)
 
 def explin(value: float, in_min: float, in_max: float, out_min: float, out_max: float) -> float:
@@ -178,7 +183,7 @@ def lincurve(
 
     if out_min > out_max:
         normalized = 1 - normalized
-        curve = -curve
+        # curve = -curve
 
     # Apply curve transformation using unified formula
     if abs(curve) < 1e-6:
@@ -231,6 +236,7 @@ def curvelin(
     if in_min > in_max:
         in_min, in_max = in_max, in_min
     
+    value = clip(value, in_min, in_max)
     normalized = (value - in_min) / (in_max - in_min)
 
     if out_min > out_max:

@@ -20,9 +20,6 @@ def main():
 
     import threading, mido, time
 
-    # find your midi devices
-    print(mido.get_input_names())
-
     # open your midi device - you may need to change the device name
     in_port = mido.open_input('Oxygen Pro Mini USB MIDI')
 

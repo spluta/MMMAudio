@@ -94,7 +94,6 @@ fn check_reversed[dtype: DType, num_chans: Int](
     in_min: SIMD[dtype, num_chans],
     in_max: SIMD[dtype, num_chans]
 ) -> Tuple[SIMD[dtype, num_chans], SIMD[dtype, num_chans], MBool[num_chans]]:
-    
     ins_reversed: MBool[num_chans] = in_min.gt(in_max)
     in_min2 = ins_reversed.select(in_max, in_min)
     in_max2 = ins_reversed.select(in_min, in_max)
@@ -119,13 +118,14 @@ fn linlin[
         out_min: The minimum of the output range.
         out_max: The maximum of the output range.
     """
-
     in_min2, in_max2, _ = check_reversed(in_min, in_max)
 
     normalized = (input - in_min2) / (in_max2 - in_min2)
 
-    out_min2, out_max2, _ = check_reversed(out_min, out_max)
+    out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
 
+    normalized = outs_reversed.select(1 - normalized, normalized)
+ 
     result = out_min2 + normalized * (out_max2 - out_min2)
     return clip(result, out_min2, out_max2)
 
@@ -176,36 +176,26 @@ fn expexp[num_chans: Int, //](
 @always_inline
 fn linexp[num_chans: Int, //
 ](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans]) -> MFloat[num_chans]:
-    """Maps samples from one linear range to another exponential range.
-
-    Parameters:
-        num_chans: Size of the SIMD vector - defaults to 1. This parameter is inferred by the values passed to the function.
-
-    Args:
-        input: The samples to map.
-        in_min: The minimum of the input range.
-        in_max: The maximum of the input range.
-        out_min: The minimum of the output range (must be > 0).
-        out_max: The maximum of the output range (must be > 0).
-
-    Returns:
-        The exponentially mapped samples in the output range.
-    """
+    """Maps samples from one linear range to another exponential range."""
+    
     mask = (out_min.le(0.0)) | (out_max.le(0.0))
     if any(mask):
         print("linexp error: out_min and out_max must be greater than 0. Returning input.")
         return input
 
+
     in_min2, in_max2, _ = check_reversed(in_min, in_max)
-    input2 = clip(input, in_min2, in_max2)
     
+    input2 = clip(input, in_min2, in_max2)
     normalized = (input2 - in_min2) / (in_max2 - in_min2)
 
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
-    normalized = outs_reversed.select(1 - normalized, normalized)
 
     ratio = out_max2 / out_min2
     result = out_min2 * pow(ratio, normalized)
+    
+    result = outs_reversed.select(out_min2 * out_max2 / result, result)
+    
     return clip(result, out_min2, out_max2)
 
 def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans]) -> MFloat[num_chans]:
@@ -274,7 +264,7 @@ fn lincurve[num_chans: Int, //
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
 
     normalized = outs_reversed.select(1 - normalized, normalized)
-    temp_curve = outs_reversed.select(-temp_curve, temp_curve)
+    # temp_curve = outs_reversed.select(temp_curve, temp_curve)
 
     grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)  # e^curve
     curved = (grow ** normalized - 1) / (grow - 1)
@@ -318,10 +308,10 @@ fn curvelin[num_chans: Int, //](
 
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
 
-    normalized = outs_reversed.select(1 - normalized, normalized)
 
-    grow = pow(MFloat[num_chans](2.71828182845904523536), curve)
-    linearized = log(normalized * (grow - 1) + 1) / curve
+    grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)
+    linearized = log(normalized * (grow - 1) + 1) / temp_curve
+    linearized = outs_reversed.select(1 - linearized, linearized) 
 
     answer = out_min2 + linearized * (out_max2 - out_min2)
     return clip(answer, out_min2, out_max2)

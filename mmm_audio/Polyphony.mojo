@@ -187,7 +187,11 @@ struct PolyGateSig(Movable, Copyable):
     var active_dict: Dict[Int, Int]
 
     fn __init__(out self, initial_num_voices: Int, max_voices: Int, num_gates: Int):
-        self.poly = PolyTriggerSig(initial_num_voices=initial_num_voices, max_voices=max_voices)
+        if initial_num_voices < num_gates:
+            inv = num_gates
+        else:
+            inv = initial_num_voices
+        self.poly = PolyTriggerSig(initial_num_voices=inv, max_voices=max_voices)
         self.changes = [Changed() for _ in range(num_gates)]
         self.num_gates = num_gates
         self.active_dict = Dict[Int, Int]()

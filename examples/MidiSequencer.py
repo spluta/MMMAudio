@@ -37,7 +37,7 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        mmm_audio.send_float("filt_freq", mprint(filter_seq.next())) # update filter frequency before each note
+        mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
         poly_pal.send_floats([fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         
