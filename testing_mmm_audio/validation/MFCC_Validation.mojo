@@ -23,7 +23,7 @@ def main():
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
     mfcc_ts = MFCCTestSuite(w)
-    fftprocess = FFTProcess[MFCCTestSuite,WindowType.hann](w, mfcc_ts^, window_size=fftsize, hop_size=hopsize)
+    fftprocess = FFTProcess[MFCCTestSuite,False,WindowType.hann](w, mfcc_ts^, window_size=fftsize, hop_size=hopsize)
     buf = Buffer.load("resources/Shiverer.wav")
     for i in range(buf.num_frames):
         _ = fftprocess.next(buf.data[0][i])

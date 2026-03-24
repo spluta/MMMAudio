@@ -7,6 +7,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--show-plots", action="store_true", help="Display plots for each validation script")
 args = parser.parse_args()
 
+os.makedirs("testing_mmm_audio/validation/validation_results", exist_ok=True)
+
 validations = glob("testing_mmm_audio/validation/*_Validation.py")
 
 for validation in validations:

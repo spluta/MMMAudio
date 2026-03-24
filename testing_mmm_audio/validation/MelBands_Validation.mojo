@@ -20,7 +20,7 @@ def main():
     w = alloc[MMMWorld](1) 
     w.init_pointee_move(MMMWorld(48000.0))
     mbts = MelBandsTestSuite(w)
-    fftprocess = FFTProcess[MelBandsTestSuite,WindowType.hann](w,mbts^, window_size=fftsize, hop_size=hopsize)
+    fftprocess = FFTProcess[MelBandsTestSuite,False,WindowType.hann](w,mbts^, window_size=fftsize, hop_size=hopsize)
     buf = Buffer.load("resources/Shiverer.wav")
     for i in range(buf.num_frames):
         _ = fftprocess.next(buf.data[0][i])

@@ -41,11 +41,11 @@ fn main():
     w[].sample_rate = buffer.sample_rate
     playBuf = Play(w)
 
-    analyzer = BufferedInput[Analyzer](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
+    analyzer = BufferedProcess[Analyzer,False,WindowType.rect](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
-        analyzer.next(sample)
+        _ = analyzer.next(sample)
     
     pth = "testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv"
     try:

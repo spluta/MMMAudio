@@ -29,11 +29,11 @@ fn main():
 
     buffer = Buffer.load("resources/Shiverer.wav")
     playBuf = Play(w)
-    analyzer = BufferedInput[Analyzer,WindowType.hann](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
+    analyzer = BufferedProcess[Analyzer,False,WindowType.hann](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
 
     for _ in range(buffer.num_frames):
         sample = playBuf.next(buffer)
-        analyzer.next(sample)
+        _ = analyzer.next(sample)
 
     pth = "testing_mmm_audio/validation/mojo_results/spectral_kurtosis_mojo_results.csv"
     try:

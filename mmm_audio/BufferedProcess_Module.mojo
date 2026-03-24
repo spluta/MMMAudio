@@ -115,15 +115,17 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             self.process.next_window(self.passing_buffer)
 
             @parameter
-            if not Self.output:
-                return 0.0
+            if Self.output:
+                for i in range(self.window_size):
+                    self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
-            for i in range(self.window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
-
-            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
+                self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
+
+        @parameter
+        if not Self.output:
+            return 0.0
 
         outval = self.output_buffer[self.read_head]
         self.output_buffer[self.read_head] = 0.0
@@ -158,15 +160,17 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             self.process.next_stereo_window(self.st_passing_buffer)
 
             @parameter
-            if not Self.output:
-                return 0.0
+            if Self.output:
+                for i in range(self.window_size):
+                    self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
 
-            for i in range(self.window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
-
-            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
+                self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
+
+        @parameter
+        if not Self.output:
+            return 0.0
 
         outval = self.st_output_buffer[self.read_head]
         self.st_output_buffer[self.read_head] = 0.0
@@ -195,15 +199,17 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             self.process.next_window(self.passing_buffer)
 
             @parameter
-            if not Self.output:
-                return 0.0
+            if Self.output:
 
-            for i in range(self.window_size):
-                self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
+                for i in range(self.window_size):
+                    self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
-            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
+                self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
+
+        if not Self.output:
+            return 0.0
 
         outval = self.output_buffer[self.read_head]
         self.output_buffer[self.read_head] = 0.0
@@ -231,15 +237,18 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
                 self.st_passing_buffer[i][1] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
-            @parameter
-            if not Self.output:
-                return 0.0
 
-            for i in range(self.window_size):
-                self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
-            self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
+            @parameter
+            if Self.output:
+               
+                for i in range(self.window_size):
+                    self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
+                self.output_buffer_write_head = (self.output_buffer_write_head + self.hop_size) % self.window_size
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
+
+        if not Self.output:
+            return 0.0
 
         outval = self.st_output_buffer[self.read_head]
         self.st_output_buffer[self.read_head] = 0.0
