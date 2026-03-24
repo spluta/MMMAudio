@@ -1153,12 +1153,12 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
 
         self.dct.process(self.db_bands, self.coeffs)
 
-    # @staticmethod
-    # fn buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
-    #     if num_frames < 0:
-    #         num_frames = buf.num_frames - start_frame
-    #     mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
-    #     return MBufAnalysis.fft_process[T=MFCC,input_win=WindowType.hann](mfcc, buf, chan, start_frame, num_frames, fft_size, hop_size)
+    @staticmethod
+    fn buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+        mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
+        return MBufAnalysis.fft_process(mfcc, buf, chan, start_frame, num_frames, fft_size, hop_size)
 
 struct DCT(Movable,Copyable):
     """Compute the Discrete Cosine Transform (DCT)."""
