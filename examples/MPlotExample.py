@@ -32,7 +32,7 @@ def main():
     # slice using spectral flux
     slice_points = MBufAnalysis.spectral_flux_onsets(d)
 
-    print(len(slice_points))
+    print("num slice points:", len(slice_points))
 
     slice_points = np.insert(slice_points, 0, 0) # add start of file as first slice point
     slice_points = np.append(slice_points, len(y)) # add end of file as last slice point
@@ -52,7 +52,7 @@ def main():
 
     print("data shape:", data.shape)
 
-    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.1,n_epochs=200).fit_transform(data)
+    data_umap = UMAP(n_components=2,learning_rate=0.1,min_dist=0.01,n_epochs=200).fit_transform(data)
 
     kdtree = KDTree(data_umap)
 

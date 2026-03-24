@@ -1263,12 +1263,12 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         if self.positive_only:
             for i in range(self.num_mags):
                 var diff = mags[i] - self.prev_mags[i]
-                self.flux += max(0.0, diff) * self.num_mags_reciprocal
+                self.flux += max(0.0, diff) #* self.num_mags_reciprocal
                 self.prev_mags[i] = mags[i]
         else:
             for i in range(self.num_mags):
                 var diff = mags[i] - self.prev_mags[i]
-                self.flux += diff * diff * self.num_mags_reciprocal
+                self.flux += diff * diff #* self.num_mags_reciprocal
                 self.prev_mags[i] = mags[i]
             
         return self.flux
@@ -1342,9 +1342,9 @@ struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
 
         onsets = List[Int]()
 
-        for i in range(buf.num_frames):
-            if sf_onsets.next(buf.data[chan][i]):
-                onsets.append(i)
+        for i in range(num_frames):
+            if sf_onsets.next(buf.data[chan][start_frame + i]):
+                onsets.append(start_frame + i)
         
         return onsets^
 

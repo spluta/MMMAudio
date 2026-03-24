@@ -168,7 +168,7 @@ struct MBufAnalysisBridge:
     fn spectral_flux_onsets(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         analysis_params = AnalysisParams(py_dict)
-        thresh = getFloat64(py_dict, "thresh", 68.0)
+        thresh = getFloat64(py_dict, "thresh", 0.01)
         window_size = getInt(py_dict, "window_size", 1024)
         hop_size = getInt(py_dict, "hop_size", window_size // 2)
         filter_size = getInt(py_dict, "filter_size", 5)
