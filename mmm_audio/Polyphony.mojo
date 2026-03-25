@@ -42,6 +42,18 @@ struct PolyTrigger(Movable, Copyable):
         self.num_messages = num_messages
         self.world = world
 
+    fn update(mut self, mut val: Float64, key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: Int, key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: List[Float64], key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: List[Int], key: String):
+        self.m.update(val, key)
+
     @doc_private
     fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
         if self.world[].top_of_block:
@@ -126,6 +138,18 @@ struct PolyGate(Movable, Copyable):
                 for i in range(len(poly_objects)):
                     poly_objects[i].set_trigger(False)
 
+
+    fn update(mut self, mut val: Float64, key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: Int, key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: List[Float64], key: String):
+        self.m.update(val, key)
+
+    fn update(mut self, mut val: List[Int], key: String):
+        self.m.update(val, key)
 
     fn next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Int])):
         """This convenience function acheives all functionality of a Gated PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and opens and closes gates for PolyObjects as needed. The call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64], where the first value is the note or key to trigger and the second value is the velocity or gate of the note. A 0 in the second value will close the gate. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python.

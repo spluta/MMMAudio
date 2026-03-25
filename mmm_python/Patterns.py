@@ -258,40 +258,27 @@ class PolyPal:
         self.name_space = name_space
         self.seq = Pseq(list(range(num_voices)))
         self.mmm_audio = mmm_audio
-        self.num = 0
 
-    def send_floats(self, values, increment: False):
+    def send_floats(self, values):
         """
         Send a list of floats to the synth."""
 
-        if increment:
-            self.num = self.seq.next()
+        self.mmm_audio.send_floats(f"{self.name_space}.{self.seq.next()}", values)
 
-        self.mmm_audio.send_floats(f"{self.name_space}.{self.num}", values)
-
-    def send_float(self, value, increment: False):
+    def send_float(self, value):
         """
         Send a single float to the synth."""
 
-        if increment:
-            self.num = self.seq.next()
+        self.mmm_audio.send_float(f"{self.name_space}.{self.seq.next()}", value)
 
-        self.mmm_audio.send_float(f"{self.name_space}.{self.num}", value)
-
-    def send_int(self, value, increment: False):
+    def send_int(self, value):
         """
         Send a single int to the synth."""
 
-        if increment:
-            self.num = self.seq.next()
+        self.mmm_audio.send_int(f"{self.name_space}.{self.seq.next()}", value)
 
-        self.mmm_audio.send_int(f"{self.name_space}.{self.num}", value)
-
-    def send_ints(self, values, increment: False):
+    def send_ints(self, values):
         """
         Send a list of ints to the synth."""
 
-        if increment:
-            self.num = self.seq.next()
-
-        self.mmm_audio.send_ints(f"{self.name_space}.{self.num}", values)
+        self.mmm_audio.send_ints(f"{self.name_space}.{self.seq.next()}", values)
