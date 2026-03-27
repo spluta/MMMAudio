@@ -3,6 +3,8 @@ from bit import next_power_of_two
 from sys import simd_width_of
 from mmm_audio import *
 
+from utils import Variant
+
 @always_inline
 fn pan2(samples: Float64, pan: Float64) -> MFloat[2]:
     """
@@ -41,14 +43,14 @@ fn pan_stereo(samples: MFloat[2], pan: Float64) -> MFloat[2]:
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay[num_simd: Int](input: List[MFloat[num_simd]], world: World) -> MFloat[2]:
+fn splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
     There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
 
     Args:
-        input: List of input samples from multiple channels.
+        input: VariadicList of input samples from multiple channels.
         world: Pointer to MMMWorld containing the pan_window.
 
     Returns:
@@ -216,6 +218,32 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
 
         Args:
             input: List of input samples from multiple channels.
+
+        Returns:
+            MFloat[self.num_channels]: The panned output sample for each output channel.
+        """
+        out = MFloat[self.num_channels](0.0)
+
+        in_len = len(input) * num_simd
+        if in_len == 0:
+            return out
+        elif in_len == 1:
+            out = input[0][0] * self.mul_list[0]
+            return out
+        for i in range(in_len):
+            index0 = i // num_simd
+            index1 = i % num_simd
+
+            out += input[index0][index1] * self.mul_list[Int(Float64(i) / Float64(in_len - 1) * Float64(self.pan_points - 1))]
+            
+        return out
+
+    @always_inline
+    fn next[num_simd: Int](mut self, *input: MFloat[num_simd]) -> MFloat[self.num_channels]:
+        """Evenly distributes multiple input channels to num_channels of output channels.
+
+        Args:
+            input: Input samples from multiple channels.
 
         Returns:
             MFloat[self.num_channels]: The panned output sample for each output channel.

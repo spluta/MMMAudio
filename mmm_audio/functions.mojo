@@ -71,7 +71,7 @@ fn select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float6
     return linear_interp(v0, v1, index_mix)
 
 @always_inline
-fn select[num_chans: Int](index: Float64, vals: List[MFloat[num_chans]]) -> MFloat[num_chans]:
+fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[num_chans]:
     """Selects a SIMD vector from a List of SIMD vectors based on a floating-point index using linear interpolation.
 
     Parameters:
@@ -79,11 +79,19 @@ fn select[num_chans: Int](index: Float64, vals: List[MFloat[num_chans]]) -> MFlo
 
     Args:
         index: The floating-point index to select.
-        vals: The List of SIMD vectors containing the values.
+        vals: Either a VariadicList or a List of SIMD vectors containing the values.
     
     Returns:
         The selected value.
     """
+    index_int = Int(index) % len(vals)
+    index_mix: Float64 = index - index_int
+    v0 = vals[index_int]
+    v1 = vals[(index_int + 1) % len(vals)]
+    return linear_interp(v0, v1, index_mix)
+
+@always_inline
+fn select[num_chans: Int](index: Float64, vals: List[MFloat[num_chans]]) -> MFloat[num_chans]:
     index_int = Int(index) % len(vals)
     index_mix: Float64 = index - index_int
     v0 = vals[index_int]
