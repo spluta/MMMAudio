@@ -6,8 +6,6 @@ This example demonstrates a couple differnt concepts:
 - How to create a coroutine to schedule note triggers using the MMMAudio scheduler.
 
 """
-from mmm_python import *
-
 if True:
     from mmm_python import *
 
@@ -24,7 +22,7 @@ if True:
     scheduler = Scheduler()
 
     poly_pal = PolyPal(mmm_audio, "poly", 10)
-    filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 5000, 100) for i in range(0, 101)])
+    filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 4999, 101) for i in range(0, 101)])
     mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
 
 

@@ -861,12 +861,67 @@ struct Sweep[num_chans: Int = 1](Representable, Movable, Copyable):
 
         var resets = self.rising_bool_detector.next(trig)
 
-        @parameter
-        for i in range(self.num_chans):
-            if resets[i]:
-                self.phase[i] = 0.0
+        self.phase = resets.select(0.0, self.phase)
 
         return self.phase
+
+struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
+    """
+        A Line between start and end that takes dur seconds to complete.
+    """
+
+    var phase: MFloat[Self.num_chans]
+    var freq_mul: Float64
+    var rising_bool_detector: RisingBoolDetector[Self.num_chans]  # Track the last reset state
+    var world: World  # Pointer to the MMMWorld instance
+    var freq: MFloat[Self.num_chans]
+    var curve: Int  # 0 = linlin, 1 = linexp, 2 = lincurve
+
+    fn __init__(out self, world: World):
+        """
+
+        Args:
+            world: Pointer to the MMMWorld instance.
+        """
+        self.world = world
+        self.phase = MFloat[Self.num_chans](0.0)
+        self.freq_mul = 1.0 / self.world[].sample_rate
+        self.rising_bool_detector = RisingBoolDetector[Self.num_chans]()
+        self.freq = MFloat[Self.num_chans](0.0)
+        self.curve = 2
+
+    fn __repr__(self) -> String:
+        return String("Sweep")
+        
+    @always_inline
+    fn next(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = False) -> MFloat[self.num_chans]:
+        """
+
+        Args:
+            start: Starting value of the line.
+            end: Ending value of the line.
+            dur: Duration of the line in seconds.
+            trig: Trigger signal to reset the phase when switching from False to True (default is all False).
+        """
+        self.phase += (self.freq * self.freq_mul)
+        var resets = self.rising_bool_detector.next(trig)
+        self.freq = resets.select((1.0 / dur), self.freq)
+        self.phase = resets.select(0.0, self.phase)
+        self.phase = clip(self.phase, 0.0, 1.0)
+
+        @parameter
+        if Self.linexpcurve == 0:
+            return linlin(self.phase, 0.0, 1.0, start, end)
+        elif Self.linexpcurve == 1:
+            start_mask = start.gt(0.000001)
+            end_mask = end.gt(0.000001)
+            start2 = start_mask.select(start, 0.000001)
+            end2 = end_mask.select(end, 0.000001)
+            return linexp(self.phase, 0.0, 1.0, start2, end2)
+        elif Self.linexpcurve == 2:
+            return lincurve(self.phase, 0.0, 1.0, start, end, self.curve)
+        else:
+            return linlin(self.phase, 0.0, 1.0, start, end)
 
 comptime OscBuffersSize: Int = 16384  # 2^14
 comptime OscBuffersMask: Int = 16383  # 2^14 - 1

@@ -23,7 +23,7 @@ def run_gui():
     add_handle("freq", 1.0, 20000.0, 0.25, 1000.0)
     add_handle("gain", 0.0, 1.0, 1, 0.2)
 
-    width_slider = Handle("width", ControlSpec(3.0, 32.0, 1), 15.0, callback=lambda v: mmm_audio.send_float("width", float(round(v))), resolution=29)
+    width_slider = Handle("width", ControlSpec(3.0, 32.0, 1), 15.0, callback=lambda v: mmm_audio.send_int("width", float(round(v))), resolution=29)
     layout.addWidget(width_slider)
     mmm_audio.send_float("width", 15.0)
 

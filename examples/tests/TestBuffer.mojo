@@ -36,6 +36,6 @@ struct TestBuffer(Copyable,Movable):
         cubic = self.cubic.next[1,Interp.cubic](self.buf)
         lagrange = self.lagrange.next[1,Interp.lagrange4](self.buf)
         sinc = self.sinc.next[1,Interp.sinc](self.buf, rate)
-        out = select(self.which,[none,linear,quad,cubic,lagrange,sinc])
+        out = select(self.which, none,linear,quad,cubic,lagrange,sinc)
 
         return out

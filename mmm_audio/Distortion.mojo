@@ -46,7 +46,7 @@ struct Latch[num_chans: Int = 1](Copyable, Movable):
         self.last_trig = trig
         return self.samp
 
-# Anti-Derivative Anti-comptimeing functions are based on Jatin Chowdhury's python notebook: https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html and chowshapers: https://github.com/Chowdhury-DSP/chowdsp_utils/tree/master/modules/dsp/chowdsp_waveshapers/Waveshapers
+# Anti-Derivative Anti-aliasing functions are based on Jatin Chowdhury's python notebook: https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html and chowshapers: https://github.com/Chowdhury-DSP/chowdsp_utils/tree/master/modules/dsp/chowdsp_waveshapers/Waveshapers
 
 # the trait currently doesn't work, but it will once parameters are included in traits
 
@@ -66,9 +66,9 @@ struct Latch[num_chans: Int = 1](Copyable, Movable):
 
 struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyable, Movable):
     """
-    Anti-Derivative Anti-comptimeing soft-clipping function.
+    Anti-Derivative Anti-aliasing soft-clipping function.
     
-    This struct provides first order anti-comptimeed `soft clip` function using the Anti-Derivative Anti-comptimeing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
+    This struct provides first order anti-aliased `soft clip` function using the Anti-Derivative Anti-aliasing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -125,13 +125,13 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     @always_inline
     fn _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
-        Computes the first-order anti-comptimeed SoftClip.
+        Computes the first-order anti-aliased SoftClip.
 
         Args:
             x: The input sample.
 
         Returns:
-            The anti-comptimeed folded signal.
+            The anti-aliased folded signal.
         """
         mask = abs(x - self.x1).lt(self.TOL)
 
@@ -141,15 +141,15 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
 
     @always_inline
     fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-        """First-order anti-comptimeed `hard_clip`.
+        """First-order anti-aliased `hard_clip`.
 
-        Computes the first-order anti-comptimeed `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
+        Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
 
         Returns:
-            The anti-comptimeed `soft_clip` of `x`.
+            The anti-aliased `soft_clip` of `x`.
         """
         @parameter
         if Self.os_index == 0:
@@ -168,9 +168,9 @@ fn hard_clip[num_chans: Int](x: MFloat[num_chans]) -> MFloat[num_chans]:
 
 struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
-    Anti-Derivative Anti-comptimeing hard-clipping function.
+    Anti-Derivative Anti-aliasing hard-clipping function.
     
-    This struct provides a first order anti-comptimeed version of the `hard_clip` function using the Anti-Derivative Anti-comptimeing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
+    This struct provides a first order anti-aliased version of the `hard_clip` function using the Anti-Derivative Anti-aliasing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -245,15 +245,15 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     @always_inline
     fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-        """First-order anti-comptimeed `hard_clip`.
+        """First-order anti-aliased `hard_clip`.
 
-        Computes the first-order anti-comptimeed `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
+        Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
 
         Returns:
-            The anti-comptimeed `hard_clip` of `x`.
+            The anti-aliased `hard_clip` of `x`.
         """
         @parameter
         if Self.os_index == 0:
@@ -269,9 +269,9 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             return self.oversampling.get_sample()
     
 struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
-    """Anti-Derivative Anti-comptimeing first order tanh function.
+    """Anti-Derivative Anti-aliasing first order tanh function.
     
-    This struct provides a first order anti-comptimeed version of the `tanh` function using the Anti-Derivative Anti-comptimeing (ADAA) method with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
+    This struct provides a first order anti-aliased version of the `tanh` function using the Anti-Derivative Anti-aliasing (ADAA) method with optional Oversampling. See [Practical Considerations for Antiderivative Anti-aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.
 
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -304,7 +304,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
 
     fn _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
-        Computes the first-order anti-comptimeed `tanh` of `x`.
+        Computes the first-order anti-aliased `tanh` of `x`.
 
         This method should be called iteratively for each sample.
 
@@ -312,7 +312,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             x: The input sample.
 
         Returns:
-            The anti-comptimeed `tanh` of `x`.
+            The anti-aliased `tanh` of `x`.
         """
         mask: MBool[Self.num_chans] = abs(x - self. x1).lt(self.TOL)
 
@@ -322,15 +322,15 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     
     @always_inline
     fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-        """First-order anti-comptimeed `hard_clip`.
+        """First-order anti-aliased `hard_clip`.
 
-        Computes the first-order anti-comptimeed `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.
+        Computes the first-order anti-aliased `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
 
         Returns:
-            The anti-comptimeed `hard_clip` of `x`.
+            The anti-aliased `hard_clip` of `x`.
         """
         @parameter
         if Self.os_index == 0:
@@ -424,7 +424,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
 struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable):
     """Buchla 259 style Wavefolder.
     
-    Buchla 259 style wavefolder implementation with Anti-Derivative Anti-comptimeing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html).
+    Buchla 259 style wavefolder implementation with Anti-Derivative Anti-aliasing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on [Practical Considerations for Antiderivative Anti-aliasing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html).
     
     Parameters:
         num_chans: The number of channels for SIMD operations.
@@ -483,14 +483,14 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     @always_inline
     fn _next1(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
         """
-        Computes the first-order anti-comptimeed BuchlaWavefolder.
+        Computes the first-order anti-aliased BuchlaWavefolder.
 
         Args:
             x: The input sample.
             amp: The amplitude/gain control.
 
         Returns:
-            The anti-comptimeed folded signal.
+            The anti-aliased folded signal.
         """
         mask = abs(x - self.x1).lt(self.TOL)
 
@@ -500,16 +500,16 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
 
     @always_inline
     fn next(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
-        """First-order anti-comptimeed BuchlaWavefolder.
+        """First-order anti-aliased BuchlaWavefolder.
 
-        Computes the first-order anti-comptimeed BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.
+        Computes the first-order anti-aliased BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.
 
         Args:
             x: The input sample.
             amp: The amplitude/gain control.
 
         Returns:
-            The anti-comptimeed `hard_clip` of `x`.
+            The anti-aliased `hard_clip` of `x`.
         """
         @parameter
         if Self.os_index == 0:

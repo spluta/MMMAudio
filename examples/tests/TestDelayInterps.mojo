@@ -49,7 +49,7 @@ struct TestDelayInterps(Movable, Copyable):
         self.max_delay_time = self.lag.next(self.max_delay_time) 
         delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0.001,self.max_delay_time)
 
-        delay_time = select(self.mouse_onoff,[delay_time, self.mouse_lag.next(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, 0.001))])
+        delay_time = select(self.mouse_onoff,delay_time, self.mouse_lag.next(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, 0.001)))
 
         input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
 
@@ -59,7 +59,7 @@ struct TestDelayInterps(Movable, Copyable):
         cubic = self.delay_cubic.next(input, delay_time)
         lagrange4 = self.delay_lagrange.next(input, delay_time)
 
-        one_delay = select(self.which_delay,[none,linear,quadratic,cubic,lagrange4])
+        one_delay = select(self.which_delay,none,linear,quadratic,cubic,lagrange4)
         sig = input * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
 
         return MFloat[2](sig, sig)
