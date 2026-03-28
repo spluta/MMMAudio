@@ -47,7 +47,45 @@ fn splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
-    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
+    There are multiple versions of splay to handle different input types. It can take a List or InlineArray of SIMD vectors, a VariadicList of SIMD, or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
+
+    Args:
+        input: VariadicList of input samples from multiple channels.
+        world: Pointer to MMMWorld containing the pan_window.
+
+    Returns:
+        Stereo output as MFloat[2].
+    """
+    num_input_channels = len(input) * num_simd
+    out = MFloat[2](0.0)
+
+    for i in range(num_input_channels):
+        if num_input_channels == 1:
+            out = input[0][0] * MFloat[2](0.7071, 0.7071)
+        else:
+            pan = Float64(i) / Float64(num_input_channels - 1)
+
+            index0 = i // num_simd
+            index1 = i % num_simd
+            
+            pan_mul = SpanInterpolator.read[
+                        interp=Interp.none,
+                        bWrap=False,
+                        mask=255
+                    ](
+                        world = world,
+                        data=world[].windows[].pan2,
+                        f_idx=pan * 255.0
+                    )
+            out += input[index0][index1] * pan_mul
+    return out
+
+@always_inline
+fn splay[num_simd: Int](input: Span[MFloat[num_simd]], world: World) -> MFloat[2]:
+    """
+    Splay multiple input channels into stereo output.
+
+    There are multiple versions of splay to handle different input types. It can take a List or InlineArray of SIMD vectors, a VariadicList of SIMD, or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
 
     Args:
         input: VariadicList of input samples from multiple channels.
@@ -82,18 +120,6 @@ fn splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
 
 @always_inline
 fn splay[num_input_channels: Int](input: MFloat[num_input_channels], world: World) -> MFloat[2]:
-    """
-    Splay multiple input channels into stereo output.
-
-    There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.
-
-    Args:
-        input: List of input samples from multiple channels. List of Float64 or List of SIMD vectors.
-        world: Pointer to MMMWorld containing the pan_window.
-    
-    Returns:
-        Stereo output as MFloat[2].
-    """
     out = MFloat[2](0.0)
 
     for i in range(num_input_channels):
@@ -176,19 +202,12 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
         num_channels: Number of output channels to splay to.
         pan_points: Number of discrete pan points to use for panning calculations. Default is 128.
     """
-    var output: List[Float64]  # Output list for stereo output
-    var world: World
-    var mul_list: List[MFloat[Self.num_channels]]
+    var mul_list: InlineArray[MFloat[Self.num_channels], Self.pan_points]
 
-    fn __init__(out self, world: World):
+    fn __init__(out self):
         """
         Initialize the SplayN instance.
-
-        Args:
-            world: Pointer to the MMMWorld instance.
         """
-        self.output = [0.0, 0.0]  # Initialize output list for stereo output
-        self.world = world
 
         js = MFloat[self.num_channels](0.0, 1.0)
         @parameter
@@ -196,7 +215,7 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
             for j in range(self.num_channels):
                 js[j] = Float64(j)
 
-        self.mul_list = [MFloat[self.num_channels](0.0) for _ in range(self.pan_points)]
+        self.mul_list = InlineArray[MFloat[self.num_channels], Self.pan_points](0.0)
         for i in range(self.pan_points):
             pan = Float64(i) * Float64(self.num_channels - 1) / Float64(self.pan_points - 1)
 
@@ -213,7 +232,7 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
                 self.mul_list[i][j] = cos(d[j] * pi_over_2)
 
     @always_inline
-    fn next[num_simd: Int](mut self, input: List[MFloat[num_simd]]) -> MFloat[self.num_channels]:
+    fn next[num_simd: Int](mut self, input: Span[MFloat[num_simd]]) -> MFloat[self.num_channels]:
         """Evenly distributes multiple input channels to num_channels of output channels.
 
         Args:

@@ -12,5 +12,3 @@ mmm_audio.send_float("delay_time", 0.005)
 
 mmm_audio.stop_audio()
 mmm_audio.plot(48000)
-
-1/0.4*48000

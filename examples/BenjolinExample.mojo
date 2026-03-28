@@ -140,8 +140,8 @@ struct Benjolin(Movable, Copyable):
         filter_output = sanitize(filter_output)
 
         output = MFloat[2](0.0, 0.0)
-        output[0] = select(self.outSignalL,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
-        output[1] = select(self.outSignalR,[tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output])
+        output[0] = select(self.outSignalL, tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output)
+        output[1] = select(self.outSignalR, tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output)
 
         for i in range(len(self.dctraps)):
             output[i] = self.dctraps[i].next(output[i])

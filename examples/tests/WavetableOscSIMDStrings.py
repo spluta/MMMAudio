@@ -11,11 +11,11 @@ from pathlib import Path
 # In order to do this, it needs to add the parent directory to the path
 # (the next line here) so that it can find the mmm_src and mmm_utils packages.
 # If you want to run it line by line in a REPL, skip this line!
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 from mmm_python import *
 
 def main():
-    mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMD", package_name="examples")
+    mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMDStrings", package_name="examples.tests")
     mmm_audio.start_audio() 
 
     import threading, mido, time
@@ -25,6 +25,22 @@ def main():
 
     # PolyPal correctly formats messages to be sent to a Synth that uses a Poly object
     poly_pal = PolyPal(mmm_audio, "poly", 10)
+
+    # just intonation ratios for a chromatic scale based on C major
+    just_offset = [
+    0.0,       # C
+    0.1173,    # C#
+    0.0391,    # D
+    0.1564,    # Eb
+   -0.1369,    # E
+   -0.0196,    # F
+   -0.0978,    # F#
+    0.0196,    # G
+    0.1369,    # Ab
+   -0.1564,    # A
+    0.1760,    # Bb
+   -0.1173     # B
+    ]
 
     # Create stop event
     global stop_event
@@ -37,9 +53,13 @@ def main():
 
                 if msg.type in ["note_on", "note_off", "control_change"]:
                     if msg.type == "note_on":
-                        poly_pal.send_ints([msg.note, (msg.velocity)])  
+                        midi_note = msg.note+just_offset[msg.note % 12]
+                        print(f"Note On: {midi_note} Velocity: {msg.velocity}")
+                        poly_pal.send_floats([midi_note, (msg.velocity)])  
                     if msg.type == "note_off":
-                        poly_pal.send_ints([msg.note, 0.0])  
+                        midi_note = msg.note+just_offset[msg.note % 12]
+                        print(f"Note Off: {midi_note} Velocity: {msg.velocity}")
+                        poly_pal.send_floats([midi_note, 0.0])  
                     if msg.type == "control_change":
                         print(f"Control Change: {msg.control} Value: {msg.value}")
                         # Example: map CC 1 to wubb_rate of all voices

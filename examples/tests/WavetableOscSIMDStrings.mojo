@@ -11,7 +11,6 @@ struct OscVoice(PolyObject):
     var wubb_rate: Float64
     var messenger: Messenger
     var triggered: Bool
-    var just_offset: List[Float64]
 
     fn check_active(mut self) -> Bool:
         return self.env.is_active
@@ -35,13 +34,12 @@ struct OscVoice(PolyObject):
         self.messenger = Messenger(world, name_space)
         self.world = world
         self.triggered = False
-        self.just_offset = [0.0, 0.1173, 0.0391, 0.1564, -0.1369, -0.0196, -0.0978, 0.0196, 0.1369, -0.1564, 0.1760, -0.1173]
 
     fn next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
         osc_frac = self.tri.next(self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.7,self.gate,2) * self.vol
 
-struct WavetableOscSIMD(Movable, Copyable):
+struct WavetableOscSIMDStrings(Movable, Copyable):
     comptime wavetables_per_channel = 8
     comptime num_messages = 10
 
@@ -54,7 +52,6 @@ struct WavetableOscSIMD(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
     var poly: PolyGate
-
 
     fn __init__(out self, world: World):
         self.world = world
@@ -81,12 +78,10 @@ struct WavetableOscSIMD(Movable, Copyable):
 
         # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
         # the kinds of messages the Messenger can receive are defined by the type of the `note` argument in the callback function
-        fn callback(mut poly_object: OscVoice, mut vals: List[Int]):
+        fn callback(mut poly_object: OscVoice, mut vals: List[MFloat[1]]):
             if vals[1] > 0: # the call_back will be called for both note on and note off messages
-                midi = vals[0] + poly_object.just_offset[vals[0] % 12]
-                print(vals[0], midi)
-                poly_object.freq = midicps(midi)
-                poly_object.vol = Float64(vals[1]) / 127.0
+                poly_object.freq = midicps(Float64(vals[0]))
+                poly_object.vol = vals[1] / 127.0
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]
         # for next_gate, the first value in the list is the note to trigger and the second value is the velocity or volume of the note, where 0 denotes a note off message. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
         self.poly.next(self.voices, call_back=callback)

@@ -39,6 +39,6 @@ struct TestCombAllpass(Movable, Copyable):
         allpass1 = self.allpass2.next_decaytime(sample, self.delay_time, 1)
         lp_comb = self.LP_Comb.next(sample, self.delay_time, 0.9, 10000.0)
 
-        filt = select(self.which, [comb0, allpass0, comb1, allpass1, lp_comb])
+        filt = select(self.which, comb0, allpass0, comb1, allpass1, lp_comb)
 
         return MFloat[2](sample, filt)

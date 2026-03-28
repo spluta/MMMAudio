@@ -62,7 +62,7 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
     
     @staticmethod
-    fn par_process[num_simd: Int, simd_width: Int](mut lags: List[Lag[simd_width]], mut vals:List[MFloat[1]]):
+    fn par_process[num_simd: Int, simd_width: Int](lags: Span[mut = True, Lag[simd_width]], vals: Span[mut = True, MFloat[1]]):
         """Parallel processes a List[Lag[simd_width]]. The one dimensional list of vals is both the input and the output."""
         
         len_vals = len(vals)

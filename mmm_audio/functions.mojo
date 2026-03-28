@@ -91,7 +91,7 @@ fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[nu
     return linear_interp(v0, v1, index_mix)
 
 @always_inline
-fn select[num_chans: Int](index: Float64, vals: List[MFloat[num_chans]]) -> MFloat[num_chans]:
+fn select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans]]) -> MFloat[num_chans]:
     index_int = Int(index) % len(vals)
     index_mix: Float64 = index - index_int
     v0 = vals[index_int]
@@ -688,7 +688,7 @@ fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
         result[i] = start + Float64(i) * step
     return result^
 
-fn diff(arr: List[Float64]) -> List[Float64]:
+fn diff(arr: Span[Float64]) -> List[Float64]:
     """Compute differences between consecutive elements.
     
     Args:
@@ -702,7 +702,7 @@ fn diff(arr: List[Float64]) -> List[Float64]:
         result[i] = arr[i + 1] - arr[i]
     return result^
 
-fn subtract_outer(a: List[Float64], b: List[Float64]) -> List[List[Float64]]:
+fn subtract_outer(a: Span[Float64], b: Span[Float64]) -> List[List[Float64]]:
     """Compute outer subtraction: a[i] - b[j] for all i, j.
     
     Args:
@@ -734,7 +734,7 @@ def coin[num_chans:Int](p: MFloat[num_chans]) -> MBool[num_chans]:
     return coins
 
 @doc_private
-fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: List[Float64]) -> MFloat[num_chans]:
+fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: Span[Float64]) -> MFloat[num_chans]:
     """Evaluate polynomial using Horner's method."""
     var result: MFloat[num_chans] = 0.0
     for i in range(len(coeffs) - 1, -1, -1):

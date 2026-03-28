@@ -27,7 +27,7 @@ struct MelBandsExample(Movable, Copyable):
         self.viz_mul = 500.0
         self.mix = 1.0
         self.lags = List[Lag[]]()
-        self.sines_vol = -18.0
+        self.sines_vol = -38.0
         self.print_counter = 0
         self.update_modulus = 50
 
@@ -74,6 +74,6 @@ struct MelBandsExample(Movable, Copyable):
 
         sines *= dbamp(self.sines_vol)
 
-        sig = select(self.mix,[flute,sines])
+        sig = select(self.mix,flute,sines)
         
         return sig

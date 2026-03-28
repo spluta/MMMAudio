@@ -57,7 +57,10 @@ struct AnalysisExample(Movable, Copyable):
         oscs = self.osc.next(self.freq,0,False,[OscType.sine, OscType.saw])
         flute = self.playBuf.next(self.buffer)
 
-        sig = select(self.which,[oscs[0], oscs[1], flute])
+        # sig_list = [oscs[0], oscs[1], flute]
+        # sig = select(self.which, sig_list)
+        
+        sig = select(self.which, oscs[0], oscs[1], flute)
         
         # do the analysis
         _ = self.analyzer.next(sig)

@@ -40,7 +40,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
         sample2 = self.filt2.next(sample, freq, q)  # Get the next sample from the filter
         sample4 = self.filt4.next(sample, freq, q)  # Get the next sample from the filter
 
-        sample = select(self.which, [sample0, sample2, sample4])
+        sample = select(self.which, sample0, sample2, sample4)
 
         return sample * 0.2
 
