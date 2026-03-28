@@ -222,7 +222,7 @@ struct MBufAnalysis:
     @staticmethod
     fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
-        frame: Int64 = start_frame
+        frame: Int = start_frame
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         window_samps = List[Float64](length=window_size,fill=0.0)
@@ -244,7 +244,7 @@ struct MBufAnalysis:
     @staticmethod
     fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
-        frame: Int64 = start_frame
+        frame: Int = start_frame
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         window_samps = List[Float64](length=window_size,fill=0.0)
