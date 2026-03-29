@@ -57,6 +57,6 @@ struct TestBufferedProcessAudio(Movable, Copyable):
         # self.ps[0].next(i[0],"input")
         self.ps[1].next(o[0],"output")
         self.m.update(self.which,"which")
-        o = select(self.which,[i,o])
+        o = select(self.which,i,o)
         return SIMD[DType.float64,2](o,o)
 

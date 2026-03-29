@@ -14,9 +14,10 @@ def main():
 
     # parameters for analysis
     d = {
-        "path": "resources/Shiverer.wav",
+        # "path": "resources/Shiverer.wav",
+        "path": "/Users/ted/Desktop/all_flucoma.wav",
         # threshold for spectral flux onset detection, lower is more sensitive, higher is less sensitive
-        "thresh":0.01,
+        "thresh":2.0,
         # minimum length of slices in seconds
         "min_slice_len":0.1,
         # window size and hop size used for all analyses
@@ -33,6 +34,7 @@ def main():
     slice_points = MBufAnalysis.spectral_flux_onsets(d)
 
     print("num slice points:", len(slice_points))
+    print("avg slice duration:", np.diff(slice_points).mean() / sr)
 
     slice_points = np.insert(slice_points, 0, 0) # add start of file as first slice point
     slice_points = np.append(slice_points, len(y)) # add end of file as last slice point
