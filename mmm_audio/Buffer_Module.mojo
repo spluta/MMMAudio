@@ -76,6 +76,28 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
             print("SIMDBuffer::__init__ No file_name provided")
             return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
 
+    fn write_to_file(self, file_name: String, num_samps: Int = -1, verbose: Bool = False):
+        """Write the SIMDBuffer to a WAV file.
+
+        Args:
+            file_name: Path to the WAV file to write to.
+            num_samps: Number of samples to write.
+            verbose: Whether to print confirmation of written file.
+        """
+
+        if num_samps < 0 or num_samps > self.num_frames:
+            try:
+                write_wav_file(file_name, self.data, Int(self.sample_rate))
+            except err:
+                print("SIMDBuffer::write_file Error writing file: ", file_name, " Error: ", err)
+        else:
+            try:
+                write_wav_file(file_name, self.data[0:num_samps], Int(self.sample_rate))
+            except err:
+                print("SIMDBuffer::write_file Error writing file: ", file_name, " Error: ", err)
+        if verbose:
+            print("SIMDBuffer written to file: ", file_name)
+
 
 struct Buffer(Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.

@@ -188,7 +188,11 @@ struct Play(Representable, Movable, Copyable):
 
     @always_inline
     fn get_relative_phase(mut self) -> Float64:
-        return self.impulse.phase / self.reset_phase_point  
+        return self.impulse.phase / self.reset_phase_point
+
+    fn reset_phase(mut self):
+        self.impulse.phase = 0.0
+
 
 struct Grain(PolyObject):
     """A single grain for granular synthesis.
@@ -204,7 +208,6 @@ struct Grain(PolyObject):
     var gain: Float64 
     var rising_bool_detector: RisingBoolDetector[1]
     var play_buf: Play
-    var win_phase: Float64
     var trigger: Bool
 
     # These are the functions that need to be implemented for the PolyObject trait:
@@ -229,7 +232,6 @@ struct Grain(PolyObject):
         self.gain = 1.0
         self.rising_bool_detector = RisingBoolDetector() 
         self.play_buf = Play(world)
-        self.win_phase = 0.0
         self.trigger = False
 
     @always_inline
@@ -342,12 +344,11 @@ struct Grain(PolyObject):
 
         # Get the current phase of the PlayBuf
         if self.play_buf.reset_phase_point > 0.0:
-            self.win_phase = self.play_buf.impulse.phase / self.play_buf.reset_phase_point  
+            win_phase = self.play_buf.impulse.phase / self.play_buf.reset_phase_point  
         else:
-            self.win_phase = 0.0  # Use the phase
+            win_phase = 0.0  # Use the phase
 
-        win = self.world[].windows[].at_phase[win_type, Interp.linear](self.world, self.win_phase)
-
+        win = self.world[].windows[].at_phase[win_type, Interp.linear](self.world, win_phase)
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
         sample = sample * win * self.gain  # Apply the window to the sample
         

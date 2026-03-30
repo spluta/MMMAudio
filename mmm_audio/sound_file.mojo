@@ -480,7 +480,7 @@ fn write_f32(mut data: List[UInt8], value: Float32):
     data.append(UInt8((bits >> 16) & 0xFF))
     data.append(UInt8((bits >> 24) & 0xFF))
 
-fn write_wav_file(file_name: String, samples: List[List[Float64]], sample_rate: Int = 44100) raises:
+fn write_wav_file(file_name: String, samples: Span[mut=False, List[Float64]], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file."""
     var num_channels = len(samples)
     var num_samples = len(samples[0]) if num_channels > 0 else 0
@@ -496,7 +496,7 @@ fn write_wav_file(file_name: String, samples: List[List[Float64]], sample_rate: 
     with open(file_name, "w") as f:
         f.write_bytes(data)
 
-fn write_wav_file[num_channels: Int](file_name: String, samples: List[MFloat[num_channels]], sample_rate: Int = 44100) raises:
+fn write_wav_file[num_channels: Int](file_name: String, samples: Span[mut=False, MFloat[num_channels]], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file."""
     var num_samples = len(samples)
     

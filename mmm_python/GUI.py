@@ -37,6 +37,7 @@ class ControlSpec:
         return linlin(norm_val, 0.0, 1.0, self.min, self.max)
 
 class Handle(QWidget):
+    """A convenience widget that combines a label, a slider, and a value display."""
     def __init__(self, label: str, spec: ControlSpec = ControlSpec(), default: float = 0.0, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
         super().__init__()
         self.resolution = resolution

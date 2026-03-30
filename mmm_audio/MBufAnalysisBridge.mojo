@@ -33,7 +33,7 @@ fn getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) rai
 
 fn getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
     if key in py_dict:
-        return Float64(py=py_dict[key])
+        return py_to_float64(py_dict[key])
     else:
         if default is None:
             abort(String("MBufAnalysis requires a '", key, "' key in the input dictionary"))

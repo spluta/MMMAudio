@@ -42,18 +42,6 @@ struct PolyTrigger(Movable, Copyable):
         self.num_messages = num_messages
         self.world = world
 
-    fn update(mut self, mut val: Float64, key: String):
-        self.m.update(val, key)
-
-    fn update(mut self, mut val: Int, key: String):
-        self.m.update(val, key)
-
-    fn update(mut self, mut val: List[Float64], key: String):
-        self.m.update(val, key)
-
-    fn update(mut self, mut val: List[Int], key: String):
-        self.m.update(val, key)
-
     @doc_private
     fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
         if self.world[].top_of_block:
@@ -64,7 +52,7 @@ struct PolyTrigger(Movable, Copyable):
                 for i in range(len(poly_objects)):
                     poly_objects[i].set_trigger(False)
 
-    fn next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Int])):
+    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Int])):
         """This convenience function acheives all functionality of a Triggered PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and triggers PolyObjects as needed. The optional call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64] or an Int or a Float64. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python.
         """
         self._reset(poly_objects)
@@ -77,7 +65,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], vals)
     
-    fn next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Float64])):
+    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Float64])):
         self._reset(poly_objects)
         vals = List[Float64]()
         for i in range(self.num_messages):
@@ -88,7 +76,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], vals)
 
-    fn next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Int)):
+    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Int)):
         self._reset(poly_objects)
         val: Int = 0
         for i in range(self.num_messages):
@@ -99,7 +87,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], val)
     
-    fn next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Float64)):
+    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Float64)):
         self._reset(poly_objects)
         val: Float64 = 0.0
         for i in range(self.num_messages):
@@ -121,6 +109,11 @@ struct PolyGate(Movable, Copyable):
     var world: World
     var string_dict: Dict[String, Int]
     var int_dict: Dict[Int, Int]
+    var call_back_dict_ints: Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Int])]
+    var call_back_dict_floats: Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Float64])]
+    var call_back_dict_int: Dict[String, fn (mut poly_object: PolyObject, mut val: Int)]
+    var call_back_dict_float: Dict[String, fn (mut poly_object: PolyObject, mut val: Float64)]
+    
 
     fn __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
         self.poly = PolyTriggerSig(initial_num_voices=initial_num_voices, max_voices=max_voices)
@@ -129,6 +122,19 @@ struct PolyGate(Movable, Copyable):
         self.world = world
         self.string_dict = Dict[String, Int]()
         self.int_dict = Dict[Int, Int]()
+        self.call_back_dict_ints = Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Int])]()
+        self.call_back_dict_floats = Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Float64])]()
+        self.call_back_dict_int = Dict[String, fn (mut poly_object: PolyObject, mut val: Int)]()
+        self.call_back_dict_float = Dict[String, fn (mut poly_object: PolyObject, mut val: Float64)]()
+
+    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut vals: List[Int])):
+        self.call_back_dict_ints[key] = call_back
+    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut vals: List[Float64])):
+        self.call_back_dict_floats[key] = call_back
+    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut val: Int)):
+        self.call_back_dict_int[key] = call_back
+    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut val: Float64)):
+        self.call_back_dict_float[key] = call_back
 
     @doc_private
     fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
