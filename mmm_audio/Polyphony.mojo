@@ -109,10 +109,6 @@ struct PolyGate(Movable, Copyable):
     var world: World
     var string_dict: Dict[String, Int]
     var int_dict: Dict[Int, Int]
-    var call_back_dict_ints: Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Int])]
-    var call_back_dict_floats: Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Float64])]
-    var call_back_dict_int: Dict[String, fn (mut poly_object: PolyObject, mut val: Int)]
-    var call_back_dict_float: Dict[String, fn (mut poly_object: PolyObject, mut val: Float64)]
     
 
     fn __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
@@ -122,19 +118,6 @@ struct PolyGate(Movable, Copyable):
         self.world = world
         self.string_dict = Dict[String, Int]()
         self.int_dict = Dict[Int, Int]()
-        self.call_back_dict_ints = Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Int])]()
-        self.call_back_dict_floats = Dict[String, fn (mut poly_object: PolyObject, mut vals: List[Float64])]()
-        self.call_back_dict_int = Dict[String, fn (mut poly_object: PolyObject, mut val: Int)]()
-        self.call_back_dict_float = Dict[String, fn (mut poly_object: PolyObject, mut val: Float64)]()
-
-    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut vals: List[Int])):
-        self.call_back_dict_ints[key] = call_back
-    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut vals: List[Float64])):
-        self.call_back_dict_floats[key] = call_back
-    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut val: Int)):
-        self.call_back_dict_int[key] = call_back
-    fn add_call_back(mut self, key: String, call_back: fn (mut poly_object: PolyObject, mut val: Float64)):
-        self.call_back_dict_float[key] = call_back
 
     @doc_private
     fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
