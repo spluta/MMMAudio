@@ -894,7 +894,7 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
         return String("Sweep")
         
     @always_inline
-    fn next(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = False) -> MFloat[self.num_chans]:
+    fn next(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = True) -> MFloat[self.num_chans]:
         """
 
         Args:

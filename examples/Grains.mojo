@@ -37,7 +37,6 @@ struct Grains(Movable, Copyable):
         var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
 
         start_frame = Int(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, Float64(self.buffer.num_frames) - 1.0))
-
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
         @parameter
