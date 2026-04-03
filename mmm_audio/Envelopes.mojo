@@ -54,6 +54,7 @@ struct Env(Representable, Movable, Copyable):
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
     var params: EnvParams
+    var params_changed: Changed
 
     fn __init__(out self, world: World):
         """Initialize the Env2 struct - with internal params.
@@ -73,6 +74,8 @@ struct Env(Representable, Movable, Copyable):
         self.params = EnvParams()
         self.params.values=[0,1,0]
         self.params.times=[1,1]
+        self.params_changed = Changed(-1)
+        self.reset_vals()
 
     fn __repr__(self) -> String:
         return String("Env")
@@ -125,15 +128,24 @@ struct Env(Representable, Movable, Copyable):
             else:
                 return self.params.values[-1]  # Return the last value if not looping
 
-        phase = phase * self.dur
+        return self.apply_phase(phase)
 
-        # Find the current segment
+    fn next(mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
+        if self.rising_bool_detector.next(trig):
+            self.reset_vals()
+        if phase >= 1.0:
+            return self.params.values[-1]
+        return self.apply_phase(phase)
+
+    @doc_private
+    fn apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
         var segment = 0
-        while segment < len(self.times) - 1 and phase >= self.times[segment + 1]:
+        phase2 = phase * self.dur
+        while segment < len(self.times) - 1 and phase2 >= self.times[segment + 1]:
             segment += 1
-            
-        out = lincurve(phase, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
-        
+
+        # by the above logic, segment should never be able to be the last index of times or values 
+        out = lincurve(phase2, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
         return out
 
     fn get_phase(self) -> Float64:
@@ -191,7 +203,7 @@ struct ASREnv(Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
         self.sweep = Sweep(world)
-        self.bool_changed = Changed() 
+        self.bool_changed = Changed(-1) 
         self.freq = 0.0  
         self.is_active = False
 

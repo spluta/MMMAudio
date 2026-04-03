@@ -1,6 +1,7 @@
 import numpy as np
 import math
 import random
+from typing import overload
 
 def mprint(
     *values: object,
@@ -275,7 +276,12 @@ def cpsmidi(frequency: float) -> float:
     """
     return 69.0 + 12 * math.log2(frequency / 440.0)
 
-def clip(val: float, min_val: float, max_val: float) -> float:
+@overload
+def clip(val: int, min_val: int, max_val: int) -> int: ...
+@overload
+def clip(val: float, min_val: float, max_val: float) -> float: ...
+
+def clip(val: float, min_val: float, max_val: float) -> float | int:
     """Clip a value to be within a specified range.
     
     Args:
@@ -346,25 +352,38 @@ def polar_to_complex(mags: np.ndarray, phases: np.ndarray) -> np.ndarray:
     complex_signal = mags * np.exp(1j * phases)
     return complex_signal
 
-def rrand(min_val: float, max_val: float) -> float:
-    """Generate a random float between min_val and max_val.
+@overload
+def rrand(min_val: float, max_val: float) -> float: ...
+@overload
+def rrand(min_val: int, max_val: int) -> int: ...
+
+def rrand(min_val: float, max_val: float) -> float | int:
+    """Generate a random value between min_val and max_val. Will return an int if both min_val and max_val are ints, otherwise returns a float.
     
     Args:
         min_val: Minimum value.
         max_val: Maximum value.
     Returns:
-        Random float between min_val and max_val.
+        Random value between min_val and max_val.
     """
+    if isinstance(min_val, int) and isinstance(max_val, int):
+        return random.randint(min_val, max_val)
     return random.uniform(min_val, max_val)
 
-def exprand(min_val: float, max_val: float) -> float:
-    """Generate a random float from an exponential distribution with given lambda.
+@overload
+def exprand(min_val: float, max_val: float) -> float: ...
+@overload
+def exprand(min_val: int, max_val: int) -> int: ...
+def exprand(min_val: float, max_val: float) -> float | int:
+    """Generate a random value from an exponential distribution with given range. Will return an int if both min_val and max_val are ints, otherwise returns a float.
     
     Args:
         min_val: Minimum value.
         max_val: Maximum value.
 
     """
+    if isinstance(min_val, int) and isinstance(max_val, int):
+        return int(linexp(random.uniform(0.0, 1.0), 0.0, 1.0, min_val, max_val))
     return linexp(random.uniform(0.0, 1.0), 0.0, 1.0, min_val, max_val)
 
 def coin(p: float) -> bool:

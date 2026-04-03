@@ -348,6 +348,10 @@ fn clip[
     return min(max(x, lo), hi)
 
 @always_inline
+fn clip(x: Int, lo: Int, hi: Int) -> Int:
+    return min(max(x, lo), hi)
+
+@always_inline
 fn wrap[
     dtype: DType, num_chans: Int, //
 ](input: SIMD[dtype, num_chans], min_val: SIMD[dtype, num_chans], max_val: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:

@@ -65,9 +65,11 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return self.state
 
-struct Changed(Representable, Movable, Copyable):
-    """Detect changes in a Bool value."""
-    var last_val: Bool  # Store the last value
+struct Changed(Movable, Copyable):
+    """Detect changes in a Bool, Int, or Float64 value."""
+    var last_bool: Bool  # Store the last value
+    var last_float: Float64  # Store the last value
+    var last_int: Int  # Store the last value
 
     fn __init__(out self, initial: Bool = False):
         """Initialize the Changed struct.
@@ -75,21 +77,42 @@ struct Changed(Representable, Movable, Copyable):
         Args:
             initial: The initial value to compare against.
         """
-        self.last_val = initial  # Initialize last value
+        self.last_bool = initial  # Initialize last value
+        self.last_float = -1.0
+        self.last_int = -1
 
-    fn __repr__(self) -> String:
-        return String("Changed")
+    fn __init__(out self, initial: Int = 0):
+        self.last_bool = False  # Initialize last value
+        self.last_float = -1.0
+        self.last_int = initial
+
+    fn __init__(out self, initial: Float64 = 0.0):
+        self.last_bool = False  # Initialize last value
+        self.last_float = initial
+        self.last_int = -1
 
     fn next(mut self, val: Bool) -> Bool:
         """Check if the value has changed.
         
         Args:
-            val: The current value to check.
+            val: The current value to check. Bool, Int, and Float64 types are supported.
         
         Returns:
             True if the value has changed since the last check, False otherwise.
         """
-        if val != self.last_val:
-            self.last_val = val  # Update last value
+        if val != self.last_bool:
+            self.last_bool = val  # Update last value
+            return True
+        return False
+    
+    fn next(mut self, val: Int) -> Bool:
+        if val != self.last_int:
+            self.last_int = val  # Update last value
+            return True
+        return False
+
+    fn next(mut self, val: Float64) -> Bool:
+        if val != self.last_float:
+            self.last_float = val  # Update last value
             return True
         return False
