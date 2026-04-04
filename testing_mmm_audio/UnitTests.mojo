@@ -4,6 +4,25 @@ from testing import TestSuite
 from math import inf, nan
 from pathlib import Path
 
+def test_Changed():
+    # Test with Bool
+    changed_bool = Changed(False)
+    assert_equal(changed_bool.next(False), False, "Changed failed for Bool: No change should return False")
+    assert_equal(changed_bool.next(True), True, "Changed failed for Bool: Change should return True")
+    assert_equal(changed_bool.next(True), False, "Changed failed for Bool: No change should return False")
+    
+    # Test with Int
+    changed_int = Changed(0)
+    assert_equal(changed_int.next(0), False, "Changed failed for Int: No change should return False")
+    assert_equal(changed_int.next(1), True, "Changed failed for Int: Change should return True")
+    assert_equal(changed_int.next(1), False, "Changed failed for Int: No change should return False")
+    
+    # Test with Float64
+    changed_float = Changed(0.0)
+    assert_equal(changed_float.next(0.0), False, "Changed failed for Float64: No change should return False")
+    assert_equal(changed_float.next(1.0), True, "Changed failed for Float64: Change should return True")
+    assert_equal(changed_float.next(1.0), False, "Changed failed for Float64: No change should return False")
+
 def test_sound_file_reader():
     try:
         # Quick one-liner to read audio
