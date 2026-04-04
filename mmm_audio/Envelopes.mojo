@@ -54,7 +54,6 @@ struct Env(Representable, Movable, Copyable):
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
     var params: EnvParams
-    var params_changed: Changed
 
     fn __init__(out self, world: World):
         """Initialize the Env2 struct - with internal params.
@@ -74,7 +73,6 @@ struct Env(Representable, Movable, Copyable):
         self.params = EnvParams()
         self.params.values=[0,1,0]
         self.params.times=[1,1]
-        self.params_changed = Changed(-1)
         self.reset_vals()
 
     fn __repr__(self) -> String:
@@ -102,6 +100,9 @@ struct Env(Representable, Movable, Copyable):
             
             Args:
                 trig: Trigger to start the envelope.
+            
+            Returns:
+                The next envelope value.
         """
         phase = 0.0
         if not self.is_active:
@@ -131,6 +132,15 @@ struct Env(Representable, Movable, Copyable):
         return self.apply_phase(phase)
 
     fn next(mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
+        """Generate the next envelope value with a provided phase rather than using the internal phasor. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
+            
+            Args:
+                trig: Trigger to start the envelope.
+                phase: The current phase of the envelope, between 0 and 1. This allows the user to control the progression of the envelope externally rather than using the internal phasor.
+            
+            Returns:
+                The envelope value at the specified phase.
+        """
         if self.rising_bool_detector.next(trig):
             self.reset_vals()
         if phase >= 1.0:
@@ -192,7 +202,7 @@ fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampd
 struct ASREnv(Movable, Copyable):
     """Simple ASR envelope generator."""
     var sweep: Sweep[1] 
-    var bool_changed: Changed  
+    var bool_changed: Changed[Bool]
     var freq: Float64 
     var is_active: Bool  
 
@@ -203,7 +213,7 @@ struct ASREnv(Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
         self.sweep = Sweep(world)
-        self.bool_changed = Changed(-1) 
+        self.bool_changed = Changed(False) 
         self.freq = 0.0  
         self.is_active = False
 

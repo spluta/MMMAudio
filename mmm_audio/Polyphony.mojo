@@ -205,7 +205,7 @@ struct PolyGate(Movable, Copyable):
 struct PolyGateSig(Movable, Copyable):
     """A Poly object designed for managing polyphonic synths with gated controls that are signals."""
     var poly: PolyTriggerSig
-    var changes: List[Changed]
+    var changes: List[Changed[Bool]]
     var num_gates: Int
     var active_dict: Dict[Int, Int]
 

@@ -65,8 +65,12 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return self.state
 
-struct Changed[T: Equatable & ImplicitlyCopyable,//](Movable, Copyable):
-    """Detect changes in a Bool, Int, or Float64 value."""
+struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
+    """Detect changes in a Bool, Int, or Float64 value.
+    
+    Parameters:
+        T: The type of value to track for changes. The is required when declared as a struct member. Must be Bool, Int, or Float64. ```Changed[Bool]``` will track changes in boolean values, ```Changed[Int]``` will track changes in integer values, and ```Changed[Float64]``` will track changes in floating-point values.
+    """
     var last: Self.T  # Store the last value
 
     fn __init__(out self, initial: Self.T):
