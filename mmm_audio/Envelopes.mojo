@@ -202,7 +202,7 @@ fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampd
 struct ASREnv(Movable, Copyable):
     """Simple ASR envelope generator."""
     var sweep: Sweep[1] 
-    var bool_changed: Changed[T=Bool]
+    var bool_changed: Changed[Bool]  # To detect changes in the gate signal
     var freq: Float64 
     var is_active: Bool  
 
@@ -213,7 +213,7 @@ struct ASREnv(Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
         self.sweep = Sweep(world)
-        self.bool_changed = Changed(False) 
+        self.bool_changed = Changed(False)  # Initialize with False
         self.freq = 0.0  
         self.is_active = False
 

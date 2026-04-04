@@ -69,7 +69,7 @@ struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
     """Detect changes in a Bool, Int, or Float64 value.
     
     Parameters:
-        T: The type of value to track for changes. The is required when declared as a struct member. Must be Bool, Int, or Float64. ```Changed[Bool]``` will track changes in boolean values, ```Changed[Int]``` will track changes in integer values, and ```Changed[Float64]``` will track changes in floating-point values.
+        T: The type of value to track for changes. The is required when declared as a struct member. This will usually be Bool, Int, Float64, or SIMD vector. ```Changed[Bool]``` will track changes in boolean values, ```Changed[Int]``` will track changes in integer values, and ```Changed[Float64]``` will track changes in floating-point values.
     """
     var last: Self.T  # Store the last value
 
@@ -94,3 +94,33 @@ struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
             self.last = val  # Update last value
             return True
         return False
+
+struct ChangedSIMD[type: DType, size: Int = 1](Movable, Copyable):
+    """Detect element-wise changes in a SIMD vector value.
+    
+    Parameters:
+        type: The DType of the SIMD vector elements (e.g., DType.float32, DType.int64, DType.bool).
+        size: The number of elements in the SIMD vector.
+    """
+    var last: SIMD[Self.type, Self.size]  # Store the last value
+
+    fn __init__(out self, initial: SIMD[Self.type, Self.size]):
+        """Initialize the ChangedSIMD struct.
+
+        Args:
+            initial: The initial SIMD vector value to compare against.
+        """
+        self.last = initial
+
+    fn next(mut self, val: SIMD[Self.type, Self.size]) -> SIMD[DType.bool, Self.size]:
+        """Check which elements in the SIMD vector have changed.
+        
+        Args:
+            val: The current SIMD vector value to check.
+        
+        Returns:
+            A boolean SIMD vector where True indicates the element changed.
+        """
+        var changed = val.ne(self.last)
+        self.last = val
+        return changed

@@ -215,7 +215,7 @@ struct PolyGateSig(Movable, Copyable):
         else:
             inv = initial_num_voices
         self.poly = PolyTriggerSig(initial_num_voices=inv, max_voices=max_voices)
-        self.changes = [Changed(False) for _ in range(num_gates)]
+        self.changes = [Changed[Bool](False) for _ in range(num_gates)]
         self.num_gates = num_gates
         self.active_dict = Dict[Int, Int]()
 
