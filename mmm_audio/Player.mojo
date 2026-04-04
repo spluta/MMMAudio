@@ -457,7 +457,7 @@ struct TGrains(Movable, Copyable):
         out = MFloat[num_simd_chans](0.0)
         for i in range(len(self.grains)):
             if self.poly.active_list[i]:  # Only process grains that are active
-                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, buf_chan, pan, gain)
+                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, buf_chan, pan, gain, num_speakers)
 
         return out
 

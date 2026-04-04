@@ -202,7 +202,7 @@ fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampd
 struct ASREnv(Movable, Copyable):
     """Simple ASR envelope generator."""
     var sweep: Sweep[1] 
-    var bool_changed: Changed[Bool]
+    var bool_changed: Changed[T=Bool]
     var freq: Float64 
     var is_active: Bool  
 
