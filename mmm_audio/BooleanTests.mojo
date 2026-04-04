@@ -65,33 +65,19 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return self.state
 
-struct Changed(Movable, Copyable):
+struct Changed[T: Equatable & ImplicitlyCopyable,//](Movable, Copyable):
     """Detect changes in a Bool, Int, or Float64 value."""
-    var last_bool: Bool  # Store the last value
-    var last_float: Float64  # Store the last value
-    var last_int: Int  # Store the last value
+    var last: Self.T  # Store the last value
 
-    fn __init__(out self, initial: Bool = False):
+    fn __init__(out self, initial: Self.T):
         """Initialize the Changed struct.
 
         Args:
             initial: The initial value to compare against.
         """
-        self.last_bool = initial  # Initialize last value
-        self.last_float = -1.0
-        self.last_int = -1
+        self.last = initial  # Initialize last value
 
-    fn __init__(out self, initial: Int = 0):
-        self.last_bool = False  # Initialize last value
-        self.last_float = -1.0
-        self.last_int = initial
-
-    fn __init__(out self, initial: Float64 = 0.0):
-        self.last_bool = False  # Initialize last value
-        self.last_float = initial
-        self.last_int = -1
-
-    fn next(mut self, val: Bool) -> Bool:
+    fn next(mut self, val: Self.T) -> Bool:
         """Check if the value has changed.
         
         Args:
@@ -100,19 +86,7 @@ struct Changed(Movable, Copyable):
         Returns:
             True if the value has changed since the last check, False otherwise.
         """
-        if val != self.last_bool:
-            self.last_bool = val  # Update last value
-            return True
-        return False
-    
-    fn next(mut self, val: Int) -> Bool:
-        if val != self.last_int:
-            self.last_int = val  # Update last value
-            return True
-        return False
-
-    fn next(mut self, val: Float64) -> Bool:
-        if val != self.last_float:
-            self.last_float = val  # Update last value
+        if val != self.last:
+            self.last = val  # Update last value
             return True
         return False
