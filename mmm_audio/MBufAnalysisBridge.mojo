@@ -249,7 +249,6 @@ struct MBufAnalysis:
                     window_samps[i] = buf.data[chan][frame + i] * window_func[i]
                 else:
                     window_samps[i] = 0.0
-            # apply window function
             fft.fft(window_samps)
             analyzer.next_frame(fft.mags,fft.phases)
             result.append(analyzer.get_features())

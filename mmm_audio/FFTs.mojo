@@ -318,7 +318,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         """
         fftanalysis = FFTAnalysis()
         try:
-            magsphss = MBufAnalysis.fft_process(fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size)
+            magsphss = MBufAnalysis.fft_process[input_win=input_window_shape](fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size)
             nframes = len(magsphss)
             nmags = len(magsphss[0]) // 2
             mags = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
