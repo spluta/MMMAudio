@@ -95,7 +95,7 @@ struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
             return True
         return False
 
-struct ChangedSIMD[type: DType, size: Int = 1](Movable, Copyable):
+struct ChangedSIMD[type: DType, size: Int,//](Movable, Copyable):
     """Detect element-wise changes in a SIMD vector value.
     
     Parameters:
