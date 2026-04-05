@@ -162,7 +162,8 @@ struct Env(Representable, Movable, Copyable):
         """Get the current phase of the envelope (between 0 and 1)."""
         return clip(self.sweep.phase, 0.0, 1.0)
     
-
+fn win_env[window_type: Int,interp: Int = Interp.none](world: World, win_phase: MFloat[1]) -> MFloat[1]:
+    return world[].windows[].at_phase[window_type, Interp.linear](world, win_phase)
 
 # min_env is just a function, not a struct
 fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampdur: MFloat[N] = 0.001) -> MFloat[N]:

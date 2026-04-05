@@ -48,6 +48,11 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
 
         return SIMDBuffer(data, sample_rate)
 
+    fn zero(mut self):
+        """Utility function to set all samples in the buffer to zero."""
+        for i in range(self.num_frames):
+            self.data[i] = MFloat[Self.num_chans](0.0)
+
     @staticmethod
     fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> SIMDBuffer[Self.num_chans]:
         """
@@ -150,6 +155,12 @@ struct Buffer(Movable, Copyable):
             data.append(channel_data^)
 
         return Buffer(data, sample_rate)
+
+    fn zero(mut self):
+        """Utility function to set all samples in the buffer to zero."""
+        for chan in range(self.num_chans):
+            for i in range(self.num_frames):
+                self.data[chan][i] = 0.0
 
     @staticmethod
     fn load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> Buffer:

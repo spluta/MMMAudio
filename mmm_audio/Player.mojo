@@ -348,7 +348,7 @@ struct Grain(PolyObject):
         else:
             win_phase = 0.0  # Use the phase
 
-        win = self.world[].windows[].at_phase[win_type, Interp.linear](self.world, win_phase)
+        win = win_env[win_type, Interp.linear](self.world, win_phase)
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
         sample = sample * win * self.gain  # Apply the window to the sample
         

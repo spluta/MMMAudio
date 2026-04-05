@@ -180,6 +180,10 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
 
         return out
 
+    fn zero(mut self):
+        """Utility function to reset the delay line buffer to zero. Can be useful to avoid unwanted noise when changing delay times or for testing."""
+        self.delay_line.buf.zero()
+
     @always_inline
     fn get_f_idx(self, delay_time: Float64) -> Float64:
         """Calculate the fractional index in the delay buffer for the given delay time.

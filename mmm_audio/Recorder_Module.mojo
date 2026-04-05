@@ -35,6 +35,12 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.buf = new_buf.copy()
         self.write_head = 0
 
+    fn zero_buffer(mut self):
+        """
+        Utility function to set all samples in the buffer to zero. Can be useful to clear the buffer for a new recording without having to create a new Recorder instance.
+        """
+        self.buf.zero()
+
     fn __repr__(self) -> String:
         return String("RecordBuf")
     
