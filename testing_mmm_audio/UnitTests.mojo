@@ -11,7 +11,7 @@ def test_Changed():
     assert_equal(changed_bool.next(True), True, "Changed failed for Bool: Change should return True")
     assert_equal(changed_bool.next(True), False, "Changed failed for Bool: No change should return False")
 
-    changed_bools = Changed[MBool[4]](MBool[4](False, False, False, False))
+    changed_bools = Changed(MBool[4](False, False, False, False))
     assert_equal(changed_bools.next(MBool[4](False, False, False, False)), False, "Changed failed for Bool: No change should return False")
     assert_equal(changed_bools.next(MBool[4](True, False, True, True)), True, "Changed failed for Bool: Change should return True")
     assert_equal(changed_bools.next(MBool[4](True, True, True, True)), True, "Changed failed for Bool: No change should return False")
@@ -22,7 +22,7 @@ def test_Changed():
     assert_equal(changed_int.next(1), True, "Changed failed for Int: Change should return True")
     assert_equal(changed_int.next(1), False, "Changed failed for Int: No change should return False")
 
-    changed_ints = Changed[MInt[4]](MInt[4](0, 0, 0, 0))
+    changed_ints = Changed(MInt[4](0, 0, 0, 0))
     assert_equal(changed_ints.next(MInt[4](0, 0, 0, 0)), False, "Changed failed for Int: No change should return False")
     assert_equal(changed_ints.next(MInt[4](1, 0, 1, 1)), True, "Changed failed for Int: Change should return True")
     assert_equal(changed_ints.next(MInt[4](1, 1, 1, 1)), True, "Changed failed for Int: No change should return False")
@@ -33,7 +33,7 @@ def test_Changed():
     assert_equal(changed_float.next(1.0), True, "Changed failed for Float64: Change should return True")
     assert_equal(changed_float.next(1.0), False, "Changed failed for Float64: No change should return False")
 
-    changed_floats = Changed[MFloat[4]](MFloat[4](0.0, 0.0, 0.0, 0.0))
+    changed_floats = Changed(MFloat[4](0.0, 0.0, 0.0, 0.0))
     assert_equal(changed_floats.next(MFloat[4](0.0, 0.0, 0.0, 0.0)), False, "Changed failed for Float64: No change should return False")
     assert_equal(changed_floats.next(MFloat[4](1.0, 0.0, 1.0, 1.0)), True, "Changed failed for Float64: Change should return True")
     assert_equal(changed_floats.next(MFloat[4](1.0, 1.0, 1.0, 1.0)), True, "Changed failed for Float64: No change should return False")
