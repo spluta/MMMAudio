@@ -33,6 +33,7 @@ struct FFTProcessor[T: FFTProcessable, ifft: Bool = True](BufferedProcessable):
     fn next_window(mut self, mut input: List[Float64]) -> None:
         self.fft.fft(input)
         self.process.next_frame(self.fft.mags,self.fft.phases)
+        @parameter
         if Self.ifft:
             self.fft.ifft(input)
     
