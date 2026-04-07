@@ -38,7 +38,7 @@ struct Record(Representable, Movable, Copyable):
         self.is_recording = False
         self.is_playing = 1.0
         self.trig = True
-        self.note_time = Float64(self.buffer.write_head) / self.world[].sample_rate
+        self.note_time = Float64(self.buffer.write_head-1) / self.world[].sample_rate
         print("Recorded duration:", self.note_time, "seconds")
         print("Recording stopped. Now playing.")
 
