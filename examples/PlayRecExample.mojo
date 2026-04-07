@@ -64,8 +64,8 @@ struct PlayRecExample(Movable, Copyable):
             self.record_bool = False
         
 
-        rec_buffer = self.messenger.notify_update(self.filepath, "save_buffer")
-        if rec_buffer:
+        save_buffer = self.messenger.notify_update(self.filepath, "save_buffer")
+        if save_buffer:
             print("Saving current buffer to:", self.filepath)
             self.recorder.buf.write_to_file(self.filepath, self.recorder.write_head)
             print("Saved", self.recorder.write_head, "samples to file.")

@@ -51,6 +51,26 @@ fn power_to_db(value: Float64, zero_db_ref: Float64 = 1.0, amin: Float64 = 1e-10
     return 10.0 * log10(max(value, amin) / zero_db_ref)
 
 @always_inline
+fn select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans]]) -> MFloat[num_chans]:
+    """Selects a value from a Span of SIMD vectors based on a floating-point index using linear interpolation.
+
+    Parameters:
+        num_chans: Size of the SIMD vector. This parameter is inferred by the values passed to the function.
+
+    Args:
+        index: The floating-point index to select.
+        vals: The Span of SIMD vectors containing the values.
+
+    Returns:
+        The interpolated value.
+    """
+    index_int = Int(index) % len(vals)
+    index_mix: Float64 = index - index_int
+    v0 = vals[index_int]
+    v1 = vals[(index_int + 1) % len(vals)]
+    return linear_interp(v0, v1, index_mix)
+
+@always_inline
 fn select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float64:
     """Selects a value from a SIMD vector based on a floating-point index and using linear interpolation.
 
@@ -62,7 +82,7 @@ fn select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float6
         vals: The SIMD vector containing the values.
     
     Returns:
-        The selected value.
+        The interpolated value.
     """
     index_int = Int(index) % len(vals)
     index_mix: Float64 = index - index_int
@@ -82,7 +102,7 @@ fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[nu
         vals: Either a VariadicList or a List of SIMD vectors containing the values.
     
     Returns:
-        The selected value.
+        The interpolated value.
     """
     index_int = Int(index) % len(vals)
     index_mix: Float64 = index - index_int
@@ -90,13 +110,6 @@ fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[nu
     v1 = vals[(index_int + 1) % len(vals)]
     return linear_interp(v0, v1, index_mix)
 
-@always_inline
-fn select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans]]) -> MFloat[num_chans]:
-    index_int = Int(index) % len(vals)
-    index_mix: Float64 = index - index_int
-    v0 = vals[index_int]
-    v1 = vals[(index_int + 1) % len(vals)]
-    return linear_interp(v0, v1, index_mix)
 
 fn check_reversed[dtype: DType, num_chans: Int](
     in_min: SIMD[dtype, num_chans],
@@ -347,9 +360,19 @@ fn clip[
     """ 
     return min(max(x, lo), hi)
 
+##########This is the downside of switching to Int. 
+
 @always_inline
 fn clip(x: Int, lo: Int, hi: Int) -> Int:
     return min(max(x, lo), hi)
+
+@always_inline
+fn wrap(x: Int, lo: Int, hi: Int) -> Int:
+    range_size = hi - lo
+    if range_size <= 0:
+        return x
+    wrapped = (x - lo) % range_size + lo
+    return wrapped
 
 @always_inline
 fn wrap[
@@ -736,6 +759,27 @@ def coin[num_chans:Int](p: MFloat[num_chans]) -> MBool[num_chans]:
     rands = rrand(MFloat[num_chans](0.0), MFloat[num_chans](1.0))
     coins = rands.lt(q)
     return coins
+
+fn rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: List[T], N: Int):
+    """Rotates a list to the left by N positions in-place.
+
+    Args:
+        data: The list to rotate.
+        N: The number of positions to rotate the list by.
+    """
+    n = N % len(data)
+    
+    fn reverse(mut arr: List[T], start: Int, end: Int):
+        s = start
+        e = end
+        while s < e:
+            arr[s], arr[e] = arr[e], arr[s]
+            s += 1
+            e -= 1
+    
+    reverse(data, 0, n - 1)      # Reverse first part
+    reverse(data, n, len(data) - 1)  # Reverse second part
+    reverse(data, 0, len(data) - 1)  # Reverse entire array
 
 @doc_private
 fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: Span[Float64]) -> MFloat[num_chans]:
