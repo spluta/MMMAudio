@@ -694,6 +694,7 @@ fn sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
 
     return pmask.select(MFloat[num_chans](1.0), nmask.select(MFloat[num_chans](-1.0), MFloat[num_chans](0.0)))
 
+# [TODO]: add endpoint argument to linspace
 fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
     """Create evenly spaced values between start and stop.
     
