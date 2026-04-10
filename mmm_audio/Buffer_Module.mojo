@@ -81,15 +81,8 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
             print("SIMDBuffer::__init__ No file_name provided")
             return SIMDBuffer[Self.num_chans].zeros(0,48000.0)
 
-    fn write_to_file(self, file_name: String, num_samps: Int = -1, verbose: Bool = False):
-        """Write the SIMDBuffer to a WAV file.
-
-        Args:
-            file_name: Path to the WAV file to write to.
-            num_samps: Number of samples to write.
-            verbose: Whether to print confirmation of written file.
-        """
-
+    @doc_private
+    fn do_the_write(self, file_name: String, num_samps: Int = -1):
         if num_samps < 0 or num_samps > self.num_frames:
             try:
                 write_wav_file(file_name, self.data, Int(self.sample_rate))
@@ -100,8 +93,38 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
                 write_wav_file(file_name, self.data[0:num_samps], Int(self.sample_rate))
             except err:
                 print("SIMDBuffer::write_file Error writing file: ", file_name, " Error: ", err)
+
+    fn write_to_file(self, file_name: String, num_samps: Int = -1, verbose: Bool = False):
+        """Write the SIMDBuffer to a WAV file.
+
+        Args:
+            file_name: Path to the WAV file to write to.
+            num_samps: Number of samples to write.
+            verbose: Whether to print confirmation of written file.
+        """
+        self.do_the_write(file_name, num_samps)
         if verbose:
             print("SIMDBuffer written to file: ", file_name)
+
+    # this is untested
+    fn write_circular_buf_to_file(mut self, write_head: Int, file_name: String, num_samps: Int = -1, rotate_back: Bool = False, verbose: Bool = False):
+        """Write the SIMDBuffer to a WAV file in a circular manner, starting from the current write head position.
+
+        Args:
+            write_head: The current write head position in the buffer. This is the index of the most recently written sample.
+            file_name: Path to the WAV file to write to.
+            num_samps: Number of samples to write. If -1, the entire buffer will be written.
+            rotate_back: Whether to rotate the buffer back to its original order after writing.
+            verbose: Whether to print confirmation of written file.
+        """
+
+        rotate_left_inplace(self.data, write_head)
+        self.do_the_write(file_name, num_samps)
+        if verbose:
+            print("SIMDBuffer circularly written to file: ", file_name)
+
+        if rotate_back:
+            rotate_left_inplace(self.data, len(self.data) - write_head)
 
 
 struct Buffer(Movable, Copyable):

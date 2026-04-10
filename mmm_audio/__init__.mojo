@@ -34,4 +34,5 @@ from .Polyphony import *
 from .Patterns import *
 
 from random import random_float64
+from random import random_si64
 from math import *

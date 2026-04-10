@@ -359,8 +359,7 @@ struct TGrains(Movable, Copyable):
     """
     Triggered granular synthesis. Each trigger starts a new grain.
     """
-    var grains: List[Grain]  
-    var counter: Int 
+    var grains: List[Grain] 
     var trig: Bool
     var world: World
     var poly: PolyTriggerSig
@@ -376,8 +375,7 @@ struct TGrains(Movable, Copyable):
         self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
         for _ in range(num_grains):
-            self.grains.append(Grain(world))  
-        self.counter = 0  
+            self.grains.append(Grain(world)) 
         self.trig = False  
         self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
