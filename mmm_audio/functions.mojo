@@ -639,8 +639,19 @@ fn sanitize[
 
     return should_zero.select(0.0, x)
 
+fn rrand(min: Int, max: Int) -> Int:
+    """Generates a random Int from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
+
+    Args:
+        min: The minimum sample (inclusive).
+        max: The maximum sample (inclusive).
+    Returns:
+        A random float64 sample from the specified range.
+    """
+    return Int(random_si64(min, max))
+
 fn rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
-    """Generates a random float64 sample from a uniform distribution.
+    """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
     Parameters:
         num_chans: Size of the SIMD vector. This parameter is inferred by the values passed to the function.
