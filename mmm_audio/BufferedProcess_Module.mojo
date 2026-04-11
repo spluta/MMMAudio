@@ -47,6 +47,8 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
     var st_passing_buffer: List[SIMD[DType.float64,2]]
     var st_output_buffer: List[SIMD[DType.float64,2]]
 
+    var last_idx: Float64
+
     var input_buffer_write_head: Int
     var read_head: Int
     var hop_counter: Int
@@ -84,6 +86,8 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.st_input_buffer = List[SIMD[DType.float64,2]](length=self.window_size * 2, fill=0.0)
         self.st_passing_buffer = List[SIMD[DType.float64,2]](length=self.window_size, fill=0.0)
         self.st_output_buffer = List[SIMD[DType.float64,2]](length=self.window_size, fill=0.0)
+
+        self.last_idx = 0
         
         self.input_attenuation_window = Windows.make_window[Self.input_window_shape](self.window_size)
         self.output_attenuation_window = Windows.make_window[Self.output_window_shape](self.window_size)
@@ -178,13 +182,17 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
-    fn next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64:
+    fn next_from_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
         """Used for non-real-time, buffer-based, processing. At the onset of the next window, reads a block of window_size samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase tries to read samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to start reading from the buffer.
             chan: The channel to read from the buffer.
+
+        Params:
+            interp: The interpolation method to use when reading from the buffer. Do not use sync.
+            bWrap: Whether to wrap around the buffer at the end or to return zeros when the phase tries to read beyond the buffer duration.
         
         Returns:
             The next output sample.
@@ -194,7 +202,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
 
             for i in range(self.window_size):
                 index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
-                self.passing_buffer[i] = SpanInterpolator.read_none[bWrap=False](buffer.data[chan], index) * self.input_attenuation_window[i]
+                self.passing_buffer[i] = SpanInterpolator.read[interp=interp, bWrap=bWrap](self.world, buffer.data, index, 0.0) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
 
@@ -217,14 +225,17 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
-    fn next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64,2]:
+    fn next_from_stereo_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> SIMD[DType.float64,2]:
         """Used for non-real-time, buffer-based, processing of stereo files. At the onset of the next window, reads a window_size block of samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase results in reading samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer.
-            start_chan: The first channel to read from the buffer. The second channel will be start_chan + 1.
         
+        Params:
+            interp: The interpolation method to use when reading from the buffer. Do not use sync.
+            bWrap: Whether to wrap around the buffer at the end or to return zeros when the phase tries to read beyond the buffer duration.
+
         Returns:
             The next output sample.
         """
@@ -232,9 +243,8 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         if self.hop_counter == 0:
            
             for i in range(self.window_size):
-                index = floor(phase * buffer.num_frames_f64) + i
-                self.st_passing_buffer[i][0] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan], index) * self.input_attenuation_window[i]
-                self.st_passing_buffer[i][1] = SpanInterpolator.read_none[bWrap=False](buffer.data[start_chan + 1], index) * self.input_attenuation_window[i]
+                index = (phase * buffer.num_frames_f64) + i
+                self.st_passing_buffer[i] = SpanInterpolator.read[interp=interp, bWrap=bWrap](self.world, buffer.data, index, 0.0) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)
 

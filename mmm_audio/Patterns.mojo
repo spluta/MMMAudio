@@ -1,4 +1,4 @@
-
+from mmm_audio import *
 
 struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     """
@@ -6,25 +6,18 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     
     Pseq generates values by iterating through a list sequentially,
     wrapping back to the beginning when it reaches the end.
-    
-    Attributes:
-        list: The list of values to cycle through
-        index: Current position in the list (starts at -1)
-        
-    Example:
-        ```python
-        pattern = Pseq([1, 2, 3])
-        print(pattern.next())  # 1
-        print(pattern.next())  # 2
-        print(pattern.next())  # 3
-        print(pattern.next())  # 1 (cycles back)
-        ```
     """
     var vals: List[Self.T]
     var index: Int
     var len: Int
 
     fn __init__(out self, in_list: List[Self.T]):
+        """
+        Initialize the Pseq instance.
+
+        Args:
+            in_list: The list of values to cycle through. Can be of any type.
+        """
         self.vals = in_list.copy()
         self.index = -1
         self.len = len(self.vals)
@@ -66,16 +59,18 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
 struct Prand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     """
     Random pattern generator that picks from a list of values.
-    
-    Attributes:
-        list: The list of values to cycle through
-        index: Current position in the list (starts at -1)
     """
     var vals: List[Self.T]
     var index: Int
     var len: Int
 
     fn __init__(out self, in_list: List[Self.T]):
+        """
+        Initialize the Prand instance.
+
+        Args:
+            in_list: The list of values to pick from. Can be of any type.
+        """
         self.vals = in_list.copy()
         self.index = -1
         self.len = len(self.vals)
@@ -111,6 +106,12 @@ struct Pxrand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     var len: Int
 
     fn __init__(out self, in_list: List[Self.T]):
+        """
+        Initialize the Pxrand instance.
+
+        Args:
+            in_list: The list of values to pick from. Can be of any type.
+        """
         self.vals = in_list.copy()
         self.index = -1
         self.len = len(self.vals)

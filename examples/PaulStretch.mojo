@@ -23,7 +23,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 # User's Synth
 struct PaulStretch(Movable, Copyable):
     var world: World
-    var buffer: Buffer
+    var buffer: SIMDBuffer[2]
     var saw: LFSaw[1]
     var paul_stretch: FFTProcess[PaulStretchWindow[window_size],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]
     var m: Messenger
@@ -31,7 +31,7 @@ struct PaulStretch(Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world
-        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world)
 
         self.paul_stretch = FFTProcess[

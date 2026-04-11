@@ -2,20 +2,19 @@ from mmm_audio import *
 
 from random import random_float64
 
-comptime window_sizes = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256]
-comptime hop_sizes = [32768, 16384, 8192, 4096, 2048, 1024, 512, 256, 128]
-
-struct NessStretchWindow[window_size: Int](FFTProcessable):
+struct NessStretchWindow(FFTProcessable):
     var world: World
+    var window_size: Int
     var m: Messenger
     var lrhp_window: List[Float64]
     var lrlp_window: List[Float64]
 
-    fn __init__(out self, world: World, low_cut: Int, high_cut: Int):
+    fn __init__(out self, world: World, window_size: Int, low_cut: Int, high_cut: Int):
         self.world = world
+        self.window_size = window_size
         self.m = Messenger(self.world)
-        self.lrhp_window = create_lr_filter(Self.window_size, low_cut, 24, highpass=True)
-        self.lrlp_window = create_lr_filter(Self.window_size, high_cut, 24, highpass=False)
+        self.lrhp_window = create_lr_filter(self.window_size, low_cut, 24, highpass=True)
+        self.lrlp_window = create_lr_filter(self.window_size, high_cut, 24, highpass=False)
 
     fn get_messages(mut self) -> None:
         pass
@@ -30,19 +29,13 @@ struct NessStretchWindow[window_size: Int](FFTProcessable):
 # User's Synth
 struct NessStretch(Movable, Copyable):
     var world: World
-    var buffer: Buffer
+    var buffer: SIMDBuffer[2]
     var saw: LFSaw[1]
-    var ness_stretches: Tuple[
-        FFTProcess[NessStretchWindow[window_sizes[0]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[1]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[2]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[3]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[4]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[5]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[6]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[7]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine],
-        FFTProcess[NessStretchWindow[window_sizes[8]],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]
-    ]
+    var window_sizes: List[Int] 
+    var hop_sizes: List[Int]
+
+    var ness_stretches: List[FFTProcess[NessStretchWindow,ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]]
+
     var m: Messenger
     var dur_mult: Float64
     var file_name: String
@@ -50,74 +43,20 @@ struct NessStretch(Movable, Copyable):
     fn __init__(out self, world: World):
         self.world = world
         self.file_name = "resources/Shiverer.wav"
-        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world)
+        self.window_sizes = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256]
+        self.hop_sizes = [32768, 16384, 8192, 4096, 2048, 1024, 512, 256, 128]
 
-        self.ness_stretches = (FFTProcess[
-                NessStretchWindow[window_sizes[0]],
+        start_cut = [0, 64, 64, 64, 64, 64, 64, 64, 64]
+        self.ness_stretches = [FFTProcess[
+                NessStretchWindow,
                 ifft=True,
                 input_window_shape=WindowType.sine,
                 output_window_shape=WindowType.sine,
                 
-            ](self.world,process=NessStretchWindow[window_sizes[0]](self.world, 0, 128),window_size=materialize[window_sizes[0]](),hop_size=materialize[hop_sizes[0]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[1]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[1]](self.world, 64, 128),window_size=materialize[window_sizes[1]](),hop_size=materialize[hop_sizes[1]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[2]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[2]](self.world, 64, 128),window_size=materialize[window_sizes[2]](),hop_size=materialize[hop_sizes[2]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[3]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[3]](self.world, 64, 128),window_size=materialize[window_sizes[3]](),hop_size=materialize[hop_sizes[3]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[4]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[4]](self.world, 64, 128),window_size=materialize[window_sizes[4]](),hop_size=materialize[hop_sizes[4]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[5]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[5]](self.world, 64, 128),window_size=materialize[window_sizes[5]](),hop_size=materialize[hop_sizes[5]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[6]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[6]](self.world, 64, 128),window_size=materialize[window_sizes[6]](),hop_size=materialize[hop_sizes[6]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[7]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[7]](self.world, 64, 128),window_size=materialize[window_sizes[7]](),hop_size=materialize[hop_sizes[7]]()),
-            FFTProcess[
-                NessStretchWindow[window_sizes[8]],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[window_sizes[8]](self.world, 64, 128),window_size=materialize[window_sizes[8]](),hop_size=materialize[hop_sizes[8]]())
-        )
-
+            ](self.world,process=NessStretchWindow(self.world, self.window_sizes[i], start_cut[i], 128),window_size=self.window_sizes[i],hop_size=self.hop_sizes[i]) for i in range(9)]
+            
         self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
@@ -125,19 +64,13 @@ struct NessStretch(Movable, Copyable):
         self.m.update(self.dur_mult,"dur_mult")
         new_file = self.m.notify_update(self.file_name, "file_name")
         if new_file:
-            self.buffer = Buffer.load(self.file_name)
+            self.buffer = SIMDBuffer.load(self.file_name)
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
-        phase = self.saw.next(speed)*0.5 + 0.5
-        o = self.ness_stretches[0].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[1].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[2].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[3].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[4].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[5].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[6].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[7].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        o += self.ness_stretches[8].buffered_process.next_from_stereo_buffer(self.buffer, phase, 0)
-        return o
+        phase = self.saw.next(speed, trig = new_file)*0.5 + 0.5 #resets the phase when the file changes
+        o = MFloat[2](0.0, 0.0)
+        for ref n in self.ness_stretches:
+            o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
+        return o 
 
 fn linkwitz_riley_bin(
     freq_bin: Int,
@@ -149,13 +82,13 @@ fn linkwitz_riley_bin(
     Calculate Linkwitz-Riley filter response for a single bin.
     
     Args:
-        freq_bin: Current frequency bin index
-        cutoff_bin: Cutoff frequency bin index
-        order: Filter order (2=12dB/oct, 4=24dB/oct, 8=48dB/oct)
-        highpass: If True, creates highpass; else lowpass
+        freq_bin: Current frequency bin index.
+        cutoff_bin: Cutoff frequency bin index.
+        order: Filter order (2=12dB/oct, 4=24dB/oct, 8=48dB/oct).
+        highpass: If True, creates highpass; else lowpass.
     
     Returns:
-        Filter magnitude coefficient for this bin
+        Filter magnitude coefficient for this bin.
     """
     if cutoff_bin == 0:
         return 1.0
