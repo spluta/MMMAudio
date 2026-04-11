@@ -186,7 +186,7 @@ fn create_lr_filter(
     highpass: Bool = False
 ) -> List[Float64]:
     """
-    Create a Linkwitz-Riley filter magnitude response.
+    Create a Linkwitz-Riley frequency domain filter.
     
     Args:
         fft_size: Size of the FFT.
