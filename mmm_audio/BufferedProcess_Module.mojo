@@ -191,7 +191,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             chan: The channel to read from the buffer.
 
         Params:
-            interp: The interpolation method to use when reading from the buffer. Do not use sync.
+            interp: The interpolation method to use when reading from the buffer. Do not use sinc interpolation.
             bWrap: Whether to wrap around the buffer at the end or to return zeros when the phase tries to read beyond the buffer duration.
         
         Returns:
@@ -233,7 +233,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             phase: The current phase to read from the buffer.
         
         Params:
-            interp: The interpolation method to use when reading from the buffer. Do not use sync.
+            interp: The interpolation method to use when reading from the buffer. Do not use sinc interpolation.
             bWrap: Whether to wrap around the buffer at the end or to return zeros when the phase tries to read beyond the buffer duration.
 
         Returns:
