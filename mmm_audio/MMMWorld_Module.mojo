@@ -3,12 +3,6 @@ import time
 from collections import Set
 from mmm_audio import *
 
-comptime MFloat[N: Int = 1] = SIMD[DType.float64, N]
-comptime MInt[N: Int = 1] = SIMD[DType.int, N]
-comptime MBool[N: Int = 1] = SIMD[DType.bool, N]
-comptime World = UnsafePointer[mut=True, MMMWorld, MutExternalOrigin]
-comptime MessengerPointer = UnsafePointer[mut=True, Messenger, MutExternalOrigin]
-
 struct MMMWorld(Movable, Copyable):
     """The MMMWorld struct holds global audio processing parameters and state.
 

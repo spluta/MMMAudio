@@ -39,7 +39,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         Move the sequence index back by n steps.
         
         Args:
-            n: Number of steps to move back in the sequence
+            n: Number of steps to move back in the sequence.
         """
         self.index = (self.index - n) % self.len
 

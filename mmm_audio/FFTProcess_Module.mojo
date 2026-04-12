@@ -116,29 +116,27 @@ struct FFTProcess[T: FFTProcessable, ifft: Bool = True,input_window_shape: Int =
         """
         return self.buffered_process.next_stereo(input)
 
-    fn next_from_buffer(mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
+    fn next_from_buffer(mut self, ref buffer: SIMDBuffer[1], phase: Float64) -> Float64:
         """Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer. Between 0 (beginning) and 1 (end).
-            chan: The channel to read from the buffer.
         
         Returns:
             The next output sample.
         """
-        return self.buffered_process.next_from_buffer(buffer, phase, chan)
+        return self.buffered_process.next_from_buffer(buffer, phase)
 
-    fn next_from_stereo_buffer(mut self, ref buffer: SIMDBuffer[2], phase: Float64, start_chan: Int = 0) -> MFloat[2]:
+    fn next_from_stereo_buffer(mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> MFloat[2]:
         """Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
 
         Args:
             buffer: The input buffer to read samples from.
             phase: The current phase to read from the buffer. Between 0 (beginning) and 1 (end).
-            start_chan: The first channel to read from the buffer.
 
         Returns:
             The next stereo output sample.
         """
-        return self.buffered_process.next_from_stereo_buffer(buffer, phase, start_chan)
+        return self.buffered_process.next_from_stereo_buffer(buffer, phase)
 

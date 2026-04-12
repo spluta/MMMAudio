@@ -3,7 +3,7 @@
 from memory import memcpy, bitcast
 from sys import argv
 from math import sin
-from mmm_audio.MMMWorld_Module import MFloat
+from mmm_audio.constants import MFloat
 
 struct WavHeader(Movable, Copyable):
     """Struct containing WAV file header information."""

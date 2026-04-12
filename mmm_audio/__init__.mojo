@@ -26,6 +26,7 @@ from .Messenger_Module import *
 from .Print_Module import *
 from .BooleanTests import *
 from .Windows_Module import *
+from .constants import *
 from .functions import *
 from .FFT_Processes import *
 from .ComplexFFTProcess_Module import *

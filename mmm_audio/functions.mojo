@@ -231,7 +231,7 @@ def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chan
         out_max: Maximum of output range (linear).
     
     Returns:
-        Linearly scaled output value
+        Linearly scaled output value.
     """
 
     mask = (input.le(0.0)) | (in_min.le(0.0)) | (in_max.le(0.0))

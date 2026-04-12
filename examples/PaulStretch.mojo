@@ -48,6 +48,6 @@ struct PaulStretch(Movable, Copyable):
         self.m.update(self.dur_mult,"dur_mult")
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed)*0.5 + 0.5
-        o = self.paul_stretch.next_from_stereo_buffer(self.buffer, phase, 0)
+        o = self.paul_stretch.next_from_stereo_buffer(self.buffer, phase)
         return o
 

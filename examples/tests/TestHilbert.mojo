@@ -3,7 +3,7 @@ from mmm_audio import *
 
 struct TestHilbert(Movable, Copyable):
     var world: World
-    var hilbert: Hilbert[2048,1024]
+    var hilbert: Hilbert[WindowType.sine]
     var sine: Osc[]
     var m: Messenger
     var freq: MFloat[]
@@ -11,7 +11,7 @@ struct TestHilbert(Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world
-        self.hilbert = Hilbert[2048,1024](self.world)
+        self.hilbert = Hilbert[WindowType.sine](2048, 1024, self.world)
         self.sine = Osc(self.world)
         self.m = Messenger(self.world)
         self.freq = 440.0
