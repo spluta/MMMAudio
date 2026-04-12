@@ -24,17 +24,19 @@ fn phase_correlation[num_chans: Int](current_phases: Span[MFloat[num_chans]], pr
     var n = MFloat[num_chans](Float64(num_bins))
     return sum_cos / n
 
-fn get_best_correlation[num_chans: Int, num_iterations: Int](mut phases: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut phases: List[MFloat[num_chans]])):
+fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]])):
     """Calls a callback function `num_iterations` times, and keeps the phase set with the best correlation to the previous phases. The callback function should modify the `phases` variable in place."""
 
+
     phase_corr = MFloat[num_chans](-1.0)
+    call_back(mags, phases)
     @parameter
-    if num_iterations < 1:
-        call_back(phases)
-    else:
+    if num_iterations > 0:
         @parameter
         for i in range(num_iterations):
-            call_back(phases)
+            temp_phases = phases.copy()
+            if i > 0:
+                call_back(mags, phases)
             phase_corr_new = phase_correlation(phases, previous_phases, hop_size, window_size)
 
             lt0 = phase_corr_new.lt(0.0)
@@ -44,15 +46,14 @@ fn get_best_correlation[num_chans: Int, num_iterations: Int](mut phases: List[MF
             # if the absolute value of the new correlation is higher than the last one, we want to keep it, but if the correlation is negative, we want to invert the phases
             # otherwise we want to keep the old phases. 
             for i2 in range(len(phases)):
-                phases[i2] = gt_last.select(lt0.select(wrap_to_pi(phases[i2] + pi), phases[i2]), previous_phases[i2])
+                phases[i2] = gt_last.select(lt0.select(wrap_to_pi(phases[i2] + pi), phases[i2]), temp_phases[i2])
 
             phase_corr = phase_corr_new
 
     previous_phases = phases.copy()
 
 
-comptime onsies_iterations = 1
-comptime twosies_iterations = 2
+comptime iterations = 2
 
 struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
     var world: World
@@ -78,10 +79,10 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
         pass
 
     fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
-        fn call_back(mut phases: List[MFloat[2]]):
+        fn call_back(mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]):
             for ref p in phases:
                 p = MFloat[2](rrand(0.0, 2.0 * 3.141592653589793), rrand(0.0, 2.0 * 3.141592653589793))
-        get_best_correlation[num_iterations=Self.num_iterations](phases, self.previous_phases, self.window_size, self.hop_size, call_back)
+        get_best_correlation[num_iterations=Self.num_iterations](mags, phases, self.previous_phases, self.window_size, self.hop_size, call_back)
         for i in range(len(mags)):
             mags[i] = mags[i] * self.lrlp_window[i]
             mags[i] = mags[i] * self.lrhp_window[i]
@@ -94,8 +95,7 @@ struct NessStretch(Movable, Copyable):
     var window_sizes: List[Int] 
     var hop_sizes: List[Int]
 
-    var ness_stretch_twosies: List[FFTProcess[NessStretchWindow[num_iterations=twosies_iterations],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]]
-    var ness_stretch_onesies: List[FFTProcess[NessStretchWindow[num_iterations=onsies_iterations],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]]
+    var ness_stretches: List[FFTProcess[NessStretchWindow[num_iterations=iterations],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]]
 
     var m: Messenger
     var dur_mult: Float64
@@ -112,21 +112,14 @@ struct NessStretch(Movable, Copyable):
         start_cut = [0, 64, 64, 64, 64, 64, 64, 64, 64]
 
         # the upper register benefit from less correlation, so I am using fewer in the upper register.
-        self.ness_stretch_twosies = [FFTProcess[
-                NessStretchWindow[num_iterations=twosies_iterations],
+        self.ness_stretches = [FFTProcess[
+                NessStretchWindow[num_iterations=iterations],
                 ifft=True,
                 input_window_shape=WindowType.sine,
                 output_window_shape=WindowType.sine,
                 
-            ](self.world,process=NessStretchWindow[num_iterations=twosies_iterations](self.world, self.window_sizes[i], self.hop_sizes[i],start_cut[i], 128),window_size=self.window_sizes[i],hop_size=self.hop_sizes[i]) for i in range(0,5)]
-        self.ness_stretch_onesies = [FFTProcess[
-                NessStretchWindow[num_iterations=onsies_iterations],
-                ifft=True,
-                input_window_shape=WindowType.sine,
-                output_window_shape=WindowType.sine,
-                
-            ](self.world,process=NessStretchWindow[num_iterations=onsies_iterations](self.world, self.window_sizes[i], self.hop_sizes[i],start_cut[i], 128),window_size=self.window_sizes[i],hop_size=self.hop_sizes[i]) for i in range(5,9)]
-            
+            ](self.world,process=NessStretchWindow[num_iterations=iterations](self.world, self.window_sizes[i], self.hop_sizes[i],start_cut[i], 128),window_size=self.window_sizes[i],hop_size=self.hop_sizes[i]) for i in range(0,9)]
+  
         self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
@@ -138,9 +131,7 @@ struct NessStretch(Movable, Copyable):
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed, trig = new_file)*0.5 + 0.5 #resets the phase when the file changes
         o = MFloat[2](0.0, 0.0)
-        for ref n in self.ness_stretch_twosies:
-            o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
-        for ref n in self.ness_stretch_onesies:
+        for ref n in self.ness_stretches:
             o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
         return o 
 
