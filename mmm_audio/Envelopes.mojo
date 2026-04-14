@@ -54,6 +54,7 @@ struct Env(Representable, Movable, Copyable):
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var last_asr: Float64  # Last output of the asr envelope
     var params: EnvParams
+    var eoc: Bool
 
     fn __init__(out self, world: World):
         """Initialize the Env2 struct - with internal params.
@@ -73,7 +74,7 @@ struct Env(Representable, Movable, Copyable):
         self.params = EnvParams()
         self.params.values=[0,1,0]
         self.params.times=[1,1]
-        self.reset_vals()
+        self.eoc = False
 
     fn __repr__(self) -> String:
         return String("Env")
@@ -105,6 +106,7 @@ struct Env(Representable, Movable, Copyable):
                 The next envelope value.
         """
         phase = 0.0
+        self.eoc = False
         if not self.is_active:
             if self.rising_bool_detector.next(trig):
                 self.sweep.phase = 0.0  # Reset phase on trigger
@@ -122,7 +124,9 @@ struct Env(Representable, Movable, Copyable):
         if self.params.loop and phase >= 1.0:  # Check if the envelope has completed
             self.sweep.phase = 0.0  # Reset phase for looping
             phase = 0.0
-        elif not self.params.loop and phase >= 1.0: 
+            self.eoc = True
+        elif not self.params.loop and phase >= 1.0:
+            self.eoc = True
             if self.params.values[-1]==self.params.values[0]:
                 self.is_active = False  # Stop the envelope if not looping and last value is the same as first
                 return self.params.values[0]  # Return the first value if not looping
@@ -205,7 +209,9 @@ struct ASREnv(Movable, Copyable):
     var sweep: Sweep[1] 
     var bool_changed: Changed[Bool]  # To detect changes in the gate signal
     var freq: Float64 
-    var is_active: Bool  
+    var is_active: Bool
+    var eoc: Bool
+    var eoc_rbd: RisingBoolDetector[1]
 
     fn __init__(out self, world: World):
         """Initialize the ASREnv struct.
@@ -217,6 +223,8 @@ struct ASREnv(Movable, Copyable):
         self.bool_changed = Changed(False)  # Initialize with False
         self.freq = 0.0  
         self.is_active = False
+        self.eoc = False  # End of Cycle flag
+        self.eoc_rbd = RisingBoolDetector() 
 
     fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
         """Simple ASR envelope generator.
@@ -240,6 +248,7 @@ struct ASREnv(Movable, Copyable):
         
         self.sweep.phase = clip(self.sweep.phase, 0.0, 1.0)
         self.is_active = self.sweep.phase > 0.0 or gate
+        self.eoc = self.eoc_rbd.next(not self.is_active)
 
         if gate:
             return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])

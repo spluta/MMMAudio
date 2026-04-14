@@ -34,7 +34,7 @@ class Pseq:
         print(pattern.next())  # 1 (cycles back)
         ```
     """
-    def __init__(self, list: list[float]):
+    def __init__(self, list: list):
         """
         Sequential pattern that cycles through a list of values.
         
@@ -56,6 +56,7 @@ class Pseq:
         """
         self.list = list
         self.index = -1
+        self.value = None
 
     def next(self) -> Optional[float]:
         """
@@ -69,18 +70,10 @@ class Pseq:
         self.index = (self.index + 1) % len(self.list)
         if self.index > len(self.list):
             self.index = 0
-        return self.list[self.index]
-
-    def go_back(self, n=1):
-        """
-        Move the sequence index back by n steps.
-        
-        Args:
-            n: Number of steps to move back in the sequence
-        """
-        if not self.list:
-            return
-        self.index = (self.index - n) % len(self.list)
+        self.value = self.list[self.index]
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
     
 class Prand:
     """
@@ -100,9 +93,9 @@ class Prand:
         print(pattern.next())  # Another random selection
         ```
     """
-    def __init__(self, list: list[float]):
+    def __init__(self, list: list):
         """
-        Random pattern that selects values randomly from a list.
+        Random pattern that selects values randomly from a list. Can contain lambdas or callables.
         
         Prand generates values by randomly selecting from a list with
         equal probability for each element. The same value can be
@@ -119,6 +112,7 @@ class Prand:
             ```
         """
         self.list = list
+        self.value = None
 
     def next(self) -> Optional[float]:
         """
@@ -129,7 +123,10 @@ class Prand:
         """
         if not self.list:
             return None
-        return choice(self.list)
+        self.value = choice(self.list)
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
 
 class Pxrand:
     """
@@ -141,7 +138,7 @@ class Pxrand:
     duplicates.
     
     Attributes:
-        list: The list of values to select from
+        list: The list of values to select from. Can contain lambdas or callables.
         last_index: Index of the previously selected value
         
     Note:
@@ -181,6 +178,7 @@ class Pxrand:
         """
         self.list = list
         self.last_index = -1
+        self.value = None
 
     def next(self) -> Optional[float]:
         """
@@ -192,7 +190,11 @@ class Pxrand:
         if not self.list:
             return None
         self.last_index = (self.last_index + randint(1, len(self.list) - 1)) % len(self.list)
-        return self.list[self.last_index]
+        self.value = self.list[self.last_index]
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
+        
 
 class PVoiceAllocator:
     """
