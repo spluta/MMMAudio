@@ -47,7 +47,8 @@ class MMMAudio:
         in_device: str = "default",
         out_device: str = "default",
         graph_name: str = "FeedbackDelays",
-        package_name: str = "examples"
+        package_name: str = "examples",
+        audio_init_timeout: float = 10.0
     ):
         """Initialize the MMMAudioProcess class.
         
@@ -59,6 +60,7 @@ class MMMAudio:
             out_device: Name of the output audio device.
             graph_name: Name of the Mojo graph to use.
             package_name: Name of the package containing the Mojo graph.
+            audio_init_timeout: Timeout for audio initialization in seconds.
         """
         
         # Store configuration
@@ -94,7 +96,7 @@ class MMMAudio:
 
         signal.signal(signal.SIGINT, self._signal_handler)
 
-        self.start_process()
+        self.start_process(audio_init_timeout)
 
     def exit_all(self):
         """Handle Ctrl+C signal"""
@@ -109,7 +111,7 @@ class MMMAudio:
         print("\nReceived Ctrl+C, stopping audio...")
         self.exit_all()
         
-    def start_process(self):
+    def start_process(self, audio_init_timeout: float = 10.0):
         """Start the audio process"""
         if self.process is not None and self.process.is_alive():
             print("[Main] Audio process already running")
@@ -140,7 +142,7 @@ class MMMAudio:
         print(f"[Main] Audio process started (PID: {self.process.pid})")
         
         # Wait for process to be ready
-        if self.process_ready.wait(timeout=10.0):
+        if self.process_ready.wait(timeout=audio_init_timeout):
             print(f"[Main] Audio process ready, sample rate: {self.sample_rate.value}")
         else:
             print("[Main] Warning: Audio process initialization timeout")
