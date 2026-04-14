@@ -397,7 +397,7 @@ fn wrap[
         The wrapped value.
     """
     # Check if any min_val >= max_val (vectorized comparison)
-    var invalid_range: MBool[num_chans] = min_val >= max_val
+    var invalid_range: MBool[num_chans] = min_val.ge(max_val)
     
     var range_size = max_val - min_val
     var wrapped_sample = (input - min_val) % range_size + min_val

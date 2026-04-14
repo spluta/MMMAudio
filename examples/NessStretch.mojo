@@ -7,32 +7,43 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
     var window_size: Int
     var hop_size: Int
     var m: Messenger
-    var lrhp_window: List[Float64]
-    var lrlp_window: List[Float64]
+    var lrbp_window: List[Float64]
     var previous_phases: List[MFloat[2]]
     var previous_mags: List[MFloat[2]]
+    var low_cut: Int
+    var high_cut: Int
+    var m_s: List[Float64]
 
     fn __init__(out self, world: World, window_size: Int, hop_size: Int, low_cut: Int, high_cut: Int):
         self.world = world
         self.window_size = window_size
         self.hop_size = hop_size
         self.m = Messenger(self.world)
-        self.lrhp_window = create_lr_filter(self.window_size, low_cut, 24, highpass=True)
-        self.lrlp_window = create_lr_filter(self.window_size, high_cut, 24, highpass=False)
+        lrhp_window = create_lr_filter(self.window_size, low_cut, 24, highpass=True)
+        lrlp_window = create_lr_filter(self.window_size, high_cut, 24, highpass=False)
+        self.lrbp_window = [lrhp_window[i] * lrlp_window[i] for i in range(len(lrhp_window))]
         self.previous_phases = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
         self.previous_mags = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
+        self.low_cut = low_cut
+        self.high_cut = high_cut
+        self.m_s = [0.0 for _ in range(self.window_size // 2 + 1)]
 
     fn get_messages(mut self) -> None:
         pass
 
     fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
+        mags[0] = 0.0 # zero the bottom bin
+        for i in range(len(mags)):
+            mags[i] *= self.lrbp_window[i]
+
         fn call_back(mut phases: List[MFloat[2]]):
             for ref p in phases:
                 p = MFloat[2](rrand(0.0, 2.0 * 3.141592653589793), rrand(0.0, 2.0 * 3.141592653589793))
-        get_best_correlation[num_iterations=Self.num_iterations](mags, phases, self.previous_mags, self.previous_phases, self.window_size, self.hop_size, call_back)
-        for i in range(len(mags)):
-            mags[i] = mags[i] * self.lrlp_window[i]
-            mags[i] = mags[i] * self.lrhp_window[i]
+        get_best_coherence[num_iterations=Self.num_iterations](mags, phases, self.previous_mags, self.previous_phases, self.window_size, self.hop_size, call_back)
+
+        self.previous_phases = phases.copy()
+        # self.previous_mags = mags.copy()
+        
 
 struct NessStretch(Movable, Copyable):
     var world: World
@@ -57,7 +68,7 @@ struct NessStretch(Movable, Copyable):
 
         start_cut = [0, 64, 64, 64, 64, 64, 64, 64, 64]
 
-        # the upper register benefit from less correlation, so I am using fewer in the upper register.
+        # the upper register benefit from less coherence, so I am using fewer in the upper register.
         self.ness_stretches = [FFTProcess[
                 NessStretchWindow[num_iterations=iterations],
                 ifft=True,
@@ -80,7 +91,7 @@ struct NessStretch(Movable, Copyable):
         for ref n in self.ness_stretches:
             o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
         # o += self.ness_stretches[1].buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
-        return o 
+        return o * 0.5
 
 fn linkwitz_riley_bin(
     freq_bin: Int,

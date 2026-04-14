@@ -66,7 +66,7 @@ fn phase_difference_bin[num_chans: Int](current_phase: MFloat[num_chans], previo
     
     return wrap_to_pi(delta_phase)
 
-fn phase_correlation[num_chans: Int](
+fn phase_coherence[num_chans: Int](
     current_phases: Span[MFloat[num_chans]], 
     previous_phases: Span[MFloat[num_chans]], 
     current_mags: Span[MFloat[num_chans]],
@@ -87,14 +87,14 @@ fn phase_correlation[num_chans: Int](
     
     return sum_cos / (weight_sum + 1e-9)
 
-fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]], mut previous_mags: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]])):
-    """Calls a callback function `num_iterations` times, and keeps the mag/phase set with the best correlation to the previous phases. There are two versions of this function, one that allows the callback to modify both mags and phases, and one that only allows the callback to modify just the phases.
+fn get_best_coherence[num_chans: Int, num_iterations: Int](mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]], mut previous_mags: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]])):
+    """Calls a callback function `num_iterations` times, and keeps the mag/phase set with the best coherence to the previous phases. There are two versions of this function, one that allows the callback to modify both mags and phases, and one that only allows the callback to modify just the phases.
     
     Args:
         mags: The magnitudes of the current frame, which can be modified by the callback function.
         phases: The phases of the current frame, which can be modified by the callback function.
-        previous_mags: The magnitudes of the previous frame, which are used to calculate the correlation.
-        previous_phases: The phases of the previous frame, which are used to calculate the correlation.
+        previous_mags: The magnitudes of the previous frame, which are used to calculate the coherence.
+        previous_phases: The phases of the previous frame, which are used to calculate the coherence.
         window_size: The size of the FFT window, used to calculate the expected phase shift.
         hop_size: The hop size of the FFT, used to calculate the expected phase shift.
         call_back: A function that takes the mags and phases or just the phases as arguments and modifies them in place.
@@ -111,13 +111,13 @@ fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFlo
             @parameter
             if i > 0:
                 call_back(mags, phases)
-            phase_corr_new = phase_correlation(phases, previous_phases, mags, previous_mags, hop_size, window_size)
+            phase_corr_new = phase_coherence(phases, previous_phases, mags, previous_mags, hop_size, window_size)
 
             lt0 = phase_corr_new.lt(0.0)
             phase_corr_new = abs(phase_corr_new)
             gt_last = phase_corr_new.gt(phase_corr)
 
-            # if the absolute value of the new correlation is higher than the last one, we want to keep it, but if the correlation is negative, we want to invert the phases
+            # if the absolute value of the new coherence is higher than the last one, we want to keep it, but if the coherence is negative, we want to invert the phases
             # otherwise we want to keep the old phases. 
             for i2 in range(len(phases)):
                 phases[i2] = gt_last.select(lt0.select(wrap_to_pi(phases[i2] + pi), phases[i2]), temp_phases[i2])
@@ -127,14 +127,14 @@ fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFlo
     previous_phases = phases.copy()
     previous_mags = mags.copy()
 
-fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]], mut previous_mags: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut phases: List[MFloat[num_chans]])):
-    """Calls a callback function `num_iterations` times, and keeps the mag/phase set with the best correlation to the previous phases. There are two versions of this function, one that allows the callback to modify both mags and phases, and one that only allows the callback to modify just the phases.
+fn get_best_coherence[num_chans: Int, num_iterations: Int](mut mags: List[MFloat[num_chans]], mut phases: List[MFloat[num_chans]], mut previous_mags: List[MFloat[num_chans]], mut previous_phases: List[MFloat[num_chans]], window_size: Int, hop_size: Int, call_back: fn (mut phases: List[MFloat[num_chans]])):
+    """Calls a callback function `num_iterations` times, and keeps the mag/phase set with the best coherence to the previous phases. There are two versions of this function, one that allows the callback to modify both mags and phases, and one that only allows the callback to modify just the phases.
     
     Args:
         mags: The magnitudes of the current frame, which can be modified by the callback function.
         phases: The phases of the current frame, which can be modified by the callback function.
-        previous_mags: The magnitudes of the previous frame, which are used to calculate the correlation.
-        previous_phases: The phases of the previous frame, which are used to calculate the correlation.
+        previous_mags: The magnitudes of the previous frame, which are used to calculate the coherence.
+        previous_phases: The phases of the previous frame, which are used to calculate the coherence.
         window_size: The size of the FFT window, used to calculate the expected phase shift.
         hop_size: The hop size of the FFT, used to calculate the expected phase shift.
         call_back: A function that takes the mags and phases or just the phases as arguments and modifies them in place.
@@ -150,13 +150,13 @@ fn get_best_correlation[num_chans: Int, num_iterations: Int](mut mags: List[MFlo
             @parameter
             if i > 0:
                 call_back(phases)
-            phase_corr_new = phase_correlation(phases, previous_phases, mags, previous_mags, hop_size, window_size)
+            phase_corr_new = phase_coherence(phases, previous_phases, mags, previous_mags, hop_size, window_size)
 
             lt0 = phase_corr_new.lt(0.0)
             phase_corr_new = abs(phase_corr_new)
             gt_last = phase_corr_new.gt(phase_corr)
 
-            # if the absolute value of the new correlation is higher than the last one, we want to keep it, but if the correlation is negative, we want to invert the phases
+            # if the absolute value of the new coherence is higher than the last one, we want to keep it, but if the coherence is negative, we want to invert the phases
             # otherwise we want to keep the old phases. 
             for i2 in range(len(phases)):
                 phases[i2] = gt_last.select(lt0.select(wrap_to_pi(phases[i2] + pi), phases[i2]), temp_phases[i2])
