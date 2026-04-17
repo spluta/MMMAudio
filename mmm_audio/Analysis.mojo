@@ -1358,6 +1358,7 @@ struct TopNFreqs(FFTProcessable):
     var thresh: Float64
     var num_peaks: Int
     var sort_by_freq: Bool
+    var bin_freq: Float64
     
     fn get_features_ptr(self) -> Pointer[mut = False, List[Tuple[Float64, Float64]], origin_of(self.freq_amp_pairs)]:
         """Return a pointer to the current List of freq, amp pairs."""
@@ -1380,19 +1381,30 @@ struct TopNFreqs(FFTProcessable):
         self.thresh = dbamp(thresh)*self.window_size/4.0 
         self.num_peaks = num_peaks
         self.sort_by_freq = sort_by_freq
+        self.bin_freq = self.world[].sample_rate / Float64(self.window_size)
 
     fn get_messages(mut self) -> None:
         pass
 
     fn next_frame(mut self, mut mags: List[MFloat[]], mut phases: List[MFloat[]]) -> None:
-        bin_freq = self.world[].sample_rate / self.window_size
+        
         top_N = topN_indices(mags, self.num_peaks, self.thresh)
 
         for i in range(self.num_peaks):
             index = top_N[i]
             if index > 0 and index < len(mags) - 1:
                 val, mag = find_quadratic_peak(mags[index-1], mags[index], mags[index+1])
-                freq = linlin(val, 0.0, 2.0, ((index-1)*bin_freq), (index+1)*bin_freq)
+
+                # mouse = linlin(self.world[].mouse_x, 0.0, 1.0, 0.55, 0.61)
+
+                if val < 1.0:
+                    low_freq = (index-1)*self.bin_freq
+                    high_freq = index*self.bin_freq
+                    freq = lincurve(val, 0.0, 1.0, low_freq, high_freq, 0.6)
+                else:
+                    low_freq = index*self.bin_freq
+                    high_freq = (index+1)*self.bin_freq
+                    freq = lincurve(val, 1.0, 2.0, low_freq, high_freq, -0.6)
                 self.freq_amp_pairs[i] = Tuple(freq, mag * (4.0/self.window_size))
             else:
                 self.freq_amp_pairs[i] = Tuple(0.0, 0.0)

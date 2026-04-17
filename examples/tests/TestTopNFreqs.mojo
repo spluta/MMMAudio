@@ -31,8 +31,8 @@ struct TestTopNFreqs(Movable, Copyable):
         out_pairs = self.analyzer.buffered_process.process.process.get_features_ptr()  # Get a pointer to the freq, amp pairs
 
         for i in range(3):
-            if self.changed[i].next(Int(out_pairs[][i][0])):
-                print("hearing ", out_pairs[][i][0], "Hz with amplitude", out_pairs[][i][1])
+            self.world[].print("hearing ", out_pairs[][i][0], "Hz with amplitude", out_pairs[][i][1], n_blocks = 20, end = " ")
+        self.world[].print("")
 
         o = splay(
             [self.out_sines[i].next(out_pairs[][i][0]) * out_pairs[][i][1] for i in range(3)],
