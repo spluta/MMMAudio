@@ -19,8 +19,8 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
         self.window_size = window_size
         self.hop_size = hop_size
         self.m = Messenger(self.world)
-        lrhp_window = create_lr_filter(self.window_size, low_cut, 24, highpass=True)
-        lrlp_window = create_lr_filter(self.window_size, high_cut, 24, highpass=False)
+        lrhp_window = create_linkwitz_riley_fft_filter(self.window_size, low_cut, 24, highpass=True)
+        lrlp_window = create_linkwitz_riley_fft_filter(self.window_size, high_cut, 24, highpass=False)
         self.lrbp_window = [lrhp_window[i] * lrlp_window[i] for i in range(len(lrhp_window))]
         self.previous_phases = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
         self.previous_mags = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
@@ -42,7 +42,6 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
         get_best_coherence[num_iterations=Self.num_iterations](mags, phases, self.previous_mags, self.previous_phases, self.window_size, self.hop_size, call_back)
 
         self.previous_phases = phases.copy()
-        # self.previous_mags = mags.copy()
         
 
 struct NessStretch(Movable, Copyable):
@@ -93,74 +92,5 @@ struct NessStretch(Movable, Copyable):
         # o += self.ness_stretches[1].buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
         return o * 0.5
 
-fn linkwitz_riley_bin(
-    freq_bin: Int,
-    cutoff_bin: Int,
-    order: Int,
-    highpass: Bool = False
-) -> Float64:
-    """
-    Calculate Linkwitz-Riley filter response for a single bin.
-    
-    Args:
-        freq_bin: Current frequency bin index.
-        cutoff_bin: Cutoff frequency bin index.
-        order: Filter order (2=12dB/oct, 4=24dB/oct, 8=48dB/oct).
-        highpass: If True, creates highpass; else lowpass.
-    
-    Returns:
-        Filter magnitude coefficient for this bin.
-    """
-    if cutoff_bin == 0:
-        return 1.0
-    
-    var ratio = Float64(freq_bin) / Float64(cutoff_bin)
-    
-    # Butterworth squared = Linkwitz-Riley
-    # LR is two cascaded Butterworth filters
-    var butterworth_order = order // 2
-    var omega_ratio_pow = pow(ratio, Float64(butterworth_order * 2))
-    
-    # Butterworth magnitude squared
-    var butterworth_mag_sq = 1.0 / (1.0 + omega_ratio_pow)
-    
-    # Linkwitz-Riley is Butterworth squared
-    var lr_response = butterworth_mag_sq
-    
-    if highpass:
-        lr_response = 1.0 - lr_response
-    
-    return sqrt(lr_response)
-
-
-fn create_lr_filter(
-    fft_size: Int,
-    cutoff_bin: Int,
-    slope_db_per_octave: Int,
-    highpass: Bool = False
-) -> List[Float64]:
-    """
-    Create a Linkwitz-Riley frequency domain filter.
-    
-    Args:
-        fft_size: Size of the FFT.
-        cutoff_bin: Cutoff frequency as bin index.
-        slope_db_per_octave: Filter slope (12, 24, 36, 48 dB/octave).
-        highpass: If True, creates highpass; else lowpass.
-    
-    Returns:
-        List of magnitude coefficients for positive frequencies.
-    """
-    # Convert slope to order: 12dB/oct = 2nd order, 24dB/oct = 4th order, etc.
-    var order = slope_db_per_octave // 6
-    
-    var num_bins = fft_size // 2 + 1
-    var filter_response = List[Float64](capacity=num_bins)
-    
-    for i in range(num_bins):
-        var magnitude = linkwitz_riley_bin(i, cutoff_bin, order, highpass)
-        filter_response.append(magnitude)
-    
-    return filter_response^
 
 

@@ -793,6 +793,66 @@ fn rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: Lis
     reverse(data, n, len(data) - 1)  # Reverse second part
     reverse(data, 0, len(data) - 1)  # Reverse entire array
 
+fn topN_indices(in_list: List[Float64], N: Int=5, thresh: Float64 = 100.0) -> List[Int]:
+    """Return the indices of the top N largest values in the array.
+    
+    Args:
+        in_list: Input list of Float64 values.
+        N: The number of top values to return.
+        thresh: The minimum value to include in the list.
+    
+    Returns:
+        A list of indices corresponding to the top N peaks in in_list that are above the threshold. Will return 0s if there are not enough peaks above the threshold. 0 is not a valid index.
+    """
+    # sort_list = in_list.copy()
+    top_N = [Int(0) for _ in range(N)]
+
+    fn argsort(in_list: List[Float64]) -> List[Int]:
+        var indices = List[Int]()
+        for i in range(len(in_list)):
+            indices.append(i)
+
+        fn cmp_fn(a: Int, b: Int) capturing -> Bool:
+            return in_list[a] > in_list[b]
+
+        sort[cmp_fn](indices)
+        return indices^
+
+    indices = argsort(in_list)
+    place_idx = 0
+    i = 0
+    while place_idx < N and in_list[indices[place_idx]] >= thresh and i < (3*N):
+        idx = indices[i]
+        if in_list[idx-1]<in_list[idx] and in_list[idx+1]<in_list[idx]:
+            top_N[place_idx] = idx
+            place_idx += 1
+        i += 1
+    return top_N^
+
+fn find_quadratic_peak(p1: Float64, p2: Float64, p3: Float64) -> Tuple[Float64, Float64]:
+    """
+    Find the vertex of a quadratic function passing through three points.
+    Points are at x = 0, 1, 2 with y values p1, p2, p3.
+    
+    For y = ax^2 + bx + c:
+    - At x=0: c = p1
+    - At x=1: a + b + c = p2
+    - At x=2: 4a + 2b + c = p3
+    """
+
+    c = p1
+    
+    a = (p3 - 2.0 * p2 + p1) / 2.0
+    b = (p2 - p1) - a
+    
+    if a == 0.0:
+        return (1.0, p2)  # Linear case, return middle point
+    
+    vertex_x = -b / (2.0 * a)
+    vertex_y = a * vertex_x * vertex_x + b * vertex_x + c
+    
+    return (vertex_x, vertex_y)
+
 @doc_private
 fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: Span[Float64]) -> MFloat[num_chans]:
     """Evaluate polynomial using Horner's method."""

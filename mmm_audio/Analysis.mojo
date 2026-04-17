@@ -1348,4 +1348,61 @@ struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
         
         return onsets^
 
+struct TopNFreqs(FFTProcessable):
+    """An FFTProcessable that identifies the top N frequency peaks in each FFT frame and provides their frequencies and amplitudes as output.
+    """
+    var world: World
+    var window_size: Int
+    var m: Messenger
+    var freq_amp_pairs: List[Tuple[Float64, Float64]]
+    var thresh: Float64
+    var num_peaks: Int
+    var sort_by_freq: Bool
+    
+    fn get_features_ptr(self) -> Pointer[mut = False, List[Tuple[Float64, Float64]], origin_of(self.freq_amp_pairs)]:
+        """Return a pointer to the current List of freq, amp pairs."""
+        return Pointer(to=self.freq_amp_pairs)
+
+    fn __init__(out self, world: World, window_size: Int, num_peaks: Int = 5, sort_by_freq: Bool = True, thresh: Float64 = -30.0):
+        """Initialize the TopNFreqs process.
+
+        Args:
+            world: The World object to use for this process.
+            window_size: The size of the FFT window. This determines the frequency resolution and the maximum number of frequency bins (window_size // 2 + 1).
+            num_peaks: The number of top peaks to identify in each FFT frame.
+            sort_by_freq: Whether to sort the output freq, amp pairs by frequency (True) or by amplitude (False).
+            thresh: The minimum amplitude threshold (in dB) for a peak to be considered. Peaks below this threshold will be ignored.
+        """
+        self.world = world
+        self.window_size = window_size
+        self.m = Messenger(self.world)
+        self.freq_amp_pairs = [(0.0, 0.0) for _ in range(num_peaks)]
+        self.thresh = dbamp(thresh)*self.window_size/4.0 
+        self.num_peaks = num_peaks
+        self.sort_by_freq = sort_by_freq
+
+    fn get_messages(mut self) -> None:
+        pass
+
+    fn next_frame(mut self, mut mags: List[MFloat[]], mut phases: List[MFloat[]]) -> None:
+        bin_freq = self.world[].sample_rate / self.window_size
+        top_N = topN_indices(mags, self.num_peaks, self.thresh)
+
+        for i in range(self.num_peaks):
+            index = top_N[i]
+            if index > 0 and index < len(mags) - 1:
+                val, mag = find_quadratic_peak(mags[index-1], mags[index], mags[index+1])
+                freq = linlin(val, 0.0, 2.0, ((index-1)*bin_freq), (index+1)*bin_freq)
+                self.freq_amp_pairs[i] = Tuple(freq, mag * (4.0/self.window_size))
+            else:
+                self.freq_amp_pairs[i] = Tuple(0.0, 0.0)
+        if self.sort_by_freq:
+            self.sort_pairs_by_freq()
+
+    fn sort_pairs_by_freq(mut self):
+        fn cmp_fn(a: Tuple[Float64, Float64], b: Tuple[Float64, Float64]) capturing -> Bool:
+            return a[0] < b[0]
+
+        sort[cmp_fn](self.freq_amp_pairs)
+
 
