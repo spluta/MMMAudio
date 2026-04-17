@@ -59,7 +59,7 @@ struct Phasor[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Cop
 
         Args:
           freq: Frequency of the phasor in Hz.
-          phase_offset: Offsets the phase of the oscillator.
+          phase_offset: Offsets the phase of the oscillator (0 to 1).
           trig: Trigger signal to reset the phase when switching from False to True.
 
         Returns:
@@ -208,7 +208,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](R
 
         Args:
             freq: Frequency of the oscillator in Hz.
-            phase_offset: Offsets the phase of the oscillator (default is 0.0).
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
             trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
             osc_type: Type of waveform. See the OscType struct for options (default is OscType.sine). Best if provided as OscType.sine, OscType.triangle, etc.
 
