@@ -39,7 +39,6 @@ struct Messenger(Copyable, Movable):
                 with_namespace = self.namespace.value()+"."+name
             else:
                 with_namespace = name
-            print("adding long name: ", with_namespace)
             self.key_dict[name] = with_namespace
 
         return LegacyUnsafePointer(to=self.key_dict[name])
