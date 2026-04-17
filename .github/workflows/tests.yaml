@@ -41,7 +41,7 @@ jobs:
       - name: Run UnitTests.mojo
         id: run-tests
         run: |
-          mojo testing_mmm_audio/UnitTests.mojo
+          mojo testing_mmm_audio/UnitTests.mojo -debug-level=line-tables
 
       - name: Test Building Mojo Files
         run: |
