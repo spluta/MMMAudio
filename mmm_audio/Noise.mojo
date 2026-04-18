@@ -256,7 +256,7 @@ struct LFSRNoise[num_chans: Int = 1](Copyable, Movable):
         var resets = self.rising_bool_detector.next(trig_mask)
         var clamped_freq = clip(freq, SIMD[DType.float64, Self.num_chans](0.0), SIMD[DType.float64, Self.num_chans](self.world[].sample_rate))
         var incremented_phase = self.phase + (clamped_freq * self.freq_mul)
-        var wrapped: SIMD[DType.bool, Self.num_chans] = (incremented_phase >= 1.0)
+        var wrapped: SIMD[DType.bool, Self.num_chans] = incremented_phase.ge(1.0)
         var old_state = self.state
         self.step()
         self.state = wrapped.select(self.state, old_state)
