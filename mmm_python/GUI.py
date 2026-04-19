@@ -38,11 +38,12 @@ class ControlSpec:
 
 class Handle(QWidget):
     """A convenience widget that combines a label, a slider, and a value display."""
-    def __init__(self, label: str, spec: ControlSpec = ControlSpec(), default: float = 0.0, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, run_callback_on_init: bool = False):
+    def __init__(self, label: str, spec: ControlSpec = ControlSpec(), default: float = 0.0, callback=None, orientation=Qt.Horizontal, resolution: int = 1000, display_resolution: int = 2, run_callback_on_init: bool = False):
         super().__init__()
         self.resolution = resolution
         self.handle = QSlider(orientation)
-        self.display = QLabel(f"{default:.4f}")
+        self.display_resolution = display_resolution
+        self.display = QLabel(f"{default:.{display_resolution}f}")
         self.label = QLabel(label)
         self.layout = QHBoxLayout()
         self.layout.addWidget(self.label)
@@ -60,7 +61,7 @@ class Handle(QWidget):
         
     def update(self):
         v = self.get_value()
-        self.display.setText(f"{v:.2f}")
+        self.display.setText(f"{v:.{self.display_resolution}f}")
         if self.callback:
             self.callback(v)
 

@@ -353,7 +353,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
 
     fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
-        """Process one sample through the allpass comb filter.
+        """Process one sample through the allpass comb filter. Uses a direct-form 1 structure.
 
         Args:
           input: The input sample to process.
@@ -363,6 +363,17 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         Returns:
           The delayed/filtered output sample.
         """
+
+        var delayed = self.delay.read(delay_time)
+        var to_delay = input + feedback_coef * delayed
+        var output = delayed - feedback_coef * to_delay
+        
+        self.delay.write(to_delay)
+        
+        return output
+
+    fn next_df2(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
+      """Process one sample through the allpass comb filter using a direct-form 2 structure."""
 
         var delayed = self.delay.read(delay_time)
         var to_delay = input + feedback_coef * delayed
@@ -383,7 +394,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         """
         feedback = calc_feedback(delay_time, decay_time)
         return self.next(input, delay_time, feedback)
-    
+        
 
 struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Representable, Movable, Copyable):
     """A feedback delay structured like a Comb filter, but with possible feedback coefficient above 1 due to an integrated tanh function.

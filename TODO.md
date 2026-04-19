@@ -1,7 +1,7 @@
 ## UGens
 
 - Shaper
-- Dattoro, GVerb
+- Dattorro, GVerb
 
 ## Big Ones
 
