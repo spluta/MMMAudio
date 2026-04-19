@@ -15,6 +15,7 @@ fn PyInit_MBufAnalysisBridge() -> PythonObject:
         m.def_function[MBufAnalysisBridge.mel_bands]("mel_bands")
         m.def_function[MBufAnalysisBridge.spectral_flux_onsets]("spectral_flux_onsets")
         m.def_function[MBufAnalysisBridge.spectral_centroid]("spectral_centroid")
+        m.def_function[MBufAnalysisBridge.top_n_freqs]("top_n_freqs")
         # m.def_function[MBufAnalysisBridge.custom]("custom")
         return m.finalize()
     except e:
@@ -106,6 +107,24 @@ struct MBufAnalysisBridge:
         window_size = getInt(py_dict, "window_size", 1024)
         hop_size = getInt(py_dict, "hop_size", window_size // 2)
         result = MBufAnalysis.fft_process[WindowType.hann](mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        
+        # return it as a numpy array
+        return MBufAnalysisBridge.matrix_to_numpy(result)
+
+    @staticmethod
+    fn top_n_freqs(py_dict: PythonObject) raises -> PythonObject:
+        # make the analysis params instance
+        ap = AnalysisParams(py_dict)
+        num_peaks = getInt(py_dict, "num_peaks", 5)
+        thresh = getFloat64(py_dict, "thresh", -30.0)
+        sort_by_freq = getBool(py_dict, "sort_by_freq", False)
+
+        window_size = getInt(py_dict, "window_size", 1024)
+        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+
+        # # run the analysis
+        top_n_freqs = TopNFreqs(ap.buf.sample_rate, window_size, num_peaks, sort_by_freq, thresh)
+        result = MBufAnalysis.fft_process[WindowType.hann](top_n_freqs, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)

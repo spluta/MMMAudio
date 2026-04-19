@@ -12,7 +12,7 @@ struct TestTopNFreqs(Movable, Copyable):
 
     fn __init__(out self, world: World):
         self.world = world
-        p = TopNFreqs(self.world, 1024, num_peaks=3, sort_by_freq=True, thresh=-30.0)
+        p = TopNFreqs(world[].sample_rate, 1024, num_peaks=3, sort_by_freq=True, thresh=-30.0)
         self.analyzer = FFTProcess[TopNFreqs,ifft=False,input_window_shape=WindowType.hann](self.world,p^, window_size=1024, hop_size=512)
         self.sines = [Osc(self.world) for _ in range(3)]
         self.m = Messenger(self.world)

@@ -30,6 +30,10 @@ class MBufAnalysis:
     def mel_bands(dict:dict):
         return MBufAnalysisBridge.mel_bands(dict)
     
+    @staticmethod
+    def top_n_freqs(dict:dict):
+        return MBufAnalysisBridge.top_n_freqs(dict)
+    
     # @staticmethod
     # def custom_analysis(dict:dict):
     #     return MBufAnalysisBridge.custom(dict)
