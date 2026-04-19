@@ -11,6 +11,7 @@ from multiprocessing import Process, Value, Event, Queue, Array
 from math import ceil
 from typing import Optional, Tuple, List
 from enum import IntEnum
+from collections import namedtuple
 import mojo.importer
 
 import signal
@@ -40,8 +41,19 @@ class MMMAudio:
     instances = []
 
     @classmethod
-    def print_available_devices(cls):
+    def get_audio_devices(cls, print_them=True) -> list:
+        """Get a list of available audio devices with their input/output capabilities.
+        
+        Args:
+            print_them: If True, prints the devices to the console.
+
+        Returns:
+            A named tuple containing two dictionaries: (in_devices, out_devices).
+            Each dictionary maps device index to a list of [name, max_channels, sample_rate].
+        """
         p = pyaudio.PyAudio()
+
+        ret_devices = namedtuple('Devices', ['in_devices', 'out_devices'])(dict(), dict())
 
         # Iterate through all devices
         for i in range(p.get_device_count()):
@@ -51,12 +63,20 @@ class MMMAudio:
             max_output = device_info.get('maxOutputChannels')
             
             # Identify device type
+            print_list = []
             if max_input > 0:
-                print(f"Input  Device {i}: {name}")
+                print_list.append(f"Input  Device {i}: {name}, Channels: {max_input}, Sample Rate: {device_info.get('defaultSampleRate')} Hz")
+                ret_devices[0][i] = [name, max_input, device_info.get('defaultSampleRate')]
             if max_output > 0:
-                print(f"Output Device {i}: {name}")
-
+                print_list.append(f"Output Device {i}: {name}, Channels: {max_output}, Sample Rate: {device_info.get('defaultSampleRate')} Hz")
+                ret_devices[1][i] = [name, max_output, device_info.get('defaultSampleRate')]
+            if print_them:
+                for msg in print_list:
+                    print(msg)
+                print("")
         p.terminate()
+
+        return ret_devices
 
     def __init__(
         self,
@@ -690,7 +710,7 @@ class MMMAudio:
         sys.stdout.flush()
 
 def list_audio_devices():
-    print("Deprecated: Use MMMAudio.audio_devices()")
+    print("Deprecated: Use MMMAudio.get_audio_devices()")
     # p_temp = pyaudio.PyAudio()
     # p_temp.get_device_count()
     # for i in range(p_temp.get_device_count()):
