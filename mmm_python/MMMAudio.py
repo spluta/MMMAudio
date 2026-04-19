@@ -39,6 +39,25 @@ class MMMAudio:
 
     instances = []
 
+    @classmethod
+    def print_available_devices(cls):
+        p = pyaudio.PyAudio()
+
+        # Iterate through all devices
+        for i in range(p.get_device_count()):
+            device_info = p.get_device_info_by_index(i)
+            name = device_info.get('name')
+            max_input = device_info.get('maxInputChannels')
+            max_output = device_info.get('maxOutputChannels')
+            
+            # Identify device type
+            if max_input > 0:
+                print(f"Input  Device {i}: {name}")
+            if max_output > 0:
+                print(f"Output Device {i}: {name}")
+
+        p.terminate()
+
     def __init__(
         self,
         blocksize: int = 64,
