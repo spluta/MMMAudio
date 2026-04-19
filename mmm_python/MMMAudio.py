@@ -671,13 +671,14 @@ class MMMAudio:
         sys.stdout.flush()
 
 def list_audio_devices():
-    p_temp = pyaudio.PyAudio()
-    p_temp.get_device_count()
-    for i in range(p_temp.get_device_count()):
-        dev_info = p_temp.get_device_info_by_index(i)
-        print(f"Device {i}: {dev_info['name']}")
-        print(f"  Input channels: {dev_info['maxInputChannels']}")
-        print(f"  Output channels: {dev_info['maxOutputChannels']}")
-        print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
-        print()
-    p_temp.terminate()
+    print("Deprecated: Use MMMAudio.audio_devices()")
+    # p_temp = pyaudio.PyAudio()
+    # p_temp.get_device_count()
+    # for i in range(p_temp.get_device_count()):
+    #     dev_info = p_temp.get_device_info_by_index(i)
+    #     print(f"Device {i}: {dev_info['name']}")
+    #     print(f"  Input channels: {dev_info['maxInputChannels']}")
+    #     print(f"  Output channels: {dev_info['maxOutputChannels']}")
+    #     print(f"  Default sample rate: {dev_info['defaultSampleRate']} Hz")
+    #     print()
+    # p_temp.terminate()
