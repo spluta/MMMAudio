@@ -107,7 +107,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
   """
     var world: World
     var EXCURSION: Float64
-    var shimmer: List[Osc[]]
+    var shimmer: Osc[2]
     var decay: Float64
     var decay_diffusion1: Float64
     var decay_diffusion2: Float64
@@ -121,26 +121,18 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
     var allpass_early: List[Allpass_Comb[interp = Interp.none]]
     var early_dtimes: List[Float64]
 
-    var Lap1: Allpass_Comb[interp = Interp.lagrange4]
-    var Ldel1: Delay[interp = Self.interp]
-    var Lpole: OnePole[]
-    var Lap2: Allpass_Comb[interp = Self.interp]
-    var Ldel2: Delay[interp = Self.interp]
+    var ap1: Allpass_Comb[2, interp = Interp.lagrange4]
+    var del1: Delay[2, interp = Self.interp]
+    var pole: OnePole[2]
+    var ap2: Allpass_Comb[2, interp = Self.interp]
+    var del2: Delay[2, interp = Self.interp]
 
-    var Rap1: Allpass_Comb[interp = Interp.lagrange4]
-    var Rdel1: Delay[interp = Self.interp]
-    var Rpole: OnePole[]
-    var Rap2: Allpass_Comb[interp = Self.interp]
-    var Rdel2: Delay[interp = Self.interp]
-
-    var tank_delay_times: List[Float64]
-    var tank_delay_samples: List[MInt[]]
+    var tank_delay_times: List[MFloat[2]]
+    var tank_delay_samples: List[MInt[2]]
 
     var trap: DCTrap[2]
 
     var final_taps: List[MInt[]]
-
-    var m: Messenger
 
     fn __init__(out self, world: World):
       """
@@ -151,7 +143,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
       """
         self.world = world
         self.EXCURSION = 16./dattoro_sr
-        self.shimmer = [Osc[](world) for _ in range(2)]
+        self.shimmer = Osc[2](world)
 
         self.decay = 0.30
         self.decay_diffusion1 = 0.70
@@ -167,23 +159,15 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.allpass_early = [Allpass_Comb[interp = Interp.none](world, 0.1) for _ in range(4)]
         self.early_dtimes = [142. / dattoro_sr, 107. / dattoro_sr, 379. / dattoro_sr, 277. / dattoro_sr]
 
-        self.tank_delay_times = [672./dattoro_sr, 4453./dattoro_sr, 1800./dattoro_sr, 3720./dattoro_sr, 908./dattoro_sr, 4217./dattoro_sr, 2656./dattoro_sr, 3163./dattoro_sr]
+        self.tank_delay_times = [MFloat[2](672./dattoro_sr, 908./dattoro_sr), MFloat[2](4453./dattoro_sr, 4217./dattoro_sr), MFloat[2](1800./dattoro_sr, 2656./dattoro_sr), MFloat[2](3720./dattoro_sr, 3163./dattoro_sr)]
 
-        self.tank_delay_samples = [MInt[](t * world[].sample_rate) for t in self.tank_delay_times]
+        self.tank_delay_samples = [MInt[2](t * world[].sample_rate) for t in self.tank_delay_times]
 
-        self.Lap1 = Allpass_Comb[interp = Interp.lagrange4](world, 0.11)
-        self.Ldel1 = Delay[interp = Self.interp](world, 0.17)
-        self.Lpole = OnePole[](world)
-        self.Lap2 = Allpass_Comb[interp = Self.interp](world, 0.11)
-        self.Ldel2 = Delay[interp = Self.interp](world, 0.17)
-
-        self.Rap1 = Allpass_Comb[interp = Interp.lagrange4](world, 0.11)
-        self.Rdel1 = Delay[interp = Self.interp](world, 0.17)
-        self.Rpole = OnePole[](world)
-        self.Rap2 = Allpass_Comb[interp = Self.interp](world, 0.11)
-        self.Rdel2 = Delay[interp = Self.interp](world, 0.17)
-        self.m = Messenger(world)
-
+        self.ap1 = Allpass_Comb[2, interp = Interp.lagrange4](world, 0.11)
+        self.del1 = Delay[2, interp = Self.interp](world, 0.17)
+        self.pole = OnePole[2](world)
+        self.ap2 = Allpass_Comb[2, interp = Self.interp](world, 0.11)
+        self.del2 = Delay[2, interp = Self.interp](world, 0.17)
         self.trap = DCTrap[2](world)
 
         self.final_taps = [Int(266/dattoro_sr*world[].sample_rate), Int(2974/dattoro_sr*world[].sample_rate), Int(1913/dattoro_sr*world[].sample_rate), Int(1996/dattoro_sr*world[].sample_rate), Int(1990/dattoro_sr*world[].sample_rate), Int(187/dattoro_sr*world[].sample_rate), Int(1066/dattoro_sr*world[].sample_rate), \
@@ -199,201 +183,43 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         for i in range(len(self.allpass_early)):
             upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion[i//2])
 
-        excursion = [self.shimmer[0].next(1) * self.EXCURSION, self.shimmer[1].next(0.707) * self.EXCURSION]
+        excursion = self.shimmer.next(MFloat[2](1, 0.707) * self.EXCURSION)
 
-        # LEFT SIDE
+        tank = upper + self.feedback
 
-        left = upper + self.feedback[0]
-
-        left = self.Lap1.next(left, self.tank_delay_times[0] + excursion[0], self.decay_diffusion1)
+        tank = self.ap1.next(tank, self.tank_delay_times[0] + excursion, self.decay_diffusion1)
         @parameter
         if self.interp == Interp.none:
-          left = self.Ldel1.next(left, self.tank_delay_samples[1])
-          left = self.Lpole.next(left, self.damping)
-          left = left * self.decay
-          left = self.Lap2.next(left, self.tank_delay_times[2], -self.decay_diffusion2)
-          left = self.Ldel2.next(left, self.tank_delay_samples[3])
+          tank = self.del1.next(tank, self.tank_delay_samples[1])
+          tank = self.pole.next(tank, self.damping)
+          tank = tank * self.decay
+          tank = self.ap2.next(tank, self.tank_delay_times[2], -self.decay_diffusion2)
+          tank = self.del2.next(tank, self.tank_delay_samples[3])
         else:
-          left = self.Ldel1.next(left, self.tank_delay_times[1])
-          left = self.Lpole.next(left*(1-self.damping), self.damping)
-          left = left * self.decay
-          left = self.Lap2.next(left, self.tank_delay_times[2], -self.decay_diffusion2)
-          left = self.Ldel2.next(left, self.tank_delay_times[3])
+          tank = self.del1.next(tank, self.tank_delay_times[1])
+          tank = self.pole.next(tank, self.damping)
+          tank = tank * self.decay
+          tank = self.ap2.next(tank, self.tank_delay_times[2], -self.decay_diffusion2)
+          tank = self.del2.next(tank, self.tank_delay_times[3])
         
-        # RIGHT SIDE
-        right = upper + self.feedback[1]
-        @parameter
-        if self.interp == Interp.none:
-          right = self.Rap1.next(right, self.tank_delay_times[4] + excursion[1], self.decay_diffusion1)
-          right = self.Rdel1.next(right, self.tank_delay_samples[5])
-          right = self.Rpole.next(right, self.damping)
-          right = right * self.decay
-          right = self.Rap2.next(right, self.tank_delay_times[6], -self.decay_diffusion2)
-          right = self.Rdel2.next(right, self.tank_delay_samples[7])
-        else:
-          right = self.Rap1.next(right, self.tank_delay_times[4] + excursion[1], self.decay_diffusion1)
-          right = self.Rdel1.next(right, self.tank_delay_times[5])
-          right = self.Rpole.next(right*(1-self.damping), self.damping)
-          right = right * self.decay
-          right = self.Rap2.next(right, self.tank_delay_times[6], -self.decay_diffusion2)
-          right = self.Rdel2.next(right, self.tank_delay_times[7])
+        self.feedback = self.trap.next(MFloat[2](tank[1], tank[0])) # flip left and right for feedback
 
-        self.feedback = self.trap.next(MFloat[2](right, left)) # flip left and right for feedback
+        accumulator = 0.6 * self.del1.read(self.final_taps[0])[1]
+        accumulator += 0.6 * self.del1.read(self.final_taps[1])[1]
+        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[2])[1]
+        accumulator += 0.6 * self.del2.read(self.final_taps[3])[1]
+        accumulator -= 0.6 * self.del1.read(self.final_taps[4])[0]
+        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[5])[0]
+        accumulator -= 0.6 * self.del2.read(self.final_taps[6])[0]
+        L = accumulator
 
-        accumulator = 0.6 * self.Rdel1.read(self.final_taps[0])
-        accumulator += 0.6 * self.Rdel1.read(self.final_taps[1])
-        accumulator -= 0.6 * self.Rap2.delay.read(self.final_taps[2])
-        accumulator += 0.6 * self.Rdel2.read(self.final_taps[3])
-        accumulator -= 0.6 * self.Ldel1.read(self.final_taps[4])
-        accumulator -= 0.6 * self.Lap2.delay.read(self.final_taps[5])
-        accumulator -= 0.6 * self.Ldel2.read(self.final_taps[6])
-        left = accumulator
+        accumulator = 0.6 * self.del1.read(self.final_taps[7])[0]
+        accumulator += 0.6 * self.del1.read(self.final_taps[8])[0]
+        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[9])[0]
+        accumulator += 0.6 * self.del2.read(self.final_taps[10])[0]
+        accumulator -= 0.6 * self.del1.read(self.final_taps[11])[1]
+        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[12])[1]
+        accumulator -= 0.6 * self.del2.read(self.final_taps[13])[1]
+        R = accumulator 
 
-        accumulator = 0.6 * self.Ldel1.read(self.final_taps[7])
-        accumulator += 0.6 * self.Ldel1.read(self.final_taps[8])
-        accumulator -= 0.6 * self.Lap2.delay.read(self.final_taps[9])
-        accumulator += 0.6 * self.Ldel2.read(self.final_taps[10])
-        accumulator -= 0.6 * self.Rdel1.read(self.final_taps[11])
-        accumulator -= 0.6 * self.Rap2.delay.read(self.final_taps[12])
-        accumulator -= 0.6 * self.Rdel2.read(self.final_taps[13])
-        right = accumulator 
-
-        return MFloat[2](left, right)
-
-# struct DattorroReverb(Movable, Copyable):
-#     var world: World
-#     var EXCURSION: Float64
-#     var shimmer: List[Osc[]]
-#     var decay: Float64
-#     var decay_diffusion1: Float64
-#     var decay_diffusion2: Float64
-#     var input_diffusion: List[Float64]
-#     var bandwidth: Float64
-#     var damping: Float64
-#     var feedback: MFloat[2]
-#     var pre_delay: Delay[]
-#     var pre_delay_time: Float64
-#     var one_pole: OnePole[]
-#     var allpass_early: List[Allpass_Comb[interp = Interp.none]]
-#     var early_dtimes: List[Float64]
-
-#     var Lap1: Allpass_Comb[]
-#     var Ldel1: Delay[]
-#     var Lpole: OnePole[]
-#     var Lap2: Allpass_Comb[]
-#     var Ldel2: Delay[]
-
-#     var Rap1: Allpass_Comb[]
-#     var Rdel1: Delay[]
-#     var Rpole: OnePole[]
-#     var Rap2: Allpass_Comb[]
-#     var Rdel2: Delay[]
-
-#     var tank_delay_times: List[Float64]
-
-#     var trap: DCTrap[2]
-
-#     var final_taps: List[MInt[]]
-
-#     var m: Messenger
-
-#     fn __init__(out self, world: World):
-#         self.world = world
-#         self.EXCURSION = 16./dattoro_sr
-#         self.shimmer = [Osc[](world) for _ in range(2)]
-
-#         self.decay = 0.30
-#         self.decay_diffusion1 = 0.70
-#         self.decay_diffusion2 = 0.50 
-#         self.pre_delay_time = 0.02
-#         self.input_diffusion = [0.750, 0.625]
-#         self.bandwidth = 0.9995
-#         self.damping = 0.0005 #no damping = 0.0
-#         self.feedback = MFloat[2](0.0)
-
-#         self.pre_delay = Delay[](world, 0.5)
-#         self.one_pole = OnePole[](world)
-#         self.allpass_early = [Allpass_Comb[interp = Interp.none](world, 0.1) for _ in range(4)]
-#         self.early_dtimes = [142. / dattoro_sr, 107. / dattoro_sr, 379. / dattoro_sr, 277. / dattoro_sr]
-
-#         self.tank_delay_times = [672./dattoro_sr, 4453./dattoro_sr, 1800./dattoro_sr, 3720./dattoro_sr, 908./dattoro_sr, 4217./dattoro_sr, 2656./dattoro_sr, 3163./dattoro_sr]
-
-#         self.Lap1 = Allpass_Comb[](world, 0.11)
-#         self.Ldel1 = Delay[](world, 0.17)
-#         self.Lpole = OnePole[](world)
-#         self.Lap2 = Allpass_Comb[](world, 0.11)
-#         self.Ldel2 = Delay[](world, 0.17)
-
-#         self.Rap1 = Allpass_Comb[](world, 0.11)
-#         self.Rdel1 = Delay[](world, 0.17)
-#         self.Rpole = OnePole[](world)
-#         self.Rap2 = Allpass_Comb[](world, 0.11)
-#         self.Rdel2 = Delay[](world, 0.17)
-#         self.m = Messenger(world)
-
-#         self.trap = DCTrap[2](world)
-
-#         self.final_taps = [Int(266/dattoro_sr*world[].sample_rate), Int(2974/dattoro_sr*world[].sample_rate), Int(1913/dattoro_sr*world[].sample_rate), Int(1996/dattoro_sr*world[].sample_rate), Int(1990/dattoro_sr*world[].sample_rate), Int(187/dattoro_sr*world[].sample_rate), Int(1066/dattoro_sr*world[].sample_rate), \
-#         Int(353/dattoro_sr*world[].sample_rate), Int(3627/dattoro_sr*world[].sample_rate), Int(1228/dattoro_sr*world[].sample_rate), Int(2673/dattoro_sr*world[].sample_rate), Int(2111/dattoro_sr*world[].sample_rate), Int(335/dattoro_sr*world[].sample_rate), Int(121/dattoro_sr*world[].sample_rate)]
-
-#     fn next(mut self, input: MFloat[2]) -> MFloat[2]:
-        
-#         upper = (input[0] + input[1]) * 0.5
-#         upper = self.pre_delay.next(upper,self.pre_delay_time)
-
-#         upper = self.one_pole.next(upper, 1-self.bandwidth)
-
-#         for i in range(len(self.allpass_early)):
-#             upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion[i//2])
-
-#         excursion = [self.shimmer[0].next(0.1) * self.EXCURSION, self.shimmer[1].next(0.07) * self.EXCURSION]
-
-#         # LEFT SIDE
-
-#         left = upper + self.feedback[0]
-
-#         left = self.Lap1.next(left, self.tank_delay_times[0] + excursion[0], self.decay_diffusion1)
-
-#         left = self.Ldel1.next(left, self.tank_delay_times[1])
-#         left = self.Lpole.next(left*(1-self.damping), self.damping)
-
-#         left = left * self.decay
-#         left = self.Lap2.next(left, self.tank_delay_times[2], self.decay_diffusion2)
-#         left = self.Ldel2.next(left, self.tank_delay_times[3])
-
-#         left = left * self.decay
-        
-#         # RIGHT SIDE
-
-#         right = upper + self.feedback[1]
-#         right = self.Rap1.next(right, self.tank_delay_times[4] + excursion[1], self.decay_diffusion1)
-#         right = self.Rdel1.next(right, self.tank_delay_times[5])
-#         right = self.Rpole.next(right*(1-self.damping), self.damping)
-
-#         right = right * self.decay
-#         right = self.Rap2.next(right, self.tank_delay_times[6], self.decay_diffusion2)
-#         right = self.Rdel2.next(right, self.tank_delay_times[7])
-
-#         right = right * self.decay
-
-#         self.feedback = self.trap.next(MFloat[2](-right, -left)) # flip left and right for feedback
-
-#         accumulator = 0.6 * self.Rdel1.read(self.final_taps[0])
-#         accumulator += 0.6 * self.Rdel1.read(self.final_taps[1])
-#         accumulator -= 0.6 * self.Rap2.delay.read(self.final_taps[2])
-#         accumulator += 0.6 * self.Rdel2.read(self.final_taps[3])
-#         accumulator -= 0.6 * self.Ldel1.read(self.final_taps[4])
-#         accumulator -= 0.6 * self.Lap2.delay.read(self.final_taps[5])
-#         accumulator -= 0.6 * self.Ldel2.read(self.final_taps[6])
-#         left = accumulator
-
-#         accumulator = 0.6 * self.Ldel1.read(self.final_taps[7])
-#         accumulator += 0.6 * self.Ldel1.read(self.final_taps[8])
-#         accumulator -= 0.6 * self.Lap2.delay.read(self.final_taps[9])
-#         accumulator += 0.6 * self.Ldel2.read(self.final_taps[10])
-#         accumulator -= 0.6 * self.Rdel1.read(self.final_taps[11])
-#         accumulator -= 0.6 * self.Rap2.delay.read(self.final_taps[12])
-#         accumulator -= 0.6 * self.Rdel2.read(self.final_taps[13])
-#         right = accumulator 
-
-#         return MFloat[2](left, right)
+        return MFloat[2](L, R)
