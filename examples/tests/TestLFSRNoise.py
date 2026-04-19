@@ -35,7 +35,7 @@ def run_gui():
 
 
     window.setLayout(layout)
-    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
+    window.closeEvent = lambda event: (MMMAudio.exit_all(), event.accept())
     window.show()
     window.raise_()
     app.exec()

@@ -28,7 +28,7 @@ def main():
     window.setWindowTitle("Pitch Shift Controller")
     window.resize(300, 100)
     # stop audio when window is closed
-    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
+    window.closeEvent = lambda event: (MMMAudio.exit_all(), event.accept())
 
     # Create layout
     layout = QVBoxLayout()

@@ -137,10 +137,11 @@ class MMMAudio:
 
         self.start_process(audio_init_timeout)
 
-    def exit_all(self):
+    @classmethod
+    def exit_all(cls):
         """Handle Ctrl+C signal"""
         print("\nReceived Ctrl+C, stopping audio...")
-        for instance in MMMAudio.instances:
+        for instance in cls.instances:
             instance.stop_audio()
             instance.stop_process()
         sys.exit(0)

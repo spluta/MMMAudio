@@ -6,7 +6,7 @@ It also demonstrates how to send a message to the graph to print the current inp
 from mmm_python.MMMAudio import *
 
 # this will list available audio devices
-list_audio_devices()
+MMMAudio.get_audio_devices()
 
 # set your own input and output devices here
 in_device = "Fireface UCX II (24219339)"

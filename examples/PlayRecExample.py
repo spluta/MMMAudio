@@ -51,7 +51,7 @@ def main():
     window.setWindowTitle("Play Example")
     window.resize(300, 100)
     # stop audio when window is closed
-    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
+    window.closeEvent = lambda event: (MMMAudio.exit_all(), event.accept())
 
     layout = QVBoxLayout()
     handle = Handle("PlayRate", ControlSpec(0.25,4,0.5), 1, lambda v: mmm_audio.send_float("play_rate", v), run_callback_on_init=True)

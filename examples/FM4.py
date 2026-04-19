@@ -83,7 +83,7 @@ def main():
 
     # window.closeEvent = lambda event: (app.quit())
     # Set the layout for the main window
-    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
+    window.closeEvent = lambda event: (MMMAudio.exit_all(), event.accept())
     window.setLayout(main_layout)
     # Show the window
     window.show()
