@@ -3,7 +3,15 @@ from math import tanh
 from math import log
 from bit import next_power_of_two
 
-struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Movable, Copyable):
+# would be great - but in order for this to mean something we need params in structs or 
+trait Tapable(Movable, Copyable):
+  ...
+#     fn tap[num_chans: Int](mut self, delay_samps: MInt[num_chans]) -> MFloat[num_chans]:
+#       ...
+#     fn tap[num_chans: Int](mut self, delay_time: MFloat[num_chans]) -> MFloat[num_chans]:
+#       ...
+
+struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     """A variable delay line with interpolation.
 
     Parameters:
@@ -72,6 +80,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
     fn __repr__(self) -> String:
         return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
+    # kind of gross
+    fn tap[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
+      return self.read(delay_samps)
+
+    fn tap[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
+      return self.read(delay_time)
+
     @always_inline
     fn read[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
       """Reads into the delay line at an exact sample delay and no interpolation.
@@ -108,6 +123,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Representable, Mov
         
       out = MFloat[self.num_chans](0.0)
 
+      @parameter
       if N == 1:
         @parameter
         if self.interp == Interp.none:
@@ -223,7 +239,7 @@ fn calc_feedback[num_chans: Int = 1](delaytime: MFloat[num_chans], decaytime: MF
 
       return zero.select(MFloat[num_chans](0.0), dec_pos.select(absret, -absret))
 
-struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
+struct Comb[num_chans: Int = 1, interp: Int = 2](Tapable):
     """
     A simple comb filter using a delay line with feedback.
 
@@ -237,16 +253,22 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
     var delay: Delay[Self.num_chans, Self.interp]
     var fb: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World, max_delay: Float64 = 1.0):
+    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the Comb filter.
 
       Args:
         world: A pointer to the MMMWorld.
-        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+        max_delay_time: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
       """
         self.world = world
-        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
+        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
         self.fb = MFloat[Self.num_chans](0.0)
+
+    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_samps)
+        
+    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_time)
 
     fn next(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans] = 0.0, feedback: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter.
@@ -281,7 +303,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Movable, Copyable):
         feedback = calc_feedback(delay_time, decay_time)
         return self.next(input, delay_time, feedback)
 
-struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyable):
+struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     """
     A simple comb filter with an integrated one-pole low-pass filter.
     
@@ -294,18 +316,24 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     var one_pole: OnePole[Self.num_chans]
     var fb: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World, max_delay: Float64 = 1.0):
+    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the LP_Comb filter.
 
       Args:
         world: A pointer to the MMMWorld.
-        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+        max_delay_time: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
       """ 
 
         self.world = world
-        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
+        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
         self.one_pole = OnePole[Self.num_chans](self.world)
         self.fb = MFloat[Self.num_chans](0.0)
+
+    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_samps)
+        
+    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_time)
 
     @always_inline
     fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback: MFloat[Self.num_chans] = 0.0, lp_freq: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
@@ -330,7 +358,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyabl
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Copyable):
+struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     """
     A simple allpass comb filter using a delay line with feedback.
     
@@ -341,16 +369,22 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
     var world: World
     var delay: Delay[Self.num_chans, Self.interp]
 
-    fn __init__(out self, world: World, max_delay: Float64 = 1.0):
+    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the Allpass Comb filter.
 
       Args:
         world: A pointer to the MMMWorld.
-        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+        max_delay_time: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
       """
 
         self.world = world
-        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
+        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
+
+    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_samps)
+        
+    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_time)
 
     fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the allpass comb filter. Uses a direct-form 1 structure.
@@ -396,7 +430,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Movable, Co
         return self.next(input, delay_time, feedback)
         
 
-struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Representable, Movable, Copyable):
+struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Tapable):
     """A feedback delay structured like a Comb filter, but with possible feedback coefficient above 1 due to an integrated tanh function.
     
     By default, Anti-comptimeing is disabled and no [oversampling](Oversampling.md) is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
@@ -414,19 +448,25 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
     var fb: MFloat[Self.num_chans]
     var tanh_ad: TanhAD[Self.num_chans, Self.os_index]
 
-    fn __init__(out self, world: World, max_delay: Float64 = 1.0):
+    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the FB_Delay.
 
       Args:
         world: A pointer to the MMMWorld.
-        max_delay: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
+        max_delay_time: The maximum delay time in seconds. The internal buffer will be allocated to accommodate this delay.
       """
 
         self.world = world
-        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay)
+        self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
         self.dc = DCTrap[Self.num_chans](self.world)
         self.fb = MFloat[Self.num_chans](0.0)
         self.tanh_ad = TanhAD[Self.num_chans, Self.os_index](self.world)
+
+    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_samps)
+        
+    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        return self.delay.tap(delay_time)
 
     fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans], feedback: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample or SIMD vector through the feedback delay.

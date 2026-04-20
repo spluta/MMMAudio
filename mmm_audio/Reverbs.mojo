@@ -184,6 +184,9 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.bandwidth = bandwidth
         self.damping = damping
 
+    # fn accum[T: Tapable](mut self, mut accum: MFloat[1], tappee: T, sign: Float64, delay_index: Int) -> MFloat[1]:
+    #       return accum + (0.6 * sign * tappee.tap[1](self.final_taps[delay_index]))
+
     fn next(mut self, input: MFloat[2]) -> MFloat[2]:
         
         upper = (input[0] + input[1]) * 0.5
@@ -207,22 +210,22 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         
         self.feedback = self.trap.next(MFloat[2](tank[1], tank[0])) # flip left and right for feedback
 
-        accumulator = 0.6 * self.del1.read(self.final_taps[0])[1]
-        accumulator += 0.6 * self.del1.read(self.final_taps[1])[1]
-        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[2])[1]
-        accumulator += 0.6 * self.del2.read(self.final_taps[3])[1]
-        accumulator -= 0.6 * self.del1.read(self.final_taps[4])[0]
-        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[5])[0]
-        accumulator -= 0.6 * self.del2.read(self.final_taps[6])[0]
+        accumulator = 0.6 * self.del1.tap(self.final_taps[0])[1]
+        accumulator += 0.6 * self.del1.tap(self.final_taps[1])[1]
+        accumulator -= 0.6 * self.ap2.tap(self.final_taps[2])[1]
+        accumulator += 0.6 * self.del2.tap(self.final_taps[3])[1]
+        accumulator -= 0.6 * self.del1.tap(self.final_taps[4])[0]
+        accumulator -= 0.6 * self.ap2.tap(self.final_taps[5])[0]
+        accumulator -= 0.6 * self.del2.tap(self.final_taps[6])[0]
         L = accumulator
 
-        accumulator = 0.6 * self.del1.read(self.final_taps[7])[0]
-        accumulator += 0.6 * self.del1.read(self.final_taps[8])[0]
-        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[9])[0]
-        accumulator += 0.6 * self.del2.read(self.final_taps[10])[0]
-        accumulator -= 0.6 * self.del1.read(self.final_taps[11])[1]
-        accumulator -= 0.6 * self.ap2.delay.read(self.final_taps[12])[1]
-        accumulator -= 0.6 * self.del2.read(self.final_taps[13])[1]
+        accumulator = 0.6 * self.del1.tap(self.final_taps[7])[0]
+        accumulator += 0.6 * self.del1.tap(self.final_taps[8])[0]
+        accumulator -= 0.6 * self.ap2.tap(self.final_taps[9])[0]
+        accumulator += 0.6 * self.del2.tap(self.final_taps[10])[0]
+        accumulator -= 0.6 * self.del1.tap(self.final_taps[11])[1]
+        accumulator -= 0.6 * self.ap2.tap(self.final_taps[12])[1]
+        accumulator -= 0.6 * self.del2.tap(self.final_taps[13])[1]
         R = accumulator 
 
         return MFloat[2](L, R)
