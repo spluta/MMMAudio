@@ -57,6 +57,9 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
+    fn get_process(mut self) -> ref[self.process] Self.T:
+        return self.process
+
     fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 

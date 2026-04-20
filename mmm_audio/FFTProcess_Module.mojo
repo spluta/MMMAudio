@@ -76,6 +76,9 @@ struct FFTProcess[T: FFTProcessable, ifft: Bool = True,input_window_shape: Int =
     var hop_size: Int
     var buffered_process: BufferedProcess[FFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape]
 
+    fn get_process(mut self) -> ref[self.buffered_process.process.process] Self.T:
+        return self.buffered_process.process.process
+
     fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int):
         """Initializes a `FFTProcess` struct.
 
