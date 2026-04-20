@@ -173,6 +173,17 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.final_taps = [Int(266/dattoro_sr*world[].sample_rate), Int(2974/dattoro_sr*world[].sample_rate), Int(1913/dattoro_sr*world[].sample_rate), Int(1996/dattoro_sr*world[].sample_rate), Int(1990/dattoro_sr*world[].sample_rate), Int(187/dattoro_sr*world[].sample_rate), Int(1066/dattoro_sr*world[].sample_rate), \
         Int(353/dattoro_sr*world[].sample_rate), Int(3627/dattoro_sr*world[].sample_rate), Int(1228/dattoro_sr*world[].sample_rate), Int(2673/dattoro_sr*world[].sample_rate), Int(2111/dattoro_sr*world[].sample_rate), Int(335/dattoro_sr*world[].sample_rate), Int(121/dattoro_sr*world[].sample_rate)]
 
+    fn set_all(mut self, pre_delay_time: Float64, decay: Float64, input_diffusion1: Float64, input_diffusion2: Float64, decay_diffusion1: Float64, decay_diffusion2: Float64, bandwidth: Float64, damping: Float64):
+        """Set all the main parameters of the reverb at once.
+        """
+        self.pre_delay_time = pre_delay_time
+        self.decay = decay
+        self.input_diffusion = [input_diffusion1, input_diffusion2]
+        self.decay_diffusion1 = decay_diffusion1
+        self.decay_diffusion2 = decay_diffusion2
+        self.bandwidth = bandwidth
+        self.damping = damping
+
     fn next(mut self, input: MFloat[2]) -> MFloat[2]:
         
         upper = (input[0] + input[1]) * 0.5
@@ -188,19 +199,11 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         tank = upper + self.feedback
 
         tank = self.ap1.next(tank, self.tank_delay_times[0] + excursion, self.decay_diffusion1)
-        @parameter
-        if self.interp == Interp.none:
-          tank = self.del1.next(tank, self.tank_delay_samples[1])
-          tank = self.pole.next(tank, self.damping)
-          tank = tank * self.decay
-          tank = self.ap2.next(tank, self.tank_delay_times[2], -self.decay_diffusion2)
-          tank = self.del2.next(tank, self.tank_delay_samples[3])
-        else:
-          tank = self.del1.next(tank, self.tank_delay_times[1])
-          tank = self.pole.next(tank, self.damping)
-          tank = tank * self.decay
-          tank = self.ap2.next(tank, self.tank_delay_times[2], -self.decay_diffusion2)
-          tank = self.del2.next(tank, self.tank_delay_times[3])
+        tank = self.del1.next(tank, self.tank_delay_samples[1])
+        tank = self.pole.next(tank, self.damping)
+        tank = tank * self.decay
+        tank = self.ap2.next(tank, self.tank_delay_times[2], -self.decay_diffusion2)
+        tank = self.del2.next(tank, self.tank_delay_samples[3])
         
         self.feedback = self.trap.next(MFloat[2](tank[1], tank[0])) # flip left and right for feedback
 
