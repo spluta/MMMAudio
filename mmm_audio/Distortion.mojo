@@ -163,7 +163,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 
-fn soft_clip_sc[num_chans: Int](x: MFloat[num_chans], min_val: MFloat[num_chans] = -1., max_val: MFloat[num_chans] = 1.) -> MFloat[num_chans]:
+fn soft_clip[num_chans: Int](x: MFloat[num_chans], min_val: MFloat[num_chans] = -1., max_val: MFloat[num_chans] = 1.) -> MFloat[num_chans]:
     """SuperCollider-style softclip with custom range."""
     var center = (min_val + max_val) / 2.0
     var range = (max_val - min_val) / 2.0
@@ -284,7 +284,6 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
 
     var x1: MFloat[Self.num_chans]
-    # var x2: MFloat[num_chans]
     comptime TOL = 1.0e-5
     var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
     var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
@@ -497,9 +496,13 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         Returns:
             The anti-aliased folded signal.
         """
+        safe_amp = max(amp, 1e-6)
+    
         mask = abs(x - self.x1).lt(self.TOL)
-
-        out = mask.select(self._next_norm((x + self.x1) * 0.5, amp), (self._next_AD1(x, amp) - self._next_AD1(self.x1, amp)) / (x - self.x1))
+        out = mask.select(
+            self._next_norm((x + self.x1) * 0.5, safe_amp), 
+            (self._next_AD1(x, safe_amp) - self._next_AD1(self.x1, safe_amp)) / (x - self.x1)
+        )
         self.x1 = x
         return out
 

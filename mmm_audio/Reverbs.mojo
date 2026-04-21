@@ -206,9 +206,6 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.bandwidth = bandwidth
         self.damping = damping
 
-    # fn accum[T: Tapable](mut self, mut accum: MFloat[1], tappee: T, sign: Float64, delay_index: Int) -> MFloat[1]:
-    #       return accum + (0.6 * sign * tappee.tap[1](self.final_taps[delay_index]))
-
     fn next(mut self, input: MFloat[2]) -> MFloat[2]:
         
         upper = (input[0] + input[1]) * 0.5
