@@ -8,7 +8,6 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from mmm_python.GUI import Handle, ControlSpec
-from mmm_python import *
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 from mmm_python import *
@@ -22,6 +21,7 @@ def add_handle(layout, mmm_audio, name: str, min: float, max: float, exp: float,
 def main():
     # instantiate and load the graph
     m_a = MMMAudio(128, 2, graph_name="DattorroReverbExample", package_name="examples")
+    m_a.send_int("in_chan", 0)
     m_a.start_audio()
 
     app = QApplication([])

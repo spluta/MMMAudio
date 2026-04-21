@@ -14,7 +14,7 @@ struct DattorroReverbExample(Movable, Copyable):
 
         fn next(mut self) -> MFloat[2]:
                 self.m.update(self.in_chan, "in_chan")
-                input = MFloat[2](self.world[].sound_in[0])
+                input = MFloat[2](self.world[].sound_in[self.in_chan])
 
                 self.m.update(self.reverb.pre_delay_time, "pre_delay_time")
                 self.m.update(self.reverb.decay, "decay")

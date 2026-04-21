@@ -213,16 +213,13 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         
         upper = (input[0] + input[1]) * 0.5
         upper = self.pre_delay.next(upper,self.pre_delay_time)
-
         upper = self.one_pole.next(upper, 1-self.bandwidth)
-
         for i in range(len(self.allpass_early)):
           upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion1 if i < 2 else self.input_diffusion2)
 
         excursion = self.shimmer.next(MFloat[2](1, 0.707), MFloat[2](0.0, 0.678)) * self.EXCURSION
 
         tank = upper + self.feedback
-
         tank = self.ap1.next(tank, self.tank_delay_times[0] + excursion, self.decay_diffusion1)
         tank = self.del1.next(tank, self.tank_delay_samples[1])
         tank = self.pole.next(tank, self.damping)
@@ -232,22 +229,22 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         
         self.feedback = self.trap.next(MFloat[2](tank[1], tank[0])) # flip left and right for feedback
 
-        accumulator = 0.6 * self.del1.tap(self.final_taps[0])[1]
-        accumulator += 0.6 * self.del1.tap(self.final_taps[1])[1]
-        accumulator -= 0.6 * self.ap2.tap(self.final_taps[2])[1]
-        accumulator += 0.6 * self.del2.tap(self.final_taps[3])[1]
-        accumulator -= 0.6 * self.del1.tap(self.final_taps[4])[0]
-        accumulator -= 0.6 * self.ap2.tap(self.final_taps[5])[0]
-        accumulator -= 0.6 * self.del2.tap(self.final_taps[6])[0]
-        L = accumulator
+        accumulator = MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[0])
+        accumulator += MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[1])
+        accumulator -= MFloat[2](0.0, 0.6) * self.ap2.tap(self.final_taps[2])
+        accumulator += MFloat[2](0.0, 0.6) * self.del2.tap(self.final_taps[3])
+        accumulator -= MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[4])
+        accumulator -= MFloat[2](0.6, 0.0) * self.ap2.tap(self.final_taps[5])
+        accumulator -= MFloat[2](0.6, 0.0) * self.del2.tap(self.final_taps[6])
+        L = accumulator.reduce_add()
 
-        accumulator = 0.6 * self.del1.tap(self.final_taps[7])[0]
-        accumulator += 0.6 * self.del1.tap(self.final_taps[8])[0]
-        accumulator -= 0.6 * self.ap2.tap(self.final_taps[9])[0]
-        accumulator += 0.6 * self.del2.tap(self.final_taps[10])[0]
-        accumulator -= 0.6 * self.del1.tap(self.final_taps[11])[1]
-        accumulator -= 0.6 * self.ap2.tap(self.final_taps[12])[1]
-        accumulator -= 0.6 * self.del2.tap(self.final_taps[13])[1]
-        R = accumulator 
+        accumulator = MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[7])
+        accumulator += MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[8])
+        accumulator -= MFloat[2](0.6, 0.0) * self.ap2.tap(self.final_taps[9])
+        accumulator += MFloat[2](0.6, 0.0) * self.del2.tap(self.final_taps[10])
+        accumulator -= MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[11])
+        accumulator -= MFloat[2](0.0, 0.6) * self.ap2.tap(self.final_taps[12])
+        accumulator -= MFloat[2](0.0, 0.6) * self.del2.tap(self.final_taps[13])
+        R = accumulator.reduce_add()
 
         return MFloat[2](L, R)
