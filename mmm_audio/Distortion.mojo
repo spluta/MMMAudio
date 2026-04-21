@@ -163,8 +163,13 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 
-fn hard_clip[num_chans: Int](x: MFloat[num_chans]) -> MFloat[num_chans]:
-        return x if abs(x) < 1 else sign(x)
+fn soft_clip_sc[num_chans: Int](x: MFloat[num_chans], min_val: MFloat[num_chans] = -1., max_val: MFloat[num_chans] = 1.) -> MFloat[num_chans]:
+    """SuperCollider-style softclip with custom range."""
+    var center = (min_val + max_val) / 2.0
+    var range = (max_val - min_val) / 2.0
+    var normalized = (x - center) / range
+    var clipped = normalized / (1.0 + abs(normalized))
+    return center + clipped * range
 
 struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     """
