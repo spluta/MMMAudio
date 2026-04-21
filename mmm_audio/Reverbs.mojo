@@ -55,7 +55,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         self.lp_comb_lpfreq = [1000.0]
         self.in_list = [0.0]
 
-    @always_inline
+    # @always_inline
     fn next(mut self, input: MFloat[self.num_chans], room_size: MFloat[self.num_chans] = 0.0, lp_comb_lpfreq: MFloat[self.num_chans] = 1000.0, added_space: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the freeverb.
 
@@ -104,6 +104,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
   
   Parameters:
     interp: The interpolation method to use for the delay lines which are not modulated. Default is none because that is what is used in the original Dattorro paper.
+
   """
     var world: World
     var EXCURSION: Float64
@@ -111,7 +112,8 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
     var decay: Float64
     var decay_diffusion1: Float64
     var decay_diffusion2: Float64
-    var input_diffusion: List[Float64]
+    var input_diffusion1: Float64
+    var input_diffusion2: Float64
     var bandwidth: Float64
     var damping: Float64
     var feedback: MFloat[2]
@@ -134,24 +136,33 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
 
     var final_taps: List[MInt[]]
 
-    fn __init__(out self, world: World):
+    fn __init__(out self, world: World, pre_delay_time: Float64 = 0.02, decay: Float64 = 0.3, input_diffusion1: Float64 = 0.75, input_diffusion2: Float64 = 0.625, decay_diffusion1: Float64 = 0.7, decay_diffusion2: Float64 = 0.5, bandwidth: Float64 = 0.9995, damping: Float64 = 0.0005):
       """
       Initialize the DattorroReverb struct.
 
       Args:
           world: A pointer to the MMMWorld instance.
+          pre_delay_time: The time of the pre-delay in seconds. 0-0.5 seconds.
+          decay: The decay factor of the reverb (0-1).
+          input_diffusion1: The feedback coefficient for the first two allpass filters in the early reflection stage (0-1).
+          input_diffusion2: The feedback coefficient for the second two allpass filters in the early reflection stage (0-1).
+          decay_diffusion1: The feedback coefficient for two allpass filters in the tank (0-1).
+          decay_diffusion2: The feedback coefficient for two allpass filters in the tank (0-1).
+          bandwidth: The bandwidth of the low-pass filters in the tank (0-1, where 1 is no filtering).
+          damping: The damping factor of the reverb (0-1, where 0 is no damping).
       """
         self.world = world
         self.EXCURSION = 16./dattoro_sr
         self.shimmer = Osc[2](world)
 
-        self.decay = 0.30
-        self.decay_diffusion1 = 0.70
-        self.decay_diffusion2 = 0.50 
-        self.pre_delay_time = 0.02
-        self.input_diffusion = [0.750, 0.625]
-        self.bandwidth = 0.9995
-        self.damping = 0.0005 #no damping = 0.0
+        self.decay = decay
+        self.decay_diffusion1 = decay_diffusion1
+        self.decay_diffusion2 = decay_diffusion2
+        self.pre_delay_time = pre_delay_time
+        self.input_diffusion1 = input_diffusion1
+        self.input_diffusion2 = input_diffusion2
+        self.bandwidth = bandwidth
+        self.damping = damping 
         self.feedback = MFloat[2](0.0)
 
         self.pre_delay = Delay[](world, 0.5)
@@ -175,10 +186,21 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
 
     fn set_all(mut self, pre_delay_time: Float64, decay: Float64, input_diffusion1: Float64, input_diffusion2: Float64, decay_diffusion1: Float64, decay_diffusion2: Float64, bandwidth: Float64, damping: Float64):
         """Set all the main parameters of the reverb at once.
+
+        Args:
+          pre_delay_time: The time of the pre-delay in seconds. 0-0.5 seconds.
+          decay: The decay factor of the reverb (0-1).
+          input_diffusion1: The diffusion amount for the first two allpass filters in the early reflection stage (0-1).
+          input_diffusion2: The diffusion amount for the second two allpass filters in the early reflection stage (0-1).
+          decay_diffusion1: The diffusion amount for the first allpass filter in the feedback loop (0-1).
+          decay_diffusion2: The diffusion amount for the second allpass filter in the feedback loop (0-1).
+          bandwidth: The bandwidth of the low-pass filters in the feedback loop (0-1, where 1 is no filtering).
+          damping: The damping factor of the reverb (0-1, where 0 is no damping).
         """
         self.pre_delay_time = pre_delay_time
         self.decay = decay
-        self.input_diffusion = [input_diffusion1, input_diffusion2]
+        self.input_diffusion1 = input_diffusion1
+        self.input_diffusion2 = input_diffusion2
         self.decay_diffusion1 = decay_diffusion1
         self.decay_diffusion2 = decay_diffusion2
         self.bandwidth = bandwidth
@@ -195,9 +217,9 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         upper = self.one_pole.next(upper, 1-self.bandwidth)
 
         for i in range(len(self.allpass_early)):
-            upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion[i//2])
+          upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion1 if i < 2 else self.input_diffusion2)
 
-        excursion = self.shimmer.next(MFloat[2](1, 0.707) * self.EXCURSION)
+        excursion = self.shimmer.next(MFloat[2](1, 0.707), MFloat[2](0.0, 0.678)) * self.EXCURSION
 
         tank = upper + self.feedback
 

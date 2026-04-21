@@ -22,7 +22,7 @@ struct DattorroReverbExample(Movable, Copyable):
                 self.m.update(self.reverb.damping, "damping")
                 self.m.update(self.reverb.decay_diffusion1, "decay_diffusion1")
                 self.m.update(self.reverb.decay_diffusion2, "decay_diffusion2")
-                self.m.update(self.reverb.input_diffusion[0], "input_diffusion1")
-                self.m.update(self.reverb.input_diffusion[1], "input_diffusion2")
+                self.m.update(self.reverb.input_diffusion1, "input_diffusion1")
+                self.m.update(self.reverb.input_diffusion2, "input_diffusion2")
 
                 return self.reverb.next(input)
