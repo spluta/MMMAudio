@@ -80,6 +80,80 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
                 if idx < len_vals:
                     vals[idx] = lagged_output[j]
 
+struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
+    """A lag processor with separate lag times for rising (up) and falling (down) values.
+
+    Parameters:
+        num_chans: Number of SIMD channels to process in parallel.
+    """
+
+    var world: World
+    var val: MFloat[Self.num_chans]
+    var b1_up: MFloat[Self.num_chans]
+    var b1_down: MFloat[Self.num_chans]
+    var lag_up: MFloat[Self.num_chans]
+    var lag_down: MFloat[Self.num_chans]
+
+    fn __init__(
+        out self,
+        world: World,
+        lag_up: MFloat[Self.num_chans] = MFloat[Self.num_chans](0.02),
+        lag_down: MFloat[Self.num_chans] = MFloat[Self.num_chans](0.02),
+    ):
+        """Initialize the lag processor with separate up/down lag times in seconds.
+
+        Args:
+            world: Pointer to the MMMWorld.
+            lag_up: SIMD vector specifying lag time in seconds for rising values.
+            lag_down: SIMD vector specifying lag time in seconds for falling values.
+        """
+        self.world = world
+        self.val = MFloat[Self.num_chans](0.0)
+        self.b1_up = 0
+        self.b1_down = 0
+        self.lag_up = 0
+        self.lag_down = 0
+        self.set_lag_times(lag_up, lag_down)
+
+    fn __repr__(self) -> String:
+        return String("LagUD")
+
+    @always_inline
+    fn next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        """Process one sample through the lag processor.
+
+        Args:
+            in_samp: Input SIMD vector values.
+
+        Returns:
+            Output values after applying the appropriate lag.
+        """
+        # Select coefficient based on whether input is greater than current value
+        mask = in_samp.gt(self.val)
+        b1 = mask.select(self.b1_up, self.b1_down)
+
+        self.val = in_samp + b1 * (self.val - in_samp)
+        self.val = sanitize(self.val)
+
+        return self.val
+
+    @always_inline
+    fn set_lag_times(
+        mut self,
+        lag_up: MFloat[Self.num_chans],
+        lag_down: MFloat[Self.num_chans],
+    ):
+        """Set new lag times in seconds for rising and falling values.
+
+        Args:
+            lag_up: SIMD vector specifying lag time in seconds for rising values.
+            lag_down: SIMD vector specifying lag time in seconds for falling values.
+        """
+        self.lag_up = lag_up
+        self.lag_down = lag_down
+        self.b1_up = exp(-6.907755278982137 / (lag_up * self.world[].sample_rate))
+        self.b1_down = exp(-6.907755278982137 / (lag_down * self.world[].sample_rate))
+
 @doc_private
 struct SVFModes:
     """Enumeration of different State Variable Filter modes.
@@ -529,7 +603,7 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
 
     
-    fn adjust_params(mut self, attack_time: MFloat[Self.num_chans], release_time: MFloat[Self.num_chans]):
+    fn set_params(mut self, attack_time: MFloat[Self.num_chans], release_time: MFloat[Self.num_chans]):
         """Adjust the attack and release time of the Amplitude tracker.
 
         Args:
@@ -545,7 +619,7 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         a_val = abs(sample)
         mask = a_val.gt(self.last_val)
         coef = mask.select(self.coef_att, self.coef_rel)
-        self.last_val = self.one_pole.next(sample, coef)
+        self.last_val = self.one_pole.next(a_val, coef)
 
         return self.last_val
 

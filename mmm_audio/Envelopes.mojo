@@ -262,12 +262,13 @@ struct Compressor[num_chans: Int](Movable, Copyable):
     """
 
     var amp: Amplitude[Self.num_chans]
-    var lag: Lag[1]
+    var lag: LagUD[1]
     var denom: Float64
     var threshold: MFloat[1]
     var ratio: MFloat[1]
     var attack: MFloat[1]
     var release: MFloat[1]
+    var sidechain: MFloat[1]
 
     fn __init__(out self, world: World, threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1):
         """Initialize the Compressor struct.
@@ -280,21 +281,24 @@ struct Compressor[num_chans: Int](Movable, Copyable):
             release: Release time in seconds.
         """
         self.amp = Amplitude[Self.num_chans](world)
-        self.lag = Lag[1](world)
-        self.denom = max(sqrt(Float64(Self.num_chans)), dbamp(-100.))
+        self.lag = LagUD[1](world)
+        self.denom = sqrt(Float64(Self.num_chans))
         self.threshold = threshold
         self.ratio = ratio
         self.attack = attack
         self.release = release
-        self.lag.set_lag_time(attack)
+        self.lag.set_lag_times(attack, release)
+        self.amp.set_params(attack, release)
+        self.sidechain = 1.0
 
-    fn adjust_params(mut self, threshold: MFloat[1], ratio: MFloat[1], attack: MFloat[1], release: MFloat[1]):
+    fn set_params(mut self, threshold: MFloat[1], ratio: MFloat[1], attack: MFloat[1], release: MFloat[1]):
         """Adjust compressor parameters on the fly."""
         self.threshold = threshold
         self.ratio = ratio
         self.attack = attack
         self.release = release
-        self.lag.set_lag_time(attack)
+        self.lag.set_lag_times(attack, release)
+        self.amp.set_params(0.001, 0.01)
     
     fn next(mut self, input: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Returns the compressed signal, which is the original signal multiplied by the negative compression gain."""
@@ -304,8 +308,11 @@ struct Compressor[num_chans: Int](Movable, Copyable):
     fn next_neg_comp(mut self, input: MFloat[Self.num_chans]) -> MFloat[1]:
         """Returns the negative compression gain for the input signal, which can be multiplied with the original signal or used as a sidechain."""
 
-        amp = ampdb(self.amp.next(input, self.attack, self.release).reduce_add()/self.denom)
+        amp = self.amp.next(input).reduce_add() / self.denom
+        amp = ampdb(max(amp, dbamp(-100.0)))  # Protect against log(0)
         val = amp - self.threshold
 
-        return dbamp(self.lag.next(max(val, 0.0) * (1.0/self.ratio - 1)))
+        self.sidechain = dbamp(self.lag.next(max(val, 0.0) * (1.0/self.ratio - 1)))
+
+        return self.sidechain
     
