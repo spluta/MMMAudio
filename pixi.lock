@@ -233,6 +233,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/pixman-0.46.4-h81086ad_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.8.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pooch-1.9.0-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/portaudio-19.7.0-h5833ebf_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/prometheus_client-0.24.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/prompt-toolkit-3.0.52-pyha770c72_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/psutil-7.2.2-py313h6688731_0.conda
@@ -3564,6 +3565,17 @@ packages:
   - pkg:pypi/pooch?source=compressed-mapping
   size: 56833
   timestamp: 1769816568869
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/portaudio-19.7.0-h5833ebf_0.conda
+  sha256: 3d86803ade1ff3fd29ea1b61ce2e5ad65af0966d795ab8a7a2685fee75cf0f82
+  md5: fb72bb70cfea298990d5e1a12317047c
+  depends:
+  - __osx >=11.0
+  - libcxx >=17
+  license: MIT
+  license_family: MIT
+  purls: []
+  size: 58138
+  timestamp: 1730364270871
 - conda: https://conda.anaconda.org/conda-forge/noarch/prometheus_client-0.24.1-pyhd8ed1ab_0.conda
   sha256: 75b2589159d04b3fb92db16d9970b396b9124652c784ab05b66f584edc97f283
   md5: 7526d20621b53440b0aae45d4797847e
