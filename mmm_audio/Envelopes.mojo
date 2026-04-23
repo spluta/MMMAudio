@@ -52,7 +52,6 @@ struct Env(Representable, Movable, Copyable):
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
     var trig_point: Float64  # Point at which the asr envelope was triggered
-    var last_asr: Float64  # Last output of the asr envelope
     var params: EnvParams
     var eoc: Bool
 
@@ -70,7 +69,6 @@ struct Env(Representable, Movable, Copyable):
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
         self.trig_point = 0.0
-        self.last_asr = 0.0
         self.params = EnvParams()
         self.params.values=[0,1,0]
         self.params.times=[1,1]
@@ -254,3 +252,60 @@ struct ASREnv(Movable, Copyable):
             return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])
         else:
             return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[1])
+
+
+struct Compressor[num_chans: Int](Movable, Copyable):
+    """Compressor from Nathan Ho's Negative Compression web post.
+    
+    Params:
+        num_chans: Number of channels to process.
+    """
+
+    var amp: Amplitude[Self.num_chans]
+    var lag: Lag[1]
+    var denom: Float64
+    var threshold: MFloat[1]
+    var ratio: MFloat[1]
+    var attack: MFloat[1]
+    var release: MFloat[1]
+
+    fn __init__(out self, world: World, threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1):
+        """Initialize the Compressor struct.
+
+        Args:
+            world: Pointer to the MMMWorld.
+            threshold: Compression threshold in dB.
+            ratio: Compression ratio (e.g., 4.0 for 4:1 compression).
+            attack: Attack time in seconds.
+            release: Release time in seconds.
+        """
+        self.amp = Amplitude[Self.num_chans](world)
+        self.lag = Lag[1](world)
+        self.denom = max(sqrt(Float64(Self.num_chans)), dbamp(-100.))
+        self.threshold = threshold
+        self.ratio = ratio
+        self.attack = attack
+        self.release = release
+        self.lag.set_lag_time(attack)
+
+    fn adjust_params(mut self, threshold: MFloat[1], ratio: MFloat[1], attack: MFloat[1], release: MFloat[1]):
+        """Adjust compressor parameters on the fly."""
+        self.threshold = threshold
+        self.ratio = ratio
+        self.attack = attack
+        self.release = release
+        self.lag.set_lag_time(attack)
+    
+    fn next(mut self, input: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        """Returns the compressed signal, which is the original signal multiplied by the negative compression gain."""
+
+        return (self.next_neg_comp(input) * input)
+
+    fn next_neg_comp(mut self, input: MFloat[Self.num_chans]) -> MFloat[1]:
+        """Returns the negative compression gain for the input signal, which can be multiplied with the original signal or used as a sidechain."""
+
+        amp = ampdb(self.amp.next(input, self.attack, self.release).reduce_add()/self.denom)
+        val = amp - self.threshold
+
+        return dbamp(self.lag.next(max(val, 0.0) * (1.0/self.ratio - 1)))
+    

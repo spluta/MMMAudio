@@ -506,6 +506,48 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         """Calculate feedback coefficient from cutoff frequency."""
         return exp(-2.0 * pi * cutoff_hz / self.world[].sample_rate)
 
+@doc_private
+fn _time_to_coef[num_chans: Int](time_s: MFloat[num_chans], sample_rate: MFloat[num_chans]) -> MFloat[num_chans]:
+    mask0 = time_s.le(0.0)
+    val = 1.0 / (time_s * sample_rate)
+    mask = val.lt(1.0)
+    return mask0.select(1.0, mask.select(val, 1.0))
+
+struct Amplitude[num_chans: Int](Movable, Copyable):
+    var one_pole: OnePole[Self.num_chans]
+    var last_val: MFloat[Self.num_chans]
+    var coef_att: MFloat[Self.num_chans]
+    var coef_rel: MFloat[Self.num_chans]
+
+    var world: World
+
+    fn __init__(out self, world: World, attack_time: MFloat[Self.num_chans] = 0.1, release_time: MFloat[Self.num_chans] = 0.1):
+        self.world = world
+        self.one_pole = OnePole[Self.num_chans](world)
+        self.last_val = MFloat[Self.num_chans](0.0)
+        self.coef_att = _time_to_coef(attack_time, self.world[].sample_rate)
+        self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
+
+    
+    fn adjust_params(mut self, attack_time: MFloat[Self.num_chans], release_time: MFloat[Self.num_chans]):
+        """Adjust the attack and release time of the Amplitude tracker.
+
+        Args:
+            attack_time: Attack time of the Amplitude function.
+            release_time: Release time of the Amplitude function.
+        """
+        
+        self.coef_att = _time_to_coef(attack_time, self.world[].sample_rate)
+        self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
+    
+    fn next(mut self, sample: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+
+        a_val = abs(sample)
+        mask = a_val.gt(self.last_val)
+        coef = mask.select(self.coef_att, self.coef_rel)
+        self.last_val = self.one_pole.next(sample, coef)
+
+        return self.last_val
 
 # struct Integrator(Representable, Movable, Copyable):
 #     """
