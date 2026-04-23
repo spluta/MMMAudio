@@ -50,7 +50,9 @@ mkdocstrings-python = ">=2.0.2,<3"
 ipykernel = ">=7.1.0,<8"
 jupyterlab = ">=4.5.5,<5"
 pixi-kernel = ">=0.7.1,<0.8"
-portaudio = ">=19.7.0,<20"
+# portaudio = ">=19.7.0,<20"
+# libhidapi = ">=0.15,<1"
+# pyaudio = "*"
 
 [pypi-dependencies]
 torch = ">=2.10.0, <3"
