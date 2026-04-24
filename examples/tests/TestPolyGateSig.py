@@ -1,7 +1,7 @@
-from mmm_python import *
-mmm_audio = MMMAudio(128, graph_name="TestPolyGateSig", package_name="examples.tests")
-mmm_audio.start_audio()
+from srcpy import *
+src_mojo = MMMAudio(128, graph_name="TestPolyGateSig", package_name="examples.tests")
+src_mojo.start_audio()
 
-mmm_audio.send_floats("dust_vals", [1.0, 6.0])
+src_mojo.send_floats("dust_vals", [1.0, 6.0])
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()

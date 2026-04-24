@@ -4,12 +4,12 @@ A synthesis example that sends Dust, single sample triggers to a resonant band-p
 Rates of the Dusts and frequencies of the filters are modulated by the mouse X and Y positions.
 """
 
-from mmm_python import * 
+from srcpy import * 
 
 # instantiate and load the graph
-mmm_audio = MMMAudio(128, graph_name="OleDusty", package_name="examples")
-mmm_audio.start_audio() 
+src_mojo = MMMAudio(128, graph_name="OleDusty", package_name="examples")
+src_mojo.start_audio() 
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()
 
-mmm_audio.plot(48000)
+src_mojo.plot(48000)

@@ -12,7 +12,7 @@ from pathlib import Path
 # (the next line here) so that it can find the mmm_src and mmm_utils packages.
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
-from mmm_python import *
+from srcpy import *
 
 def main():
     mmm_audio = MMMAudio(128, graph_name="WavetableOscSIMDStrings", package_name="examples.tests")

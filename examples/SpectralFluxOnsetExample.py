@@ -3,7 +3,7 @@ This example demonstrates using SpectralFluxOnsets to detect onsets in an audio 
 The audio plays in the left channel and onset impulses are heard in the right channel.
 """
 
-from mmm_python import *
+from srcpy import *
 ma = MMMAudio(128, graph_name="SpectralFluxOnsetExample", package_name="examples")
 ma.start_audio()
 

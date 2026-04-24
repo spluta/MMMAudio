@@ -3,7 +3,7 @@
 MMMAudio can run multiple graphs in parallel, each in its own process. This example shows how to create multiple MMMAudio instances, each with its own graph, and send messages to them independently.
 """
 
-from mmm_python import *
+from srcpy import *
 m_s = []
 for i in range(4):
     m_s.append(MMMAudio(128, graph_name=

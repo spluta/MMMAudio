@@ -7,10 +7,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_python.GUI import Handle, ControlSpec
+from srcpy.GUI import Handle, ControlSpec
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
-from mmm_python import *
+from srcpy import *
 
 def add_handle(layout, mmm_audio, name: str, min: float, max: float, exp: float, default: float, resolution: float, display_resolution: int):
     """Create a slider and connect it to the audio graph."""

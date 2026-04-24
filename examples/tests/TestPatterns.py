@@ -1,8 +1,8 @@
-from mmm_python import *
-mmm_audio = MMMAudio(128, graph_name="TestPatterns", package_name="examples.tests")
-mmm_audio.start_audio()
+from srcpy import *
+src_mojo = MMMAudio(128, graph_name="TestPatterns", package_name="examples.tests")
+src_mojo.start_audio()
 
-mmm_audio.send_int("which", 0)
-mmm_audio.send_int("which", 1)
-mmm_audio.send_int("which", 2)
+src_mojo.send_int("which", 0)
+src_mojo.send_int("which", 1)
+src_mojo.send_int("which", 2)
 

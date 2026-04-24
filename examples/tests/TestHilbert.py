@@ -1,15 +1,15 @@
 from cmath import pi
 
-from mmm_python import *
+from srcpy import *
 
-mmm_audio = MMMAudio(128, graph_name="TestHilbert", package_name="examples.tests")
-mmm_audio.start_audio()
+src_mojo = MMMAudio(128, graph_name="TestHilbert", package_name="examples.tests")
+src_mojo.start_audio()
 
-mmm_audio.send_float("freq", 150)
-mmm_audio.send_float("radians", 0.0)
-mmm_audio.send_float("radians", pi/2.0)
-mmm_audio.send_float("radians", pi)
-mmm_audio.send_float("radians", 3*pi/2.0)
+src_mojo.send_float("freq", 150)
+src_mojo.send_float("radians", 0.0)
+src_mojo.send_float("radians", pi/2.0)
+src_mojo.send_float("radians", pi)
+src_mojo.send_float("radians", 3*pi/2.0)
 
-mmm_audio.stop_audio()
-mmm_audio.plot(2048)
+src_mojo.stop_audio()
+src_mojo.plot(2048)

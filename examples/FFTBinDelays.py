@@ -4,9 +4,9 @@ This example shows how to use the PaulStretch graph in MMM-Audio to stretch audi
 You can change the stretch factor by sending different float values to the "dur_mult" parameter.
 """
 
-from mmm_python import *
-mmm_audio = MMMAudio(2048, graph_name="FFTBinDelays", package_name="examples")
-mmm_audio.start_audio()
+from srcpy import *
+src_mojo = MMMAudio(2048, graph_name="FFTBinDelays", package_name="examples")
+src_mojo.start_audio()
 
 def make_delay_times():
     x = 5
@@ -24,6 +24,6 @@ def make_delay_times():
 
 
 delay_times = make_delay_times()
-mmm_audio.send_ints("delay_times", delay_times)
+src_mojo.send_ints("delay_times", delay_times)
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()

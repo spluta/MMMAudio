@@ -1,8 +1,8 @@
-from mmm_python import *
-mmm_audio = MMMAudio(128, graph_name="TestASR", package_name="examples.tests")
-mmm_audio.start_audio()
+from srcpy import *
+src_mojo = MMMAudio(128, graph_name="TestASR", package_name="examples.tests")
+src_mojo.start_audio()
 
-mmm_audio.send_floats("curves", [4.0, -4.0])  # set the curves to logarithmic attack and exponential decay
+src_mojo.send_floats("curves", [4.0, -4.0])  # set the curves to logarithmic attack and exponential decay
 
 # this program is looking for midi note_on and note_off from note 48, so we prepare the keyboard to send messages to mmm_audio:
 if True:
@@ -27,9 +27,9 @@ if True:
                 print(msg)
 
                 if msg.type == "note_on":
-                    mmm_audio.send_bool("gate", True)
+                    src_mojo.send_bool("gate", True)
                 elif msg.type == "note_off":
-                    mmm_audio.send_bool("gate", False)
+                    src_mojo.send_bool("gate", False)
             time.sleep(0.01)
 
     # Start the thread

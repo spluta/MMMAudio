@@ -7,23 +7,23 @@ This example demonstrates a couple differnt concepts:
 
 """
 if True:
-    from mmm_python import *
+    from srcpy import *
 
     # instantiate and load the graph
-    mmm_audio = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
-    mmm_audio.start_audio()
+    src_mojo = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
+    src_mojo.start_audio()
 
-    from mmm_python.Patterns import Pseq, Pxrand
+    from srcpy.Patterns import Pseq, Pxrand
     import numpy as np
     import asyncio
-    from mmm_python.functions import midicps, linexp
+    from srcpy.functions import midicps, linexp
 
     global scheduler
     scheduler = Scheduler()
 
-    poly_pal = PolyPal(mmm_audio, "poly", 10)
+    poly_pal = PolyPal(src_mojo, "poly", 10)
     filter_seq = Pseq([linexp(i/100, 0, 1, 100, 5000) for i in range(0, 101)] + [linexp(i/100, 0, 1, 4999, 101) for i in range(0, 101)])
-    mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
+    src_mojo.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
 
 
 # load the sequencer function
@@ -35,7 +35,7 @@ async def trig_synth(wait):
     i = 0
     fund = midicps(fund_seq.next())
     while True:
-        mmm_audio.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
+        src_mojo.send_float("filt_freq", filter_seq.next()) # update filter frequency before each note
         poly_pal.send_floats([fund * mult_seq.next(), 100 / 127.0])  # note freq and velocity scaled 0 to 1
         await asyncio.sleep(wait)
         
@@ -53,5 +53,5 @@ rout.cancel() # stop just this routine
 # stop all routines
 scheduler.stop_routs() # you can also stop the routines with ctl-C in the terminal
 
-mmm_audio.stop_audio()
-mmm_audio.start_audio()
+src_mojo.stop_audio()
+src_mojo.start_audio()

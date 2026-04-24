@@ -1,17 +1,17 @@
-from mmm_python import *
+from srcpy import *
 
-mmm_audio = MMMAudio(128, graph_name="TestDelay", package_name="examples.tests")
-mmm_audio.start_audio() 
-mmm_audio.stop_audio()
-mmm_audio.send_float("del_time", 2.0/mmm_audio.sample_rate)
+src_mojo = MMMAudio(128, graph_name="TestDelay", package_name="examples.tests")
+src_mojo.start_audio() 
+src_mojo.stop_audio()
+src_mojo.send_float("del_time", 2.0/src_mojo.sample_rate)
 
-mmm_audio.send_trig("trig")
-mmm_audio.send_trig("trig")
-mmm_audio.send_trig("trig")
+src_mojo.send_trig("trig")
+src_mojo.send_trig("trig")
+src_mojo.send_trig("trig")
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()
 
-mmm_audio.send_float("freq", 5)
-mmm_audio.send_trig("trig")
+src_mojo.send_float("freq", 5)
+src_mojo.send_trig("trig")
 
-mmm_audio.plot(2048)
+src_mojo.plot(2048)

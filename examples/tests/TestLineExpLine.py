@@ -1,4 +1,4 @@
-from mmm_python import *
+from srcpy import *
 m_a = MMMAudio(128, graph_name="TestLineExpLine", package_name="examples.tests")
 m_a.start_audio() 
 

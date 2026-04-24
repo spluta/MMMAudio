@@ -8,21 +8,21 @@ You can also train the Multi-Layer Perceptron by creating any number of input/ou
 """
 
 if True:
-    from mmm_python import *
+    from srcpy import *
     from random import random
 
-    mmm_audio = MMMAudio(128, graph_name="TorchMlp", package_name="examples")
+    src_mojo = MMMAudio(128, graph_name="TorchMlp", package_name="examples")
 
     # this one is a bit intense, so maybe start with a low volume
-    mmm_audio.start_audio()
+    src_mojo.start_audio()
 
 
 
 # below is the code to make a new training --------------------------------
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_bool("mlp1.toggle_inference", True)
-mmm_audio.send_bool("mlp1.toggle_inference", False)
+src_mojo.send_bool("mlp1.toggle_inference", True)
+src_mojo.send_bool("mlp1.toggle_inference", False)
 
 # how many outputs does your mlp have?
 out_size = 16
@@ -36,7 +36,7 @@ def make_setting():
     for _ in range(out_size):
         setting.append(random())
     print("setting =", setting)
-    mmm_audio.send_floats("mlp1.fake_model_output", setting)
+    src_mojo.send_floats("mlp1.fake_model_output", setting)
 
     return setting
 
@@ -82,7 +82,7 @@ def do_the_training():
 
     # train the network in a separate thread so the audio thread doesn't get interrupted
 
-    from mmm_audio.MLP_Python import train_nn
+    from mmmaudio.srcpy.MLP_Python import train_nn
     import threading
 
     target_function = train_nn
@@ -95,7 +95,7 @@ def do_the_training():
 do_the_training()
 
 # load the new training into the synth
-mmm_audio.send_string("mlp1.load_mlp_training", "examples/nn_trainings/model_traced.pt")  
+src_mojo.send_string("mlp1.load_mlp_training", "examples/nn_trainings/model_traced.pt")  
 
 # toggle inference off so you can set the synth values directly
-mmm_audio.send_bool("mlp1.toggle_inference", True)
+src_mojo.send_bool("mlp1.toggle_inference", True)

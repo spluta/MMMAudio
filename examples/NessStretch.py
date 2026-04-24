@@ -2,20 +2,20 @@
 """
 MMMAudio.get_audio_devices()
 
-from mmm_python import *
-mmm_audio = MMMAudio(2048, graph_name="NessStretch", package_name="examples")
-mmm_audio.start_audio()
+from srcpy import *
+src_mojo = MMMAudio(2048, graph_name="NessStretch", package_name="examples")
+src_mojo.start_audio()
 
 # load your own file - the candier pop the better
-mmm_audio.send_string("file_name", "tmp/Man_short.wav")
+src_mojo.send_string("file_name", "tmp/Man_short.wav")
 
 # change how slow the audio gets stretched
-mmm_audio.send_float("dur_mult", 10.0)
-mmm_audio.send_float("dur_mult", 100.0)
-mmm_audio.send_float("dur_mult", 40.0)
-mmm_audio.send_float("dur_mult", 10000.0)
+src_mojo.send_float("dur_mult", 10.0)
+src_mojo.send_float("dur_mult", 100.0)
+src_mojo.send_float("dur_mult", 40.0)
+src_mojo.send_float("dur_mult", 10000.0)
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()
 
 import numpy as np
 

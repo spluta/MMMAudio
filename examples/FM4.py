@@ -8,12 +8,12 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from mmm_python import *
+from srcpy import *
 
 
 
-from mmm_python.GUI import Handle, ControlSpec
-from mmm_python import *
+from srcpy.GUI import Handle, ControlSpec
+from srcpy import *
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 

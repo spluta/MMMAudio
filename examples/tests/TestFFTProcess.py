@@ -1,18 +1,18 @@
-from mmm_python import *
+from srcpy import *
 
-mmm_audio = MMMAudio(128, graph_name="TestFFTProcess", package_name="examples.tests")
-mmm_audio.start_audio()
+src_mojo = MMMAudio(128, graph_name="TestFFTProcess", package_name="examples.tests")
+src_mojo.start_audio()
 
-mmm_audio.send_float("onsets_thresh",68)
-mmm_audio.send_float("onsets_min_slice_len",3)
+src_mojo.send_float("onsets_thresh",68)
+src_mojo.send_float("onsets_min_slice_len",3)
 
-mmm_audio.send_int("nscrambles",100)
-mmm_audio.send_trig("rescramble")
+src_mojo.send_int("nscrambles",100)
+src_mojo.send_trig("rescramble")
 
-mmm_audio.send_int("scramble_range",20)
+src_mojo.send_int("scramble_range",20)
 
-mmm_audio.send_int("lpbin",513)
+src_mojo.send_int("lpbin",513)
 
-mmm_audio.stop_audio()
+src_mojo.stop_audio()
 
-mmm_audio.plot(2048)
+src_mojo.plot(2048)

@@ -1,0 +1,297 @@
+"""
+Pattern classes for generating sequences of values.
+
+This module provides pattern classes inspired by SuperCollider's pattern system for generating sequences, random selections, and non-repeating random selections from lists of values.
+
+Classes:
+    Pseq: Sequential pattern that cycles through a list
+    Prand: Random pattern that selects randomly from a list  
+    Pxrand: Exclusive random pattern that avoids immediate repetition
+"""
+
+from random import choice, randint
+from typing import Optional
+
+class Pseq:
+    """
+    Sequential pattern that cycles through a list of values.
+    
+    Pseq generates values by iterating through a list sequentially,
+    wrapping back to the beginning when it reaches the end.
+    
+    Attributes:
+        list: The list of values to cycle through
+        index: Current position in the list (starts at -1)
+        
+    Example:
+        ```python
+        pattern = Pseq([1, 2, 3])
+        print(pattern.next())  # 1
+        print(pattern.next())  # 2
+        print(pattern.next())  # 3
+        print(pattern.next())  # 1 (cycles back)
+        ```
+    """
+    def __init__(self, list: list):
+        """
+        Sequential pattern that cycles through a list of values.
+        
+        Pseq generates values by iterating through a list sequentially,
+        wrapping back to the beginning when it reaches the end.
+        
+        Attributes:
+            list: The list of values to cycle through
+            index: Current position in the list (starts at -1)
+            
+        Example:
+            ```python
+            pattern = Pseq([1, 2, 3])
+            print(pattern.next())  # 1
+            print(pattern.next())  # 2
+            print(pattern.next())  # 3
+            print(pattern.next())  # 1 (cycles back)
+            ```
+        """
+        self.list = list
+        self.index = -1
+        self.value = None
+
+    def next(self) -> Optional[float]:
+        """
+        Get the next value in the sequence.
+        
+        Returns:
+            The next value in the list, cycling back to the beginning when reaching the end. Returns None if the list is empty.
+        """
+        if not self.list:
+            return None
+        self.index = (self.index + 1) % len(self.list)
+        if self.index > len(self.list):
+            self.index = 0
+        self.value = self.list[self.index]
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
+    
+class Prand:
+    """
+    Random pattern that selects values randomly from a list.
+    
+    Prand generates values by randomly selecting from a list with
+    equal probability for each element. The same value can be
+    selected consecutively.
+    
+    Attributes:
+        list: The list of values to select from randomly
+        
+    Example:
+        ```python
+        pattern = Prand([1, 2, 3, 4])
+        print(pattern.next())  # Random selection: 1, 2, 3, or 4
+        print(pattern.next())  # Another random selection
+        ```
+    """
+    def __init__(self, list: list):
+        """
+        Random pattern that selects values randomly from a list. Can contain lambdas or callables.
+        
+        Prand generates values by randomly selecting from a list with
+        equal probability for each element. The same value can be
+        selected consecutively.
+        
+        Attributes:
+            list: The list of values to select from randomly
+            
+        Example:
+            ```python
+            pattern = Prand([1, 2, 3, 4])
+            print(pattern.next())  # Random selection: 1, 2, 3, or 4
+            print(pattern.next())  # Another random selection
+            ```
+        """
+        self.list = list
+        self.value = None
+
+    def next(self) -> Optional[float]:
+        """
+        Get a random value from the list.
+        
+        Returns:
+            A randomly selected value from the list. Returns None if the list is empty.
+        """
+        if not self.list:
+            return None
+        self.value = choice(self.list)
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
+
+class Pxrand:
+    """
+    Exclusive random pattern that avoids immediate repetition.
+    
+    Pxrand generates values by randomly selecting from a list while
+    ensuring that the same value is never selected twice in a row.
+    This is useful for creating varied sequences without consecutive
+    duplicates.
+    
+    Attributes:
+        list: The list of values to select from. Can contain lambdas or callables.
+        last_index: Index of the previously selected value
+        
+    Note:
+        This pattern requires a list with at least 2 elements to
+        function properly and avoid repetition.
+        
+    Example:
+        ```python
+        pattern = Pxrand([1, 2, 3, 4])
+        print(pattern.next())  # Random selection: 1, 2, 3, or 4
+        print(pattern.next())  # Different from previous selection
+        ```
+    """
+    def __init__(self, list: list[float]):
+        """
+        Exclusive random pattern that avoids immediate repetition.
+        
+        Pxrand generates values by randomly selecting from a list while
+        ensuring that the same value is never selected twice in a row.
+        This is useful for creating varied sequences without consecutive
+        duplicates.
+        
+        Attributes:
+            list: The list of values to select from
+            last_index: Index of the previously selected value
+            
+        Note:
+            This pattern requires a list with at least 2 elements to
+            function properly and avoid repetition.
+            
+        Example:
+            ```python
+            pattern = Pxrand([1, 2, 3, 4])
+            print(pattern.next())  # Random selection: 1, 2, 3, or 4
+            print(pattern.next())  # Different from previous selection
+            ```
+        """
+        self.list = list
+        self.last_index = -1
+        self.value = None
+
+    def next(self) -> Optional[float]:
+        """
+        Get a random value that differs from the previous selection.
+        
+        Returns:
+            A randomly selected value from the list that is guaranteed to be different from the previous selection. Returns None if the list is empty.
+        """
+        if not self.list:
+            return None
+        self.last_index = (self.last_index + randint(1, len(self.list) - 1)) % len(self.list)
+        self.value = self.list[self.last_index]
+        if callable(self.value):
+            self.value = self.value()
+        return self.value
+        
+
+class PVoiceAllocator:
+    """
+    Voice allocator for managing polyphonic voice assignments.
+    
+    PVoiceAllocator keeps track of busy and free voices for
+    polyphonic synthesis, allowing for efficient voice allocation
+    and deallocation.
+    
+    Attributes:
+        num_voices: Total number of voices available
+        busy_list: List tracking the status of each voice (-1 for free,
+                   otherwise holds the note number)
+    """
+    def __init__(self, num_voices):
+        """
+        Voice allocator for managing polyphonic voice assignments.
+    
+        PVoiceAllocator keeps track of busy and free voices for polyphonic synthesis, allowing for efficient voice allocation and deallocation.
+        """
+
+        self.num_voices = num_voices
+        self.busy_list = [-1] * num_voices
+        self.counter = 0
+        self.voice_seq = Pseq(list(range(num_voices)))
+
+    def get_free_voice(self, note):
+        """
+        Looks for a free voice and assigns it to the given note. If a free voice is found, it marks it as busy with the note number and returns the voice index. If all voices are busy, it returns -1.
+        """
+        counter = 0
+        found = False
+        while not found and counter < self.num_voices:
+            voice = self.voice_seq.next()
+            if self.busy_list[voice] == -1:
+                self.busy_list[voice] = note
+                found = True
+                return voice
+            counter += 1
+        return -1  # all voices are busy
+
+    def release_voice(self, note):
+        """
+        Looks through the busy_list for the provided note. If the note is found, frees the index and returns a Tuple with (True, index of found item). If the note is not found, returns (False, -1)
+        """
+        counter = 0
+        found = False
+        while not found and counter < self.num_voices:
+            if self.busy_list[counter] == note:
+                self.busy_list[counter] = -1
+                return (True, counter)
+            counter += 1
+        return (False, -1)    
+    
+class PolyPal:
+    """
+    A helper class for communication with a MMMAudio synth that uses the PolyM object.
+
+    Has send_float, send_floats, send_int, and send_ints methods.
+    """
+
+    def __init__(self, mmm_audio, name_space, num_voices):
+        self.name_space = name_space
+        self.seq = Pseq(list(range(num_voices)))
+        self.mmm_audio = mmm_audio
+        self.num = 0
+
+    def send_floats(self, values, trig = True):
+        """
+        Send a list of floats to the synth."""
+
+        if trig:
+            self.num = self.seq.next()
+
+        self.mmm_audio.send_floats(f"{self.name_space}.{self.num}", values)
+
+    def send_float(self, value, trig = True):
+        """
+        Send a single float to the synth."""
+
+        if trig:
+            self.num = self.seq.next()
+
+        self.mmm_audio.send_float(f"{self.name_space}.{self.num}", value)
+
+    def send_int(self, value, trig = True):
+        """
+        Send a single int to the synth."""
+
+        if trig:
+            self.num = self.seq.next()
+
+        self.mmm_audio.send_int(f"{self.name_space}.{self.num}", value)
+
+    def send_ints(self, values, trig = True):
+        """
+        Send a list of ints to the synth."""
+
+        if trig:
+            self.num = self.seq.next()
+
+        self.mmm_audio.send_ints(f"{self.name_space}.{self.num}", values)

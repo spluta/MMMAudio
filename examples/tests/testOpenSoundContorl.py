@@ -1,4 +1,4 @@
-from mmm_python.OSCServer import OSCServer
+from srcpy.OSCServer import OSCServer
 
 def osc_msg_handler(key, *args):
     print(f"Received OSC message: {key} with arguments: {args}")
