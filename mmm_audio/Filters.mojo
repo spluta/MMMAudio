@@ -5,7 +5,7 @@ from bit import next_power_of_two
 from sys import simd_width_of
 from algorithm import vectorize
 
-struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
+struct Lag[num_chans: Int = 1](Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
 
     Parameters:
@@ -32,9 +32,6 @@ struct Lag[num_chans: Int = 1](Representable, Movable, Copyable):
         self.lag = 0
         self.set_lag_time(lag)
         
-    fn __repr__(self) -> String:
-        return String("Lag")
-
     @always_inline
     fn next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the lag processor.
@@ -615,6 +612,14 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
     
     fn next(mut self, sample: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        """Process one sample through the Amplitude tracker.
+
+        Args:
+            sample: The input signal to process.
+
+        Returns:
+            The next sample of the amplitude-tracked output.
+        """
 
         a_val = abs(sample)
         mask = a_val.gt(self.last_val)
@@ -622,49 +627,6 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         self.last_val = self.one_pole.next(a_val, coef)
 
         return self.last_val
-
-# struct Integrator(Representable, Movable, Copyable):
-#     """
-#     Simple one-pole IIR filter that can be configured as lowpass or highpass
-#     """
-#     var last_samp: Float64  # Previous output
-#     var sample_rate: Float64
-    
-#     fn __init__(out self, world: World):
-#         self.last_samp = 0.0
-#         self.sample_rate = world[].sample_rate
-    
-#     fn __repr__(self) -> String:
-#         return String("Integrator")
-    
-#     fn next(mut self, input: Float64, coef: Float64) -> Float64:
-#         """Process one sample through the filter"""
-#         var output = input + coef * self.last_samp
-#         self.last_samp = output
-#         return output
-
-# needs to be tested and updated to SIMD
-# struct OneZero(Representable, Movable, Copyable):
-#     """
-#     Simple one-zero filter
-#     """
-#     var last_samp: Float64  # Previous output
-#     var sample_rate: Float64
-    
-#     fn __init__(out self, world: World):
-#         """Initialize the one-zero filter"""
-
-#         self.last_samp = 0.0
-#         self.sample_rate = world[].sample_rate
-    
-#     fn __repr__(self) -> String:
-#         return String("OnePoleFilter")
-    
-#     fn next(mut self, input: Float64, coef: Float64) -> Float64:
-#         """Process one sample through the filter"""
-#         var output = input - coef * self.last_samp
-#         self.last_samp = output
-#         return output
 
 struct DCTrap[num_chans: Int=1](Movable, Copyable):
     """DC Trap filter.

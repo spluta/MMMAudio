@@ -6,6 +6,8 @@ Right now, it only supports Logitech Extreme 3D Pro and Thrustmaster joysticks, 
 
 from mmm_python import *
 
+from mmm_python.hid_devices import Joystick
+
 if True:
     joystick = Joystick(
         "thrustmaster", 0x044F, 0xB10A

@@ -28,7 +28,7 @@ struct TestEnv(Movable, Copyable):
         # self.env.params.curves[0] = self.messenger.get_val("curve", 1)
         env = self.env.next(trig)  # get the next value of the envelope
 
-        self.world[].print(self.env.rising_bool_detector.state, self.env.is_active, self.env.sweep.phase, self.env.sweep.phase, self.env.trig_point, self.env.last_asr)
+        self.world[].print(self.env.rising_bool_detector.state, self.env.is_active, self.env.sweep.phase, self.env.sweep.phase, self.env.trig_point)
 
         sample = self.synth.next(500)
         return env * sample * self.mul

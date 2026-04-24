@@ -20,11 +20,11 @@ struct TestCombAllpass(Movable, Copyable):
         self.synth = Impulse[1](self.world)
         self.messenger = Messenger(world)
         self.which = 0
-        self.comb = Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
-        self.allpass = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
-        self.comb2 = Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
-        self.allpass2 = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
-        self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay=2.0)
+        self.comb = Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.allpass = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.comb2 = Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.allpass2 = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
         self.delay_time = 0.1
 
     fn next(mut self) -> MFloat[2]:

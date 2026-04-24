@@ -41,6 +41,32 @@ def linlin(value: float, in_min: float, in_max: float, out_min: float, out_max: 
     result = out_min + normalized * (out_max - out_min)
     return clip(result, out_min, out_max)
 
+def dbamp(db: float) -> float:
+    """Converts decibel values to amplitude.
+
+    amplitude = 10^(dB/20).
+
+    Args:
+        db: The decibel values to convert.
+
+    Returns:
+        The corresponding amplitude values.
+    """
+    return 10.0 ** (db / 20.0)
+
+def ampdb(amp: float) -> float:
+    """Converts amplitude values to decibels.
+
+    dB = 20 * log10(amplitude).
+    
+    Args:
+        amp: The amplitude values to convert.
+
+    Returns:
+        The corresponding decibel values.
+    """
+    return 20.0 * math.log10(amp)
+
 def linexp(value: float, in_min: float, in_max: float, out_min: float, out_max: float) -> float:
     """
     Linear-to-exponential transform
@@ -305,7 +331,7 @@ def ampdb(amp: float) -> float:
     """
     if amp <= 0:
         return -float('inf')  # Return negative infinity for zero or negative amplitude
-    return 20.0 * np.log10(amp)
+    return 20.0 * math.log10(amp)
 
 def dbamp(db: float) -> float:
     """Converts decibel values to amplitude.

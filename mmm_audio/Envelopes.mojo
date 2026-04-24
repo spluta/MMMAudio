@@ -258,61 +258,78 @@ struct Compressor[num_chans: Int](Movable, Copyable):
     """Compressor from Nathan Ho's Negative Compression web post.
     
     Params:
-        num_chans: Number of channels to process.
+        num_chans: Number of channels of input/output.
     """
 
     var amp: Amplitude[Self.num_chans]
     var lag: LagUD[1]
     var denom: Float64
-    var threshold: MFloat[1]
-    var ratio: MFloat[1]
-    var attack: MFloat[1]
-    var release: MFloat[1]
     var sidechain: MFloat[1]
+    var changed: Changed[MFloat[1]]
+    var changed2: Changed[MFloat[1]]
 
-    fn __init__(out self, world: World, threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1):
+    fn __init__(out self, world: World):
         """Initialize the Compressor struct.
 
         Args:
             world: Pointer to the MMMWorld.
-            threshold: Compression threshold in dB.
-            ratio: Compression ratio (e.g., 4.0 for 4:1 compression).
-            attack: Attack time in seconds.
-            release: Release time in seconds.
         """
         self.amp = Amplitude[Self.num_chans](world)
         self.lag = LagUD[1](world)
         self.denom = sqrt(Float64(Self.num_chans))
-        self.threshold = threshold
-        self.ratio = ratio
-        self.attack = attack
-        self.release = release
-        self.lag.set_lag_times(attack, release)
-        self.amp.set_params(attack, release)
         self.sidechain = 1.0
 
-    fn set_params(mut self, threshold: MFloat[1], ratio: MFloat[1], attack: MFloat[1], release: MFloat[1]):
-        """Adjust compressor parameters on the fly."""
-        self.threshold = threshold
-        self.ratio = ratio
-        self.attack = attack
-        self.release = release
-        self.lag.set_lag_times(attack, release)
+        self.changed = Changed(0.01)
+        self.changed2 = Changed(0.1)
+
+        self.lag.set_lag_times(0.01, 0.1)
         self.amp.set_params(0.001, 0.01)
     
-    fn next(mut self, input: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-        """Returns the compressed signal, which is the original signal multiplied by the negative compression gain."""
+    fn next(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[Self.num_chans]:
+        """Returns the compressed signal, which is the original signal multiplied by the negative compression gain.
+        
+        Args:
+            input: MFloat[Self.num_chans] audio signal to be compressed.
+            threshold: MFloat[1] threshold in dB above which compression occurs.
+            ratio: MFloat[1] compression ratio. For example, a ratio of 4.0 means that for every 4 dB the input signal exceeds the threshold, the output will only exceed the threshold by 1 dB.
+            attack: MFloat[1] attack time in seconds for the compressor's envelope follower.
+            release: MFloat[1] release time in seconds for the compressor's envelope follower.
+            knee_width: MFloat[1] width of the knee in dB. A value of 0 means a hard knee, while higher values create a softer knee N/2 decibels around the threshold.
+        """
 
-        return (self.next_neg_comp(input) * input)
+        return (self.next_neg_comp(input, threshold, ratio, attack, release, knee_width) * input)
 
-    fn next_neg_comp(mut self, input: MFloat[Self.num_chans]) -> MFloat[1]:
-        """Returns the negative compression gain for the input signal, which can be multiplied with the original signal or used as a sidechain."""
+    fn next_neg_comp(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[1]:
+        """Returns the negative compression gain for the input signal, which can be multiplied with the original signal or used as a sidechain.
+        
+        Args:
+            input: MFloat[Self.num_chans] audio signal to be compressed.
+            threshold: MFloat[1] threshold in dB above which compression occurs.
+            ratio: MFloat[1] compression ratio. For example, a ratio of 4.0 means that for every 4 dB the input signal exceeds the threshold, the output will only exceed the threshold by 1 dB.
+            attack: MFloat[1] attack time in seconds for the compressor's envelope follower.
+            release: MFloat[1] release time in seconds for the compressor's envelope follower.
+            knee_width: MFloat[1] width of the knee in dB. A value of 0 means a hard knee, while higher values create a softer knee N/2 decibels around the threshold.
+        """
+
+        ratio2 = max(ratio, 1.0)  # Ensure ratio is at least 1:1
+
+        c1 = self.changed.next(attack)
+        c2 = self.changed2.next(release)
+        if c1 or c2:
+            self.lag.set_lag_times(release, attack) # backwards because gain reduction is 1 when there is no gain reduction so the attack goes down and the release goes up
 
         amp = self.amp.next(input).reduce_add() / self.denom
-        amp = ampdb(max(amp, dbamp(-100.0)))  # Protect against log(0)
-        val = amp - self.threshold
+        amp_db = ampdb(max(amp, dbamp(-100.0))) 
+        val = amp_db - threshold
 
-        self.sidechain = dbamp(self.lag.next(max(val, 0.0) * (1.0/self.ratio - 1)))
+        if val <= -knee_width / 2:
+            gain_reduction = 0.0
+        elif val >= knee_width / 2:
+            gain_reduction = val * (1.0 / ratio2 - 1)
+        else:
+            
+            gain_reduction = (1.0 / ratio2 - 1) * (val + knee_width / 2) ** 2 / (2 * knee_width)
+        self.sidechain = dbamp(self.lag.next(gain_reduction))
 
         return self.sidechain
     
