@@ -1,0 +1,833 @@
+{
+  "decl": {
+    "aliases": [
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "MFloat",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "",
+            "kind": "parameter",
+            "name": "N",
+            "passingKind": "pos_or_kw",
+            "type": "Int"
+          }
+        ],
+        "path": "/mmm_audio/MMMWorld_Module/#mfloat",
+        "signature": "comptime MFloat[N: Int = 1]",
+        "summary": "",
+        "type": "AnyStruct[SIMD[DType.float64, N]]",
+        "value": "SIMD[DType.float64, N]"
+      },
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "MInt",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "",
+            "kind": "parameter",
+            "name": "N",
+            "passingKind": "pos_or_kw",
+            "type": "Int"
+          }
+        ],
+        "path": "/mmm_audio/MMMWorld_Module/#mint",
+        "signature": "comptime MInt[N: Int = 1]",
+        "summary": "",
+        "type": "AnyStruct[SIMD[DType.index, N]]",
+        "value": "SIMD[DType.index, N]"
+      },
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "MBool",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "",
+            "kind": "parameter",
+            "name": "N",
+            "passingKind": "pos_or_kw",
+            "type": "Int"
+          }
+        ],
+        "path": "/mmm_audio/MMMWorld_Module/#mbool",
+        "signature": "comptime MBool[N: Int = 1]",
+        "summary": "",
+        "type": "AnyStruct[SIMD[DType.bool, N]]",
+        "value": "SIMD[DType.bool, N]"
+      },
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "World",
+        "parameters": [],
+        "path": "/mmm_audio/MMMWorld_Module/#world",
+        "signature": "comptime World",
+        "summary": "",
+        "value": "UnsafePointer[MMMWorld, MutExternalOrigin]"
+      }
+    ],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "MMMWorld_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "In pretty much all usage, don't edit this struct.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "block_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "osc_buffers",
+            "summary": "",
+            "type": "UnsafePointer[OscBuffers, MutExternalOrigin]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "windows",
+            "summary": "",
+            "type": "UnsafePointer[Windows, MutExternalOrigin]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "messenger_manager",
+            "summary": "",
+            "type": "UnsafePointer[MessengerManager, MutExternalOrigin]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_in_chans",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_out_chans",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sound_in",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "screen_dims",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "os_multiplier",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mouse_x",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mouse_y",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "block_state",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "top_of_block",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sinc_interpolator",
+            "summary": "",
+            "type": "SincInterpolator"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_print_time",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "print_flag",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_print_flag",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "print_counter",
+            "summary": "",
+            "type": "UInt16"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "default": "48000",
+                    "description": "The audio sample rate.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "64",
+                    "description": "The audio block size.",
+                    "kind": "argument",
+                    "name": "block_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2",
+                    "description": "The number of input channels.",
+                    "kind": "argument",
+                    "name": "num_in_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2",
+                    "description": "The number of output channels.",
+                    "kind": "argument",
+                    "name": "num_out_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "UnsafePointer[True, OscBuffers, MutExternalOrigin, AddressSpace.GENERIC]()",
+                    "description": "A pointer to the OscBuffers struct, which holds precomputed oscillator waveforms.",
+                    "kind": "argument",
+                    "name": "osc_buffers_ptr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/unsafe_pointer/UnsafePointer",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "UnsafePointer[True, Windows, MutExternalOrigin, AddressSpace.GENERIC]()",
+                    "description": "A pointer to the Windows struct, which holds precomputed window functions.",
+                    "kind": "argument",
+                    "name": "windows_ptr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/unsafe_pointer/UnsafePointer",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "UnsafePointer[True, MessengerManager, MutExternalOrigin, AddressSpace.GENERIC]()",
+                    "description": "A pointer to the MessengerManager struct.",
+                    "kind": "argument",
+                    "name": "messenger_manager_ptr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/unsafe_pointer/UnsafePointer",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sample_rate: Float64 = 48000, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[OscBuffers, MutExternalOrigin] = UnsafePointer[True, OscBuffers, MutExternalOrigin, AddressSpace.GENERIC](), windows_ptr: UnsafePointer[Windows, MutExternalOrigin] = UnsafePointer[True, Windows, MutExternalOrigin, AddressSpace.GENERIC](), messenger_manager_ptr: UnsafePointer[MessengerManager, MutExternalOrigin] = UnsafePointer[True, MessengerManager, MutExternalOrigin, AddressSpace.GENERIC]())",
+                "summary": "Initializes the MMMWorld struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_channel_count",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The number of input channels.",
+                    "kind": "argument",
+                    "name": "num_in_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The number of output channels.",
+                    "kind": "argument",
+                    "name": "num_out_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_channel_count",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_channel_count(mut self, num_in_chans: Int, num_out_chans: Int)",
+                "summary": "Sets the number of input and output channels."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "print",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Values to print. Can be of any type that implements Mojo's `Writable` trait. This is a \"variadic\" argument meaning that the user can pass in any number of values (not as a list, just as comma separated arguments).",
+                    "kind": "argument",
+                    "name": "*values",
+                    "passingKind": "pos_or_kw",
+                    "type": "*Ts"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "10",
+                    "description": "Number of audio blocks between prints. Must be specified using the keyword argument.",
+                    "kind": "argument",
+                    "name": "n_blocks",
+                    "passingKind": "kw",
+                    "path": "/std/builtin/simd/#uint16",
+                    "type": "UInt16"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "\" \"",
+                    "description": "Separator string between values. Must be specified using the keyword argument.",
+                    "kind": "argument",
+                    "name": "sep",
+                    "passingKind": "kw",
+                    "path": "/std/collections/string/string_slice/StringSlice",
+                    "type": "StringSlice"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "\"\\n\"",
+                    "description": "End string to print after all values. Must be specified using the keyword argument.",
+                    "kind": "argument",
+                    "name": "end",
+                    "passingKind": "kw",
+                    "path": "/std/collections/string/string_slice/StringSlice",
+                    "type": "StringSlice"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "print",
+                "parameters": [
+                  {
+                    "description": "Types of the values to print. Can be of any type that implements Mojo's `Writable` trait. This parameter is inferred by the values passed to the function. The user doesn't need to specify it.",
+                    "kind": "parameter",
+                    "name": "*Ts",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/format/Writable",
+                    "type": "Writable"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "print[*Ts: Writable](self, *values: *Ts, *, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = \" \", end: StringSlice[StaticConstantOrigin] = \"\\n\")",
+                "summary": "Print values to the console at the top of the audio block every n_blocks."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "MMMWorld",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct MMMWorld",
+        "summary": "The MMMWorld struct holds global audio processing parameters and state."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "none",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#none",
+            "signature": "comptime none",
+            "summary": "",
+            "value": "0"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "linear",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#linear",
+            "signature": "comptime linear",
+            "summary": "",
+            "value": "1"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "quad",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#quad",
+            "signature": "comptime quad",
+            "summary": "",
+            "value": "2"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "cubic",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#cubic",
+            "signature": "comptime cubic",
+            "summary": "",
+            "value": "3"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "lagrange4",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#lagrange4",
+            "signature": "comptime lagrange4",
+            "summary": "",
+            "value": "4"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "sinc",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#sinc",
+            "signature": "comptime sinc",
+            "summary": "",
+            "value": "5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Specify an interpolation type by typing it explicitly.\nFor example, to specify linear interpolation, one could use the number `1`, \nbut it is clearer to type `Interp.linear`.\n\n| Interpolation Type | Value | Notes                                        |\n| ------------------ | ----- | -------------------------------------------- |\n| Interp.none        | 0     |                                              |\n| Interp.linear      | 1     |                                              |\n| Interp.quad        | 2     |                                              |\n| Interp.cubic       | 3     |                                              |\n| Interp.lagrange4   | 4     |                                              |\n| Interp.sinc        | 5     | Should only be used with oscillators         |",
+        "fields": [],
+        "functions": [],
+        "kind": "struct",
+        "name": "Interp",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "signature": "struct Interp",
+        "summary": "Interpolation types for use in various UGens."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "rect",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#rect",
+            "signature": "comptime rect",
+            "summary": "",
+            "value": "0"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "hann",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#hann",
+            "signature": "comptime hann",
+            "summary": "",
+            "value": "1"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "hamming",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#hamming",
+            "signature": "comptime hamming",
+            "summary": "",
+            "value": "2"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "blackman",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#blackman",
+            "signature": "comptime blackman",
+            "summary": "",
+            "value": "3"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "kaiser",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#kaiser",
+            "signature": "comptime kaiser",
+            "summary": "",
+            "value": "4"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "sine",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#sine",
+            "signature": "comptime sine",
+            "summary": "",
+            "value": "5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "tri",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#tri",
+            "signature": "comptime tri",
+            "summary": "",
+            "value": "6"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "pan2",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#pan2",
+            "signature": "comptime pan2",
+            "summary": "",
+            "value": "7"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Specify a window type by typing it explicitly.\nFor example, to specify a hann window, one could use the number `1`, \nbut it is clearer to type `WindowType.hann`.\n\n| Window Type         | Value |\n| ------------------- | ----- |\n| WindowType.rect     | 0     |\n| WindowType.hann     | 1     |\n| WindowType.hamming  | 2     |\n| WindowType.blackman | 3     |\n| WindowType.kaiser   | 4     |\n| WindowType.sine     | 5     |\n| WindowType.tri      | 6     |\n| WindowType.pan2     | 7     |",
+        "fields": [],
+        "functions": [],
+        "kind": "struct",
+        "name": "WindowType",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "signature": "struct WindowType",
+        "summary": "Window types for predefined windows found in world[].windows."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "sine",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#sine",
+            "signature": "comptime sine",
+            "summary": "",
+            "value": "0"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "triangle",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#triangle",
+            "signature": "comptime triangle",
+            "summary": "",
+            "value": "1"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "saw",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#saw",
+            "signature": "comptime saw",
+            "summary": "",
+            "value": "2"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "square",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#square",
+            "signature": "comptime square",
+            "summary": "",
+            "value": "3"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMWorld_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Specify an oscillator type by typing it explicitly.\nFor example, to specify a sine, one could use the number `0`, \nbut it is clearer to type `OscType.sine`.\n\n| Oscillator Type              | Value |\n| ---------------------------- | ----- |\n| OscType.sine                 | 0     |\n| OscType.triangle             | 1     |\n| OscType.saw                  | 2     |\n| OscType.square               | 3     |",
+        "fields": [],
+        "functions": [],
+        "kind": "struct",
+        "name": "OscType",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "signature": "struct OscType",
+        "summary": "Oscillator types for selecting waveform types."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,3179 @@
+{
+  "decl": {
+    "aliases": [
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "OscBuffersSize",
+        "parameters": [],
+        "path": "/mmm_audio/Oscillators/#oscbufferssize",
+        "signature": "comptime OscBuffersSize",
+        "summary": "",
+        "value": "16384"
+      },
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "OscBuffersMask",
+        "parameters": [],
+        "path": "/mmm_audio/Oscillators/#oscbuffersmask",
+        "signature": "comptime OscBuffersMask",
+        "summary": "",
+        "value": "16383"
+      }
+    ],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Oscillators",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "An oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio.\n\nThe Phasor can act as a simple phasor with the .next() function. \n\nHowever, it can also be an impulse with next_impulse() and a boolean impulse with next_bool().\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phase",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq_mul",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector_impulse",
+            "summary": "",
+            "type": "RisingBoolDetector[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Phasor",
+                    "type": "Phasor"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the phasor in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator.",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](True)",
+                    "description": "Trigger signal to reset the phase when switching from False to True.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the phasor output.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: Phasor[num_chans, os_index], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](True)) -> SIMD[DType.float64, num_chans]",
+                "summary": "Creates the next sample of the phasor output based on the inputs."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_bool",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the phasor in Hz (default is 100.0).",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](True)",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is all True, which resets the phasor on the first sample).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_bool",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A boolean SIMD indicating True when the impulse occurs.",
+                  "type": "SIMD"
+                },
+                "signature": "next_bool(mut self, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](True)) -> SIMD[DType.bool, num_chans]",
+                "summary": "Increments the phasor and returns a boolean impulse when the phase wraps around from 1.0 to 0.0. This only works with possive frequencies and phase offsets between 0.0 and 1.0."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_impulse",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the phasor in Hz (default is 100.0).",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](True)",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is all True, which resets the phasor on the first sample).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_impulse",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next impulse sample as a Float64. 1.0 when the impulse occurs, 0.0 otherwise.",
+                  "type": "SIMD"
+                },
+                "signature": "next_impulse(mut self, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](True)) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generates an impulse waveform where the output is 1.0 for one sample when the phase wraps around from 1.0 to 0.0, and 0.0 otherwise. This only works with possive frequencies and phase offsets between 0.0 and 1.0."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Phasor",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "Oversampling index (0 = no oversampling, 1 = 2x, up to 4 = 16x). Phasor does not downsample its output, so oversampling is only useful when used as part of other oversampled oscillators.",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Phasor[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "Phasor Oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "An oscillator that outputs a 1.0 or True for one sample when the phase wraps around from 1.0 to 0.0.\n\nImpulse is essentially a wrapper around the Phasor oscillator that provides impulse-specific methods.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phasor",
+            "summary": "",
+            "type": "Phasor[num_chans, os_index]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_bool",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the phasor in Hz (default is 100.0).",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](True)",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is all True, which resets the phasor on the first sample).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_bool",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A boolean SIMD indicating True when the impulse occurs.",
+                  "type": "SIMD"
+                },
+                "signature": "next_bool(mut self, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](True)) -> SIMD[DType.bool, num_chans]",
+                "summary": "Increments the phasor and returns a boolean impulse when the phase wraps around from 1.0 to 0.0."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the phasor in Hz (default is 100.0).",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](True)",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is all True, which resets the phasor on the first sample).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next impulse sample as a Float64. 1.0 when the impulse occurs, 0.0 otherwise.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](True)) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generates an impulse waveform where the output is 1.0 for one sample when the phase wraps around from 1.0 to 0.0, and 0.0 otherwise."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Impulse",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Impulse[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "Impulse Oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "A wavetable oscillator capable of all standard waveforms and also able to load custom wavetables. Capable of linear, cubic, quadratic, lagrange, or sinc interpolation. Also capable of [Oversampling](Oversampling.md).\n\n- Pure tones can be generated without oversampling or sinc interpolation.\n- When doing extreme modulation, best practice is to use sinc interpolation and an oversampling index of 1 (2x).\n- Try all the combinations of interpolation and oversampling to find the best tradeoff between quality and CPU usage for your application.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phasor",
+            "summary": "",
+            "type": "Phasor[num_chans, os_index]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, (2 ** os_index)]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_phase",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Osc",
+                    "type": "Osc"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the oscillator in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "OscType.sine",
+                    "description": "Type of waveform. See the OscType struct for options (default is OscType.sine). Best if provided as OscType.sine, OscType.triangle, etc.",
+                    "kind": "argument",
+                    "name": "osc_type",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the oscillator output.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: Osc[num_chans, interp, os_index], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False, osc_type: SIMD[DType.index, num_chans] = OscType.sine) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next oscillator sample on a single waveform type. All inputs are SIMD types except trig, which is a scalar. This means that an oscillator can have num_chans different instances, each with its own frequency, phase offset, and waveform type, but they will all share the same trigger signal."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_all_basic_waveforms",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "last_phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_all_basic_waveforms",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next_all_basic_waveforms(mut self, freq: Float64 = 100, phase: Float64 = 0, last_phase: Float64 = 0, trig: Bool = False) -> SIMD[DType.float64, 4]",
+                "summary": "Returns the next sample of all basic waveforms (sine, triangle, saw, square) in a SIMD vector, where each waveform is in a different lane."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_basic_waveforms",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the oscillator in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "List[Int](OscType.sine, OscType.triangle, OscType.saw, OscType.square, Tuple[]())",
+                    "description": "List of waveform types ([OscType](MMMWorld.md/#struct-osctype)) to interpolate between (default is [OscType.sine,OscType.triangle,OscType.saw,OscType.square].",
+                    "kind": "argument",
+                    "name": "osc_types",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first waveform in the osc_types list, 1.0 corresponds to the last waveform in the osc_types list, and values in between interpolate linearly between all waveforms in the list.",
+                    "kind": "argument",
+                    "name": "osc_frac",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_basic_waveforms",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the oscillator output.",
+                  "type": "SIMD"
+                },
+                "signature": "next_basic_waveforms(mut self, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False, osc_types: List[Int] = List[Int](OscType.sine, OscType.triangle, OscType.saw, OscType.square, Tuple[]()), osc_frac: SIMD[DType.float64, num_chans] = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Variable Wavetable Oscillator using built-in waveforms. Generates the next oscillator sample on a variable  waveform where the output is interpolated between  different waveform types. All inputs are SIMD types except trig and osc_types, which are scalar. This  means that an oscillator can have num_chans different instances, each with its own frequency, phase offset,  and waveform type, but they will all share the same trigger signal and the same list of waveform types  to interpolate between."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_vwt",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Osc",
+                    "type": "Osc"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "Reference to a Buffer containing the waveforms to interpolate between.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/Buffer",
+                    "type": "Buffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the oscillator in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0). All waveforms will reset together.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first channel in the input buffer, 1.0 corresponds to the last channel in the input buffer, and values in between interpolate linearly between all channels in the buffer.",
+                    "kind": "argument",
+                    "name": "osc_frac",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_vwt",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next_vwt(mut self: Osc[num_chans, interp, os_index], ref buffer: Buffer, freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False, osc_frac: SIMD[DType.float64, num_chans] = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Variable Wavetable Oscillator that interpolates over a loaded Buffer. Generates the next oscillator sample on a variable waveform where the output is interpolated between  different different channels of a provided Buffer."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Osc",
+                    "type": "Osc"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "Reference to a Buffer containing the waveforms to interpolate between.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the oscillator in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0). All waveforms will reset together.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Fractional index for wavetable interpolation. Values are between 0.0 and 1.0. 0.0 corresponds to the first channel in the input buffer, 1.0 corresponds to the last channel in the input buffer, and values in between interpolate linearly between all channels in the buffer.",
+                    "kind": "argument",
+                    "name": "osc_frac",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_vwt",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "simd_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next_vwt[simd_chans: Int](mut self: Osc[num_chans, interp, os_index], ref buffer: SIMDBuffer[simd_chans], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False, osc_frac: SIMD[DType.float64, num_chans] = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Variable Wavetable Oscillator that interpolates over a loaded SIMDBuffer. Generates the next oscillator sample on a variable waveform where the output is interpolated between  different different channels of a provided Buffer. This should only be used with low channel counts (maybe up to 4 or 8 channels depending on the CPU)."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Osc",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "Interp.linear",
+            "description": "Interpolation method. See [Interp](MMMWorld.md/#struct-interp) struct for options (default is Interp.linear).",
+            "kind": "parameter",
+            "name": "interp",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "[Oversampling](Oversampling.md) index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.; default is 0).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0]",
+        "summary": "Wavetable Oscillator Core."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This is a convenience struct as internally it uses [Osc](Oscillators.md/#struct-osc) and indicates `osc_type = OscType.sine`.\n\nArgs:\n    world: Pointer to the MMMWorld instance.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "osc",
+            "summary": "",
+            "type": "Osc[num_chans, os_index=os_index]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/SinOsc",
+                    "type": "SinOsc"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "interp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: SinOsc[num_chans, os_index], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False, interp: Int = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SinOsc",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "Oversampling index (0 = no oversampling, 1 = 2x, etc.; default is 0).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct SinOsc[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "A sine wave oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to comptimeing.\n\nOutputs values between 0.0 and 1.0.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phasor",
+            "summary": "",
+            "type": "Phasor[num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/LFSaw",
+                    "type": "LFSaw"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the sawtooth wave in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: LFSaw[num_chans], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next sawtooth wave sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "LFSaw",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct LFSaw[num_chans: Int = 1]",
+        "summary": "A low-frequency sawtooth oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Creates a non-band-limited square wave. Outputs values of -1.0 or 1.0. Useful for modulation, but should be avoided for audio-rate synthesis due to comptimeing.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phasor",
+            "summary": "",
+            "type": "Phasor[num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/LFSquare",
+                    "type": "LFSquare"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the square wave in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator (default is 0.0).",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is 0.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: LFSquare[num_chans], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next square wave sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "LFSquare",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct LFSquare[num_chans: Int = 1]",
+        "summary": "A low-frequency square wave oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This oscillator generates a triangle wave at audio rate. It is useful for \nmodulation, but should be avoided for audio-rate synthesis due to comptimeing.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phasor",
+            "summary": "",
+            "type": "Phasor[num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/LFTri",
+                    "type": "LFTri"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the triangle wave in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Offsets the phase of the oscillator.",
+                    "kind": "argument",
+                    "name": "phase_offset",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: LFTri[num_chans], freq: SIMD[DType.float64, num_chans] = 100, phase_offset: SIMD[DType.float64, num_chans] = 0, trig: Bool = False) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next triangle wave sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "LFTri",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels (default is 1).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct LFTri[num_chans: Int = 1]",
+        "summary": "A low-frequency triangle wave oscillator."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Dust has a Phasor as its core, and the frequency of the Phasor is randomly changed each time an impulse is generated. This allows the Dust to be used in multiple ways. It can be used as a simple random impulse generator, or the user can use the get_phase() method to get the current phase of the internal Phasor and use that phase to drive other oscillators or processes. The user can also set the phase of the internal Phasor using the set_phase() method, allowing for more complex interactions.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "impulse",
+            "summary": "",
+            "type": "Phasor[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Dust",
+                    "type": "Dust"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Lower bound for the random frequency range.",
+                    "kind": "argument",
+                    "name": "low",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2000",
+                    "description": "Upper bound for the random frequency range.",
+                    "kind": "argument",
+                    "name": "high",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](False)",
+                    "description": "Trigger signal to reset the phase when switching from False to True.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next dust noise sample as a Float64. Will be 1.0 when an impulse occurs, 0.0 otherwise.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: Dust[num_chans], low: SIMD[DType.float64, num_chans] = 100, high: SIMD[DType.float64, num_chans] = 2000, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](False)) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next dust noise sample."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_bool",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/Dust",
+                    "type": "Dust"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Lower bound for the random frequency range.",
+                    "kind": "argument",
+                    "name": "low",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2000",
+                    "description": "Upper bound for the random frequency range.",
+                    "kind": "argument",
+                    "name": "high",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "SIMD[DType.bool, num_chans](False)",
+                    "description": "Trigger signal to reset the phase when switching from False to True.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_bool",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next dust noise sample as a boolean SIMD. Will be True when an impulse occurs, False otherwise.",
+                  "type": "SIMD"
+                },
+                "signature": "next_bool(mut self: Dust[num_chans], low: SIMD[DType.float64, num_chans] = 100, high: SIMD[DType.float64, num_chans] = 2000, trig: SIMD[DType.bool, num_chans] = SIMD[DType.bool, num_chans](False)) -> SIMD[DType.bool, num_chans]",
+                "summary": "Generate the next dust noise sample as a boolean impulse."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_phase",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_phase",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "get_phase(self) -> SIMD[DType.float64, num_chans]",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_phase",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phase",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_phase",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_phase(mut self, phase: SIMD[DType.float64, num_chans])",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Dust",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Dust[num_chans: Int = 1]",
+        "summary": "A dust noise oscillator that generates random impulses at random intervals."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "impulse",
+            "summary": "",
+            "type": "Phasor[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "history",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "history_index",
+            "summary": "",
+            "type": "List[Int8]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Oscillators/LFNoise",
+                    "type": "LFNoise"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the noise in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample as a Float64.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self: LFNoise[num_chans, interp], freq: SIMD[DType.float64, num_chans] = 100) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next low-frequency noise sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "LFNoise",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "Interp.cubic",
+            "description": "Interpolation method. Options are Interp.none (stepped), Interp.linear, Interp.cubic.",
+            "kind": "parameter",
+            "name": "interp",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic]",
+        "summary": "Low-frequency interpolating noise generator generating numbers between -1.0 and 1.0. With stepped (none), linear, or cubic interpolation."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Oscillators/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phase",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq_mul",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "Frequency of the sweep in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset the phase when switching from False to True (default is all False).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample as a Float64.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, freq: SIMD[DType.float64, num_chans] = 100, trig: SIMD[DType.bool, num_chans] = False) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next sweep sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Sweep",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Sweep[num_chans: Int = 1]",
+        "summary": "A phase accumulator."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

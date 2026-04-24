@@ -1,0 +1,5068 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Analysis",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "pitch",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "confidence",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fft",
+            "summary": "",
+            "type": "RealFFT"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fft_input",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fft_power_mags",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fft_zero_phases",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "acf_real",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "yin_buffer",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "yin_values",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "window_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "The size of the analysis window in samples.",
+                    "kind": "argument",
+                    "name": "window_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider for pitch detection.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2.0E+4",
+                    "description": "The maximum frequency to consider for pitch detection.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "An initialized YIN struct.",
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, window_size: Int = 1024, min_freq: Float64 = 20, max_freq: Float64 = 2.0E+4)",
+                "summary": "Initialize the YIN pitch detector."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current pitch and confidence as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_window",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input audio frame of size `window_size`. This List gets passed from [BufferedProcess](BufferedProcess.md).",
+                    "kind": "argument",
+                    "name": "frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_window",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_window(mut self, mut frame: List[Float64])",
+                "summary": "Compute the YIN pitch estimate for the given frame of audio samples."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "YIN",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "BufferedProcessable",
+            "path": "/mmm_audio/BufferedProcess_Module/BufferedProcessable"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct YIN",
+        "summary": "Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version)."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Based on the [Peeters (2003)](http://recherche.ircam.fr/anasyn/peeters/ARTICLES/Peeters_2003_cuidadoaudiofeatures.pdf)",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "centroid",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "An initialized SpectralCentroid struct.",
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Centroid analyzer. Args:     sr: The sample rate from the MMMWorld.     min_freq: The minimum frequency to consider when computing the spectral centroid.     max_freq: The maximum frequency to consider when computing the spectral centroid.     power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the centroid."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral centroid value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input phases as a List of Float64.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is to be used by FFTProcess if SpectralCentroid is passed as the \"process\".\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral centroid for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The sample rate of the audio signal.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider when computing the spectral centroid.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider when computing the spectral centroid.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the centroid.",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This static method is useful when there is an FFT already computed, perhaps as \npart of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "Float64. The spectral centroid value.",
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False) -> Float64",
+                "summary": "Compute the spectral centroid for the given magnitudes of an FFT frame."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralCentroid",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralCentroid",
+        "summary": "Spectral Centroid analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "spread",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Spread analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral spread value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral spread for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralSpread",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralSpread",
+        "summary": "Spectral Spread analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "skewness",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Skewness analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral skewness value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral skewness for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralSkewness",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralSkewness",
+        "summary": "Spectral Skewness analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "kurtosis",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Kurtosis analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral kurtosis value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral kurtosis for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralKurtosis",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralKurtosis",
+        "summary": "Spectral Kurtosis analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rolloff",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rolloff_target",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "95",
+                    "description": "Percentage of spectral energy for rolloff.",
+                    "kind": "argument",
+                    "name": "rolloff_target",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Rolloff analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral rolloff value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral rolloff for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "95",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "rolloff_target",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralRolloff",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralRolloff",
+        "summary": "Spectral Rolloff analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "flatness",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Flatness analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral flatness value (dB) as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral flatness for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralFlatness",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralFlatness",
+        "summary": "Spectral Flatness analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "crest",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_freq",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power_mag",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency to consider.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "The maximum frequency to consider.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use log-frequency (MIDI) bins.",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to use power magnitudes (mags^2).",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False)",
+                "summary": "Initialize the Spectral Crest analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral crest value (dB) as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral crest for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20000",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "log_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "power_mag",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralCrest",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralCrest",
+        "summary": "Spectral Crest analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rms",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the RMS analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current RMS value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_window",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input audio frame of samples. This List gets passed from [BufferedProcess](BufferedProcess.md/#struct-bufferedprocess).",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is to be used with a [BufferedProcess](BufferedProcess.md/#struct-bufferedprocess).\n\nThe computed RMS value is stored in self.rms.",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_window",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_window(mut self, mut input: List[Float64])",
+                "summary": "Compute the RMS for the given window of audio samples."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_window",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "The input audio frame of samples.",
+                    "kind": "argument",
+                    "name": "frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This static method is useful when there is an audio frame already available, perhaps\nas part of a custom struct that implements the [BufferedProcessable](BufferedProcess.md/#trait-bufferedprocessable) trait.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "from_window",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "Float64. The computed RMS value.",
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_window(mut frame: List[Float64]) -> Float64",
+                "summary": "Compute the RMS for the given window of audio samples."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "RMS",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "BufferedProcessable",
+            "path": "/mmm_audio/BufferedProcess_Module/BufferedProcessable"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct RMS",
+        "summary": "Root Mean Square (RMS) amplitude analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This implementation follows the approach used in the [Librosa](https://librosa.org/) library. ",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "weights",
+            "summary": "",
+            "type": "List[List[Float64]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "bands",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_bands",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fft_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "power",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate from the MMMWorld.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "40",
+                    "description": "The number of mel bands to compute.",
+                    "kind": "argument",
+                    "name": "num_bands",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency (in Hz) to consider when computing the mel bands.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2.0E+4",
+                    "description": "The maximum frequency (in Hz) to consider when computing the mel bands.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "The size of the FFT being used to compute the mel bands.",
+                    "kind": "argument",
+                    "name": "fft_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2",
+                    "description": "Exponent applied to magnitudes before mel filtering (librosa default is 2.0 for power).",
+                    "kind": "argument",
+                    "name": "power",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "An initialized MelBands struct.",
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, num_bands: Int = 40, min_freq: Float64 = 20, max_freq: Float64 = 2.0E+4, fft_size: Int = 1024, power: Float64 = 2)",
+                "summary": "Initialize the Mel Bands analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current mel band values as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input phases as a List of Float64.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is to be used by FFTProcess if MelBands is passed as the \"process\".\n\nNothing is returned from this function, but the computed mel band values are stored in self.bands.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the mel bands for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is useful when there is an FFT already computed, perhaps as \npart of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "from_mags(mut self, ref mags: List[Float64])",
+                "summary": "Compute the mel bands for a given list of magnitudes."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "mel_frequencies",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "default": "128",
+                    "description": "The number of mel bands to generate.",
+                    "kind": "argument",
+                    "name": "n_mels",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The lowest frequency (in Hz).",
+                    "kind": "argument",
+                    "name": "fmin",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2.0E+4",
+                    "description": "The highest frequency (in Hz).",
+                    "kind": "argument",
+                    "name": "fmax",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.mel_frequencies.html).  For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "mel_frequencies",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A List of Float64 representing the center frequencies of each mel band.",
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "mel_frequencies(n_mels: Int = 128, fmin: Float64 = 0, fmax: Float64 = 2.0E+4) -> List[Float64]",
+                "summary": "Compute an array of acoustic frequencies tuned to the mel scale."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hz_to_mel",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The frequencies in Hz to convert.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.hz_to_mel.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "hz_to_mel",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The corresponding mel frequencies.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "hz_to_mel[num_chans: Int = 1](freq: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Convert Hz to Mels."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "mel_to_hz",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "mel",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.mel_to_hz.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "mel_to_hz",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "mel_to_hz[num_chans: Int = 1](mel: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Convert mel bin numbers to frequencies."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "MelBands",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct MelBands",
+        "summary": "Mel Bands analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mel_bands",
+            "summary": "",
+            "type": "MelBands"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "db_bands",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "dct",
+            "summary": "",
+            "type": "DCT"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "coeffs",
+            "summary": "",
+            "type": "List[Float64]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate for the mel band computation.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "13",
+                    "description": "The number of MFCC coefficients to compute (including the 0th coefficient).",
+                    "kind": "argument",
+                    "name": "num_coeffs",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "40",
+                    "description": "The number of mel bands to use when computing the MFCCs.",
+                    "kind": "argument",
+                    "name": "num_bands",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "20",
+                    "description": "The minimum frequency (in Hz) to consider when computing the mel bands for the MFCCs.",
+                    "kind": "argument",
+                    "name": "min_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2.0E+4",
+                    "description": "The maximum frequency (in Hz) to consider when computing the mel bands for the MFCCs.",
+                    "kind": "argument",
+                    "name": "max_freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "The size of the FFT being used to compute the mel bands for the MFCCs.",
+                    "kind": "argument",
+                    "name": "fft_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "An initialized MFCC struct.",
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sr: Float64, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20, max_freq: Float64 = 2.0E+4, fft_size: Int = 1024)",
+                "summary": "Initialize the MFCC analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current MFCC values as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input phases as a List of Float64.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if MFCC is passed as the \"process\".\n\nNothing is returned from this function, but the computed MFCC values are stored in self.coeffs.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the MFCCs for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is useful when there is an FFT already computed, \nperhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.\n\nNothing is returned from this function, but the computed MFCC values are stored in self.coeffs.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "from_mags(mut self, ref mags: List[Float64])",
+                "summary": "Compute the MFCCs for a given list of magnitudes."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mel_bands",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input mel band energies as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mbands",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is useful when there is a mel band analysis already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.\n\nNothing is returned from this function, but the computed MFCC values are stored in self.coeffs.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "from_mel_bands",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "from_mel_bands(mut self, ref mbands: List[Float64])",
+                "summary": "Compute the MFCCs for a given list of mel band energies."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "MFCC",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct MFCC",
+        "summary": "Mel-Frequency Cepstral Coefficients (MFCC) analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "weights",
+            "summary": "",
+            "type": "List[List[Float64]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "input_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "output_size",
+            "summary": "",
+            "type": "Int"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "input_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "output_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, input_size: Int, output_size: Int)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "process",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "Input vector of length `input_size`.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "Output vector of length `output_size`.",
+                    "kind": "argument",
+                    "name": "output",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Nothing is returned from this function, but the computed DCT coefficients are stored in the `output` List passed as an argument.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "process",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "process(mut self, ref input: List[Float64], mut output: List[Float64])",
+                "summary": "Compute the first `output_size` DCT-II coefficients for `input`."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "DCT",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct DCT",
+        "summary": "Compute the Discrete Cosine Transform (DCT)."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This implementation computes the squared difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_mags",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_mags_f64",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_mags_reciprocal",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "prev_mags",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "flux",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "positive_only",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The number of magnitude bins in the input to expect. This is typically the FFT size divided by 2, but could also be the number of mel bands or another spectral summary that produces a list of values.",
+                    "kind": "argument",
+                    "name": "num_mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to only consider positive differences (increases in energy) when computing the spectral flux. If `False`, spectral flux is the average of squared differences between the magnitudes. If `True`, spectral flux is the average of (non-squared to match FluCoMa) differences between the magnitudes, but negative differences are set to 0. Using `positive_only=True` is a common approach when using spectral flux for onset detection, as onsets are typically characterized by increases in energy.",
+                    "kind": "argument",
+                    "name": "positive_only",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, num_mags: Int, positive_only: Bool = False)",
+                "summary": "Initialize the Spectral Flux analyzer."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "The input phases as a List of Float64.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnsets is passed as the \"process\".\n\nNothing is returned from this function, but the computed spectral flux value is stored in self.flux.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64])",
+                "summary": "Compute the spectral flux onset value for a given FFT analysis."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Float64]",
+                "summary": "Return the current spectral flux value as a List of Float64."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "from_mags",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input magnitudes as a List of Float64.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This function is useful when there is an FFT already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.\n\nNothing is returned from this function, but the computed spectral flux value is stored in self.flux.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "from_mags",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "from_mags(mut self, ref mags: List[Float64]) -> Float64",
+                "summary": "Compute the spectral flux onset value for a given list of magnitudes."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralFlux",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "FFTProcessable",
+            "path": "/mmm_audio/FFTProcess_Module/FFTProcessable"
+          },
+          {
+            "name": "GetFloat64Featurable",
+            "path": "/mmm_audio/Analysis/GetFloat64Featurable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralFlux",
+        "summary": "Spectral Flux analysis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "thresh",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "state",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "current_slice_length_samps",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "min_slice_len",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "filter_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "filter",
+            "summary": "",
+            "type": "MedianFilter"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "prev_flux",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "fftp",
+            "summary": "",
+            "type": "FFTProcess[SpectralFlux]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "window_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "512",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "hop_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "5",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "filter_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], num_mags: Int, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self) -> List[Bool]",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "next(mut self, input: Float64) -> Bool",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpectralFluxOnsets",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "GetBoolFeaturable",
+            "path": "/mmm_audio/Analysis/GetBoolFeaturable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpectralFluxOnsets[num_chans: Int = 1]",
+        "summary": "Spectral Flux Onset analysis."
+      }
+    ],
+    "summary": "",
+    "traits": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "The implementation of `__del__` is considered to be trivial if:\n- The struct has a compiler-generated trivial destructor and all its fields\n  have a trivial `__del__` method.\n\nIn practice, it means that the `__del__` can be considered as no-op.",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__del__` is trivial.",
+            "value": ""
+          }
+        ],
+        "deprecated": "",
+        "description": "",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self: _Self) -> List[Float64]",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "trait",
+        "name": "GetFloat64Featurable",
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "summary": ""
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "The implementation of `__del__` is considered to be trivial if:\n- The struct has a compiler-generated trivial destructor and all its fields\n  have a trivial `__del__` method.\n\nIn practice, it means that the `__del__` can be considered as no-op.",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Analysis/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__del__` is trivial.",
+            "value": ""
+          }
+        ],
+        "deprecated": "",
+        "description": "",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "get_features",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_features",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "get_features(self: _Self) -> List[Bool]",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "trait",
+        "name": "GetBoolFeaturable",
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "summary": ""
+      }
+    ]
+  },
+  "version": "0.26.1.0"
+}

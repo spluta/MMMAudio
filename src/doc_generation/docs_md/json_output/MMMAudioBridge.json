@@ -1,0 +1,1056 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "PyInit_MMMAudioBridge",
+        "overloads": [
+          {
+            "args": [],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "PyInit_MMMAudioBridge",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "PythonObject"
+            },
+            "signature": "PyInit_MMMAudioBridge() -> PythonObject",
+            "summary": ""
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "MMMAudioBridge",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMAudioBridge/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MMMAudioBridge/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "graph",
+            "summary": "",
+            "type": "FeedbackDelays"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "osc_buffers",
+            "summary": "",
+            "type": "UnsafePointer[OscBuffers, MutExternalOrigin]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "windows",
+            "summary": "",
+            "type": "UnsafePointer[Windows, MutExternalOrigin]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "messenger_manager",
+            "summary": "",
+            "type": "UnsafePointer[MessengerManager, MutExternalOrigin]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "default": "44100",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "512",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "block_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "12",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_in_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "12",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_out_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, sample_rate: Float64 = 44100, block_size: Int = 512, num_in_chans: Int = 12, num_out_chans: Int = 12)",
+                "summary": "Initialize the audio engine with sample rate, block size, and number of channels."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "py_init",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "args",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "kwargs",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "py_init",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "py_init(args: PythonObject, kwargs: PythonObject, out self: Self)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_channel_count",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "args",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "set_channel_count",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "set_channel_count(py_selfA: PythonObject, args: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_screen_dims",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "dims",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "set_screen_dims",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "set_screen_dims(py_selfA: PythonObject, dims: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_mouse_pos",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "pos",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_mouse_pos",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_mouse_pos(py_selfA: PythonObject, pos: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "to_float64",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_float",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "to_float64",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "to_float64(py_float: PythonObject) -> Float64",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_bool_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_bool_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_bool_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_bools_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_bools_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_bools_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_float_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_float_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_float_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_floats_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_floats_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_floats_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_int_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_int_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_int_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_ints_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_ints_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_ints_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_trig_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_trig_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_trig_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_trigs_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_trigs_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_trigs_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_string_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_string_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_string_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update_strings_msg",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "key_vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "update_strings_msg",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "update_strings_msg(py_selfA: PythonObject, key_vals: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_audio_samples",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "loc_in_buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/unsafe_pointer/UnsafePointer",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "loc_out_buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/unsafe_pointer/UnsafePointer",
+                    "type": "UnsafePointer"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_audio_samples",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "signature": "get_audio_samples(mut self, loc_in_buffer: UnsafePointer[Float32, origin], mut loc_out_buffer: UnsafePointer[Float64, origin])",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_selfA",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "in_buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "out_buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "next(py_selfA: PythonObject, in_buffer: PythonObject, out_buffer: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "MMMAudioBridge",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct MMMAudioBridge",
+        "summary": ""
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

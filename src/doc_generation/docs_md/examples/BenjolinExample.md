@@ -1,16 +1,22 @@
-"""Rob Hordijk's Benjolin-inspired Synthesizer
+*For more information about the examples, such as how the Python and Mojo files interact with each other, see the [Examples Overview](index.md)*
 
-Based on the [SuperCollider implementation by Hyppasus](https://scsynth.org/t/benjolin-inspired-instrument/1074/1).
+# BenjolinExample
 
-Ported to MMMAudio by Ted Moore, October 2025
-"""
+<!-- Use mkdocs ":::" syntax to get docstring from Python file -->
+:::examples.BenjolinExample
+    options:
+      members: []
+
+
+## Python Code
+<!-- Puts the remaining lines from the Python script here -->
+```python
+
 
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-print(str(Path(__file__).parent.parent))
 
 from mmm_python.GUI import Handle, ControlSpec
 from mmm_python import *
@@ -36,7 +42,7 @@ def main():
     window.setWindowTitle("Benjolin")
     window.resize(300, 100)
     # stop audio when window is closed
-    window.closeEvent = lambda event: (MMMAudio.exit_all(), event.accept())
+    window.closeEvent = lambda event: (mmm_audio.exit_all(), event.accept())
 
     # Create layout
     layout = QVBoxLayout()
@@ -68,3 +74,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+```
+
+## Mojo Code
+<!-- Put the contents of the .mojo file *of the same name!* here -->
+```mojo
+
+--8<-- "examples/BenjolinExample.mojo"
+
+```

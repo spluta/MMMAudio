@@ -1,10 +1,19 @@
-"""
-Chowning FM synthesis example.
+*For more information about the examples, such as how the Python and Mojo files interact with each other, see the [Examples Overview](index.md)*
 
-These examples are adapted from Chowning's original [paper](https://web.eecs.umich.edu/~fessler/course/100/misc/chowning-73-tso.pdf) on FM synthesis and can also be found in "Computer Music" by Dodge and Jerse. pg. 123-127.
-"""
+# ChowningFM
 
-from MMMAudio.mmm_python import *
+<!-- Use mkdocs ":::" syntax to get docstring from Python file -->
+:::examples.ChowningFM
+    options:
+      members: []
+
+
+## Python Code
+<!-- Puts the remaining lines from the Python script here -->
+```python
+
+
+from mmm_python import *
 mmm_audio = MMMAudio(128, graph_name="ChowningFM", package_name="examples")
 mmm_audio.start_audio()
 
@@ -67,3 +76,13 @@ mmm_audio.send_trig("trigger")
 
 # stop audio
 mmm_audio.stop_audio()
+
+```
+
+## Mojo Code
+<!-- Put the contents of the .mojo file *of the same name!* here -->
+```mojo
+
+--8<-- "examples/ChowningFM.mojo"
+
+```

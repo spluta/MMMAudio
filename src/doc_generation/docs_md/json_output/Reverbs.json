@@ -1,0 +1,346 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Reverbs",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Reverbs/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Reverbs/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Reverbs/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb0",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb1",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb2",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb3",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb4",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb5",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb6",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb7",
+            "summary": "",
+            "type": "LP_Comb[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "temp",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "allpass_combs",
+            "summary": "",
+            "type": "List[Allpass_Comb[num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "feedback",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lp_comb_lpfreq",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "in_list",
+            "summary": "",
+            "type": "List[Float64]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld instance.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the Freeverb struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The size of the reverb room (0-1).",
+                    "kind": "argument",
+                    "name": "room_size",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1000",
+                    "description": "The cutoff frequency of the low-pass filter (in Hz).",
+                    "kind": "argument",
+                    "name": "lp_comb_lpfreq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The amount of added space (0-1).",
+                    "kind": "argument",
+                    "name": "added_space",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The processed output sample.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, input: SIMD[DType.float64, num_chans], room_size: SIMD[DType.float64, num_chans] = 0, lp_comb_lpfreq: SIMD[DType.float64, num_chans] = 1000, added_space: SIMD[DType.float64, num_chans] = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the freeverb."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Freeverb",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Size of the SIMD vector - defaults to 1.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Freeverb[num_chans: Int = 1]",
+        "summary": "A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

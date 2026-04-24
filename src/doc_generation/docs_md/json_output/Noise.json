@@ -1,0 +1,1194 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Noise",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the WhiteNoise struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A random value between -gain and gain.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(self, gain: SIMD[DType.float64, num_chans] = 1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next white noise sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "WhiteNoise",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct WhiteNoise[num_chans: Int = 1]",
+        "summary": "Generate white noise samples."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Uses the [Voss-McCartney algorithm](https://www.firstpr.com.au/dsp/pink-noise/#Voss-McCartney).\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b0",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b2",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b3",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b4",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b5",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b6",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the PinkNoise struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next pink noise sample scaled by gain.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, gain: SIMD[DType.float64, num_chans] = 1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next pink noise sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PinkNoise",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PinkNoise[num_chans: Int = 1]",
+        "summary": "Generate pink noise samples."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_output",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the BrownNoise struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next brown noise sample scaled by gain.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, gain: SIMD[DType.float64, num_chans] = 1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next brown noise sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "BrownNoise",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct BrownNoise[num_chans: Int = 1]",
+        "summary": "Generate brown noise samples."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "stored_output",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_trig",
+            "summary": "",
+            "type": "SIMD[DType.bool, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "is_initialized",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the TExpRand struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Minimum value for the random value.",
+                    "kind": "argument",
+                    "name": "min",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Maximum value for the random value.",
+                    "kind": "argument",
+                    "name": "max",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Trigger to generate a new value.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The value is repeated until a new trigger is received, at which point a new value is generated.\nAnd that new value is repeated until the next trigger, and so on.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The exponentially distributed random value.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Output the exponentially distributed random value."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "TExpRand",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct TExpRand[num_chans: Int = 1]",
+        "summary": "Generate exponentially distributed random value upon receiving a trigger."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "stored_output",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_trig",
+            "summary": "",
+            "type": "SIMD[DType.bool, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "is_initialized",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the TRand struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Minimum value for the random value.",
+                    "kind": "argument",
+                    "name": "min",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Maximum value for the random value.",
+                    "kind": "argument",
+                    "name": "max",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Trigger to generate a new value.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The value is repeated until a new trigger is received, at which point a new value is generated.\nAnd that new value is repeated until the next trigger, and so on.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The uniformly distributed random value.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Output uniformly distributed random value."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "TRand",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct TRand[num_chans: Int = 1]",
+        "summary": "Generate uniformly distributed random value upon receiving a trigger."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Noise/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Based on [Josiah Sytsma's LFSR implementation](https://www.mjsyts.com/development/lfsr-noise-part-3).\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "state",
+            "summary": "",
+            "type": "SIMD[DType.uint32, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "width",
+            "summary": "",
+            "type": "SIMD[DType.uint32, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mask",
+            "summary": "",
+            "type": "SIMD[DType.uint32, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phase",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq_mul",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Frequency at which to step the LFSR in Hz.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "15",
+                    "description": "Width of the LFSR in bits (3-32).",
+                    "kind": "argument",
+                    "name": "width",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal to reset state when switching from False to True.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next LFSR noise sample.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, freq: SIMD[DType.float64, num_chans] = 1, width: SIMD[DType.uint32, num_chans] = 15, trig: Bool = False) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next LFSR noise sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "LFSRNoise",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct LFSRNoise[num_chans: Int = 1]",
+        "summary": "Generate noise using a Linear Feedback Shift Register (LFSR)."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

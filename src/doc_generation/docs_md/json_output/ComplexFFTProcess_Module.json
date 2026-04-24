@@ -1,0 +1,726 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "ComplexFFTProcess_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True if True if True if True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if True if T.__moveinit__is_trivial else T.__moveinit__is_trivial else True if T.__moveinit__is_trivial else T.__moveinit__is_trivial"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "buffered_process",
+            "summary": "",
+            "type": "BufferedProcess[ComplexFFTProcessor[T, window_size], input_window_shape, output_window_shape]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "var",
+                    "description": "A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.",
+                    "kind": "argument",
+                    "name": "process",
+                    "passingKind": "pos_or_kw",
+                    "type": "T"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "An initialized `FFTProcess` struct.",
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], var process: T)",
+                "summary": "Initializes a `FFTProcess` struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The next input sample to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next output sample.",
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "next(mut self, input: Float64) -> Float64",
+                "summary": "Processes the next input sample and returns the next output sample."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_stereo",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The next input samples to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_stereo",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next output samples.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next_stereo(mut self, input: SIMD[DType.float64, 2]) -> SIMD[DType.float64, 2]",
+                "summary": "Processes the next stereo input sample and returns the next output sample."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_from_buffer",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input buffer to read samples from.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/Buffer",
+                    "type": "Buffer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The current phase to read from the buffer. Between 0 (beginning) and 1 (end).",
+                    "kind": "argument",
+                    "name": "phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The channel to read from the buffer.",
+                    "kind": "argument",
+                    "name": "chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_from_buffer",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next output sample.",
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "next_from_buffer(mut self, ref buffer: Buffer, phase: Float64, chan: Int = 0) -> Float64",
+                "summary": "Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_from_stereo_buffer",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "The input buffer to read samples from.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/Buffer",
+                    "type": "Buffer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The current phase to read from the buffer. Between 0 (beginning) and 1 (end).",
+                    "kind": "argument",
+                    "name": "phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The first channel to read from the buffer.",
+                    "kind": "argument",
+                    "name": "start_chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_from_stereo_buffer",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next stereo output sample.",
+                  "path": "/std/builtin/simd/SIMD",
+                  "type": "SIMD"
+                },
+                "signature": "next_from_stereo_buffer(mut self, ref buffer: Buffer, phase: Float64, start_chan: Int = 0) -> SIMD[DType.float64, 2]",
+                "summary": "Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "ComplexFFTProcess",
+        "parameters": [
+          {
+            "description": "A user defined struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.",
+            "kind": "parameter",
+            "name": "T",
+            "passingKind": "pos_or_kw",
+            "path": "/mmm_audio/ComplexFFTProcess_Module/ComplexFFTProcessable",
+            "type": "ComplexFFTProcessable"
+          },
+          {
+            "default": "1024",
+            "description": "The size of the FFT window.",
+            "kind": "parameter",
+            "name": "window_size",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "512",
+            "description": "The number of samples between each processed spectral frame.",
+            "kind": "parameter",
+            "name": "hop_size",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "WindowType.hann",
+            "description": "Int specifying what window shape to use to modify the amplitude of the input samples before the FFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.",
+            "kind": "parameter",
+            "name": "input_window_shape",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "WindowType.hann",
+            "description": "Int specifying what window shape to use to modify the amplitude of the output samples after the IFFT. See [WindowType](MMMWorld.md/#struct-windowtype) for the options.",
+            "kind": "parameter",
+            "name": "output_window_shape",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct ComplexFFTProcess[T: ComplexFFTProcessable, window_size: Int = 1024, hop_size: Int = 512, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann]",
+        "summary": "Create an FFTProcess for audio manipulation in the frequency domain. This version will output and input complex frequency bins directly rather than magnitude and phase. This is currently untested."
+      }
+    ],
+    "summary": "",
+    "traits": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "The implementation of `__del__` is considered to be trivial if:\n- The struct has a compiler-generated trivial destructor and all its fields\n  have a trivial `__del__` method.\n\nIn practice, it means that the `__del__` can be considered as no-op.",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__del__` is trivial.",
+            "value": ""
+          },
+          {
+            "deprecated": "",
+            "description": "The implementation of `__copyinit__` is considered to be trivial if:\n- The struct has a compiler-generated trivial `__copyinit__` and all its fields\n  have a trivial `__copyinit__` method.\n\nIn practice, it means the value can be copied by copying the bits from\none location to another without side effects.",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__copyinit__` is trivial.",
+            "value": ""
+          },
+          {
+            "deprecated": "",
+            "description": "The implementation of `__moveinit__` is considered to be trivial if:\n- The struct has a compiler-generated `__moveinit__` and all its fields\n  have a trivial `__moveinit__` method.\n\nIn practice, it means the value can be moved by moving the bits from\none location to another without side effects.",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/ComplexFFTProcess_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__moveinit__` is trivial.",
+            "value": ""
+          }
+        ],
+        "deprecated": "",
+        "description": "See `TestFFTProcess.mojo` for an example on how to create a spectral process \nusing a struct that implements FFTProcessable.",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__copyinit__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The value to copy.",
+                    "kind": "argument",
+                    "name": "existing",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__copyinit__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "_Self"
+                },
+                "signature": "__copyinit__(out self: _Self, existing: _Self, /)",
+                "summary": "Create a new instance of the value by copying an existing one."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__moveinit__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "deinit",
+                    "description": "The value to move.",
+                    "kind": "argument",
+                    "name": "existing",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__moveinit__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "_Self"
+                },
+                "signature": "__moveinit__(out self: _Self, deinit existing: _Self, /)",
+                "summary": "Create a new instance of the value by moving the value of another."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "complex",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_frame(mut self: _Self, mut complex: List[ComplexSIMD[DType.float64, 1]])",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_stereo_frame",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "complex",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_stereo_frame",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next_stereo_frame(mut self: _Self, mut complex: List[ComplexSIMD[DType.float64, 2]])",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_messages",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_messages",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "get_messages(mut self: _Self)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "copy",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "copy",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A copy of this value.",
+                  "type": "_Self"
+                },
+                "signature": "copy(self: _Self) -> _Self",
+                "summary": "Explicitly construct a copy of self."
+              }
+            ]
+          }
+        ],
+        "kind": "trait",
+        "name": "ComplexFFTProcessable",
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "summary": "Implement this trait in a custom struct to pass to `FFTProcess` as a Parameter."
+      }
+    ]
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,794 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "This module provides an envelope generator class that can create complex envelopes with multiple segments, curves, and looping capabilities.",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "min_env",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "default": "0.01",
+                "description": "Current env position between 0 (beginning) and 1 (end).",
+                "kind": "argument",
+                "name": "phase",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "0.10000000000000001",
+                "description": "Total duration of the envelope.",
+                "kind": "argument",
+                "name": "totaldur",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "0.001",
+                "description": "Duration of the rise and fall segments that occur at the beginning and end of the envelope.",
+                "kind": "argument",
+                "name": "rampdur",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "Envelope that rises linearly from 0 to 1 over `rampdur` seconds, stays at 1 until `totaldur - rampdur`, \nthen falls linearly back to 0 over the final `rampdur` seconds. This envelope isn't \"triggered,\" instead\nthe user provides the current phase between 0 (beginning) and 1 (end) of the envelope.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "min_env",
+            "parameters": [
+              {
+                "default": "1",
+                "description": "",
+                "kind": "parameter",
+                "name": "N",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Envelope value at the current ramp position.",
+              "type": "SIMD"
+            },
+            "signature": "min_env[N: Int = 1](phase: SIMD[DType.float64, N] = 0.01, totaldur: SIMD[DType.float64, N] = 0.10000000000000001, rampdur: SIMD[DType.float64, N] = 0.001) -> SIMD[DType.float64, N]",
+            "summary": "Simple envelope."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "Envelopes",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This struct holds the parameters for the envelope generator. It\nis not required to use the `Env` struct, but it might be convenient.\n\n\nElements:\n\nvalues: List of envelope values at each breakpoint.  \ntimes: List of durations (in seconds) for each segment between adjacent breakpoints. This List should be one element shorter than the `values` List.  \ncurves: List of curve shapes for each segment. Positive values for convex \"exponential\" curves, negative for concave \"logarithmic\" curves. (if the output of the envelope is negative, the curve will be inverted).  \nloop: Bool to indicate if the envelope should loop.  \ntime_warp: Time warp factor to speed up or slow down the envelope. Default is 1.0 meaning no warp. A value of 2.0 will make the envelop take twice as long to complete. A value of 0.5 will make the envelope take half as long to complete.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "values",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "times",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "curves",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "loop",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "time_warp",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "default": "List[Float64](0, 1, 0, Tuple[]())",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "values",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "List[Float64](1, 1, Tuple[]())",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "times",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "List[Float64](1, Tuple[]())",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "curves",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "time_warp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "For information on the arguments, see the documentation of the `Env::next()` method that takes each parameter individually.",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, values: List[Float64] = List[Float64](0, 1, 0, Tuple[]()), times: List[Float64] = List[Float64](1, 1, Tuple[]()), curves: List[Float64] = List[Float64](1, Tuple[]()), loop: Bool = False, time_warp: Float64 = 1)",
+                "summary": "Initialize EnvParams."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "EnvParams",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct EnvParams",
+        "summary": "Parameters for the Env class."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sweep",
+            "summary": "",
+            "type": "Sweep"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "is_active",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "times",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "dur",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "trig_point",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_asr",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "params",
+            "summary": "",
+            "type": "EnvParams"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the Env2 struct - with internal params."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "True",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "next(mut self, trig: Bool = True) -> Float64",
+                "summary": "Generate the next envelope value. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.          Args:         trig: Trigger to start the envelope."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Env",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Env",
+        "summary": "Envelope generator with an arbitrary number of segments."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Envelopes/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sweep",
+            "summary": "",
+            "type": "Sweep"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "bool_changed",
+            "summary": "",
+            "type": "Changed"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "freq",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "is_active",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the ASREnv struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "(Float64): Attack time in seconds.",
+                    "kind": "argument",
+                    "name": "attack",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "(Float64): Sustain level (0 to 1).",
+                    "kind": "argument",
+                    "name": "sustain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "(Float64): Release time in seconds.",
+                    "kind": "argument",
+                    "name": "release",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "(Bool): Gate signal (True or False).",
+                    "kind": "argument",
+                    "name": "gate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "(MFloat[2]): Can pass a Float64 for equivalent curve on rise and fall or MFloat[2] for different rise and fall curve. Positive values for convex \"exponential\" curves, negative for concave \"logarithmic\" curves.",
+                    "kind": "argument",
+                    "name": "curve",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: SIMD[DType.float64, 2] = 1) -> Float64",
+                "summary": "Simple ASR envelope generator."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "ASREnv",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct ASREnv",
+        "summary": "Simple ASR envelope generator."
+      }
+    ],
+    "summary": "Envelope generator module.",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

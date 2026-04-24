@@ -1,0 +1,516 @@
+{
+  "decl": {
+    "aliases": [
+      {
+        "deprecated": "",
+        "description": "",
+        "kind": "alias",
+        "name": "pi_over_2",
+        "parameters": [],
+        "path": "/mmm_audio/Pan/#pi_over_2",
+        "signature": "comptime pi_over_2",
+        "summary": "",
+        "value": "1.5707963267948966"
+      }
+    ],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "pan2",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Float64 - Mono input sample.",
+                "kind": "argument",
+                "name": "samples",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "Float64 - Pan value from -1.0 (left) to 1.0 (right).",
+                "kind": "argument",
+                "name": "pan",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "pan2",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Stereo output as MFloat[2].",
+              "type": "SIMD"
+            },
+            "signature": "pan2(samples: Float64, pan: Float64) -> SIMD[DType.float64, 2]",
+            "summary": "Simple constant power panning function."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "pan_stereo",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "MFloat[2] - Stereo input sample.",
+                "kind": "argument",
+                "name": "samples",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Float64 - Pan value from -1.0 (left) to 1.0 (right).",
+                "kind": "argument",
+                "name": "pan",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "pan_stereo",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Stereo output as MFloat[2].",
+              "type": "SIMD"
+            },
+            "signature": "pan_stereo(samples: SIMD[DType.float64, 2], pan: Float64) -> SIMD[DType.float64, 2]",
+            "summary": "Simple constant power panning function for stereo samples."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "splay",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "List of input samples from multiple channels.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "Pointer to MMMWorld containing the pan_window.",
+                "kind": "argument",
+                "name": "world",
+                "passingKind": "pos_or_kw",
+                "type": "UnsafePointer"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "splay",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_simd",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Stereo output as MFloat[2].",
+              "type": "SIMD"
+            },
+            "signature": "splay[num_simd: Int](input: List[SIMD[DType.float64, num_simd]], world: UnsafePointer[MMMWorld, MutExternalOrigin]) -> SIMD[DType.float64, 2]",
+            "summary": "Splay multiple input channels into stereo output."
+          },
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "List of input samples from multiple channels. List of Float64 or List of SIMD vectors.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Pointer to MMMWorld containing the pan_window.",
+                "kind": "argument",
+                "name": "world",
+                "passingKind": "pos_or_kw",
+                "type": "UnsafePointer"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "There are multiple versions of splay to handle different input types. It can take a list of SIMD vectors or a single 1 or many channel SIMD vector. In the case of a list of SIMD vectors, each channel within the vector is treated separately and panned individually.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "splay",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_input_channels",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Stereo output as MFloat[2].",
+              "type": "SIMD"
+            },
+            "signature": "splay[num_input_channels: Int](input: SIMD[DType.float64, num_input_channels], world: UnsafePointer[MMMWorld, MutExternalOrigin]) -> SIMD[DType.float64, 2]",
+            "summary": "Splay multiple input channels into stereo output."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "pan_az",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Mono input sample.",
+                "kind": "argument",
+                "name": "sample",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "Pan position from 0.0 to 1.0.",
+                "kind": "argument",
+                "name": "pan",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "Number of speakers to pan to.",
+                "kind": "argument",
+                "name": "num_speakers",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              },
+              {
+                "convention": "read",
+                "default": "2",
+                "description": "Width of the speaker array (default is 2.0).",
+                "kind": "argument",
+                "name": "width",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "default": "0.5",
+                "description": "Orientation offset of the speaker array (default is 0.5).",
+                "kind": "argument",
+                "name": "orientation",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "pan_az",
+            "parameters": [
+              {
+                "default": "2",
+                "description": "Number of output channels (speakers). Must be a power of two that is at least as large as num_speakers.",
+                "kind": "parameter",
+                "name": "simd_out_size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "MFloat[simd_out_size]: The panned output sample for each speaker.",
+              "type": "SIMD"
+            },
+            "signature": "pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2, orientation: Float64 = 0.5) -> SIMD[DType.float64, simd_out_size]",
+            "summary": "Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "Pan",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Pan/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Pan/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Pan/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "output",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mul_list",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_channels]]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld instance.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the SplayN instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "List of input samples from multiple channels.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "num_simd",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "MFloat[self.num_channels]: The panned output sample for each output channel.",
+                  "type": "SIMD"
+                },
+                "signature": "next[num_simd: Int](mut self, input: List[SIMD[DType.float64, num_simd]]) -> SIMD[DType.float64, num_channels]",
+                "summary": "Evenly distributes multiple input channels to num_channels of output channels."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SplayN",
+        "parameters": [
+          {
+            "default": "2",
+            "description": "Number of output channels to splay to.",
+            "kind": "parameter",
+            "name": "num_channels",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "128",
+            "description": "Number of discrete pan points to use for panning calculations. Default is 128.",
+            "kind": "parameter",
+            "name": "pan_points",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SplayN[num_channels: Int = 2, pan_points: Int = 128]",
+        "summary": "SplayN - Splays multiple input channels into N output channels. Different from `splay` which only outputs stereo, SplayN can output to any number of channels."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

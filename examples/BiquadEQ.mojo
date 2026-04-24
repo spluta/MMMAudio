@@ -35,7 +35,7 @@ struct EQSynth(Movable, Copyable):
         self.world = world
         
         # Load the audio buffer
-        self.buffer = Buffer.load("resources/Shiverer.wav")
+        self.buffer = Buffer.load("MMMAudio/resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans
         
         # without printing this, the compiler wants to free the buffer for some reason

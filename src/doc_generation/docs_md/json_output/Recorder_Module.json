@@ -1,0 +1,389 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Recorder_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Recorder_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Recorder_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Recorder_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "write_head",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "buf",
+            "summary": "",
+            "type": "SIMDBuffer[num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld instance.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The number of frames in the empty buffer to be recorded to.",
+                    "kind": "argument",
+                    "name": "num_frames",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The sample rate of the empty buffer.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], num_frames: Int, sample_rate: Float64)",
+                "summary": "Initialize the Recorder struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "replace_buffer",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The new buffer to replace the existing buffer with.",
+                    "kind": "argument",
+                    "name": "new_buf",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "replace_buffer",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "replace_buffer(mut self, new_buf: SIMDBuffer[num_chans])",
+                "summary": "Replace the internal buffer with a new buffer. The new buffer must have the same number of channels as the existing buffer. Write head is reset to 0."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "write",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The SIMD input to write to the buffer.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The index in the buffer to write the input to.",
+                    "kind": "argument",
+                    "name": "index",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "write",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "write(mut self, input: SIMD[DType.float64, num_chans], index: Int)",
+                "summary": "Write SIMD input to buffer at specified index. Used internally by write_next and write_previous, which will be more appropriate for most use cases."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "write_next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The SIMD input to write to the buffer.",
+                    "kind": "argument",
+                    "name": "value",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "write_next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "write_next(mut self, value: SIMD[DType.float64, num_chans])",
+                "summary": "Write SIMD input to buffer at current write head and advance write head forward. This is the correct option in most use cases."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "write_previous",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The SIMD input to write to the buffer.",
+                    "kind": "argument",
+                    "name": "value",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "write_previous",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "write_previous(mut self, value: SIMD[DType.float64, num_chans])",
+                "summary": "Write SIMD input to buffer at current write head and move write head backward. This is useful for things like delay lines, which write backwards through a buffer so they can interpolate forwards."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Recorder",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels in the buffer. Default is 1 (mono).",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Recorder[num_chans: Int = 1]",
+        "summary": "A struct for storing a buffer and recording audio into it."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,488 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "FFTs",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/FFTs/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/FFTs/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/FFTs/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "If you're looking to create an FFT-based FX, look to the [FFTProcessable](FFTProcess.md/#trait-fftprocessable)\ntrait used in conjunction with [FFTProcess](FFTProcess.md/#struct-fftprocess) instead. This struct is a \nlower-level implementation that provides\nFFT and inverse FFT on fixed windows of real values. [FFTProcessable](FFTProcess.md/#trait-fftprocessable) structs will enable you to \nsend audio samples (such as in a custom struct's `.next()` `fn`) *into* and *out of* \nan FFT, doing some manipulation of the magnitudes and phases in between. ([FFTProcess](FFTProcess.md/#struct-fftprocess)\nhas this RealFFT struct inside of it.)\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "result",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "reversed",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "mags",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phases",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "w_ms",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "bit_reverse_lut",
+            "summary": "",
+            "type": "List[Int]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "packed_freq",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "unpacked",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "unpack_twiddles",
+            "summary": "",
+            "type": "List[ComplexSIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_n",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "log_n_full",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "scale",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "window_size",
+            "summary": "",
+            "type": "Int"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "window_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "All internal buffers and lookup tables are set up here based on the Parameters.",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, window_size: Int)",
+                "summary": "Initialize the RealFFT struct."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "fft",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input real-valued samples to transform. This can be a List of SIMD vectors for multi-channel processing or a List of Float64 for single-channel processing.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The resulting magnitudes and phases are stored in the internal `mags` and `phases` lists.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "fft",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "fft(mut self, input: List[SIMD[DType.float64, num_chans]])",
+                "summary": "Compute the FFT of the input real-valued samples."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input real-valued samples to transform. This can be a List of SIMD vectors for multi-channel processing or a List of Float64 for single-channel processing.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A mutable list to store the magnitudes of the FFT result.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A mutable list to store the phases of the FFT result.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The resulting magnitudes and phases are stored in the provided lists.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "fft",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "fft(mut self, input: List[SIMD[DType.float64, num_chans]], mut mags: List[SIMD[DType.float64, num_chans]], mut phases: List[SIMD[DType.float64, num_chans]])",
+                "summary": "Compute the FFT of the input real-valued samples."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "ifft",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A mutable list to store the output real-valued samples.",
+                    "kind": "argument",
+                    "name": "output",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The output real-valued samples are written to the provided output list.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "ifft",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "ifft(mut self, mut output: List[SIMD[DType.float64, num_chans]])",
+                "summary": "Compute the inverse FFT using the internal magnitudes and phases."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A list of magnitudes for the inverse FFT.",
+                    "kind": "argument",
+                    "name": "mags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A list of phases for the inverse FFT.",
+                    "kind": "argument",
+                    "name": "phases",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A mutable list to store the output real-valued samples.",
+                    "kind": "argument",
+                    "name": "output",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "The output real-valued samples are written to the provided output list.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "ifft",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "ifft(mut self, mags: List[SIMD[DType.float64, num_chans]], phases: List[SIMD[DType.float64, num_chans]], mut output: List[SIMD[DType.float64, num_chans]])",
+                "summary": "Compute the inverse FFT using the provided magnitudes and phases."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "fft_frequencies",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The sample rate of the audio signal.",
+                    "kind": "argument",
+                    "name": "sr",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The size of the FFT.",
+                    "kind": "argument",
+                    "name": "n_fft",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The minimum FFT bin index to include.",
+                    "kind": "argument",
+                    "name": "min_bin",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "-1",
+                    "description": "The number of FFT bins to include. Defaults to all bins from min_bin to n_fft//2.",
+                    "kind": "argument",
+                    "name": "num_bins",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.fft_frequencies.html).\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "fft_frequencies",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A List of Float64 representing the center frequencies of each FFT bin.",
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "fft_frequencies(sr: Float64, n_fft: Int, min_bin: Int = 0, num_bins: Int = -1) -> List[Float64]",
+                "summary": "Compute the FFT bin center frequencies."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "RealFFT",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels for SIMD processing.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct RealFFT[num_chans: Int = 1]",
+        "summary": "Real-valued FFT implementation using Cooley-Tukey algorithm."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,1317 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Buffer_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Audio data is stored in the `data` variable as a `List[MFloat[Self.num_chans]]` where each `MFloat[Self.num_chans]` represents a single frame of audio data for all channels. For example, if `num_chans` is 2, each element of `data` would be an `MFloat[2]` where the first element is the sample value for the left channel and the second element is the sample value for the right channel.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "data",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames_f64",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "duration",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A `List` of `List`s of `Float64` representing the audio data for each channel.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The sample rate of the audio data.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, data: List[SIMD[DType.float64, num_chans]], sample_rate: Float64)",
+                "summary": "Initialize a SIMDBuffer with the given audio data and sample rate."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "zeros",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Number of frames in the buffer.",
+                    "kind": "argument",
+                    "name": "num_frames",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "48000",
+                    "description": "Sample rate of the buffer.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "zeros",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "zeros(num_frames: Int, sample_rate: Float64 = 48000) -> Self",
+                "summary": "Initialize a SIMDBuffer with zeros."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "load",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Path to the WAV file to load.",
+                    "kind": "argument",
+                    "name": "file_name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.",
+                    "kind": "argument",
+                    "name": "num_wavetables",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to print verbose output.",
+                    "kind": "argument",
+                    "name": "verbose",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "load",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> Self",
+                "summary": "Initialize a SIMDBuffer by loading data from a WAV file using SciPy and NumPy."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SIMDBuffer",
+        "parameters": [
+          {
+            "default": "2",
+            "description": "",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SIMDBuffer[num_chans: Int = 2]",
+        "summary": "A multi-channel audio buffer for storing audio data."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Audio data is stored in the `data` variable as a `List[List[Float64]]`, where each inner `List` represents a channel of audio samples.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "data",
+            "summary": "",
+            "type": "List[List[Float64]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_chans",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames_f64",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "duration",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A `List` of `List`s of `Float64` representing the audio data for each channel.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The sample rate of the audio data.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, data: List[List[Float64]], sample_rate: Float64)",
+                "summary": "Initialize a Buffer with the given audio data and sample rate."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "zeros",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Number of frames in the buffer.",
+                    "kind": "argument",
+                    "name": "num_frames",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Number of channels in the buffer.",
+                    "kind": "argument",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "48000",
+                    "description": "Sample rate of the buffer.",
+                    "kind": "argument",
+                    "name": "sample_rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "zeros",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "zeros(num_frames: Int, num_chans: Int = 1, sample_rate: Float64 = 48000) -> Self",
+                "summary": "Initialize a Buffer with zeros."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "load",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Path to the WAV file to load.",
+                    "kind": "argument",
+                    "name": "file_name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Number of wavetables per channel. This is only used if the sound file being loaded contains multiple wavetables concatenated in a single channel.",
+                    "kind": "argument",
+                    "name": "num_wavetables",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to print verbose output.",
+                    "kind": "argument",
+                    "name": "verbose",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "load",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "load(file_name: String, num_wavetables: Int = 1, verbose: Bool = False) -> Self",
+                "summary": "Initialize a Buffer by loading data from a WAV file using SciPy and NumPy."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Buffer",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Buffer",
+        "summary": "A multi-channel audio buffer for storing audio data."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Buffer_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "`SpanInterpolator` supports various interpolation methods including\n\n* no interpolation (none)\n* linear interpolation\n* quadratic interpolation\n* cubic interpolation\n* lagrange interpolation (4th order)\n* sinc interpolation\n\nThe available interpolation methods are defined in the struct [Interp](MMMWorld.md#struct-interp).",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "idx_in_range",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "idx_in_range",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "idx_in_range[num_chans: Int = 1](data: Span[SIMD[DType.float64, num_chans], origin], idx: Int) -> Bool",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld instance.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The previous floating-point index (used for [SincInterpolation](SincInterpolator.md)).",
+                    "kind": "argument",
+                    "name": "prev_f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "Interp.none",
+                    "description": "Interpolation method to use (from [Interp](MMMWorld.md#struct-interp) enum).",
+                    "kind": "parameter",
+                    "name": "interp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read[num_chans: Int = 1, interp: Int = Interp.none, bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld, MutExternalOrigin], data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64, prev_f_idx: Float64 = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a Span[MFloat[num_chans]] using provided index and interpolation method, which is determined at compile time."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_none",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_none",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with no interpolation."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_none",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], idx: Int) -> SIMD[DType.float64, num_chans]",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_linear",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_linear",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_linear[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with linear interpolation."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_quad",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_quad",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_quad[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with quadratic interpolation."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_cubic",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_cubic",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_cubic[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with cubic interpolation."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_lagrange4",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_lagrange4",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_lagrange4[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with lagrange4 interpolation."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "read_sinc",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld instance.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The `Span[MFloat[num_chans]]` to read from.",
+                    "kind": "argument",
+                    "name": "data",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/memory/span/Span",
+                    "type": "Span"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The floating-point index to read at.",
+                    "kind": "argument",
+                    "name": "f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The previous floating-point index.",
+                    "kind": "argument",
+                    "name": "prev_f_idx",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "read_sinc",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of channels in the data.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "True",
+                    "description": "Whether to wrap indices that go out of bounds.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).",
+                    "kind": "parameter",
+                    "name": "mask",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "read_sinc[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](world: UnsafePointer[MMMWorld, MutExternalOrigin], data: Span[SIMD[DType.float64, num_chans], origin], f_idx: Float64, prev_f_idx: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "Read a value from a `Span[MFloat[num_chans]]` using provided index with [SincInterpolation](SincInterpolator.md)."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SpanInterpolator",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SpanInterpolator",
+        "summary": "A collection of static methods for interpolating values from a `List[Float64]` or `InlineArray[Float64]`."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

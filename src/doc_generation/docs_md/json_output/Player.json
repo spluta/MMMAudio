@@ -1,0 +1,1985 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Player",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Plays back audio from a Buffer with variable rate, interpolation, looping, and triggering capabilities.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "impulse",
+            "summary": "",
+            "type": "Phasor"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "active",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "start_frame",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "reset_phase_point",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "phase_offset",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The audio buf to read from (List[MFloat[num_chans]]).",
+                    "kind": "argument",
+                    "name": "buf",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "The playback rate. 1 is the normal speed of the buf.",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "True",
+                    "description": "Whether to loop the buf (default: True).",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "True",
+                    "description": "Trigger starts the synth at start_frame (default: 1.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The start frame for playback (default: 0) upon receiving a trigger.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "var",
+                    "default": "-1",
+                    "description": "The end frame for playback (default: -1 means to the end of the buf).",
+                    "kind": "argument",
+                    "name": "num_frames",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of output channels to read from the buffer and also the size of the output SIMD vector.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "Interp.linear",
+                    "description": "Interpolation method to use when reading from the buffer (see the Interp struct for available options - default: Interp.linear).",
+                    "kind": "parameter",
+                    "name": "interp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). This is necessary when reading from a wavetable or other oscillating buffer, for instance, where the ending samples of the buffer connect seamlessly to the first. If this is false, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample(s) from the buf as a SIMD vector.",
+                  "type": "SIMD"
+                },
+                "signature": "next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Get the next sample from a SIMD audio buf (SIMDBuffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames. A key difference between SIMDBuffer and Buffer is that calling next on a SIMDBuffer always returns the entire SIMD vector of samples for the current phase, whereas with Buffer, you can specify the number of channels to read."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The audio buf to read from (List[Float64]).",
+                    "kind": "argument",
+                    "name": "buf",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/Buffer",
+                    "type": "Buffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "The playback rate. 1 is the normal speed of the buf.",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "True",
+                    "description": "Whether to loop the buf (default: True).",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "True",
+                    "description": "Trigger starts the synth at start_frame (default: 1.0).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The start frame for playback (default: 0) upon receiving a trigger.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "var",
+                    "default": "-1",
+                    "description": "The end frame for playback (default: -1 means to the end of the buf).",
+                    "kind": "argument",
+                    "name": "num_frames",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The start channel for multi-channel bufs (default: 0).",
+                    "kind": "argument",
+                    "name": "start_chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of output channels to read from the buffer and also the size of the output SIMD vector.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "Interp.linear",
+                    "description": "Interpolation method to use when reading from the buffer (see the Interp struct for available options - default: Interp.linear).",
+                    "kind": "parameter",
+                    "name": "interp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). This is necessary when reading from a wavetable or other oscillating buffer, for instance, where the ending samples of the buffer connect seamlessly to the first. If this is false, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample(s) from the buf as a SIMD vector.",
+                  "type": "SIMD"
+                },
+                "signature": "next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> SIMD[DType.float64, num_chans]",
+                "summary": "Get the next sample from an audio buf (Buffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "get_relative_phase",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "get_relative_phase",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "get_relative_phase(mut self) -> Float64",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Play",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Play",
+        "summary": "The principle buffer playback object for MMMAudio."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Used as part of the TGrains and the PitchShift structs for triggered granular synthesis.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "start_frame",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rate",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "pan",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "gain",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "rising_bool_detector",
+            "summary": "",
+            "type": "RisingBoolDetector"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "play_buf",
+            "summary": "",
+            "type": "Play"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "win_phase",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "trigger",
+            "summary": "",
+            "type": "Bool"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "check_active",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "check_active",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "check_active(mut self) -> Bool",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_trigger",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trigger",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_trigger",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_trigger(mut self, trigger: Bool)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_pan2",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "Audio buffer containing the source sound.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Playback rate of the grain (1.0 = normal speed).",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to loop the grain (default: False).",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Starting frame position in the buffer.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Duration of the grain in seconds.",
+                    "kind": "argument",
+                    "name": "duration",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Panning position from -1.0 (left) to 1.0 (right).",
+                    "kind": "argument",
+                    "name": "pan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor for the grain.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_pan2",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.",
+                    "kind": "parameter",
+                    "name": "num_playback_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "0",
+                    "description": "Type of window to apply to the grain (default is Hann window (WinType.hann)).",
+                    "kind": "parameter",
+                    "name": "win_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next_pan2[num_playback_chans: Int = 1, win_type: Int = 0, bWrap: Bool = False](mut self, mut buffer: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = False, start_frame: Int = 0, duration: Float64 = 0, pan: Float64 = 0, gain: Float64 = 1) -> SIMD[DType.float64, 2]",
+                "summary": "Generate the next grain and pan it to stereo using pan2. Depending on num_playback_chans, will either pan a mono signal out 2 channels using pan2 or a stereo signal out 2 channels using pan_stereo."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_pan_az",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "Audio buffer containing the source sound.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Playback rate of the grain (1.0 = normal speed).",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to loop the grain (default: False).",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Starting frame position in the buffer.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Duration of the grain in seconds.",
+                    "kind": "argument",
+                    "name": "duration",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "The buffer channel to read from for the grain (default: 0).",
+                    "kind": "argument",
+                    "name": "buffer_chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Panning position from 0.0 to 1.0.",
+                    "kind": "argument",
+                    "name": "pan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor for the grain.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "4",
+                    "description": "Number of speakers to pan to.",
+                    "kind": "argument",
+                    "name": "num_speakers",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_pan_az",
+                "parameters": [
+                  {
+                    "default": "4",
+                    "description": "Number of output channels (speakers). Must be a power of two that is at least as large as num_speakers.",
+                    "kind": "parameter",
+                    "name": "num_simd_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "WindowType.hann",
+                    "description": "Type of window to apply to the grain (default is Hann window (WindowType.hann) See [WindowType](MMMWorld.md/#struct-windowtype) for all options.).",
+                    "kind": "parameter",
+                    "name": "win_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next_pan_az[num_simd_chans: Int = 4, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, mut buffer: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = False, start_frame: Int = 0, duration: Float64 = 0, buffer_chan: Int = 0, pan: Float64 = 0, gain: Float64 = 1, num_speakers: Int = 4) -> SIMD[DType.float64, num_simd_chans]",
+                "summary": "Generate the next grain and pan it to N speakers using azimuth panning."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "Audio buffer containing the source sound.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Playback rate of the grain (1.0 = normal speed).",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Whether to loop the grain (default: False).",
+                    "kind": "argument",
+                    "name": "loop",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Starting frame position in the buffer.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Duration of the grain in seconds.",
+                    "kind": "argument",
+                    "name": "duration",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Panning position from -1.0 (left) to 1.0 (right).",
+                    "kind": "argument",
+                    "name": "pan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor for the grain.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Number of output channels to read from the buffer and also the size of the output SIMD vector.",
+                    "kind": "parameter",
+                    "name": "num_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "WindowType.hann",
+                    "description": "Type of window to apply to the grain (default is Hann window (WinType.hann)).",
+                    "kind": "parameter",
+                    "name": "win_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next[num_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, mut buffer: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = False, start_frame: Int = 0, duration: Float64 = 0, pan: Float64 = 0, gain: Float64 = 1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next unpanned grain. This is called internally by the panning functions, but can also be used directly if panning is not needed. The grain will always have the channel size of the SIMDBuffer."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Grain",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "PolyObject",
+            "path": "/mmm_audio/Polyphony/PolyObject"
+          }
+        ],
+        "signature": "struct Grain",
+        "summary": "A single grain for granular synthesis."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "grains",
+            "summary": "",
+            "type": "List[Grain]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "counter",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "trig",
+            "summary": "",
+            "type": "Bool"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "poly",
+            "summary": "",
+            "type": "PolyTriggerSig"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_grains",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_grains",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, num_grains: Int, max_grains: Int, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Args:     num_grains: Number of grains to initialize.     max_grains: Maximum number of grains that can be allocated.     world: Pointer to the MMMWorld instance."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0.10000000000000001",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "duration",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "buf_chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "pan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Args:.\n    buffer: Audio buffer containing the source sound.\n    rate: Playback rate of the grains (1.0 = normal speed).\n    trig: Trigger signal (>0 to start a new grain).\n    start_frame: Starting frame position in the buffer.\n    duration: Duration of each grain in seconds.\n    buf_chan: Channel in the buffer to read from.\n    pan: Panning position from -1.0 (left) to 1.0 (right).\n    gain: Amplitude scaling factor for the grains.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "default": "1",
+                    "description": "Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.",
+                    "kind": "parameter",
+                    "name": "num_playback_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "WindowType.hann",
+                    "description": "Type of window to apply to each grain (default is Hann window (WinType.hann)).",
+                    "kind": "parameter",
+                    "name": "win_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "List of output samples for all channels.",
+                  "type": "SIMD"
+                },
+                "signature": "next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, mut buffer: SIMDBuffer[num_chans], rate: Float64 = 1, trig: Bool = False, start_frame: Int = 0, duration: Float64 = 0.10000000000000001, buf_chan: Int = 0, pan: Float64 = 0, gain: Float64 = 1) -> SIMD[DType.float64, 2]",
+                "summary": "Generate the next set of grains. Uses pan2 to pan to 2 channels. Depending on num_playback_chans, will either pan a mono signal out 2 channels or a stereo signal out 2 channels."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next_pan_az",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "Audio buffer containing the source sound.",
+                    "kind": "argument",
+                    "name": "buffer",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Buffer_Module/SIMDBuffer",
+                    "type": "SIMDBuffer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Playback rate of the grains (1.0 = normal speed).",
+                    "kind": "argument",
+                    "name": "rate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "False",
+                    "description": "Trigger signal (>0 to start a new grain).",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Starting frame position in the buffer.",
+                    "kind": "argument",
+                    "name": "start_frame",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0.10000000000000001",
+                    "description": "Duration of each grain in seconds.",
+                    "kind": "argument",
+                    "name": "duration",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Channel in the buffer to read from.",
+                    "kind": "argument",
+                    "name": "buf_chan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Panning position from -1.0 (left) to 1.0 (right).",
+                    "kind": "argument",
+                    "name": "pan",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor for the grains.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2",
+                    "description": "Number of speakers to pan to. Must be fewer than or equal to num_simd_chans.",
+                    "kind": "argument",
+                    "name": "num_speakers",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next_pan_az",
+                "parameters": [
+                  {
+                    "default": "2",
+                    "description": "The size of the output SIMD vector. Must be a power of two that is at least as large as num_speakers.",
+                    "kind": "parameter",
+                    "name": "num_simd_chans",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "WindowType.hann",
+                    "description": "Type of window to apply to each grain (default is Hann window (WinType.hann)).",
+                    "kind": "parameter",
+                    "name": "win_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "False",
+                    "description": "Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.",
+                    "kind": "parameter",
+                    "name": "bWrap",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "Output samples for all channels as a SIMD vector.",
+                  "type": "SIMD"
+                },
+                "signature": "next_pan_az[num_simd_chans: Int = 2, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, mut buffer: SIMDBuffer[num_chans], rate: Float64 = 1, trig: Bool = False, start_frame: Int = 0, duration: Float64 = 0.10000000000000001, buf_chan: Int = 0, pan: Float64 = 0, gain: Float64 = 1, num_speakers: Int = 2) -> SIMD[DType.float64, num_simd_chans]",
+                "summary": "Generate the next set of grains. Uses azimuth panning for N channel output."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "TGrains",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct TGrains",
+        "summary": "Triggered granular synthesis. Each trigger starts a new grain."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Player/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Args:\n    world: Pointer to the MMMWorld instance.\n    buf_dur: Duration of the internal buffer in seconds.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "grains",
+            "summary": "",
+            "type": "List[Grain]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "counter",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "recorder",
+            "summary": "",
+            "type": "Recorder[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "dust",
+            "summary": "",
+            "type": "Dust"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "pitch_ratios",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "poly",
+            "summary": "",
+            "type": "PolyTriggerSig"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "2",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "buf_dur",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "6",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_grains",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "12",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_grains",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], buf_dur: Float64 = 2, num_grains: Int = 6, max_grains: Int = 12)",
+                "summary": "Args:     world: pointer to the MMMWorld instance.     overlaps: Number of overlapping grains (default is 4).     buf_dur: duration of the internal buffer in seconds."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Input signal to be pitch shifted.",
+                    "kind": "argument",
+                    "name": "in_sig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0.20000000000000001",
+                    "description": "Duration of each grain in seconds.",
+                    "kind": "argument",
+                    "name": "grain_dur",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "4",
+                    "description": "Number of overlapping grains (default is 4).",
+                    "kind": "argument",
+                    "name": "overlaps",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Pitch shift ratio (1.0 = no shift, 2.0 = one octave up, 0.5 = one octave down, etc).",
+                    "kind": "argument",
+                    "name": "pitch_ratio",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Amount of random variation in pitch ratio.",
+                    "kind": "argument",
+                    "name": "pitch_dispersion",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Amount of random variation in grain triggering time. Value between 0.0 and 1.0, where 0.0 is no variation and 1.0 is maximum variation of up to the grain duration.",
+                    "kind": "argument",
+                    "name": "time_dispersion",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Minimum amount of delay to add to the start of each grain in seconds.",
+                    "kind": "argument",
+                    "name": "added_delay_low",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "Maximum amount of delay to add to the start of each grain in seconds. (Maximum added delay should be set so that it does not exceed the internal buffer size when combined with the grain duration and time dispersion).",
+                    "kind": "argument",
+                    "name": "added_delay_high",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1",
+                    "description": "Amplitude scaling factor for the output.",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, in_sig: SIMD[DType.float64, num_chans], grain_dur: Float64 = 0.20000000000000001, overlaps: Int = 4, pitch_ratio: Float64 = 1, pitch_dispersion: Float64 = 0, time_dispersion: Float64 = 0, added_delay_low: Float64 = 0, added_delay_high: Float64 = 0, gain: Float64 = 1) -> SIMD[DType.float64, num_chans]",
+                "summary": "Generate the next set of grains for pitch shifting."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PitchShift",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of input/output channels.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "WindowType.hann",
+            "description": "Type of window to apply to each grain (default is Hann window (WinType.hann)).",
+            "kind": "parameter",
+            "name": "win_type",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann]",
+        "summary": "An N channel granular pitchshifter. Each channel is processed in parallel."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

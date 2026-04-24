@@ -1,5 +1,21 @@
+# Ignore everything
+*
+
+# But not these folders and their contents
+!src/
+!src/**
+!examples/
+!examples/**
+!.gitignore
+!README.md
+!pixi.toml
+!pyproject.toml
+
+# Also keep the .gitignore itself
+!.gitignore
+
 .DS_Store
-/*Bridge.mojo
+/src/*Bridge.mojo
 
 # user files
 mine/

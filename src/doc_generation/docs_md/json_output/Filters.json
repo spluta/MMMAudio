@@ -1,0 +1,3515 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Filters",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "simd_width",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#simd_width",
+            "signature": "comptime simd_width",
+            "summary": "",
+            "value": "simd_width_of[DType.float64]()"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "val",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "b1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "lag",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0.02",
+                    "description": "SIMD vector specifying lag time in seconds for each channel.",
+                    "kind": "argument",
+                    "name": "lag",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], lag: SIMD[DType.float64, num_chans] = 0.02)",
+                "summary": "Initialize the lag processor with given lag time in seconds."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "Input SIMD vector values.",
+                    "kind": "argument",
+                    "name": "in_samp",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "Output values after applying the lag.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, in_samp: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the lag processor."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_lag_time",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "SIMD vector specifying new lag time in seconds for each channel.",
+                    "kind": "argument",
+                    "name": "lag",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_lag_time",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_lag_time(mut self, lag: SIMD[DType.float64, num_chans])",
+                "summary": "Set a new lag time in seconds for each channel."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "par_process",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "lags",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "vals",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "par_process",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "num_simd",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "simd_width",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "par_process[num_simd: Int, simd_width: Int](mut lags: List[Lag[simd_width]], mut vals: List[Float64])",
+                "summary": "Parallel processes a List[Lag[simd_width]]. The one dimensional list of vals is both the input and the output."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Lag",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Lag[num_chans: Int = 1]",
+        "summary": "A lag processor that smooths input values over time based on a specified lag time in seconds."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "To use the different modes, see the mode-specific methods.\n\nImplementation from [Andrew Simper](https://cytomic.com/files/dsp/SvfLinearTrapOptimised2.pdf). \nTranslated from Oleg Nesterov's Faust implementation.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "ic1eq",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "ic2eq",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the SVF."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "reset",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "reset",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "reset(mut self)",
+                "summary": "Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF lowpass filter. Passes frequencies below the cutoff while attenuating frequencies above it."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "bpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the bandpass filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The bandwidth of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "bpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "bpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF bandpass filter. Passes a band of frequencies centered at the cutoff while attenuating frequencies above and below."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the highpass filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "hpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "hpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF highpass filter. Passes frequencies above the cutoff while attenuating frequencies below it."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "peak",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the peak filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "peak",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "peak(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF peak filter. Boosts or cuts a band of frequencies centered at the cutoff by an amount determined by q, leaving frequencies outside the band unaffected."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "notch",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the notch filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notch",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "notch(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "allpass",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the allpass filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "allpass",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "allpass(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF allpass filter. Passes all frequencies at equal amplitude while shifting their phase relationship around the cutoff frequency."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "bell",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the bell filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "bell",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "bell(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF bell (peaking EQ) filter. Boosts or cuts a band of frequencies centered at the cutoff by a specified gain amount, leaving frequencies outside the band unaffected."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lowshelf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the low shelf filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lowshelf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lowshelf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF lowshelf filter. Boosts or cuts all frequencies below the cutoff by a specified gain amount, leaving frequencies above unaffected."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "highshelf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the high shelf filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "highshelf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "highshelf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a SVF highshelf filter. Boosts or cuts all frequencies above the cutoff by a specified gain amount, leaving frequencies below unaffected."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SVF",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct SVF[num_chans: Int = 1]",
+        "summary": "A State Variable Filter struct."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "svf1",
+            "summary": "",
+            "type": "SVF[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "svf2",
+            "summary": "",
+            "type": "SVF[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "q",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the 4th-order Linkwitz-Riley lowpass filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "A single sample through the 4th order Linkwitz-Riley lowpass filter."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "lpf_LR4",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct lpf_LR4[num_chans: Int = 1]",
+        "summary": "A 4th-order [Linkwitz-Riley](https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter) lowpass filter."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_samp",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the one-pole filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "cutoff_hz",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lpf(mut self, input: SIMD[DType.float64, num_chans], cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the one-pole lowpass filter with a given cutoff frequency."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the highpass filter.",
+                    "kind": "argument",
+                    "name": "cutoff_hz",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "hpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "hpf(mut self, input: SIMD[DType.float64, num_chans], cutoff_hz: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the one-pole highpass filter with a given cutoff frequency."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "OnePole",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct OnePole[num_chans: Int = 1]",
+        "summary": "One-pole IIR filter that can be configured as lowpass or highpass."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Implementation from Digital Sound Generation by Beat Frei. The cutoff\nfrequency of the highpass filter is fixed to 5 Hz.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "alpha",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_samp",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_inner",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the DC blocker filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, input: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the DC blocker filter."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "DCTrap",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct DCTrap[num_chans: Int = 1]",
+        "summary": "DC Trap filter."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This implementation supports both lowpass and highpass modes.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "step_val",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the VAOnePole filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the VA one-pole lowpass filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the highpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "hpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "hpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the VA one-pole highpass filter."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "VAOnePole",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct VAOnePole[num_chans: Int = 1]",
+        "summary": "One-pole filter based on the Virtual Analog design by  Vadim Zavalishin in \"The Art of VA Filter Design\"."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Implementation based on the Virtual Analog design by Vadim Zavalishin in \n\"The Art of VA Filter Design\"\n\nThis implementation supports 4-pole lowpass filtering with optional [oversampling](Oversampling.md).\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "nyquist",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "step_val",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_2",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_3",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_4",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, (2 ** os_index)]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "upsampler",
+            "summary": "",
+            "type": "Upsampler[num_chans, (2 ** os_index)]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the VAMoogLadder filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "sig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "100",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0.5",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, sig: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans] = 100, q: SIMD[DType.float64, num_chans] = 0.5) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process one sample through the Moog Ladder lowpass filter."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "VAMoogLadder",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "[oversampling](Oversampling.md) factor as a power of two (0 = no oversampling, 1 = 2x, 2 = 4x, etc).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "Virtual Analog Moog Ladder Filter."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "A translation of Julius Smith's Faust implementation of [tf2s (virtual analog) resonant filters](https://github.com/grame-cncm/faustlibraries/blob/6061da8bf2279ae4281333861a3dc6254e9076f9/filters.lib#L2054).\nCopyright (C) 2003-2019 by Julius O. Smith III\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "tf2",
+            "summary": "",
+            "type": "tf2[num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "coeffs",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the Reson filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the lowpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The output gain (clipped to 0.0-1.0 range).",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a resonant lowpass filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency of the highpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The output gain (clipped to 0.0-1.0 range).",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "hpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "hpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a resonant highpass filter."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "bpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The center frequency of the bandpass filter.",
+                    "kind": "argument",
+                    "name": "freq",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The output gain (clipped to 0.0-1.0 range).",
+                    "kind": "argument",
+                    "name": "gain",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "bpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "bpf(mut self, input: SIMD[DType.float64, num_chans], freq: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a resonant bandpass filter."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Reson",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Reson[num_chans: Int = 1]",
+        "summary": "Resonant filter with lowpass, highpass, and bandpass modes."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Filters/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "To use the different modes, see the mode-specific methods.\n\nBased on [Robert Bristow-Johnson's Audio EQ Cookbook](https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html). \n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "s1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "s2",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the Biquad."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__repr__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "__repr__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "String"
+                },
+                "signature": "__repr__(self) -> String",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "reset",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "reset",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "reset(mut self)",
+                "summary": "Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad lowpass filter. Passes frequencies below the cutoff while attenuating frequencies above it."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "hpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "hpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "hpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad highpass filter. Passes frequencies above the cutoff while attenuating frequencies below it."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "bpf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The bandwidth of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "bpf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "bpf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad bandpass filter. Passes a band of frequencies centered at the cutoff while attenuating frequencies above and below."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "notch",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notch",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "notch(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "allpass",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "allpass",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "allpass(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad allpass filter. Passes all frequencies at equal amplitude while shifting their phase relationship around the cutoff frequency."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "bell",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "bell",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "bell(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad bell (peaking EQ) filter. Boosts or cuts a band of frequencies centered at the cutoff by a specified gain amount, leaving frequencies outside the band unaffected."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "lowshelf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "lowshelf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "lowshelf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad lowshelf filter. Boosts or cuts all frequencies below the cutoff by a specified gain amount, leaving frequencies above unaffected."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "highshelf",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input signal to process.",
+                    "kind": "argument",
+                    "name": "input",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The cutoff frequency in Hz.",
+                    "kind": "argument",
+                    "name": "frequency",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The resonance of the filter.",
+                    "kind": "argument",
+                    "name": "q",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amount to boost/cut around the cutoff.",
+                    "kind": "argument",
+                    "name": "gain_db",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "highshelf",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The next sample of the filtered output.",
+                  "type": "SIMD"
+                },
+                "signature": "highshelf(mut self, input: SIMD[DType.float64, num_chans], frequency: SIMD[DType.float64, num_chans], q: SIMD[DType.float64, num_chans], gain_db: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process input through a biquad highshelf filter. Boosts or cuts all frequencies above the cutoff by a specified gain amount, leaving frequencies below unaffected."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Biquad",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "Number of SIMD channels to process in parallel.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          },
+          {
+            "name": "Representable",
+            "path": "/std/builtin/repr/Representable"
+          }
+        ],
+        "signature": "struct Biquad[num_chans: Int = 1]",
+        "summary": "A Biquad filter struct."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

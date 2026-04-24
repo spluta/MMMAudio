@@ -1,0 +1,13 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "windows_waveforms",
+    "structs": [],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,1270 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "bitcrusher",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The input sample to be bitcrushed.",
+                "kind": "argument",
+                "name": "in_samp",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The number of bits to reduce the signal to.",
+                "kind": "argument",
+                "name": "bits",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "bitcrusher",
+            "parameters": [
+              {
+                "description": "The number of channels for SIMD operations.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "SIMD"
+            },
+            "signature": "bitcrusher[num_chans: Int](in_samp: SIMD[DType.float64, num_chans], bits: Int) -> SIMD[DType.float64, num_chans]",
+            "summary": "Simple bitcrusher function that reduces the bit depth of the input signal."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "hard_clip",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "hard_clip",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "SIMD"
+            },
+            "signature": "hard_clip[num_chans: Int](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "buchla_wavefolder",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Signal in - between 0 and +/-40.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "type": "SIMD"
+              },
+              {
+                "convention": "var",
+                "description": "Amplitude/gain control (1 to 40).",
+                "kind": "argument",
+                "name": "amp",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "Buchla waveshaper implementation as a function. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. See the BuchlaWavefolder struct for an ADAA version with oversampling.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "buchla_wavefolder",
+            "parameters": [
+              {
+                "description": "The number of channels for SIMD operations.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Waveshaped output signal.",
+              "type": "SIMD"
+            },
+            "signature": "buchla_wavefolder[num_chans: Int](input: SIMD[DType.float64, num_chans], var amp: Float64) -> SIMD[DType.float64, num_chans]",
+            "summary": "Buchla waveshaper."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "Distortion",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "samp",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "last_trig",
+            "summary": "",
+            "type": "SIMD[DType.bool, num_chans]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": "Initialize the Latch."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample to be latched.",
+                    "kind": "argument",
+                    "name": "in_samp",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A boolean trigger signal. When switching from false to true, the latch updates its output to the current input sample.",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, in_samp: SIMD[DType.float64, num_chans], trig: SIMD[DType.bool, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "Process the input sample and trigger, returning the latched output sample."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Latch",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels for SIMD operations.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Latch[num_chans: Int = 1]",
+        "summary": "A simple latch that holds the last input sample when a trigger is received."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "times_oversampling",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#times_oversampling",
+            "signature": "comptime times_oversampling",
+            "summary": "",
+            "value": "(2 ** os_index)"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "TOL",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#tol",
+            "signature": "comptime TOL",
+            "summary": "",
+            "value": "1.0000000000000001E-5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This struct provides first order anti-comptimeed `soft clip` function using the Anti-Derivative Anti-comptimeing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "x1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, SoftClipAD[num_chans, os_index, degree].times_oversampling]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "upsampler",
+            "summary": "",
+            "type": "Upsampler[num_chans, SoftClipAD[num_chans, os_index, degree].times_oversampling]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "D",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "norm_factor",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "inv_norm_factor",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "G1",
+            "summary": "",
+            "type": "Float64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample.",
+                    "kind": "argument",
+                    "name": "x",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Computes the first-order anti-comptimeed `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The anti-comptimeed `soft_clip` of `x`.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "First-order anti-comptimeed `hard_clip`."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "SoftClipAD",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels for SIMD operations.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "3",
+            "description": "The degree of the soft clipping polynomial (must be odd).",
+            "kind": "parameter",
+            "name": "degree",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3]",
+        "summary": "Anti-Derivative Anti-comptimeing soft-clipping function."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "TOL",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#tol",
+            "signature": "comptime TOL",
+            "summary": "",
+            "value": "1.0000000000000001E-5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This struct provides a first order anti-comptimeed version of the `hard_clip` function using the Anti-Derivative Anti-comptimeing (ADAA) with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "x1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "x2",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, (2 ** os_index)]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "upsampler",
+            "summary": "",
+            "type": "Upsampler[num_chans, (2 ** os_index)]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the HardClipAD."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample.",
+                    "kind": "argument",
+                    "name": "x",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Computes the first-order anti-comptimeed `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The anti-comptimeed `hard_clip` of `x`.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "First-order anti-comptimeed `hard_clip`."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "HardClipAD",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels for SIMD operations.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, 3 = 8x, 4 = 16x).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct HardClipAD[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "Anti-Derivative Anti-comptimeing hard-clipping function."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "TOL",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#tol",
+            "signature": "comptime TOL",
+            "summary": "",
+            "value": "1.0000000000000001E-5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "This struct provides a first order anti-comptimeed version of the `tanh` function using the Anti-Derivative Anti-comptimeing (ADAA) method with optional Oversampling. See [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html) for more details on how this works.\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "x1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, (2 ** os_index)]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "upsampler",
+            "summary": "",
+            "type": "Upsampler[num_chans, (2 ** os_index)]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the TanhAD."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample.",
+                    "kind": "argument",
+                    "name": "x",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Computes the first-order anti-comptimeed `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The anti-comptimeed `hard_clip` of `x`.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+                "summary": "First-order anti-comptimeed `hard_clip`."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "TanhAD",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels for SIMD operations.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "0",
+            "description": "The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct TanhAD[num_chans: Int = 1, os_index: Int = 0]",
+        "summary": "Anti-Derivative Anti-comptimeing first order tanh function."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "x_mix",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#x_mix",
+            "signature": "comptime x_mix",
+            "summary": "",
+            "value": "5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "TOL",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#tol",
+            "signature": "comptime TOL",
+            "summary": "",
+            "value": "1.0000000000000001E-5"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Distortion/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "Buchla 259 style wavefolder implementation with Anti-Derivative Anti-comptimeing (ADAA) and Oversampling. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. The ADAA technique is based on [Practical Considerations for Antiderivative Anti-comptimeing (Chowdhury)](https://ccrma.stanford.edu/~jatin/Notebooks/adaa.html).\n",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "cells",
+            "summary": "",
+            "type": "List[BuchlaCell[num_chans]]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "x1",
+            "summary": "",
+            "type": "SIMD[DType.float64, num_chans]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "oversampling",
+            "summary": "",
+            "type": "Oversampling[num_chans, (2 ** os_index)]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "upsampler",
+            "summary": "",
+            "type": "Upsampler[num_chans, (2 ** os_index)]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "A pointer to the MMMWorld.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin])",
+                "summary": "Initialize the BuchlaWavefolder."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The input sample.",
+                    "kind": "argument",
+                    "name": "x",
+                    "passingKind": "pos_or_kw",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "The amplitude/gain control.",
+                    "kind": "argument",
+                    "name": "amp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "Computes the first-order anti-comptimeed BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "The anti-comptimeed `hard_clip` of `x`.",
+                  "type": "SIMD"
+                },
+                "signature": "next(mut self, x: SIMD[DType.float64, num_chans], amp: Float64) -> SIMD[DType.float64, num_chans]",
+                "summary": "First-order anti-comptimeed BuchlaWavefolder."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "BuchlaWavefolder",
+        "parameters": [
+          {
+            "default": "1",
+            "description": "The number of channels for SIMD operations.",
+            "kind": "parameter",
+            "name": "num_chans",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          },
+          {
+            "default": "1",
+            "description": "The oversampling index (0 = no oversampling, 1 = 2x, 2 = 4x, etc.).",
+            "kind": "parameter",
+            "name": "os_index",
+            "passingKind": "pos_or_kw",
+            "path": "/std/builtin/int/Int",
+            "type": "Int"
+          }
+        ],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1]",
+        "summary": "Buchla 259 style Wavefolder."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

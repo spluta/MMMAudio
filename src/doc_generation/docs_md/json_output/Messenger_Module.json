@@ -1,0 +1,976 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Messenger_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Messenger_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False if True if _all_trivial_del[_NoneType, String]() else _all_trivial_del[_NoneType, String]() else True if _all_trivial_del[_NoneType, String]() else _all_trivial_del[_NoneType, String]()"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Messenger_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]()"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Messenger_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False if True if _all_trivial_copyinit[_NoneType, String]() else _all_trivial_copyinit[_NoneType, String]() else True if _all_trivial_copyinit[_NoneType, String]() else _all_trivial_copyinit[_NoneType, String]()"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "It works by checking for messages sent from Python at the start of each audio block, and updating\nany parameters registered with it accordingly. Each data type has its own `update` function and `notify_update` which will return a Bool indicating whether the parameter was updated.\n\nFor example usage, see the MessengerExample.mojo file in the [Examples](../examples/index.md) folder.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "namespace",
+            "summary": "",
+            "type": "Optional[String]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "key_dict",
+            "summary": "",
+            "type": "Dict[String, String]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "An `World` to the world to check for new messages.",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "None",
+                    "description": "A `String` (or by defaut `None`) to declare as the 'namespace' for this Messenger. If a 'namespace' is provided, any messages sent from Python need to be prepended with this name. For example, if a Float64 updates with the name 'freq' and this Messenger has the namespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.",
+                    "kind": "argument",
+                    "name": "namespace",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/optional/Optional",
+                    "type": "Optional"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "If a 'namespace' is provided, any messages sent from Python need to be prepended with this name.\nFor example, if a Float64 updates with the name 'freq' and this Messenger has the\nnamespace 'synth1', then to update the freq value from Python, the user must send 'synth1.freq'.\n",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, world: UnsafePointer[MMMWorld, MutExternalOrigin], namespace: Optional[String] = None)",
+                "summary": "Initialize the Messenger."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "update",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Bool` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Bool sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: Bool, name: String)",
+                "summary": "Update a Bool variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Float64` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Float64 sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: Float64, name: String)",
+                "summary": "Update a Float64 variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[Float64]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "A `String` to identify the List[Float64] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: List[Float64], ref name: String)",
+                "summary": "Update a List[Float64] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the SIMD[DType.float64] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: SIMD[DType.float64, size], name: String)",
+                "summary": "Update a SIMD[DType.float64] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Int` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Int sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: Int, name: String)",
+                "summary": "Update a Int variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[Int]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "A `String` to identify the List[Int] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: List[Int], ref name: String)",
+                "summary": "Update a List[Int] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `String` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the String sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: String, name: String)",
+                "summary": "Update a String variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[String]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the List[String] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "update(mut self, mut param: List[String], name: String)",
+                "summary": "Update a List[String] variable with a value sent from Python."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "notify_update",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Bool` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Bool sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: Bool, name: String) -> Bool",
+                "summary": "Notify and update a Bool variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Float64` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Float64 sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: Float64, name: String) -> Bool",
+                "summary": "Notify and update a Float64 variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[Float64]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "A `String` to identify the List[Float64] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: List[Float64], ref name: String) -> Bool",
+                "summary": "Notify and update a List[Float64] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/SIMD",
+                    "type": "SIMD"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the SIMD[DType.float64] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: SIMD[DType.float64, size], name: String) -> Bool",
+                "summary": "Notify and update a SIMD[DType.float64] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `Int` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the Int sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: Int, name: String) -> Bool",
+                "summary": "Notify and update a Int variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[Int]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "ref",
+                    "description": "A `String` to identify the List[Int] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: List[Int], ref name: String) -> Bool",
+                "summary": "Notify and update a List[Int] variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `String` variable to be updated.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the String sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: String, name: String) -> Bool",
+                "summary": "Notify and update a String variable with a value sent from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A `List[String]` variable to be updated. The List will be resized to match the incoming data.",
+                    "kind": "argument",
+                    "name": "param",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the List[String] sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_update",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether the parameter was updated.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_update(mut self, mut param: List[String], name: String) -> Bool",
+                "summary": "Notify and update a List[String] variable with a value sent from Python."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "notify_trig",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A `String` to identify the trigger sent from Python.",
+                    "kind": "argument",
+                    "name": "name",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "notify_trig",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A `Bool` indicating whether a trigger was sent from Python under the specified name.",
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "notify_trig(mut self, name: String) -> Bool",
+                "summary": "Get notified if a `send_trig` message was sent under the specified name."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Messenger",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Messenger",
+        "summary": "Communication between Python and Mojo."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

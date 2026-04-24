@@ -1,0 +1,1651 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [],
+    "kind": "module",
+    "name": "Polyphony",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True if True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]()"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "PolyTrigger is designed to be paired with the PolyPal class in Python. Give them the same name_space and num_messages arguments, and the messages sent from Python with PolyPal will be correctly received by the PolyTrigger object.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "poly",
+            "summary": "",
+            "type": "PolyTriggerSig"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "m",
+            "summary": "",
+            "type": "Messenger"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_messages",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "initial_num_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "name_space",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "10",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_messages",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, initial_num_voices: Int, max_voices: Int, world: UnsafePointer[MMMWorld, MutExternalOrigin], name_space: String, num_messages: Int = 10)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut vals: List[Int]) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut vals: List[Int]) -> None)",
+                "summary": "This convenience function acheives all functionality of a Triggered PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and triggers PolyObjects as needed. The optional call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64] or an Int or a Float64. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut vals: List[Float64]) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut vals: List[Float64]) -> None)",
+                "summary": ""
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut val: Int) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut val: Int) -> None)",
+                "summary": ""
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut val: Float64) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut val: Float64) -> None)",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PolyTrigger",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PolyTrigger",
+        "summary": "A Poly implementation that has an internal Messenger for handling messages from Python. The `next` function is designed to be used with messages that simply trigger a voice. Use PolyGate for messages that open and close gates."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True if True if True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]() else True if _all_trivial_moveinit[_NoneType, String]() else _all_trivial_moveinit[_NoneType, String]()"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "PolyGate is designed to be paired with the PolyPal class in Python. Give them the same name_space and num_messages arguments, and the messages sent from Python with PolyPal will be correctly received by the PolyGate object.",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "poly",
+            "summary": "",
+            "type": "PolyTriggerSig"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "m",
+            "summary": "",
+            "type": "Messenger"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_messages",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "world",
+            "summary": "",
+            "type": "World"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "active_dict",
+            "summary": "",
+            "type": "Dict[String, Int]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "initial_num_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "name_space",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/string/string/String",
+                    "type": "String"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "10",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_messages",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, initial_num_voices: Int, max_voices: Int, world: UnsafePointer[MMMWorld, MutExternalOrigin], name_space: String, num_messages: Int = 10)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut vals: List[Int]) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut vals: List[Int]) -> None)",
+                "summary": "This convenience function acheives all functionality of a Gated PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and opens and closes gates for PolyObjects as needed. The call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64], where the first value is the note or key to trigger and the second value is the velocity or gate of the note. A 0 in the second value will close the gate. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, mut vals: List[Float64]) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  },
+                  {
+                    "default": "True",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "only_top_of_block",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject, only_top_of_block: Bool = True](mut self, mut poly_objects: List[T], call_back: fn(mut poly_object: T, mut vals: List[Float64]) -> None)",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PolyGate",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PolyGate",
+        "summary": "A Poly implementation that has an internal Messenger for handling messages from Python. The `next` function is designed to be used with list messages where the second value opens and closes the voice's gate."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "poly",
+            "summary": "",
+            "type": "PolyTriggerSig"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "changes",
+            "summary": "",
+            "type": "List[Changed]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_gates",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "active_dict",
+            "summary": "",
+            "type": "Dict[Int, Int]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "initial_num_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "num_gates",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, initial_num_voices: Int, max_voices: Int, num_gates: Int)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "A list of structs conforming to the PolyObject trait. This function calls the set_gate function for each PolyObject to open and close the gates as needed.",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "A list of boolean signals that control the gates of the voices. Each signal corresponds to a different gate, so the length of the gate_sigs list should be the same as the number of gates in the synth. When a signal goes from False to True, the corresponding gate will be opened for a new voice. When a signal goes from True to False, the corresponding gate will be closed for the voice that is currently playing with that gate.",
+                    "kind": "argument",
+                    "name": "gate_sigs",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "next[T: PolyObject](mut self, mut poly_objects: List[T], gate_sigs: List[Bool])",
+                "summary": "This function is designed to be used with polyphonic synths that have gated controls that are signals."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PolyGateSig",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PolyGateSig",
+        "summary": "A Poly object designed for managing polyphonic synths with gated controls that are signals."
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "active_list",
+            "summary": "",
+            "type": "List[Bool]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "max_voices",
+            "summary": "",
+            "type": "Int"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "initial_num_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "max_voices",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, initial_num_voices: Int, max_voices: Int)",
+                "summary": "Args:     initial_num_voices (Int): the number of voices to start with. This can be changed later by the Poly object itself if more voices need to be added.     max_voices (Int): the maximum number of voices that can be allocated. Poly will not allocate more than this number of voices."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "next",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/int/Int",
+                  "type": "Int"
+                },
+                "signature": "next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int",
+                "summary": "Looks at the value of trig. If trig is True, looks for a free voice and triggers it. Returns the index of the voice that was triggered, or -1 if no voice was triggered."
+              },
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "call_back",
+                    "passingKind": "pos_or_kw",
+                    "type": "fn(mut poly_object: T, trig: Bool) -> None"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "next",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/int/Int",
+                  "type": "Int"
+                },
+                "signature": "next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, call_back: fn(mut poly_object: T, trig: Bool) -> None) -> Int",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "find_voice_and_trigger",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "poly_objects",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trig",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "find_voice_and_trigger",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/Polyphony/PolyObject",
+                    "type": "PolyObject"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/int/Int",
+                  "type": "Int"
+                },
+                "signature": "find_voice_and_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "PolyTriggerSig",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct PolyTriggerSig",
+        "summary": "A Poly implementation for synths triggered by signals, like TGrains and PitchShift."
+      }
+    ],
+    "summary": "",
+    "traits": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "The implementation of `__del__` is considered to be trivial if:\n- The struct has a compiler-generated trivial destructor and all its fields\n  have a trivial `__del__` method.\n\nIn practice, it means that the `__del__` can be considered as no-op.",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__del__` is trivial.",
+            "value": ""
+          },
+          {
+            "deprecated": "",
+            "description": "The implementation of `__copyinit__` is considered to be trivial if:\n- The struct has a compiler-generated trivial `__copyinit__` and all its fields\n  have a trivial `__copyinit__` method.\n\nIn practice, it means the value can be copied by copying the bits from\none location to another without side effects.",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__copyinit__` is trivial.",
+            "value": ""
+          },
+          {
+            "deprecated": "",
+            "description": "The implementation of `__moveinit__` is considered to be trivial if:\n- The struct has a compiler-generated `__moveinit__` and all its fields\n  have a trivial `__moveinit__` method.\n\nIn practice, it means the value can be moved by moving the bits from\none location to another without side effects.",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Polyphony/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "A flag (often compiler generated) to indicate whether the implementation of `__moveinit__` is trivial.",
+            "value": ""
+          }
+        ],
+        "deprecated": "",
+        "description": "",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__copyinit__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "The value to copy.",
+                    "kind": "argument",
+                    "name": "existing",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__copyinit__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "_Self"
+                },
+                "signature": "__copyinit__(out self: _Self, existing: _Self, /)",
+                "summary": "Create a new instance of the value by copying an existing one."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "__moveinit__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "deinit",
+                    "description": "The value to move.",
+                    "kind": "argument",
+                    "name": "existing",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__moveinit__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "_Self"
+                },
+                "signature": "__moveinit__(out self: _Self, deinit existing: _Self, /)",
+                "summary": "Create a new instance of the value by moving the value of another."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "check_active",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "check_active",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/bool/Bool",
+                  "type": "Bool"
+                },
+                "signature": "check_active(mut self: _Self) -> Bool",
+                "summary": "A required, user defind function to check if the voice is active. This is usually done by checking if the envelope is active or if a Play object is still playing. This function is used internally by Poly to keep track of which voices are active and which are not."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_trigger",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "trigger",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_trigger",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_trigger(mut self: _Self, trigger: Bool)",
+                "summary": "Necessary for triggered PolyObjects. This function is used internally by Poly to set the PolyObject to triggered. That way, the PolyObject can open its own envelope or trigger other parameters in the subsequent `next` call."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "set_gate",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "gate",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/bool/Bool",
+                    "type": "Bool"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "set_gate",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "set_gate(mut self: _Self, gate: Bool)",
+                "summary": "Necessary for gated PolyObjects. This function is used internally by PolyGate and PolyGateSig to open and close the gate of the PolyObject."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "reset_env",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "reset_env",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "signature": "reset_env(mut self: _Self)",
+                "summary": "Necessary for gated PolyObjects that use gated envelopes. This is needed because Poly will internally copy a living PolyObject to create a new voice, and this can result in a hung voice if the env is already active when it's copied."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "copy",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "_Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": true,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "copy",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "doc": "A copy of this value.",
+                  "type": "_Self"
+                },
+                "signature": "copy(self: _Self) -> _Self",
+                "summary": "Explicitly construct a copy of self."
+              }
+            ]
+          }
+        ],
+        "kind": "trait",
+        "name": "PolyObject",
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "summary": ""
+      }
+    ]
+  },
+  "version": "0.26.1.0"
+}

@@ -1,0 +1,1946 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "dbamp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The decibel values to convert.",
+                "kind": "argument",
+                "name": "db",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "amplitude = 10^(dB/20).\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "dbamp",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "width",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The corresponding amplitude values.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "dbamp[width: Int, //](db: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]",
+            "summary": "Converts decibel values to amplitude."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "ampdb",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The amplitude values to convert.",
+                "kind": "argument",
+                "name": "amp",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "dB = 20 * log10(amplitude).\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "ampdb",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "width",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The corresponding decibel values.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "ampdb[width: Int, //](amp: SIMD[DType.float64, width]) -> SIMD[DType.float64, width]",
+            "summary": "Converts amplitude values to decibels."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "power_to_db",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Power value to convert.",
+                "kind": "argument",
+                "name": "value",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "default": "1",
+                "description": "Reference power for 0 dB.",
+                "kind": "argument",
+                "name": "zero_db_ref",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "default": "1.0E-10",
+                "description": "Minimum value to avoid log of zero.",
+                "kind": "argument",
+                "name": "amin",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "This mirrors librosa's power_to_db behavior for a single scalar: 10 * log10(max(amin, value) / zero_db_ref).\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "power_to_db",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The value in decibels.",
+              "path": "/std/builtin/simd/#float64",
+              "type": "Float64"
+            },
+            "signature": "power_to_db(value: Float64, zero_db_ref: Float64 = 1, amin: Float64 = 1.0E-10) -> Float64",
+            "summary": "Convert a power value to decibels."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "select",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The floating-point index to select.",
+                "kind": "argument",
+                "name": "index",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "The SIMD vector containing the values.",
+                "kind": "argument",
+                "name": "vals",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "select",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The selected value.",
+              "path": "/std/builtin/simd/#float64",
+              "type": "Float64"
+            },
+            "signature": "select[num_chans: Int, //](index: Float64, vals: SIMD[DType.float64, num_chans]) -> Float64",
+            "summary": "Selects a value from a SIMD vector based on a floating-point index and using linear interpolation."
+          },
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The floating-point index to select.",
+                "kind": "argument",
+                "name": "index",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "The List of SIMD vectors containing the values.",
+                "kind": "argument",
+                "name": "vals",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "select",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The selected value.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "select[num_chans: Int](index: Float64, vals: List[SIMD[DType.float64, num_chans]]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Selects a SIMD vector from a List of SIMD vectors based on a floating-point index using linear interpolation."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "check_reversed",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "check_reversed",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Tuple"
+            },
+            "signature": "check_reversed[dtype: DType, num_chans: Int](in_min: SIMD[dtype, num_chans], in_max: SIMD[dtype, num_chans]) -> Tuple[SIMD[dtype, num_chans], SIMD[dtype, num_chans], SIMD[DType.bool, num_chans]]",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "linlin",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The samples to map.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "0",
+                "description": "The minimum of the input range.",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "1",
+                "description": "The maximum of the input range.",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "0",
+                "description": "The minimum of the output range.",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "1",
+                "description": "The maximum of the output range.",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "Samples outside the input range are clamped to the corresponding output boundaries.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "linlin",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "linlin[dtype: DType, num_chans: Int, //](input: SIMD[dtype, num_chans], in_min: SIMD[dtype, num_chans] = 0, in_max: SIMD[dtype, num_chans] = 1, out_min: SIMD[dtype, num_chans] = 0, out_max: SIMD[dtype, num_chans] = 1) -> SIMD[dtype, num_chans]",
+            "summary": "Maps samples from one range to another range linearly."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "expexp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Input value to transform (exponential scale).",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of input range (exponential).",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of input range (exponential).",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of output range (exponential).",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of output range (exponential).",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "expexp",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Exponentially scaled output value.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "expexp[num_chans: Int, //](input: SIMD[DType.float64, num_chans], in_min: SIMD[DType.float64, num_chans], in_max: SIMD[DType.float64, num_chans], out_min: SIMD[DType.float64, num_chans], out_max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Exponential-to-exponential transform."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "linexp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "linexp",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "linexp[num_chans: Int, //](input: SIMD[DType.float64, num_chans], in_min: SIMD[DType.float64, num_chans], in_max: SIMD[DType.float64, num_chans], out_min: SIMD[DType.float64, num_chans], out_max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Maps samples from one linear range to another exponential range."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "explin",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Input value to transform (exponential scale).",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of input range (exponential).",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of input range (exponential).",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of output range (linear).",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of output range (linear).",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": true,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "explin",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Linearly scaled output value",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "explin[num_chans: Int, //](input: SIMD[DType.float64, num_chans], in_min: SIMD[DType.float64, num_chans], in_max: SIMD[DType.float64, num_chans], out_min: SIMD[DType.float64, num_chans], out_max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Exponential-to-linear transform (inverse of linexp)."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "lincurve",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The samples to map.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The minimum of the input range.",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum of the input range.",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The minimum of the output range (must be > 0).",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum of the output range (must be > 0).",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The curve factor. Positive values create an exponential-like curve, negative values create a logarithmic-like curve, and zero results in a linear mapping.",
+                "kind": "argument",
+                "name": "curve",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "lincurve",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector - defaults to 1. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The curved mapped samples in the output range.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "lincurve[num_chans: Int, //](input: SIMD[DType.float64, num_chans], in_min: SIMD[DType.float64, num_chans], in_max: SIMD[DType.float64, num_chans], out_min: SIMD[DType.float64, num_chans], out_max: SIMD[DType.float64, num_chans], curve: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Maps samples from one linear range to another curved range."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "curvelin",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Input value to transform (from curved space).",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of input range (curved).",
+                "kind": "argument",
+                "name": "in_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of input range (curved).",
+                "kind": "argument",
+                "name": "in_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Minimum of output range (linear).",
+                "kind": "argument",
+                "name": "out_min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Maximum of output range (linear).",
+                "kind": "argument",
+                "name": "out_max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "0",
+                "description": "Curve parameter (-10 to 10 typical range)\n       curve = 0: linear\n       curve > 0: undoes exponential curve\n       curve < 0: undoes logarithmic curve.",
+                "kind": "argument",
+                "name": "curve",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "curvelin",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Linearized output value.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "curvelin[num_chans: Int, //](input: SIMD[DType.float64, num_chans], in_min: SIMD[DType.float64, num_chans], in_max: SIMD[DType.float64, num_chans], out_min: SIMD[DType.float64, num_chans], out_max: SIMD[DType.float64, num_chans], curve: SIMD[DType.float64, num_chans] = 0) -> SIMD[DType.float64, num_chans]",
+            "summary": "Curve-to-linear transform (inverse of lincurve)."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "py_to_float64",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "py_float",
+                "passingKind": "pos_or_kw",
+                "path": "/std/python/python_object/PythonObject",
+                "type": "PythonObject"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "py_to_float64",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/builtin/simd/#float64",
+              "type": "Float64"
+            },
+            "signature": "py_to_float64(py_float: PythonObject) -> Float64",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "clip",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The SIMD vector to clip. Each element will be clipped individually.",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The minimum possible value.",
+                "kind": "argument",
+                "name": "lo",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum possible value.",
+                "kind": "argument",
+                "name": "hi",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "clip",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The clipped SIMD vector.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "clip[dtype: DType, num_chans: Int, //](x: SIMD[dtype, num_chans], lo: SIMD[dtype, num_chans], hi: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Clips each element in the SIMD vector to the specified range."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "wrap",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The sample to wrap.",
+                "kind": "argument",
+                "name": "input",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The minimum of the range.",
+                "kind": "argument",
+                "name": "min_val",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum of the range.",
+                "kind": "argument",
+                "name": "max_val",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "The wrapped sample within the range [min_val, max_val). \nThis function uses modulus arithmetic so the output can never equal max_val.\nReturns the sample if min_val >= max_val.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "wrap",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The wrapped value.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "wrap[dtype: DType, num_chans: Int, //](input: SIMD[dtype, num_chans], min_val: SIMD[dtype, num_chans], max_val: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Wraps a sample around a specified range."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "quadratic_interp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The sample at position 0.",
+                "kind": "argument",
+                "name": "y0",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The sample at position 1.",
+                "kind": "argument",
+                "name": "y1",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The sample at position 2.",
+                "kind": "argument",
+                "name": "y2",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The interpolation position (fractional part between 0 and 1).",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "quadratic_interp",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The interpolated sample at position x.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "quadratic_interp[dtype: DType, num_chans: Int, //](y0: SIMD[dtype, num_chans], y1: SIMD[dtype, num_chans], y2: SIMD[dtype, num_chans], x: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Performs quadratic interpolation between three points."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "cubic_interp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Point to the left of p1.",
+                "kind": "argument",
+                "name": "p0",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Point to the left of the float t.",
+                "kind": "argument",
+                "name": "p1",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Point to the right of the float t.",
+                "kind": "argument",
+                "name": "p2",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Point to the right of p2.",
+                "kind": "argument",
+                "name": "p3",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "Interpolation parameter (fractional part between p1 and p2).",
+                "kind": "argument",
+                "name": "t",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "Cubic Intepolation equation from *The Audio Programming Book* \nby Richard Boulanger and Victor Lazzarini. pg. 400\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "cubic_interp",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Interpolated sample.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "cubic_interp[dtype: DType, num_chans: Int, //](p0: SIMD[dtype, num_chans], p1: SIMD[dtype, num_chans], p2: SIMD[dtype, num_chans], p3: SIMD[dtype, num_chans], t: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Performs cubic interpolation."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "lagrange4",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The first sample.",
+                "kind": "argument",
+                "name": "sample0",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The second sample.",
+                "kind": "argument",
+                "name": "sample1",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The third sample.",
+                "kind": "argument",
+                "name": "sample2",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The fourth sample.",
+                "kind": "argument",
+                "name": "sample3",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The fifth sample.",
+                "kind": "argument",
+                "name": "sample4",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The fractional part between sample0 and sample1.",
+                "kind": "argument",
+                "name": "frac",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "lagrange4",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The interpolated sample.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "lagrange4[dtype: DType, num_chans: Int, //](sample0: SIMD[dtype, num_chans], sample1: SIMD[dtype, num_chans], sample2: SIMD[dtype, num_chans], sample3: SIMD[dtype, num_chans], sample4: SIMD[dtype, num_chans], frac: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Perform Lagrange interpolation for 4th order case (from JOS Faust Model). This is extrapolated from the JOS Faust filter model."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "linear_interp",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The starting point.",
+                "kind": "argument",
+                "name": "p0",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The ending point.",
+                "kind": "argument",
+                "name": "p1",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The interpolation parameter (fractional part between p0 and p1).",
+                "kind": "argument",
+                "name": "t",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "linear_interp",
+            "parameters": [
+              {
+                "description": "The data type of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "dtype",
+                "passingKind": "inferred",
+                "path": "/std/builtin/dtype/DType",
+                "type": "DType"
+              },
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The interpolated sample.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "linear_interp[dtype: DType, num_chans: Int, //](p0: SIMD[dtype, num_chans], p1: SIMD[dtype, num_chans], t: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]",
+            "summary": "Performs linear interpolation between two points."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "midicps",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The MIDI note number(s) to convert.",
+                "kind": "argument",
+                "name": "midi_note_number",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "69",
+                "description": "The reference MIDI note number.",
+                "kind": "argument",
+                "name": "reference_midi_note",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "default": "440",
+                "description": "The frequency of the reference MIDI note.",
+                "kind": "argument",
+                "name": "reference_frequency",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "(cps = \"cycles per second\")\n\nConversion happens based on equating the `reference_midi_note` to the `reference_frequency`.\nFor standard tuning, leave the defaults of MIDI note 69 (A4) and 440.0 Hz.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "midicps",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "Frequency in Hz.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "midicps[num_chans: Int, //](midi_note_number: SIMD[DType.float64, num_chans], reference_midi_note: Float64 = 69, reference_frequency: Float64 = 440) -> SIMD[DType.float64, num_chans]",
+            "summary": "Convert MIDI note numbers to frequencies in Hz."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "cpsmidi",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The frequency in Hz to convert.",
+                "kind": "argument",
+                "name": "freq",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "default": "69",
+                "description": "The reference MIDI note number.",
+                "kind": "argument",
+                "name": "reference_midi_note",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "default": "440",
+                "description": "The frequency of the reference MIDI note.",
+                "kind": "argument",
+                "name": "reference_frequency",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "(cps = \"cycles per second\")\n\nConversion happens based on equating the `reference_midi_note` to the `reference_frequency`.\nFor standard tuning, leave the defaults of MIDI note 69 (A4) and 440.0 Hz.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "cpsmidi",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The corresponding MIDI note number.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "cpsmidi[num_chans: Int, //](freq: SIMD[DType.float64, num_chans], reference_midi_note: Float64 = 69, reference_frequency: Float64 = 440) -> SIMD[DType.float64, num_chans]",
+            "summary": "Convert frequencies in Hz to MIDI note numbers."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "sanitize",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "mut",
+                "description": "The SIMD float64 vector to sanitize.",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "sanitize",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "The sanitized SIMD float64 vector.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "sanitize[num_chans: Int, //](mut x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Sanitizes a SIMD float64 vector by zeroing out elements that are too large, too small, or NaN."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "rrand",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The minimum sample (inclusive).",
+                "kind": "argument",
+                "name": "min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum sample (inclusive).",
+                "kind": "argument",
+                "name": "max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "rrand",
+            "parameters": [
+              {
+                "default": "1",
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "rrand[num_chans: Int = 1](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Generates a random float64 sample from a uniform distribution."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "exprand",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The minimum sample (inclusive).",
+                "kind": "argument",
+                "name": "min",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              },
+              {
+                "convention": "read",
+                "description": "The maximum sample (inclusive).",
+                "kind": "argument",
+                "name": "max",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "exprand",
+            "parameters": [
+              {
+                "description": "Size of the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "exprand[num_chans: Int](min: SIMD[DType.float64, num_chans], max: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Generates a random float64 sample from an exponential distribution."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "sign",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The input SIMD vector.",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "sign",
+            "parameters": [
+              {
+                "description": "Number of channels in the SIMD vector. This parameter is inferred by the values passed to the function.",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "inferred",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "A SIMD vector containing the sign of each element in x.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "sign[num_chans: Int, //](x: SIMD[DType.float64, num_chans]) -> SIMD[DType.float64, num_chans]",
+            "summary": "Returns the sign of x: -1 if negative, 1 if positive, and 0 if zero."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "linspace",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "The starting value.",
+                "kind": "argument",
+                "name": "start",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "The ending value.",
+                "kind": "argument",
+                "name": "stop",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              },
+              {
+                "convention": "read",
+                "description": "Number of samples to generate.",
+                "kind": "argument",
+                "name": "num",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "linspace",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "A List of Float64 values evenly spaced between start and stop.",
+              "path": "/std/collections/list/List",
+              "type": "List"
+            },
+            "signature": "linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]",
+            "summary": "Create evenly spaced values between start and stop."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "diff",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Input list of Float64 values.",
+                "kind": "argument",
+                "name": "arr",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "diff",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "A new list with length len(arr) - 1 containing differences.",
+              "path": "/std/collections/list/List",
+              "type": "List"
+            },
+            "signature": "diff(arr: List[Float64]) -> List[Float64]",
+            "summary": "Compute differences between consecutive elements."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "subtract_outer",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "First input list (will be rows).",
+                "kind": "argument",
+                "name": "a",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "Second input list (will be columns).",
+                "kind": "argument",
+                "name": "b",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "subtract_outer",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "A 2D list where result[i][j] = a[i] - b[j].",
+              "path": "/std/collections/list/List",
+              "type": "List"
+            },
+            "signature": "subtract_outer(a: List[Float64], b: List[Float64]) -> List[List[Float64]]",
+            "summary": "Compute outer subtraction: a[i] - b[j] for all i, j."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "coin",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Probability of returning True (between 0 and 1).",
+                "kind": "argument",
+                "name": "p",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/SIMD",
+                "type": "SIMD"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": true,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "coin",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_chans",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "True with probability p, False otherwise.",
+              "path": "/std/builtin/simd/SIMD",
+              "type": "SIMD"
+            },
+            "signature": "coin[num_chans: Int](p: SIMD[DType.float64, num_chans]) -> SIMD[DType.bool, num_chans]",
+            "summary": "Return True with probability p, False otherwise."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "functions",
+    "structs": [],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

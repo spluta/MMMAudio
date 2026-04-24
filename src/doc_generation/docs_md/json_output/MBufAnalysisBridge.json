@@ -1,0 +1,897 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "PyInit_MBufAnalysisBridge",
+        "overloads": [
+          {
+            "args": [],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "PyInit_MBufAnalysisBridge",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/python/python_object/PythonObject",
+              "type": "PythonObject"
+            },
+            "signature": "PyInit_MBufAnalysisBridge() -> PythonObject",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "getInt",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "py_dict",
+                "passingKind": "pos_or_kw",
+                "path": "/std/python/python_object/PythonObject",
+                "type": "PythonObject"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "key",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "default": "None",
+                "description": "",
+                "kind": "argument",
+                "name": "default",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/optional/Optional",
+                "type": "Optional"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "getInt",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Int"
+            },
+            "signature": "getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) -> Int",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "getFloat64",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "py_dict",
+                "passingKind": "pos_or_kw",
+                "path": "/std/python/python_object/PythonObject",
+                "type": "PythonObject"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "key",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "default": "None",
+                "description": "",
+                "kind": "argument",
+                "name": "default",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/optional/Optional",
+                "type": "Optional"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "getFloat64",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = None) -> Float64",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "getBool",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "py_dict",
+                "passingKind": "pos_or_kw",
+                "path": "/std/python/python_object/PythonObject",
+                "type": "PythonObject"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "key",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "default": "None",
+                "description": "",
+                "kind": "argument",
+                "name": "default",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/optional/Optional",
+                "type": "Optional"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "getBool",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Bool"
+            },
+            "signature": "getBool(py_dict: PythonObject, key: String, default: Optional[Bool] = None) -> Bool",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "getString",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "py_dict",
+                "passingKind": "pos_or_kw",
+                "path": "/std/python/python_object/PythonObject",
+                "type": "PythonObject"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "key",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "default": "None",
+                "description": "",
+                "kind": "argument",
+                "name": "default",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/optional/Optional",
+                "type": "Optional"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "getString",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/collections/string/string/String",
+              "type": "String"
+            },
+            "signature": "getString(py_dict: PythonObject, key: String, default: Optional[String] = None) -> String",
+            "summary": ""
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "MBufAnalysisBridge",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MBufAnalysisBridge/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "buf",
+            "summary": "",
+            "type": "Buffer"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "chan",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "start_frame",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_frames",
+            "summary": "",
+            "type": "Int"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  },
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self, py_dict: PythonObject)",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "AnalysisParams",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "signature": "struct AnalysisParams",
+        "summary": ""
+      },
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/MBufAnalysisBridge/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "mel_bands",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "mel_bands",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "mel_bands(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "mfcc",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "mfcc",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "mfcc(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "rms",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "rms",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "rms(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "yin",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "yin",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "yin(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "spectral_centroid",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "spectral_centroid",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "spectral_centroid(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "spectral_flux_onsets",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "py_dict",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/python/python_object/PythonObject",
+                    "type": "PythonObject"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "spectral_flux_onsets",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "spectral_flux_onsets(py_dict: PythonObject) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "list_to_numpy",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "list",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "list_to_numpy",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "list_to_numpy(list: List[Int64]) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "buffered_process",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "analyzer",
+                    "passingKind": "pos_or_kw",
+                    "type": "T"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "analysis_params",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/MBufAnalysisBridge/AnalysisParams",
+                    "type": "AnalysisParams"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "window_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "512",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "hop_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "buffered_process",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "pos_or_kw",
+                    "traits": [
+                      {
+                        "path": "/mmm_audio/Analysis/GetFloat64Featurable",
+                        "type": "GetFloat64Featurable"
+                      },
+                      {
+                        "path": "/mmm_audio/BufferedProcess_Module/BufferedProcessable",
+                        "type": "BufferedProcessable"
+                      }
+                    ],
+                    "type": "GetFloat64Featurable & BufferedProcessable"
+                  }
+                ],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T, analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) -> List[List[Float64]]",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "fft_process",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "mut",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "analyzer",
+                    "passingKind": "pos_or_kw",
+                    "type": "T"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "analysis_params",
+                    "passingKind": "pos_or_kw",
+                    "path": "/mmm_audio/MBufAnalysisBridge/AnalysisParams",
+                    "type": "AnalysisParams"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "1024",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "window_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "512",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "hop_size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "fft_process",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "T",
+                    "passingKind": "inferred",
+                    "traits": [
+                      {
+                        "path": "/mmm_audio/Analysis/GetFloat64Featurable",
+                        "type": "GetFloat64Featurable"
+                      },
+                      {
+                        "path": "/mmm_audio/FFTProcess_Module/FFTProcessable",
+                        "type": "FFTProcessable"
+                      }
+                    ],
+                    "type": "GetFloat64Featurable & FFTProcessable"
+                  },
+                  {
+                    "default": "WindowType.hann",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "input_win",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/collections/list/List",
+                  "type": "List"
+                },
+                "signature": "fft_process[T: GetFloat64Featurable & FFTProcessable, //, input_win: Int = WindowType.hann](mut analyzer: T, analysis_params: AnalysisParams, window_size: Int = 1024, hop_size: Int = 512) -> List[List[Float64]]",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "matrix_to_numpy",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "list",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/collections/list/List",
+                    "type": "List"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "matrix_to_numpy",
+                "parameters": [],
+                "raises": true,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/python/python_object/PythonObject",
+                  "type": "PythonObject"
+                },
+                "signature": "matrix_to_numpy(list: List[List[Float64]]) -> PythonObject",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "MBufAnalysisBridge",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          }
+        ],
+        "signature": "struct MBufAnalysisBridge",
+        "summary": ""
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

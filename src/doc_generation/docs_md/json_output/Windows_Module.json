@@ -1,0 +1,683 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "rect_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "rect_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the rectangular window values (all ones).",
+              "type": "List"
+            },
+            "signature": "rect_window(size: Int) -> List[Float64]",
+            "summary": "Generate a rectangular window of length size."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "tri_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "tri_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "List"
+            },
+            "signature": "tri_window(size: Int) -> List[Float64]",
+            "summary": "Generate a triangular window of length size. Args:     size: Length of the window. Returns:     List containing the triangular window values."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "bessel_i0",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Input value.",
+                "kind": "argument",
+                "name": "x",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "bessel_i0",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "I₀(x).",
+              "path": "/std/builtin/simd/#float64",
+              "type": "Float64"
+            },
+            "signature": "bessel_i0(x: Float64) -> Float64",
+            "summary": "Calculate the modified Bessel function of the first kind, order 0 (I₀). Uses polynomial approximation for accurate results."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "kaiser_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              },
+              {
+                "convention": "read",
+                "description": "Shape parameter that controls the trade-off between main lobe width and side lobe level. See description for details.",
+                "kind": "argument",
+                "name": "beta",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float64",
+                "type": "Float64"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "- beta = 0: rectangular window.\n- beta = 5: similar to Hamming window.\n- beta = 6: similar to Hanning window.\n- beta = 8.6: similar to Blackman window.\n",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "kaiser_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List[Float64] containing the Kaiser window coefficients.",
+              "type": "List"
+            },
+            "signature": "kaiser_window(size: Int, beta: Float64) -> List[Float64]",
+            "summary": "Create a Kaiser window of length n with shape parameter beta."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "hann_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "hann_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the Hann window values.",
+              "type": "List"
+            },
+            "signature": "hann_window(size: Int) -> List[Float64]",
+            "summary": "Generate a Hann window of length size."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "hamming_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "hamming_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the Hamming window values.",
+              "type": "List"
+            },
+            "signature": "hamming_window(size: Int) -> List[Float64]",
+            "summary": "Generate a Hamming window of length size."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "blackman_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "blackman_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the Blackman window values.",
+              "type": "List"
+            },
+            "signature": "blackman_window(size: Int) -> List[Float64]",
+            "summary": "Generate a Blackman window of length size."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "sine_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "sine_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the Sine window values.",
+              "type": "List"
+            },
+            "signature": "sine_window(size: Int) -> List[Float64]",
+            "summary": "Generate a Sine window of length size."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "pan2_window",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Length of the window.",
+                "kind": "argument",
+                "name": "size",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "pan2_window",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "doc": "List containing the quarter cosine window values.",
+              "type": "List"
+            },
+            "signature": "pan2_window(size: Int) -> List[SIMD[DType.float64, 2]]",
+            "summary": "Generate a MFloat[2] quarter cosine window for panning. The first element of the SIMD vector is the multiplier for the left channel, and the second element is for the right channel. This allows any sample to be panned at one of `size` positions between left and right channels smoothly."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "Windows_Module",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "size",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#size",
+            "signature": "comptime size",
+            "summary": "",
+            "value": "2048"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "size_f64",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#size_f64",
+            "signature": "comptime size_f64",
+            "summary": "",
+            "value": "2048"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "mask",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#mask",
+            "signature": "comptime mask",
+            "summary": "",
+            "value": "2047"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "False"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/Windows_Module/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "False"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "hann",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "hamming",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "blackman",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sine",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "kaiser",
+            "summary": "",
+            "type": "List[Float64]"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "pan2",
+            "summary": "",
+            "type": "List[SIMD[DType.float64, 2]]"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": ""
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "at_phase",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "world",
+                    "passingKind": "pos_or_kw",
+                    "type": "UnsafePointer"
+                  },
+                  {
+                    "convention": "read",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "0",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "prev_phase",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": false,
+                "kind": "function",
+                "name": "at_phase",
+                "parameters": [
+                  {
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "window_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "default": "Interp.none",
+                    "description": "",
+                    "kind": "parameter",
+                    "name": "interp",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "path": "/std/builtin/simd/#float64",
+                  "type": "Float64"
+                },
+                "signature": "at_phase[window_type: Int, interp: Int = Interp.none](self, world: UnsafePointer[MMMWorld, MutExternalOrigin], phase: Float64, prev_phase: Float64 = 0) -> Float64",
+                "summary": "Get window value at given phase (0.0 to 1.0) for specified window type."
+              }
+            ]
+          },
+          {
+            "kind": "function",
+            "name": "make_window",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "read",
+                    "description": "Length of the window.",
+                    "kind": "argument",
+                    "name": "size",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  },
+                  {
+                    "convention": "read",
+                    "default": "5",
+                    "description": "Shape parameter only used for Kaiser window. See kaiser_window() for details.",
+                    "kind": "argument",
+                    "name": "beta",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/simd/#float64",
+                    "type": "Float64"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "make_window",
+                "parameters": [
+                  {
+                    "description": "Type of window to generate. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).",
+                    "kind": "parameter",
+                    "name": "window_type",
+                    "passingKind": "pos_or_kw",
+                    "path": "/std/builtin/int/Int",
+                    "type": "Int"
+                  }
+                ],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "List"
+                },
+                "signature": "make_window[window_type: Int](size: Int, beta: Float64 = 5) -> List[Float64]",
+                "summary": "Generate a window of specified type and size."
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "Windows",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct Windows",
+        "summary": "Stores various window functions used in audio processing. This struct precomputes several common window types."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}

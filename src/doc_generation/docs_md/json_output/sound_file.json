@@ -1,0 +1,926 @@
+{
+  "decl": {
+    "aliases": [],
+    "description": "",
+    "functions": [
+      {
+        "kind": "function",
+        "name": "read_8bit_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_8bit_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_8bit_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 8-bit unsigned PCM sample and normalize to [-1.0, 1.0]."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_16bit_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_16bit_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_16bit_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 16-bit signed PCM sample and normalize to [-1.0, 1.0]."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_24bit_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_24bit_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_24bit_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 24-bit signed PCM sample and normalize to [-1.0, 1.0]."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_32bit_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_32bit_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_32bit_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 32-bit signed PCM sample and normalize to [-1.0, 1.0]."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_float32_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_float32_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_float32_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 32-bit float sample (already normalized)."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_float64_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_float64_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "read_float64_sample(data: List[UInt8], offset: Int) -> Float64",
+            "summary": "Read 64-bit float sample (already normalized)."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_wav_header",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Path to the WAV file.",
+                "kind": "argument",
+                "name": "file_name",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_wav_header",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/mmm_audio/sound_file/WavHeader",
+              "type": "WavHeader"
+            },
+            "signature": "read_wav_header(file_name: String) -> WavHeader",
+            "summary": "Parse WAV header from file data."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_wav_samples",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Path to the WAV file.",
+                "kind": "argument",
+                "name": "file_name",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "description": "Parsed WAV header.",
+                "kind": "argument",
+                "name": "header",
+                "passingKind": "pos_or_kw",
+                "path": "/mmm_audio/sound_file/WavHeader",
+                "type": "WavHeader"
+              },
+              {
+                "convention": "read",
+                "default": "1",
+                "description": "Number of wavetables per channel. If > 1, splits samples into multiple wavetables of equal size (for large files).",
+                "kind": "argument",
+                "name": "num_wavetables",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_wav_samples",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/collections/list/List",
+              "type": "List"
+            },
+            "signature": "read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int = 1) -> List[List[Float64]]",
+            "summary": "Read all audio samples from WAV file data."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "get_sample",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "file_data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "offset",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "bits_per_sample",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "is_pcm",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/bool/Bool",
+                "type": "Bool"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "is_float",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/bool/Bool",
+                "type": "Bool"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "get_sample",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "returns": {
+              "type": "Float64"
+            },
+            "signature": "get_sample(file_data: List[UInt8], offset: Int, bits_per_sample: Int, is_pcm: Bool, is_float: Bool) -> Float64",
+            "summary": ""
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "read_wav_SIMDs",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "Path to the WAV file.",
+                "kind": "argument",
+                "name": "file_name",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "description": "Parsed WAV header.",
+                "kind": "argument",
+                "name": "header",
+                "passingKind": "pos_or_kw",
+                "path": "/mmm_audio/sound_file/WavHeader",
+                "type": "WavHeader"
+              },
+              {
+                "convention": "read",
+                "default": "1",
+                "description": "If > 1, split samples into multiple wavetables of equal size (for large files).",
+                "kind": "argument",
+                "name": "num_wavetables",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "read_wav_SIMDs",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_channels",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": true,
+            "raisesDoc": "",
+            "returns": {
+              "path": "/std/collections/list/List",
+              "type": "List"
+            },
+            "signature": "read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_wavetables: Int = 1) -> List[SIMD[DType.float64, num_channels]]",
+            "summary": "Read all audio samples from s WAV file and return them as a List of SIMD vectors."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "print_wav_info",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "header",
+                "passingKind": "pos_or_kw",
+                "path": "/mmm_audio/sound_file/WavHeader",
+                "type": "WavHeader"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "print_wav_info",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "signature": "print_wav_info(header: WavHeader)",
+            "summary": "Pretty print WAV header information."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "print_sample_stats",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "samples",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "print_sample_stats",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "signature": "print_sample_stats(samples: List[List[Float64]])",
+            "summary": "Print statistics about the audio samples."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "write_f32",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "mut",
+                "description": "",
+                "kind": "argument",
+                "name": "data",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "value",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/simd/#float32",
+                "type": "Float32"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "write_f32",
+            "parameters": [],
+            "raises": false,
+            "raisesDoc": "",
+            "signature": "write_f32(mut data: List[UInt8], value: Float32)",
+            "summary": "Write a Float32 as 4 little-endian bytes."
+          }
+        ]
+      },
+      {
+        "kind": "function",
+        "name": "write_wav_file",
+        "overloads": [
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "file_name",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "samples",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "default": "44100",
+                "description": "",
+                "kind": "argument",
+                "name": "sample_rate",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "write_wav_file",
+            "parameters": [],
+            "raises": true,
+            "raisesDoc": "",
+            "signature": "write_wav_file(file_name: String, samples: List[List[Float64]], sample_rate: Int = 44100)",
+            "summary": "Write audio samples to a WAV file."
+          },
+          {
+            "args": [
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "file_name",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/string/string/String",
+                "type": "String"
+              },
+              {
+                "convention": "read",
+                "description": "",
+                "kind": "argument",
+                "name": "samples",
+                "passingKind": "pos_or_kw",
+                "path": "/std/collections/list/List",
+                "type": "List"
+              },
+              {
+                "convention": "read",
+                "default": "44100",
+                "description": "",
+                "kind": "argument",
+                "name": "sample_rate",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "async": false,
+            "constraints": "",
+            "deprecated": "",
+            "description": "",
+            "hasDefaultImplementation": false,
+            "isDef": false,
+            "isImplicitConversion": false,
+            "isStatic": false,
+            "kind": "function",
+            "name": "write_wav_file",
+            "parameters": [
+              {
+                "description": "",
+                "kind": "parameter",
+                "name": "num_channels",
+                "passingKind": "pos_or_kw",
+                "path": "/std/builtin/int/Int",
+                "type": "Int"
+              }
+            ],
+            "raises": true,
+            "raisesDoc": "",
+            "signature": "write_wav_file[num_channels: Int](file_name: String, samples: List[SIMD[DType.float64, num_channels]], sample_rate: Int = 44100)",
+            "summary": "Write audio samples to a WAV file."
+          }
+        ]
+      }
+    ],
+    "kind": "module",
+    "name": "sound_file",
+    "structs": [
+      {
+        "aliases": [
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__del__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/sound_file/#__del__is_trivial",
+            "signature": "comptime __del__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__moveinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/sound_file/#__moveinit__is_trivial",
+            "signature": "comptime __moveinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          },
+          {
+            "deprecated": "",
+            "description": "",
+            "kind": "alias",
+            "name": "__copyinit__is_trivial",
+            "parameters": [],
+            "path": "/mmm_audio/sound_file/#__copyinit__is_trivial",
+            "signature": "comptime __copyinit__is_trivial",
+            "summary": "",
+            "value": "True"
+          }
+        ],
+        "constraints": "",
+        "convention": "memory_only",
+        "deprecated": "",
+        "description": "",
+        "fields": [
+          {
+            "description": "",
+            "kind": "field",
+            "name": "file_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "audio_format",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_channels",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "sample_rate",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "byte_rate",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "block_align",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "bits_per_sample",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "data_size",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "data_offset",
+            "summary": "",
+            "type": "Int"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "duration_seconds",
+            "summary": "",
+            "type": "Float64"
+          },
+          {
+            "description": "",
+            "kind": "field",
+            "name": "num_samples",
+            "summary": "",
+            "type": "UInt64"
+          }
+        ],
+        "functions": [
+          {
+            "kind": "function",
+            "name": "__init__",
+            "overloads": [
+              {
+                "args": [
+                  {
+                    "convention": "out",
+                    "description": "",
+                    "kind": "argument",
+                    "name": "self",
+                    "passingKind": "pos_or_kw",
+                    "type": "Self"
+                  }
+                ],
+                "async": false,
+                "constraints": "",
+                "deprecated": "",
+                "description": "",
+                "hasDefaultImplementation": false,
+                "isDef": false,
+                "isImplicitConversion": false,
+                "isStatic": true,
+                "kind": "function",
+                "name": "__init__",
+                "parameters": [],
+                "raises": false,
+                "raisesDoc": "",
+                "returns": {
+                  "type": "Self"
+                },
+                "signature": "__init__(out self)",
+                "summary": ""
+              }
+            ]
+          }
+        ],
+        "kind": "struct",
+        "name": "WavHeader",
+        "parameters": [],
+        "parentTraits": [
+          {
+            "name": "AnyType",
+            "path": "/std/builtin/anytype/AnyType"
+          },
+          {
+            "name": "Copyable",
+            "path": "/std/builtin/value/Copyable"
+          },
+          {
+            "name": "ImplicitlyDestructible",
+            "path": "/std/builtin/anytype/ImplicitlyDestructible"
+          },
+          {
+            "name": "Movable",
+            "path": "/std/builtin/value/Movable"
+          }
+        ],
+        "signature": "struct WavHeader",
+        "summary": "Struct containing WAV file header information."
+      }
+    ],
+    "summary": "",
+    "traits": []
+  },
+  "version": "0.26.1.0"
+}
