@@ -281,13 +281,10 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Tapable):
         Returns:
           The delayed output sample.
         """
-        # Get the delayed sample
-        fb_in = input + self.fb * clip(feedback, -1.0, 1.0)
-        var out = self.delay.next(fb_in, delay_time)  
-
-        self.fb = out
-
-        return out  # Return the delayed sample
+        var delayed = self.delay.tap(delay_time)  # read first
+        var fb_in = input + delayed * clip(feedback, -1.0, 1.0)
+        self.delay.write(fb_in)  # write separately
+        return delayed
 
     fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter with decay time calculation.

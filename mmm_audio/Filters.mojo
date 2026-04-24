@@ -585,6 +585,11 @@ fn _time_to_coef[num_chans: Int](time_s: MFloat[num_chans], sample_rate: MFloat[
     return mask0.select(1.0, mask.select(val, 1.0))
 
 struct Amplitude[num_chans: Int](Movable, Copyable):
+    """An amplitude tracker that smooths the absolute value of an input signal over time based on specified attack and release times.
+    
+    Parameters:
+        num_chans: Number of channels to process in parallel.
+    """
     var one_pole: OnePole[Self.num_chans]
     var last_val: MFloat[Self.num_chans]
     var coef_att: MFloat[Self.num_chans]
