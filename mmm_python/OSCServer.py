@@ -120,7 +120,7 @@ class OSCServer:
                 self._clients[key] = SimpleUDPClient(ip, port)
             return self._clients[key]
     
-    def send(self, address: str, *args, ip: str = "127.0.0.1", port: int = 5006):
+    def send(self, key: str, *args, ip: str = "127.0.0.1", port: int = 5006):
         """Send an OSC message to a specific destination.
         
         Args:
@@ -135,13 +135,13 @@ class OSCServer:
             server.send("/note", 60, 127, 0.5)  # multiple values
         """
         client = self._get_client(ip, port)
-        client.send_message(address, args if len(args) != 1 else args[0])
+        client.send_message(key, args if len(args) != 1 else args[0])
     
     def send_bundle(self, messages: list, ip: str = "127.0.0.1", port: int = 5006, timetag=None):
         """Send an OSC bundle (multiple messages with optional timetag).
         
         Args:
-            messages (list): List of tuples (address, args) where args is a list/tuple of values.
+            messages (list): List of tuples (key, args) where args is a list of values.
             ip (str): Target IP address. Defaults to "127.0.0.1".
             port (int): Target port number. Defaults to 5006.
             timetag: Optional timetag for the bundle (None = immediately).

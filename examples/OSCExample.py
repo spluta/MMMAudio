@@ -29,3 +29,9 @@ if True:
 
     os = OSCServer("169.254.252.246", 5005, osc_msg_handler)
     os.start()
+
+# can also send messages to clients 
+
+os.send("/fader1", 0.5, ip="169.254.252.246", port=5006)  # single value
+
+os.send_bundle([("/fader1", [0.5]), ("/fader2", [0.75]), ("/xy5", [0.25, 0.9])], ip="169.254.252.246", port=5006)  # bundle of messages
