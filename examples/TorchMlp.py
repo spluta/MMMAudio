@@ -8,7 +8,7 @@ You can also train the Multi-Layer Perceptron by creating any number of input/ou
 """
 
 if True:
-    from srcpy import *
+    from mmmaudio import *
     from random import random
 
     src_mojo = MMMAudio(128, graph_name="TorchMlp", package_name="examples")
@@ -82,7 +82,7 @@ def do_the_training():
 
     # train the network in a separate thread so the audio thread doesn't get interrupted
 
-    from mmmaudio.srcpy.MLP_Python import train_nn
+    from mmmaudio.MLP_Python import train_nn
     import threading
 
     target_function = train_nn

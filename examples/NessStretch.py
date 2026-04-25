@@ -2,7 +2,7 @@
 """
 MMMAudio.get_audio_devices()
 
-from srcpy import *
+from mmmaudio import *
 src_mojo = MMMAudio(2048, graph_name="NessStretch", package_name="examples")
 src_mojo.start_audio()
 

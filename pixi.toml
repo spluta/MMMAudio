@@ -4,6 +4,17 @@ channels = ["https://conda.modular.com/max-nightly", "conda-forge", "pytorch","h
 name = "MMMAudio"
 platforms = ["osx-arm64"]
 version = "0.0.0"
+preview = ["pixi-build"]
+
+[package] 
+name = "MMMAudio"
+version = "0.0.0"
+
+[package.build] 
+backend = { name = "pixi-build-python", version = "0.*" }
+
+[package.host-dependencies] 
+hatchling = "==1.26.3"
 
 [tasks.validate]
 args = [
@@ -35,7 +46,7 @@ mojo = "0.26.1.*"
 numpy = ">=2.3.5,<3"
 scipy = ">=1.17.0,<2"
 librosa = ">=0.11.0,<0.12"
-python = "3.13.*"
+python = ">=3.13"
 mido = ">=1.2.10,<2"
 matplotlib = ">=3.10.8,<4"
 pyside6 = ">=6.10.2,<7"

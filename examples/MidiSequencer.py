@@ -7,16 +7,16 @@ This example demonstrates a couple differnt concepts:
 
 """
 if True:
-    from srcpy import *
+    from mmmaudio import *
 
     # instantiate and load the graph
     src_mojo = MMMAudio(128, graph_name="MidiSequencer", package_name="examples")
     src_mojo.start_audio()
 
-    from srcpy.Patterns import Pseq, Pxrand
+    from mmmaudio.Patterns import Pseq, Pxrand
     import numpy as np
     import asyncio
-    from srcpy.functions import midicps, linexp
+    from mmmaudio.functions import midicps, linexp
 
     global scheduler
     scheduler = Scheduler()

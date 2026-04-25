@@ -7,12 +7,12 @@ from python.bindings import PythonModuleBuilder
 from os import abort
 from memory import *
 
-from mmmaudio.srcmojo import *
-from mmmaudio.FeedbackDelays import FeedbackDelays
+from mmmaudio import *
+from FM4 import *
 
 struct MMMAudioBridge(Representable, Movable):
     var world: World
-    var graph: FeedbackDelays  # The audio graph instance
+    var graph: FM4  # The audio graph instance
     var osc_buffers: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] 
     var windows: UnsafePointer[mut=True, Windows, MutExternalOrigin]
     var messenger_manager: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin] 
@@ -47,7 +47,7 @@ struct MMMAudioBridge(Representable, Movable):
         self.world = alloc[MMMWorld](1) 
         self.world.init_pointee_move(MMMWorld(sample_rate, block_size, num_in_chans, num_out_chans, self.osc_buffers, self.windows, self.messenger_manager))
 
-        self.graph = FeedbackDelays(self.world)
+        self.graph = FM4(self.world)
 
     @staticmethod
     fn set_channel_count(py_selfA: PythonObject, args: PythonObject) raises -> PythonObject:
@@ -211,7 +211,7 @@ struct MMMAudioBridge(Representable, Movable):
 
 # this is needed to make the module importable in Python - so simple!
 @export
-fn PyInit_MMMAudioBridge() -> PythonObject:
+fn PyInit_FM4Bridge() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MMMAudioBridge")
 

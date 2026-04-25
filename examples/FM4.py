@@ -1,21 +1,8 @@
-import sys
-from pathlib import Path
+import os, sys 
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")) 
+sys.path.insert(0, ROOT)
 
-# This example is able to run by pressing the "play" button in VSCode
-# that executes the whole file.
-# In order to do this, it needs to add the parent directory to the path
-# (the next line here) so that it can find the mmm_src and mmm_utils packages.
-# If you want to run it line by line in a REPL, skip this line!
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from srcpy import *
-
-
-
-from srcpy.GUI import Handle, ControlSpec
-from srcpy import *
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
-
+from mmmaudio import *
 
 app = QApplication([])
 

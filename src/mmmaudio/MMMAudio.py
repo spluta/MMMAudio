@@ -366,12 +366,13 @@ class MMMAudio:
         # Initialize Mojo bridge
         # =========================================================================
         try:
-            from mmmaudio.srcpy.make_solo_graph import make_solo_graph
+            from mmmaudio.make_solo_graph import make_solo_graph
+            users_python_file: str = os.path.abspath(sys.argv[0])
+            print(f"user is calling this Python file: {users_python_file}")
+            expected_dir: str = os.path.dirname(users_python_file)
             import importlib
-            # print current directory for debugging
-            print(f"[PID {pid}] Current directory: {os.getcwd()}")
-            make_solo_graph(graph_name, package_name)
-            MMMAudioBridge = importlib.import_module(name=f"mmmaudio.{graph_name}Bridge")
+            bridge_path = make_solo_graph(expected_dir,graph_name)
+            MMMAudioBridge = importlib.import_module(name=f"{graph_name}Bridge")
 
             bridge_file = graph_name + "Bridge.mojo"
             if os.path.exists(bridge_file):

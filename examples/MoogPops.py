@@ -3,7 +3,7 @@ A synthesis example that sends Dust, single sample triggers to a Virtual Analog 
 """
 
 
-from srcpy import *
+from mmmaudio import *
 src_mojo = MMMAudio(128, graph_name="MoogPops", package_name="examples")
 src_mojo.start_audio() # start the audio thread - or restart it where it left off
 

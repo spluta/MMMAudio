@@ -3,7 +3,7 @@ This is the simplest MMMAudio example. It routes input channels directly to outp
 It also demonstrates how to send a message to the graph to print the current input values to the REPL.
 """
 
-from srcpy.MMMAudio import *
+from mmmaudio.MMMAudio import *
 
 # this will list available audio devices
 MMMAudio.get_audio_devices()

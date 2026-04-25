@@ -1,4 +1,4 @@
-from srcpy import *
+from mmmaudio import *
 
 # instantiate and load the graph
 src_mojo = MMMAudio(128, graph_name="TestHardClipADAA", package_name="examples.tests")

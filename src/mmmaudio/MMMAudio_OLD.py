@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 
 import pyautogui
 from sympy import arg
-import srcpy.Scheduler as Scheduler
+import mmmaudio.src.mmmaudio.Scheduler as Scheduler
 
 from math import ceil
     
@@ -70,7 +70,7 @@ class MMMAudio_OLD:
         """
         self.device_index = None
         # this makes the graph file that should work
-        from srcpy.make_solo_graph import make_solo_graph
+        from mmmaudio.make_solo_graph import make_solo_graph
         
         import importlib
         # generate the Mojo graph bridge file

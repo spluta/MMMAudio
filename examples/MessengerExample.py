@@ -13,8 +13,8 @@ We are able to send:
 
 """
 
-from srcpy import *
-from srcpy.functions import midicps
+from mmmaudio import *
+from mmmaudio.functions import midicps
 
 a = MMMAudio(128, graph_name="MessengerExample", package_name="examples")
 

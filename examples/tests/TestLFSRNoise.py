@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from srcpy import *
+from mmmaudio import *
 
 def run_gui():
     mmm_audio = MMMAudio(128, graph_name="TestLFSRNoise", package_name="examples.tests")

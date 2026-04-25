@@ -2,7 +2,7 @@
 MMMAudio can run multiple graphs in parallel, each in its own process and very likely on a different CPU core.
 """ 
 
-from srcpy import *
+from mmmaudio import *
 
 src_mojo = MMMAudio(128, graph_name="ManyOscillators", package_name="examples")
 src_mojo.start_audio()

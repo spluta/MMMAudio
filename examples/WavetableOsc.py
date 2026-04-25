@@ -7,7 +7,7 @@ MMM_Audio can load commercial .wav files, designed for Vital or Serum, as waveta
 Also demonstrates how to use the PVoiceAllocator class to manage multiple voices for polyphonic MIDI input.
 """
 
-from srcpy import *
+from mmmaudio import *
 src_mojo = MMMAudio(128, graph_name="WavetableOsc", package_name="examples")
 src_mojo.start_audio() 
 
@@ -26,8 +26,8 @@ if True:
     import threading
     import mido
     import time
-    from srcpy.functions import linexp, linlin, midicps, cpsmidi
-    from srcpy.Patterns import PVoiceAllocator
+    from mmmaudio.functions import linexp, linlin, midicps, cpsmidi
+    from mmmaudio.Patterns import PVoiceAllocator
 
     # find your midi devices
     print(mido.get_input_names())

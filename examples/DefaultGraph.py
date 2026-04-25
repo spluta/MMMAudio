@@ -3,7 +3,7 @@
 A simple default graph example that can be used as a starting point for creating your own graphs.
 """
 
-from srcpy import *
+from mmmaudio import *
 
 # instantiate and load the graph
 src_mojo = MMMAudio(128, graph_name="DefaultGraph", package_name="examples")

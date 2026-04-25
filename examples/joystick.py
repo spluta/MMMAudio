@@ -4,9 +4,9 @@ The Joystick example shows how to connect a joystick or other hid device and pri
 Right now, it only supports Logitech Extreme 3D Pro and Thrustmaster joysticks, but you can modify the `parse_report` method in `mmm_python/hid_devices.py` to support your own joystick by examining its HID report format. If you do so, please consider contributing the code back to the repository!
 """
 
-from srcpy import *
+from mmmaudio import *
 
-from srcpy.hid_devices import Joystick
+from mmmaudio.hid_devices import Joystick
 
 if True:
     joystick = Joystick(
@@ -56,7 +56,7 @@ if True:
     import threading
     from os import name
 
-    from srcpy.hid_devices import Joystick
+    from mmmaudio.hid_devices import Joystick
 
     joystick = Joystick(
         "my_joystick", 1103, 45322

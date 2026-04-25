@@ -1,4 +1,4 @@
-from srcpy import *
+from mmmaudio import *
 
 # instantiate and load the graph
 m_s = []

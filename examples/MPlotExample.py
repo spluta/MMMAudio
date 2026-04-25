@@ -2,7 +2,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from pathlib import Path
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from srcpy import *
+from mmmaudio import *
 from umap import UMAP
 from sklearn.neighbors import KDTree
 import librosa

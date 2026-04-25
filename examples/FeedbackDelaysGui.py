@@ -14,8 +14,8 @@ from pathlib import Path
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from srcpy.GUI import Handle, ControlSpec
-from srcpy import *
+from mmmaudio.GUI import Handle, ControlSpec
+from mmmaudio import *
 from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
 
 

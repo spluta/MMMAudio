@@ -6,7 +6,7 @@ Use the BuchlaWaveFolder_AD version for Anti-comptimeing (ADAA) and Oversampling
 
 It is recommended to plot the output waveform to get a sense of how the wavefolding process alters the sound."""
 
-from srcpy import *
+from mmmaudio import *
 
 # instantiate and load the graph
 src_mojo = MMMAudio(128, graph_name="BuchlaWaveFolder_AD", package_name="examples")

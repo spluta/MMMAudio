@@ -1,4 +1,4 @@
-from srcpy import *
+from mmmaudio import *
 src_mojo = MMMAudio(128, num_output_channels = 4, graph_name="TestAmpComp", package_name="examples.tests")
 src_mojo.start_audio()
 

@@ -1,6 +1,6 @@
 from cmath import pi
 
-from srcpy import *
+from mmmaudio import *
 
 src_mojo = MMMAudio(128, graph_name="TestHilbert", package_name="examples.tests")
 src_mojo.start_audio()

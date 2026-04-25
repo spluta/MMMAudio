@@ -4,7 +4,7 @@ Demonstrates granular synthesis using TGrains, using a mouse to control granular
 Left and right moves around in the buffer. Up and down controls rate of triggers.
 """
 
-from srcpy import *
+from mmmaudio import *
 src_mojo = MMMAudio(128, num_output_channels = 8, graph_name="Grains", package_name="examples")
 src_mojo.start_audio() # start the audio thread - or restart it where it left off
 

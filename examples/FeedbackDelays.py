@@ -1,6 +1,6 @@
 """A simple but awesome sounding feedback delay effect using the FB_Delay UGen."""
 
-from srcpy import *
+from mmmaudio import *
 
 src_mojo = MMMAudio(128, graph_name="FeedbackDelays", package_name="examples")
 

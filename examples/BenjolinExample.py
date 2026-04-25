@@ -5,15 +5,11 @@ Based on the [SuperCollider implementation by Hyppasus](https://scsynth.org/t/be
 Ported to MMMAudio by Ted Moore, October 2025
 """
 
-import sys
-from pathlib import Path
+import os, sys 
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")) 
+sys.path.insert(0, ROOT)
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from srcpy.GUI import Handle, ControlSpec
-from srcpy import *
-from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QCheckBox
-
+from mmmaudio import *
 
 def add_handle(layout, mmm_audio, name: str, min: float, max: float, exp: float, default: float):
     """Create a slider and connect it to the audio graph."""

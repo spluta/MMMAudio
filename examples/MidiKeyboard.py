@@ -20,7 +20,7 @@ from pathlib import Path
 # (the next line here) so that it can find the mmm_src and mmm_utils packages.
 # If you want to run it line by line in a REPL, skip this line!
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from srcpy import *
+from mmmaudio import *
 
 def main():
     # instantiate and load the graph - notice we are using the MidiSequencer graph here (the same as in the MidiSequencer example)
