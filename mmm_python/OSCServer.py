@@ -29,15 +29,15 @@ class OSCServer:
         self._clients = {}
         self._clients_lock = threading.Lock()
 
-    def filter_handler(self, client_address, address, *args):
+    def filter_handler(self, client_address, key, *args):
         if self.in_ip == "0.0.0.0" or self.in_ip == client_address[0]:
-            self.osc_msg_handler(client_address, address, *args)
+            self.osc_msg_handler(client_address, key, *args)
 
-    def default_handler(self, client_address, address, *args):
+    def default_handler(self, client_address, key, *args):
         client_ip = client_address[0]
         client_port = client_address[1]
         if client_ip == self.in_ip:
-            print(f"From {client_ip}:{client_port} | {address} | Args: {args}")
+            print(f"From {client_ip}:{client_port} | {key} | Args: {args}")
         
     def set_osc_msg_handler(self, handler):
         """Set a custom OSC message handler.
