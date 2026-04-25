@@ -32,6 +32,12 @@ if True:
 
 # can also send messages to clients 
 
-os.send("/fader1", 0.5, ip="169.254.252.246", port=5006)  # single value
+from mmm_python.OSCServer import OSCServer
 
-os.send_bundle([("/fader1", [0.5]), ("/fader2", [0.75]), ("/xy5", [0.25, 0.9])], ip="169.254.252.246", port=5006)  # bundle of messages
+OSCServer.send("/fader1", 0.5, ip="169.254.252.246", port=5006)  # single value
+
+OSCServer.send_bundle([("/fader1", [0.5]), ("/fader2", [0.75]), ("/xy5", [0.25, 0.9])], ip="169.254.252.246", port=5006)  # bundle of messages
+
+# for easier sending, you can register named targets and then send to them by name instead of IP and port each time
+OSCServer.add_target("volume", "169.254.252.246", 5006)
+OSCServer.send_to("volume", "/fader8", 0.5)

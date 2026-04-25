@@ -7,6 +7,10 @@ from pythonosc.udp_client import SimpleUDPClient
 
 class OSCServer:
     """A threaded OSC server using python-osc library. With a given message handler function, will call that function on incoming messages."""
+    # Dictionary to store clients for sending messages
+    _clients = {}
+    _clients_lock = threading.Lock()
+    _named_targets = {}
 
     def __init__(self, in_ip="0.0.0.0", port=5005, osc_msg_handler=None):
         """Initialize the OSC server with IP, port, and message handler.
@@ -25,9 +29,7 @@ class OSCServer:
         self.osc_msg_handler = osc_msg_handler if osc_msg_handler else self.default_handler
         self.dispatcher = Dispatcher()
         
-        # Dictionary to store clients for sending messages
-        self._clients = {}
-        self._clients_lock = threading.Lock()
+        
 
     def filter_handler(self, client_address, key, *args):
         if self.in_ip == "0.0.0.0" or self.in_ip == client_address[0]:
@@ -76,9 +78,9 @@ class OSCServer:
         else:
             print("OSC Server stopped successfully")
         
-        # Clear clients
-        with self._clients_lock:
-            self._clients.clear()
+        # # Clear clients
+        # with self._clients_lock:
+        #     self._clients.clear()
     
     def _run_server(self):
         """Run the server in its own event loop"""
@@ -103,8 +105,8 @@ class OSCServer:
                 self.transport.close()
 
     # ==================== SENDING METHODS ====================
-    
-    def _get_client(self, ip: str, port: int) -> SimpleUDPClient:
+    @staticmethod
+    def _get_client(ip: str, port: int) -> SimpleUDPClient:
         """Get or create a client for the given ip:port combination.
         
         Args:
@@ -115,16 +117,17 @@ class OSCServer:
             SimpleUDPClient: The OSC client for sending messages.
         """
         key = (ip, port)
-        with self._clients_lock:
-            if key not in self._clients:
-                self._clients[key] = SimpleUDPClient(ip, port)
-            return self._clients[key]
-    
-    def send(self, key: str, *args, ip: str = "127.0.0.1", port: int = 5006):
+        with OSCServer._clients_lock:
+            if key not in OSCServer._clients:
+                OSCServer._clients[key] = SimpleUDPClient(ip, port)
+            return OSCServer._clients[key]
+
+    @staticmethod
+    def send(key: str, *args, ip: str = "127.0.0.1", port: int = 5006):
         """Send an OSC message to a specific destination.
         
         Args:
-            address (str): OSC address pattern (e.g., "/synth/freq").
+            key (str): OSC address pattern (e.g., "/synth/freq").
             *args: Values to send with the message.
             ip (str): Target IP address. Defaults to "127.0.0.1".
             port (int): Target port number. Defaults to 5006.
@@ -134,10 +137,11 @@ class OSCServer:
             server.send("/mixer/volume", 0.8, ip="192.168.1.100", port=9000)
             server.send("/note", 60, 127, 0.5)  # multiple values
         """
-        client = self._get_client(ip, port)
+        client = OSCServer._get_client(ip, port)
         client.send_message(key, args if len(args) != 1 else args[0])
     
-    def send_bundle(self, messages: list, ip: str = "127.0.0.1", port: int = 5006, timetag=None):
+    @staticmethod
+    def send_bundle(messages: list, ip: str = "127.0.0.1", port: int = 5006, timetag=None):
         """Send an OSC bundle (multiple messages with optional timetag).
         
         Args:
@@ -166,10 +170,11 @@ class OSCServer:
             bundle_builder.add_content(msg_builder.build())
         
         bundle = bundle_builder.build()
-        client = self._get_client(ip, port)
+        client = OSCServer._get_client(ip, port)
         client.send(bundle)
     
-    def add_target(self, name: str, ip: str, port: int):
+    @staticmethod
+    def add_target(name: str, ip: str, port: int):
         """Register a named target for easier sending.
         
         Args:
@@ -181,13 +186,12 @@ class OSCServer:
             server.add_target("synth", "192.168.1.100", 9000)
             server.send_to("synth", "/freq", 440.0)
         """
-        if not hasattr(self, '_named_targets'):
-            self._named_targets = {}
-        self._named_targets[name] = (ip, port)
-        # Pre-create the client
-        self._get_client(ip, port)
+
+        OSCServer._named_targets[name] = (ip, port)
+        OSCServer._get_client(ip, port)
     
-    def send_to(self, target_name: str, address: str, *args):
+    @staticmethod
+    def send_to(target_name: str, key: str, *args):
         """Send an OSC message to a named target.
         
         Args:
@@ -198,7 +202,6 @@ class OSCServer:
         Example:
             server.send_to("synth", "/freq", 440.0)
         """
-        if not hasattr(self, '_named_targets') or target_name not in self._named_targets:
-            raise ValueError(f"Unknown target: {target_name}. Use add_target() first.")
-        ip, port = self._named_targets[target_name]
-        self.send(address, *args, ip=ip, port=port)
+
+        ip, port = OSCServer._named_targets[target_name]
+        OSCServer.send(key, *args, ip=ip, port=port)
