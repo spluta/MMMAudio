@@ -64,7 +64,7 @@ pixi-kernel = ">=0.7.1,<0.8"
 # mmmaudio = { path = "./mmmaudio" }
 
 [pypi-dependencies]
-torch = ">=2.10.0, <3"
+torch = ">=2.9.0, <3"
 pyautogui = ">=0.9.54, <0.10"
 python-osc = ">=1.9.3, <2"
 python-rtmidi = ">=1.5.8, <2"
