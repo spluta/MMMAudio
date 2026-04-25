@@ -87,7 +87,8 @@ class MMMAudio:
         out_device: str = "default",
         graph_name: str = "FeedbackDelays",
         package_name: str = "examples",
-        audio_init_timeout: float = 10.0
+        audio_init_timeout: float = 10.0,
+        graph_path: Optional[str] = None,
     ):
         """Initialize the MMMAudioProcess class.
         
@@ -100,6 +101,7 @@ class MMMAudio:
             graph_name: Name of the Mojo graph to use.
             package_name: Name of the package containing the Mojo graph.
             audio_init_timeout: Timeout for audio initialization in seconds.
+            graph_path: Optional explicit path to a `.mojo` graph file.
         """
         
         # Store configuration
@@ -110,6 +112,7 @@ class MMMAudio:
         self.out_device = out_device
         self.graph_name = graph_name
         self.package_name = package_name
+        self.graph_path = graph_path
         
         # Process control
         self.process: Optional[Process] = None
@@ -170,6 +173,7 @@ class MMMAudio:
                 self.out_device,
                 self.graph_name,
                 self.package_name,
+                self.graph_path,
                 self.stop_flag,
                 self.audio_running,
                 self.process_ready,
@@ -322,6 +326,7 @@ class MMMAudio:
         out_device: str,
         graph_name: str,
         package_name: str,
+        graph_path: Optional[str],
         stop_flag: Event,
         audio_running: Value,
         process_ready: Event,
@@ -365,19 +370,51 @@ class MMMAudio:
         # =========================================================================
         # Initialize Mojo bridge
         # =========================================================================
+        bridge_build = None
         try:
-            from mmmaudio.make_solo_graph import make_solo_graph
-            users_python_file: str = os.path.abspath(sys.argv[0])
+            from pathlib import Path
+            from mmmaudio.make_solo_graph import load_graph_bridge
+            users_python_file = Path(sys.argv[0]).resolve()
             print(f"user is calling this Python file: {users_python_file}")
-            expected_dir: str = os.path.dirname(users_python_file)
-            import importlib
-            bridge_path = make_solo_graph(expected_dir,graph_name)
-            MMMAudioBridge = importlib.import_module(name=f"{graph_name}Bridge")
+            expected_dir = users_python_file.parent
+            if graph_path is not None:
+                resolved_graph_path = Path(graph_path).resolve()
+                graph_module_name = resolved_graph_path.stem
+                source_root = resolved_graph_path.parent
+            else:
+                requested_graph = Path(graph_name)
+                if requested_graph.suffix == ".mojo" or len(requested_graph.parts) > 1:
+                    graph_module_name = requested_graph.stem
+                    resolved_graph_path = (
+                        requested_graph if requested_graph.is_absolute() else (expected_dir / requested_graph)
+                    )
+                    source_root = resolved_graph_path.parent
+                else:
+                    graph_module_name = graph_name
+                    resolved_graph_path = expected_dir / f"{graph_module_name}.mojo"
+                    source_root = expected_dir
 
-            bridge_file = graph_name + "Bridge.mojo"
-            if os.path.exists(bridge_file):
-                os.remove(bridge_file)
+            if not resolved_graph_path.exists():
+                repo_root = Path(__file__).resolve().parents[2]
+                package_root = repo_root / Path(*package_name.split("."))
+                package_graph_path = package_root / f"{graph_module_name}.mojo"
+                if package_graph_path.exists():
+                    resolved_graph_path = package_graph_path
+                    source_root = package_root
+                else:
+                    raise FileNotFoundError(f"Mojo graph not found at {resolved_graph_path} or {package_graph_path}")
+
+            print(f"[PID {pid}] Using Mojo graph source: {resolved_graph_path}")
+            bridge_build = load_graph_bridge(
+                graph_source_path=str(resolved_graph_path),
+                graph_name=graph_module_name,
+                source_root_path=str(source_root),
+            )
+            MMMAudioBridge = bridge_build.module
         except Exception as e:
+            if bridge_build is not None:
+                sys.modules.pop(bridge_build.module_name, None)
+                bridge_build.build_dir.cleanup()
             print(f"[PID {pid}] Error loading Mojo bridge: {e}")
             sys.stdout.flush()
             return
@@ -392,6 +429,9 @@ class MMMAudio:
         
         if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
             print(f"[PID {pid}] Sample rate mismatch!")
+            if bridge_build is not None:
+                sys.modules.pop(bridge_build.module_name, None)
+                bridge_build.build_dir.cleanup()
             sys.stdout.flush()
             return
         
@@ -708,6 +748,10 @@ class MMMAudio:
         output_stream.stop_stream()
         output_stream.close()
         p.terminate()
+
+        if bridge_build is not None:
+            sys.modules.pop(bridge_build.module_name, None)
+            bridge_build.build_dir.cleanup()
         
         print(f"[PID {pid}] Audio process terminated")
         sys.stdout.flush()

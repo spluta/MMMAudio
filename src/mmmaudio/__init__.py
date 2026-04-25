@@ -1,3 +1,5 @@
+import sys as _sys
+
 # from .BufAnalysis import *
 from .functions import *
 from .GUI import *
@@ -7,3 +9,5 @@ from .MMMAudio import *
 from .OSCServer import *
 from .Patterns import *
 from .Scheduler import *
+
+_sys.modules.setdefault("mmm_audio", _sys.modules[__name__])
