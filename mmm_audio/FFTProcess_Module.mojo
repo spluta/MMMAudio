@@ -97,7 +97,7 @@ struct FFTProcess[T: FFTProcessable, ifft: Bool = True,input_window_shape: Int =
         p = FFTProcessor[Self.T, Self.ifft](self.world, process=process^, window_size=self.window_size)
         self.buffered_process = BufferedProcess[FFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
-    fn next(mut self, input: Float64) -> Float64:
+    fn next(mut self, input: Float64 = 0.0) -> Float64:
         """Processes the next input sample and returns the next output sample.
         
         Args:
