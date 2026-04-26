@@ -69,8 +69,6 @@ class Joystick:
         
         # this is a 32-bit integer of 1s and 0s pertaining to the joystick state
         combined = int.from_bytes(data, byteorder='little')
-        # print(f"Combined data: {combined:032b}")  # Debug print of the combined data
-        # print(f"Combined data: {combined>>40:032b}")  # Debug print of the combined data
 
         if self.name.lower() in self.joystick_fn_dict:
             self.joystick_fn_dict[self.name.lower()](data, combined)
