@@ -290,25 +290,31 @@ struct Compressor[num_chans: Int](Movable, Copyable):
         
         Args:
             input: MFloat[Self.num_chans] audio signal to be compressed.
-            threshold: MFloat[1] threshold in dB above which compression occurs.
+            threshold: MFloat[1] threshold in dBFS above which compression occurs.
             ratio: MFloat[1] compression ratio. For example, a ratio of 4.0 means that for every 4 dB the input signal exceeds the threshold, the output will only exceed the threshold by 1 dB.
             attack: MFloat[1] attack time in seconds for the compressor's envelope follower.
             release: MFloat[1] release time in seconds for the compressor's envelope follower.
             knee_width: MFloat[1] width of the knee in dB. A value of 0 means a hard knee, while higher values create a softer knee N/2 decibels around the threshold.
+        
+        Returns:
+            MFloat[Self.num_chans] compressed audio signal, which is the original signal multiplied by the negative compression gain.
         """
 
-        return (self.next_neg_comp(input, threshold, ratio, attack, release, knee_width) * input)
+        return self.next_neg_comp(input, threshold, ratio, attack, release, knee_width) * input
 
     fn next_neg_comp(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[1]:
-        """Returns the negative compression gain for the input signal, which can be multiplied with the original signal or used as a sidechain.
+        """Returns the negative compression gain (in amplitude units, not dB) for the input signal, which can be multiplied with the original signal or used as a sidechain.
         
         Args:
             input: MFloat[Self.num_chans] audio signal to be compressed.
-            threshold: MFloat[1] threshold in dB above which compression occurs.
+            threshold: MFloat[1] threshold in dBFS above which compression occurs.
             ratio: MFloat[1] compression ratio. For example, a ratio of 4.0 means that for every 4 dB the input signal exceeds the threshold, the output will only exceed the threshold by 1 dB.
             attack: MFloat[1] attack time in seconds for the compressor's envelope follower.
             release: MFloat[1] release time in seconds for the compressor's envelope follower.
             knee_width: MFloat[1] width of the knee in dB. A value of 0 means a hard knee, while higher values create a softer knee N/2 decibels around the threshold.
+
+        Returns:
+            MFloat[1] negative compression gain in amplitude units, which can be multiplied with the original signal or used as a sidechain.
         """
 
         ratio2 = max(ratio, 1.0)  # Ensure ratio is at least 1:1
