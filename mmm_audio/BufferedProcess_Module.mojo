@@ -95,7 +95,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.input_attenuation_window = Windows.make_window[Self.input_window_shape](self.window_size)
         self.output_attenuation_window = Windows.make_window[Self.output_window_shape](self.window_size)
 
-    fn next(mut self, input: Float64) -> Float64:
+    fn next(mut self, input: Float64 = 0.0) -> Float64:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
