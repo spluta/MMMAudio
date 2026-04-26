@@ -255,7 +255,7 @@ struct ASREnv(Movable, Copyable):
 
 
 struct Compressor[num_chans: Int](Movable, Copyable):
-    """Compressor from Nathan Ho's Negative Compression web post.
+    """Compressor from Nathan Ho's [Negative Compression web post](https://nathan.ho.name/posts/negative-compression/).
     
     Params:
         num_chans: Number of channels of input/output.
