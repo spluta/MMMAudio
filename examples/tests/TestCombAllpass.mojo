@@ -9,9 +9,9 @@ struct TestCombAllpass(Movable, Copyable):
     var messenger: Messenger
     var which: Float64
     var comb: Comb[1, Interp.lagrange4]
-    var allpass: Allpass_Comb[1, Interp.lagrange4]
+    var allpass: Allpass[1, Interp.lagrange4]
     var comb2: Comb[1, Interp.lagrange4]
-    var allpass2: Allpass_Comb[1, Interp.lagrange4]
+    var allpass2: Allpass[1, Interp.lagrange4]
     var LP_Comb: LP_Comb[1, Interp.lagrange4]
     var delay_time: Float64
 
@@ -21,9 +21,9 @@ struct TestCombAllpass(Movable, Copyable):
         self.messenger = Messenger(world)
         self.which = 0
         self.comb = Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
-        self.allpass = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.allpass = Allpass[1, Interp.lagrange4](self.world, max_delay_time=2.0)
         self.comb2 = Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
-        self.allpass2 = Allpass_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
+        self.allpass2 = Allpass[1, Interp.lagrange4](self.world, max_delay_time=2.0)
         self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
         self.delay_time = 0.1
 

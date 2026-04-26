@@ -355,9 +355,9 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     fn __repr__(self) -> String:
         return "LP_Comb"
 
-struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
+struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     """
-    A simple allpass comb filter using a delay line with feedback.
+    A simple allpass filter using a delay line with feedback.
     
     Parameters:
       num_chans: Size of the SIMD vector.
@@ -367,7 +367,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     var delay: Delay[Self.num_chans, Self.interp]
 
     fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
-      """Initialize the Allpass Comb filter.
+      """Initialize the Allpass filter.
 
       Args:
         world: A pointer to the MMMWorld.
@@ -384,7 +384,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         return self.delay.tap(delay_time)
 
     fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
-        """Process one sample through the allpass comb filter. Uses a direct-form 1 structure.
+        """Process one sample through the allpass filter. Uses a direct-form 1 structure.
 
         Args:
           input: The input sample to process.
@@ -404,7 +404,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         return output
 
     fn next_df2(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
-      """Process one sample through the allpass comb filter using a direct-form 2 structure."""
+      """Process one sample through the allpass filter using a direct-form 2 structure."""
 
         var delayed = self.delay.read(delay_time)
         var to_delay = input + feedback_coef * delayed
@@ -415,7 +415,7 @@ struct Allpass_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         return output
 
     fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
-        """Process one sample through the allpass comb filter with decay time calculation.
+        """Process one sample through the allpass filter with decay time calculation.
         
         Args:
           input: The input sample to process.

@@ -18,7 +18,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     var lp_comb7: LP_Comb[Self.num_chans]
 
     var temp: List[Float64]
-    var allpass_combs: List[Allpass_Comb[Self.num_chans]]
+    var allpasss: List[Allpass[Self.num_chans]]
     var feedback: List[Float64]
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
@@ -45,7 +45,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         self.lp_comb7 = LP_Comb[Self.num_chans](self.world, 0.04)
 
         self.temp = [0.0 for _ in range(8)]
-        self.allpass_combs = [Allpass_Comb[Self.num_chans](self.world, 0.015) for _ in range(4)]
+        self.allpasss = [Allpass[Self.num_chans](self.world, 0.015) for _ in range(4)]
         
         self.feedback = [0.0]
         self.lp_comb_lpfreq = [1000.0]
@@ -81,10 +81,10 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         out += self.lp_comb6.next(input, 0.03530612244897959 + delay_offset, feedback, lp_comb_lpfreq)
         out += self.lp_comb7.next(input, 0.03666666666666667 + delay_offset, feedback, lp_comb_lpfreq)
 
-        out = self.allpass_combs[0].next(out, 0.012607709750566893, feedback2)
-        out = self.allpass_combs[1].next(out, 0.01, feedback2)
-        out = self.allpass_combs[2].next(out, 0.007732426303854875, feedback2)
-        out = self.allpass_combs[3].next(out, 0.00510204081632653, feedback2)
+        out = self.allpasss[0].next(out, 0.012607709750566893, feedback2)
+        out = self.allpasss[1].next(out, 0.01, feedback2)
+        out = self.allpasss[2].next(out, 0.007732426303854875, feedback2)
+        out = self.allpasss[3].next(out, 0.00510204081632653, feedback2)
 
         out = sanitize(out)
 
@@ -116,13 +116,13 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
     var pre_delay: Delay[]
     var pre_delay_time: Float64
     var one_pole: OnePole[]
-    var allpass_early: List[Allpass_Comb[interp = Interp.none]]
+    var allpass_early: List[Allpass[interp = Interp.none]]
     var early_dtimes: List[Float64]
 
-    var ap1: Allpass_Comb[2, interp = Interp.lagrange4]
+    var ap1: Allpass[2, interp = Interp.lagrange4]
     var del1: Delay[2, interp = Self.interp]
     var pole: OnePole[2]
-    var ap2: Allpass_Comb[2, interp = Self.interp]
+    var ap2: Allpass[2, interp = Self.interp]
     var del2: Delay[2, interp = Self.interp]
 
     var tank_delay_times: List[MFloat[2]]
@@ -163,17 +163,17 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
 
         self.pre_delay = Delay[](world, 0.5)
         self.one_pole = OnePole[](world)
-        self.allpass_early = [Allpass_Comb[interp = Interp.none](world, 0.1) for _ in range(4)]
+        self.allpass_early = [Allpass[interp = Interp.none](world, 0.1) for _ in range(4)]
         self.early_dtimes = [142. / dattoro_sr, 107. / dattoro_sr, 379. / dattoro_sr, 277. / dattoro_sr]
 
         self.tank_delay_times = [MFloat[2](672./dattoro_sr, 908./dattoro_sr), MFloat[2](4453./dattoro_sr, 4217./dattoro_sr), MFloat[2](1800./dattoro_sr, 2656./dattoro_sr), MFloat[2](3720./dattoro_sr, 3163./dattoro_sr)]
 
         self.tank_delay_samples = [MInt[2](t * world[].sample_rate) for t in self.tank_delay_times]
 
-        self.ap1 = Allpass_Comb[2, interp = Interp.lagrange4](world, 0.11)
+        self.ap1 = Allpass[2, interp = Interp.lagrange4](world, 0.11)
         self.del1 = Delay[2, interp = Self.interp](world, 0.17)
         self.pole = OnePole[2](world)
-        self.ap2 = Allpass_Comb[2, interp = Self.interp](world, 0.11)
+        self.ap2 = Allpass[2, interp = Self.interp](world, 0.11)
         self.del2 = Delay[2, interp = Self.interp](world, 0.17)
         self.trap = DCTrap[2](world)
 
