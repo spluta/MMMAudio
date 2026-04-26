@@ -15,7 +15,7 @@ struct TestLineExpLine[](Movable, Copyable):
     var curveline: Line[num, 2]
     var which: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc[num](self.world)
         self.osc2 = Osc[num](self.world)
@@ -27,7 +27,7 @@ struct TestLineExpLine[](Movable, Copyable):
         self.expline = Line[num, 1](self.world)
         self.curveline = Line[num, 2](self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         trig = self.m.notify_update(self.line_vals, "line_vals")
         trig2 = MBool[num](fill = trig)
         self.m.update(self.which, "which")

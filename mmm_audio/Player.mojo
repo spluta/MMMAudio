@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 # it is a bit gross to be overloading the functions like this. A Trait for Buffer and SIMDBuffer would be better, but that would need Traits with Parameters, because the Span passed into the get_sample function needs to know the number of channels at compile time for the type signature. 
-struct Play(Representable, Movable, Copyable):
+struct Play(Movable, Copyable):
     """The principle buffer playback object for MMMAudio.
     
     Plays back audio from a Buffer with variable rate, interpolation, looping, and triggering capabilities.
@@ -14,7 +14,7 @@ struct Play(Representable, Movable, Copyable):
     var reset_phase_point: Float64
     var phase_offset: Float64  # Offset for the phase calculation
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """ 
         
         Args:
@@ -30,10 +30,7 @@ struct Play(Representable, Movable, Copyable):
         self.reset_phase_point = 0.0
         self.phase_offset = 0.0
 
-    fn __repr__(self) -> String:
-        return String("Play")
-
-    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1) -> MFloat[num_chans]: 
+    def next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1) -> MFloat[num_chans]: 
         """Get the next sample from a SIMD audio buf (SIMDBuffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames. A key difference between SIMDBuffer and Buffer is that calling next on a SIMDBuffer always returns the entire SIMD vector of samples for the current phase, whereas with Buffer, you can specify the number of channels to read.
 
         Parameters:
@@ -99,9 +96,9 @@ struct Play(Representable, Movable, Copyable):
             else:
                 return self.get_sample[num_chans,interp, bWrap](buf, prev_phase)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: SIMDBuffer[num_chans], prev_phase: Float64) -> MFloat[num_chans]:
+    def get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: SIMDBuffer[num_chans], prev_phase: Float64) -> MFloat[num_chans]:
         f_idx = ((self.impulse.phase + self.phase_offset)) * buf.num_frames_f64
         out = SpanInterpolator.read[num_chans, interp=interp,bWrap=bWrap](
                 world=self.world,
@@ -112,7 +109,7 @@ struct Play(Representable, Movable, Copyable):
         return out
 
     @always_inline
-    fn next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> MFloat[num_chans]: 
+    def next[num_chans: Int = 1, interp: Int = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> MFloat[num_chans]: 
         """Get the next sample from an audio buf (Buffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames.
 
         Parameters:
@@ -170,13 +167,12 @@ struct Play(Representable, Movable, Copyable):
             else:
                 return self.get_sample[num_chans,interp, bWrap](buf, prev_phase, start_chan)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: Buffer, prev_phase: Float64, start_chan: Int) -> MFloat[num_chans]:
+    def get_sample[num_chans: Int, interp: Int, bWrap: Bool = False](self, buf: Buffer, prev_phase: Float64, start_chan: Int) -> MFloat[num_chans]:
         
         out = MFloat[num_chans](0.0)
-        @parameter
-        for out_chan in range(num_chans):
+        comptime for out_chan in range(num_chans):
             out[out_chan] = SpanInterpolator.read[interp=interp,bWrap=bWrap](
                 world=self.world,
                 data=buf.data[(out_chan + start_chan) % len(buf.data)], # wrap around channels
@@ -187,10 +183,10 @@ struct Play(Representable, Movable, Copyable):
         return out
 
     @always_inline
-    fn get_relative_phase(mut self) -> Float64:
+    def get_relative_phase(mut self) -> Float64:
         return self.impulse.phase / self.reset_phase_point
 
-    fn reset_phase(mut self):
+    def reset_phase(mut self):
         self.impulse.phase = 0.0
 
 
@@ -211,14 +207,14 @@ struct Grain(PolyObject):
     var trigger: Bool
 
     # These are the functions that need to be implemented for the PolyObject trait:
-    fn check_active(mut self) -> Bool:
+    def check_active(mut self) -> Bool:
         return self.play_buf.active
 
-    fn set_trigger(mut self, trigger: Bool):
+    def set_trigger(mut self, trigger: Bool):
         self.trigger = trigger
     # ------------------------------------------------
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
 
         Args:
@@ -235,7 +231,7 @@ struct Grain(PolyObject):
         self.trigger = False
 
     @always_inline
-    fn next_pan2[num_playback_chans: Int = 1, win_type: Int = 0, bWrap: Bool = False](mut self, 
+    def next_pan2[num_playback_chans: Int = 1, win_type: Int = 0, bWrap: Bool = False](mut self, 
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     loop: Bool = False, 
@@ -262,8 +258,7 @@ struct Grain(PolyObject):
         
         var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, pan, gain)
 
-        @parameter
-        if num_playback_chans == 1:
+        comptime if num_playback_chans == 1:
             panned = pan2(sample[0], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
             return panned
         else:
@@ -271,7 +266,7 @@ struct Grain(PolyObject):
             return panned  # Return the output samples
 
     @always_inline
-    fn next_pan_az[num_simd_chans: Int = 4, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    def next_pan_az[num_simd_chans: Int = 4, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     loop: Bool = False, 
@@ -306,7 +301,7 @@ struct Grain(PolyObject):
 
         return panned
 
-    fn next[num_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    def next[num_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
     mut buffer: SIMDBuffer[num_chans], 
     rate: Float64 = 1.0, 
     loop: Bool = False, 
@@ -364,7 +359,7 @@ struct TGrains(Movable, Copyable):
     var world: World
     var poly: PolyTriggerSig
 
-    fn __init__(out self, num_grains: Int, max_grains: Int, world: World):
+    def __init__(out self, num_grains: Int, max_grains: Int, world: World):
         """
 
         Args:
@@ -380,7 +375,7 @@ struct TGrains(Movable, Copyable):
         self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
     @always_inline
-    fn next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    def next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     trig: Bool = False, 
@@ -419,7 +414,7 @@ struct TGrains(Movable, Copyable):
         return out
 
     @always_inline
-    fn next_pan_az[num_simd_chans: Int = 2, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    def next_pan_az[num_simd_chans: Int = 2, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
     mut buffer: SIMDBuffer, 
     rate: Float64 = 1.0, 
     trig: Bool = False, 
@@ -480,7 +475,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
     var pitch_ratios: List[Float64]
     var poly: PolyTriggerSig
 
-    fn __init__(out self, world: World, buf_dur: Float64 = 2.0, num_grains: Int = 6, max_grains: Int = 12):
+    def __init__(out self, world: World, buf_dur: Float64 = 2.0, num_grains: Int = 6, max_grains: Int = 12):
         """ 
 
         Args:
@@ -500,7 +495,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
         self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
     @always_inline
-    fn next(mut self, in_sig: MFloat[Self.num_chans], grain_dur: Float64 = 0.2, overlaps: Int = 4, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, added_delay_low: Float64 = 0.0, added_delay_high: Float64 = 0.0, gain: Float64 = 1.0) -> MFloat[Self.num_chans]:
+    def next(mut self, in_sig: MFloat[Self.num_chans], grain_dur: Float64 = 0.2, overlaps: Int = 4, pitch_ratio: Float64 = 1.0, pitch_dispersion: Float64 = 0.0, time_dispersion: Float64 = 0.0, added_delay_low: Float64 = 0.0, added_delay_high: Float64 = 0.0, gain: Float64 = 1.0) -> MFloat[Self.num_chans]:
         """Generate the next set of grains for pitch shifting.
 
         Args:

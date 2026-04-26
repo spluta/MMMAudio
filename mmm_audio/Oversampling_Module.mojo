@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representable, Movable, Copyable):
+struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Movable, Copyable):
     """A struct that collects ` times_oversampling` samples and then downsamples them using a low-pass filter. Add a sample for each oversampling iteration with `add_sample()`, then get the downsampled output with `get_sample()`.
 
     Parameters:
@@ -12,7 +12,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
     var counter: Int
     var lpf: OS_LPF4[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
 
         Args:
@@ -25,11 +25,8 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
         
         self.lpf.set_cutoff(0.48 * world[].sample_rate)
 
-    fn __repr__(self) -> String:
-        return String("Oversampling")
-
     @always_inline
-    fn add_sample(mut self, sample: MFloat[self.num_chans]):
+    def add_sample(mut self, sample: MFloat[self.num_chans]):
         """Add a sample to the oversampling buffer.
         
         Args:
@@ -39,7 +36,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
         self.counter += 1
 
     @always_inline
-    fn get_sample(mut self) -> MFloat[self.num_chans]:
+    def get_sample(mut self) -> MFloat[self.num_chans]:
         """Get the next sample from a filled oversampling buffer."""
         out = MFloat[self.num_chans](0.0)
         if self.counter > 1:
@@ -50,7 +47,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Representab
         self.counter = 0
         return out
         
-struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable, Movable, Copyable):
+struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Movable, Copyable):
     """A struct that upsamples the input signal by the specified factor using a low-pass filter.
 
     Parameters:
@@ -59,7 +56,7 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
     """
     var lpf: OS_LPF4[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
 
         Args:
@@ -69,11 +66,8 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Representable,
         self.lpf.set_sample_rate(world[].sample_rate * Self.times_oversampling)
         self.lpf.set_cutoff(0.5 * world[].sample_rate)
 
-    fn __repr__(self) -> String:
-        return String("Upsampler")  
-
     @always_inline
-    fn next(mut self, input: MFloat[self.num_chans], i: Int) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], i: Int) -> MFloat[self.num_chans]:
         """Process one sample through the upsampler. Pass in the same sample `times_oversampling` times, once for each oversampling iteration. The algorithm will use the first sample given and fill the buffer with zeroes for the subsequent samples.
 
         Args:
@@ -104,7 +98,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     var z2: MFloat[Self.num_chans]
     comptime INV_SQRT2 = 0.7071067811865475
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
 
         Args:
@@ -119,7 +113,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         self.z1 = MFloat[Self.num_chans](0.0)
         self.z2 = MFloat[Self.num_chans](0.0)
 
-    fn set_sample_rate(mut self, sr: Float64):
+    def set_sample_rate(mut self, sr: Float64):
         """Set the sample rate for the filter.
 
         Args:
@@ -127,7 +121,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         """
         self.sample_rate = sr
 
-    fn set_cutoff(mut self, fc: Float64):
+    def set_cutoff(mut self, fc: Float64):
         """Set the cutoff frequency for the low-pass filter.
 
         Args:
@@ -160,7 +154,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         self.a2 = a2
 
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the 2nd-order low-pass filter.
         
         Args:
@@ -180,7 +174,7 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
     var os_lpf1: OS_LPF[Self.num_chans]
     var os_lpf2: OS_LPF[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
 
         Args:
@@ -188,16 +182,16 @@ struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
         """
         self.os_lpf1 = OS_LPF[Self.num_chans](world)
         self.os_lpf2 = OS_LPF[Self.num_chans](world)
-    fn set_sample_rate(mut self, sr: Float64):
+    def set_sample_rate(mut self, sr: Float64):
         self.os_lpf1.set_sample_rate(sr)
         self.os_lpf2.set_sample_rate(sr)
     
-    fn set_cutoff(mut self, fc: Float64):
+    def set_cutoff(mut self, fc: Float64):
         self.os_lpf1.set_cutoff(fc)
         self.os_lpf2.set_cutoff(fc)
 
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the 4th-order low-pass filter with fixed cutoff frequency.
         
         Args:

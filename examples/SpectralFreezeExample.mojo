@@ -10,17 +10,17 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
     var stored_phases: List[MFloat[2]]
     var stored_mags: List[MFloat[2]]
 
-    fn __init__(out self, world: World, namespace: Optional[String] = None):
+    def __init__(out self, world: World, namespace: Optional[String] = None):
         self.world = world
         self.bin = (Self.window_size // 2) + 1
         self.m = Messenger(world, namespace)
         self.freeze_gate = False
         self.stored_phases = [MFloat[2](0.0) for _ in range(Self.window_size)]
         self.stored_mags = [MFloat[2](0.0) for _ in range(Self.window_size)]
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         self.m.update(self.freeze_gate, "freeze_gate")
 
-    fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
+    def next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
         if not self.freeze_gate:
             # self.stored_phases = phases.copy()
             self.stored_mags = mags.copy()
@@ -42,7 +42,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
     var freeze_gate: Bool
     var asr: ASREnv
 
-    fn __init__(out self, world: World, namespace: Optional[String] = None):
+    def __init__(out self, world: World, namespace: Optional[String] = None):
         self.world = world
         self.freeze = FFTProcess[
                 SpectralFreezeWindow[Self.window_size],
@@ -54,7 +54,7 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         self.freeze_gate = False
         self.asr = ASREnv(self.world)
 
-    fn next(mut self, sample: MFloat[2]) -> MFloat[2]:
+    def next(mut self, sample: MFloat[2]) -> MFloat[2]:
         self.m.update(self.freeze_gate, "freeze_gate")
         env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
         freeze = self.freeze.next_stereo(sample)
@@ -71,7 +71,7 @@ struct SpectralFreezeExample(Movable, Copyable):
     var m: Messenger
     var stereo_switch: Bool
 
-    fn __init__(out self, world: World, namespace: Optional[String] = None):
+    def __init__(out self, world: World, namespace: Optional[String] = None):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.play_buf = Play(self.world) 
@@ -79,7 +79,7 @@ struct SpectralFreezeExample(Movable, Copyable):
         self.m = Messenger(self.world)
         self.stereo_switch: Bool = False
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.stereo_switch,"stereo_switch")
 
         out = self.play_buf.next[2](self.buffer,1)

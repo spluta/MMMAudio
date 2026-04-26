@@ -1,6 +1,6 @@
-from python import PythonObject
-import time
-from collections import Set
+from std.python import PythonObject
+import std.time
+from std.collections import Set
 from mmm_audio import *
 
 struct MMMWorld(Movable, Copyable):
@@ -39,7 +39,7 @@ struct MMMWorld(Movable, Copyable):
 
     var print_counter: UInt16
 
-    fn __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin](), messenger_manager_ptr: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin] = UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]()):
+    def __init__(out self, sample_rate: Float64 = 48000.0, block_size: Int = 64, num_in_chans: Int = 2, num_out_chans: Int = 2, osc_buffers_ptr: UnsafePointer[mut=True, OscBuffers, MutExternalOrigin] = UnsafePointer[mut=True, OscBuffers, MutExternalOrigin](), windows_ptr: UnsafePointer[mut=True, Windows, MutExternalOrigin] = UnsafePointer[mut=True, Windows, MutExternalOrigin](), messenger_manager_ptr: UnsafePointer[mut=True, MessengerManager, MutExternalOrigin] = UnsafePointer[mut=True, MessengerManager, MutExternalOrigin]()):
         """Initializes the MMMWorld struct.
 
         Args:
@@ -66,7 +66,7 @@ struct MMMWorld(Movable, Copyable):
 
         self.os_multiplier = List[Float64]()  # Initialize the list of multipliers
         for i in range(5):  # Initialize multipliers for oversampling ratios
-            self.os_multiplier.append(1.0 / (2 ** i))  # Example multipliers, can be adjusted as needed
+            self.os_multiplier.append(1.0 / MFloat[1](2 ** i))  # Example multipliers, can be adjusted as needed
 
         # I don't know why, but objects don't see these as updated? maybe it is copying the world when I pass it?
         self.mouse_x = 0.0
@@ -87,7 +87,7 @@ struct MMMWorld(Movable, Copyable):
 
         print("MMMWorld initialized with sample rate:", self.sample_rate, "and block size:", self.block_size)
 
-    fn set_channel_count(mut self, num_in_chans: Int, num_out_chans: Int):
+    def set_channel_count(mut self, num_in_chans: Int, num_out_chans: Int):
         """Sets the number of input and output channels.
 
         Args:
@@ -101,7 +101,7 @@ struct MMMWorld(Movable, Copyable):
             self.sound_in.append(0.0)  # Reinitialize input buffer with zeros
 
     @always_inline
-    fn print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+    def print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
         """Print values to the console at the top of the audio block every n_blocks.
 
         Parameters:
@@ -116,8 +116,7 @@ struct MMMWorld(Movable, Copyable):
         
         if self.top_of_block:
             if self.print_counter % n_blocks == 0:
-                @parameter
-                for i in range(values.__len__()):
+                comptime for i in range(values.__len__()):
                     print(values[i], end=sep if i < values.__len__() - 1 else end)
 
 # Enum-like structs for selecting settings

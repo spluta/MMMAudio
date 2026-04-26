@@ -11,11 +11,11 @@ struct MFCCTestSuite(FFTProcessable):
     var mfcc: MFCC
     var data: List[List[Float64]]
 
-    fn __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
+    def __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
         self.mfcc = MFCC[](w[].sample_rate,num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize)
         self.data = List[List[Float64]]()
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         self.mfcc.next_frame(mags, phases)
         self.data.append(self.mfcc.coeffs.copy())
 

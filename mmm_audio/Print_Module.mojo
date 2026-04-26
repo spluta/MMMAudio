@@ -1,13 +1,13 @@
 from mmm_audio import *
 
-struct Print(Representable, Copyable, Movable):
+struct Print(Copyable, Movable):
     """
     A struct for printing values in the MMMWorld environment.
     """
     var impulse: Impulse[1]
     var world: World
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """
         Initialize the Print struct.
 
@@ -17,10 +17,7 @@ struct Print(Representable, Copyable, Movable):
         self.world = world
         self.impulse = Impulse(world)
 
-    fn __repr__(self: Print) -> String:
-        return String("Print")
-
-    fn next[T: Writable](mut self, value: T, label: Optional[String] = None, freq: Float64 = 10.0) -> None:
+    def next[T: Writable](mut self, value: T, label: Optional[String] = None, freq: Float64 = 10.0) -> None:
         """
         Print the value at a given frequency.
 

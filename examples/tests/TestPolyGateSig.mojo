@@ -11,19 +11,19 @@ struct PGSVoice(PolyObject):
     var freq: MFloat[]
     var pan: MFloat[]
 
-    fn check_active(self) -> Bool:
+    def check_active(self) -> Bool:
         return self.env.is_active
     
-    fn set_gate(mut self, gate: Bool):
+    def set_gate(mut self, gate: Bool):
         self.gate = gate
         if gate:
             self.freq = exprand(100., 1000.)
             self.pan = rrand(-1., 1.)
 
-    fn reset_env(mut self):
+    def reset_env(mut self):
         self.env = ASREnv(self.world)
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.env = ASREnv(self.world)
         self.synth = Osc(self.world)
@@ -34,7 +34,7 @@ struct PGSVoice(PolyObject):
         self.pan = 0.0
 
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         env = self.env.next(0.01, 1, 0.7, self.gate, self.curves)
         sample = self.synth.next(self.freq)
         return env * pan2(sample, self.pan) * 0.1
@@ -51,7 +51,7 @@ struct TestPolyGateSig(Movable, Copyable):
     var m: Messenger
     var dust_vals: List[Float64]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.psg_voices = [PGSVoice(world) for _ in range(self.num_gates)]
         self.world = world
         self.gates = [Dust(self.world) for _ in range(self.num_gates)]
@@ -60,7 +60,7 @@ struct TestPolyGateSig(Movable, Copyable):
         self.m = Messenger(world)
         self.dust_vals = [1.0, 2.0]
     
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.m.update(self.dust_vals, "dust_vals")
         for i in range(Self.num_gates):
             if self.gates[i].next_bool(self.dust_vals[0], self.dust_vals[1]): self.gated_sigs[i] = not self.gated_sigs[i]

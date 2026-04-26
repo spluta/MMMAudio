@@ -11,7 +11,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     var index: Int
     var len: Int
 
-    fn __init__(out self, in_list: List[Self.T]):
+    def __init__(out self, in_list: List[Self.T]):
         """
         Initialize the Pseq instance.
 
@@ -22,7 +22,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         self.index = -1
         self.len = len(self.vals)
 
-    fn next(mut self) -> Self.T:
+    def next(mut self) -> Self.T:
         """
         Get the next value in the sequence.
         
@@ -34,7 +34,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
             self.index = 0
         return self.vals[self.index]
 
-    fn go_back(mut self, n: Int = 1):
+    def go_back(mut self, n: Int = 1):
         """
         Move the sequence index back by n steps.
         
@@ -43,7 +43,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         """
         self.index = (self.index - n) % self.len
 
-    fn val(mut self) -> Self.T:
+    def val(mut self) -> Self.T:
         """
         Get the current value in the sequence without advancing.
         
@@ -64,7 +64,7 @@ struct Prand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     var index: Int
     var len: Int
 
-    fn __init__(out self, in_list: List[Self.T]):
+    def __init__(out self, in_list: List[Self.T]):
         """
         Initialize the Prand instance.
 
@@ -75,7 +75,7 @@ struct Prand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         self.index = -1
         self.len = len(self.vals)
 
-    fn next(mut self) -> Self.T:
+    def next(mut self) -> Self.T:
         """
         Get the next value in the sequence.
         
@@ -85,7 +85,7 @@ struct Prand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         self.index = rrand(0, self.len-1)
         return self.vals[self.index]
 
-    fn val(mut self) -> Self.T:
+    def val(mut self) -> Self.T:
         """
         Get the current value in the sequence without advancing.
         
@@ -105,7 +105,7 @@ struct Pxrand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
     var index: Int
     var len: Int
 
-    fn __init__(out self, in_list: List[Self.T]):
+    def __init__(out self, in_list: List[Self.T]):
         """
         Initialize the Pxrand instance.
 
@@ -116,7 +116,7 @@ struct Pxrand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         self.index = -1
         self.len = len(self.vals)
 
-    fn next(mut self) -> Self.T:
+    def next(mut self) -> Self.T:
         """
         Get the next value in the sequence.
         
@@ -126,7 +126,7 @@ struct Pxrand[T: Movable & Copyable & ImplicitlyCopyable](Movable, Copyable):
         self.index = (self.index+rrand(1, self.len-1)) % self.len
         return self.vals[self.index]
 
-    fn val(mut self) -> Self.T:
+    def val(mut self) -> Self.T:
         """
         Get the current value in the sequence without advancing.
         

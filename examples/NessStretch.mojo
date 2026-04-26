@@ -14,7 +14,7 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
     var high_cut: Int
     var m_s: List[Float64]
 
-    fn __init__(out self, world: World, window_size: Int, hop_size: Int, low_cut: Int, high_cut: Int):
+    def __init__(out self, world: World, window_size: Int, hop_size: Int, low_cut: Int, high_cut: Int):
         self.world = world
         self.window_size = window_size
         self.hop_size = hop_size
@@ -28,15 +28,15 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
         self.high_cut = high_cut
         self.m_s = [0.0 for _ in range(self.window_size // 2 + 1)]
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         pass
 
-    fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
+    def next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
         mags[0] = 0.0 # zero the bottom bin
         for i in range(len(mags)):
             mags[i] *= self.lrbp_window[i]
 
-        fn call_back(mut phases: List[MFloat[2]]):
+        def call_back(mut phases: List[MFloat[2]]):
             for ref p in phases:
                 p = MFloat[2](rrand(0.0, 2.0 * 3.141592653589793), rrand(0.0, 2.0 * 3.141592653589793))
         get_best_coherence[num_iterations=Self.num_iterations](mags, phases, self.previous_mags, self.previous_phases, self.window_size, self.hop_size, call_back)
@@ -57,7 +57,7 @@ struct NessStretch(Movable, Copyable):
     var dur_mult: Float64
     var file_name: String
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.file_name = "resources/Shiverer.wav"
         self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
@@ -79,7 +79,7 @@ struct NessStretch(Movable, Copyable):
         self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.dur_mult,"dur_mult")
         new_file = self.m.notify_update(self.file_name, "file_name")
         if new_file:

@@ -1,12 +1,12 @@
-from python import PythonObject
-from python import Python
-from python import ConvertibleFromPython
-from python.bindings import PythonModuleBuilder
-from os import abort
+from std.python import PythonObject
+from std.python import Python
+from std.python import ConvertibleFromPython
+from std.python.bindings import PythonModuleBuilder
+from std.os import abort
 from mmm_audio import *
 
 @export
-fn PyInit_MBufAnalysisBridge() -> PythonObject:
+def PyInit_MBufAnalysisBridge() -> PythonObject:
     try:
         var m = PythonModuleBuilder("MBufAnalysisBridge")
         m.def_function[MBufAnalysisBridge.rms]("rms")
@@ -22,7 +22,7 @@ fn PyInit_MBufAnalysisBridge() -> PythonObject:
         abort(String("error creating Python Mojo module:", e))
 
 # [TODO]: also pass in a string that let's us know what *analysis* it comes from
-fn getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) raises -> Int:
+def getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) raises -> Int:
     if key in py_dict:
         return Int(py=py_dict[key])
     else:
@@ -32,7 +32,7 @@ fn getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) rai
             print("No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
-fn getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
+def getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
     if key in py_dict:
         return py_to_float64(py_dict[key])
     else:
@@ -42,7 +42,7 @@ fn getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = N
             print("No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
-fn getBool(py_dict: PythonObject, key: String, default: Optional[Bool] = None) raises -> Bool:
+def getBool(py_dict: PythonObject, key: String, default: Optional[Bool] = None) raises -> Bool:
     if key in py_dict:
         return Bool(py=py_dict[key])
     else:
@@ -52,7 +52,7 @@ fn getBool(py_dict: PythonObject, key: String, default: Optional[Bool] = None) r
             print("No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
-fn getString(py_dict: PythonObject, key: String, default: Optional[String] = None) raises -> String:
+def getString(py_dict: PythonObject, key: String, default: Optional[String] = None) raises -> String:
     if key in py_dict:
         return String(py=py_dict[key])
     else:
@@ -69,7 +69,7 @@ struct AnalysisParams:
     var num_frames: Int
     # [TODO]: padding
 
-    fn __init__(out self, py_dict: PythonObject) raises:
+    def __init__(out self, py_dict: PythonObject) raises:
 
         self.buf = Buffer.load(getString(py_dict, "path"))
         self.chan = getInt(py_dict, "chan", 0)
@@ -79,7 +79,7 @@ struct AnalysisParams:
 struct MBufAnalysisBridge:
 
     @staticmethod
-    fn mel_bands(py_dict: PythonObject) raises -> PythonObject:
+    def mel_bands(py_dict: PythonObject) raises -> PythonObject:
 
         ap = AnalysisParams(py_dict)
         window_size = getInt(py_dict, "window_size", 1024)
@@ -94,7 +94,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn mfcc(py_dict: PythonObject) raises -> PythonObject:
+    def mfcc(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         num_bands = getInt(py_dict, "num_bands", 40)
@@ -112,7 +112,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn top_n_freqs(py_dict: PythonObject) raises -> PythonObject:
+    def top_n_freqs(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         num_peaks = getInt(py_dict, "num_peaks", 5)
@@ -130,7 +130,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn rms(py_dict: PythonObject) raises -> PythonObject:
+    def rms(py_dict: PythonObject) raises -> PythonObject:
 
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
@@ -145,7 +145,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn yin(py_dict: PythonObject) raises -> PythonObject:
+    def yin(py_dict: PythonObject) raises -> PythonObject:
         
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
@@ -169,7 +169,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn spectral_centroid(py_dict: PythonObject) raises -> PythonObject:
+    def spectral_centroid(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         min_freq = getFloat64(py_dict, "min_freq", 20.0)
@@ -186,7 +186,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    fn spectral_flux_onsets(py_dict: PythonObject) raises -> PythonObject:
+    def spectral_flux_onsets(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         analysis_params = AnalysisParams(py_dict)
         thresh = getFloat64(py_dict, "thresh", 0.01)
@@ -214,7 +214,7 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.list_to_numpy(onsets)
     
     @staticmethod
-    fn list_to_numpy(list: List[Int]) raises -> PythonObject:
+    def list_to_numpy(list: List[Int]) raises -> PythonObject:
         np = Python.import_module("numpy")
         shape = Python.tuple(Int(len(list)))
         nparray = np.zeros(shape=shape,dtype=np.int64)
@@ -223,7 +223,7 @@ struct MBufAnalysisBridge:
         return nparray
 
     @staticmethod
-    fn matrix_to_numpy(list: List[List[Float64]]) raises -> PythonObject:
+    def matrix_to_numpy(list: List[List[Float64]]) raises -> PythonObject:
         np = Python.import_module("numpy")
         shape = Python.tuple(Int(len(list)), Int(len(list[0])))
         nparray = np.zeros(shape=shape,dtype=np.float64)
@@ -236,7 +236,7 @@ struct MBufAnalysis:
 
     # [TODO]: add windowing
     @staticmethod
-    fn buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
+    def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
         frame: Int = start_frame
         if num_frames < 0:
@@ -254,7 +254,7 @@ struct MBufAnalysis:
         return result^
     
     @staticmethod
-    fn fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
+    def fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: Int = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
         result = List[List[Float64]]()
         frame: Int = start_frame
         if num_frames < 0:
@@ -275,7 +275,7 @@ struct MBufAnalysis:
         return result^
 
     # @staticmethod
-    # fn custom(py_path: PythonObject) raises -> PythonObject:
+    # def custom(py_path: PythonObject) raises -> PythonObject:
     #     path = String(py=py_path)
     #     print("custom analysis called, not yet implemented", path)
     #     return 42

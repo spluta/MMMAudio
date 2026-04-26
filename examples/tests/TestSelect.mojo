@@ -8,7 +8,7 @@ struct TestSelect(Movable, Copyable):
     var printers: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.messenger = Messenger(self.world)
         self.vs = List[Float64](capacity=8)
@@ -20,7 +20,7 @@ struct TestSelect(Movable, Copyable):
         self.printers[0] = Print(self.world)
         self.printers[1] = Print(self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.vs, "vs")
         self.messenger.update(self.which,"which")
 

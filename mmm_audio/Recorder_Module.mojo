@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
+struct Recorder[num_chans: Int = 1](Movable, Copyable):
     """
     A struct for storing a buffer and recording audio into it.
 
@@ -12,7 +12,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
     var write_head: Int
     var buf: SIMDBuffer[Self.num_chans]
 
-    fn __init__(out self, world: World, num_frames: Int, sample_rate: Float64):
+    def __init__(out self, world: World, num_frames: Int, sample_rate: Float64):
         """
         Initialize the Recorder struct.
 
@@ -25,7 +25,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.write_head = 0
         self.buf = SIMDBuffer[Self.num_chans].zeros(num_frames, sample_rate)
 
-    fn replace_buffer(mut self, new_buf: SIMDBuffer[Self.num_chans]):
+    def replace_buffer(mut self, new_buf: SIMDBuffer[Self.num_chans]):
         """
         Replace the internal buffer with a new buffer. The new buffer must have the same number of channels as the existing buffer. Write head is reset to 0.
 
@@ -35,17 +35,14 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         self.buf = new_buf.copy()
         self.write_head = 0
 
-    fn zero_buffer(mut self):
+    def zero_buffer(mut self):
         """
         Utility function to set all samples in the buffer to zero. Can be useful to clear the buffer for a new recording without having to create a new Recorder instance.
         """
         self.buf.zero()
 
-    fn __repr__(self) -> String:
-        return String("RecordBuf")
-    
     # Write SIMD input to buffer
-    fn write(mut self, input: MFloat[Self.num_chans], index: Int):
+    def write(mut self, input: MFloat[Self.num_chans], index: Int):
         """
         Write SIMD input to buffer at specified index. Used internally by write_next and write_previous, which will be more appropriate for most use cases.
 
@@ -59,7 +56,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
 
         self.buf.data[index] = input
 
-    fn write_next[loop: Bool = True](mut self, value: MFloat[Self.num_chans]):
+    def write_next[loop: Bool = True](mut self, value: MFloat[Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and advance write head forward. This is the correct option in most use cases.
         
@@ -69,8 +66,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
         Params:
             loop: Whether to loop the write head back to the beginning of the buffer when it reaches the end. Default is True.
         """
-        @parameter
-        if loop:
+        comptime if loop:
             self.write(value, self.write_head)
             self.write_head = (self.write_head + 1) % self.buf.num_frames
         else:
@@ -78,7 +74,7 @@ struct Recorder[num_chans: Int = 1](Representable, Movable, Copyable):
                 self.write(value, self.write_head)
                 self.write_head += 1
     
-    fn write_previous(mut self, value: MFloat[Self.num_chans]):
+    def write_previous(mut self, value: MFloat[Self.num_chans]):
         """
         Write SIMD input to buffer at current write head and move write head backward. This is useful for things like delay lines, which write backwards through a buffer so they can interpolate forwards.
 

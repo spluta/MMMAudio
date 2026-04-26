@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-from sys import simd_width_of
+from std.sys import simd_width_of
 
 comptime simd_width = simd_width_of[DType.float64]() * 2
 comptime model_out_size = 16  # Define the output size of the model
@@ -29,7 +29,7 @@ struct TorchSynth(Movable, Copyable):
     var dc1: DCTrap[]
     var dc2: DCTrap[]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc1 = Osc[1, Interp.sinc, 1](self.world)
         self.osc2 = Osc[1, Interp.sinc, 1](self.world)
@@ -55,7 +55,7 @@ struct TorchSynth(Movable, Copyable):
         self.dc2 = DCTrap(self.world)
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.model.model_input[0] = self.world[].mouse_x
         self.model.model_input[1] = self.world[].mouse_y
 
@@ -115,10 +115,10 @@ struct TorchMlp(Movable, Copyable):
     var world: World
     var torch_synth: TorchSynth  # Instance of the TorchSynth
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
 
         self.torch_synth = TorchSynth(self.world)  # Initialize the TorchSynth with the world instance
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         return self.torch_synth.next()

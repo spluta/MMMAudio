@@ -11,7 +11,7 @@ struct TestLatch(Movable, Copyable):
     var dusty: Dust[]
     var messenger: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = SinOsc(self.world)
         self.lfo = SinOsc(self.world)
@@ -19,7 +19,7 @@ struct TestLatch(Movable, Copyable):
         self.dusty = Dust(self.world)
         self.messenger = Messenger(self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         freq = self.lfo.next(0.1) * 200 + 300
         freq = self.latch.next(freq,self.dusty.next(0.5) > 0.0)
         sample = self.osc.next(freq)  # Get the next sample from the synth

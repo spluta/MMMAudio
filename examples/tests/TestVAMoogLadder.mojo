@@ -13,7 +13,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
     var which: Float64
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.noise = WhiteNoise[Self.N]()
         self.filt0 = VAMoogLadder[Self.N, 0](world)
@@ -22,14 +22,7 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
         self.m = Messenger(world)
         self.which = 0.0
 
-
-
-    fn __repr__(self) -> String:
-        return String("TestVAMoogLadder")
-
-
-
-    fn next(mut self) -> MFloat[Self.N]:
+    def next(mut self) -> MFloat[Self.N]:
         sample = self.noise.next()  # Get the next white noise sample
         freq = linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 24000.0)
         q = linexp(self.world[].mouse_y, 0.0, 1.0, 0.01, 1.04)

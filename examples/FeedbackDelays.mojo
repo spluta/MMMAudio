@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct DelaySynth(Representable, Movable, Copyable):
+struct DelaySynth(Movable, Copyable):
     var world: World
 
     var buf: Buffer
@@ -8,7 +8,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var delays: FB_Delay[2, Interp.lagrange4, True, 1]  # FB_Delay for feedback delay effect - notice we are using ADAA and Oversampling in the internal Tanh funciton.
     var lag: Lag[2]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world  
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -18,7 +18,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.lag = Lag[2](self.world, 0.5)  # Initialize Lag with a default time constant
 
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         var sample = self.playBuf.next[num_chans=2,interp=Interp.linear](self.buf, 1.0, True)  # Read samples from the buffer
 
@@ -36,20 +36,14 @@ struct DelaySynth(Representable, Movable, Copyable):
 
         return sample
 
-    fn __repr__(self) -> String:
-        return String("DelaySynth")
 
-
-struct FeedbackDelays(Representable, Movable, Copyable):
+struct FeedbackDelays(Movable, Copyable):
     var world: World
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 
-    fn __repr__(self) -> String:
-        return String("FeedbackDelays")
-
-    fn next(mut self: FeedbackDelays) -> MFloat[2]:
+    def next(mut self: FeedbackDelays) -> MFloat[2]:
         return self.delay_synth.next()  # Return the combined output sample

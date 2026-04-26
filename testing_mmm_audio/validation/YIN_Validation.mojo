@@ -21,19 +21,19 @@ struct Analyzer(BufferedProcessable):
     var freqs: List[Float64]
     var confs: List[Float64]
 
-    fn __init__(out self, world: World, sample_rate: Float64):
+    def __init__(out self, world: World, sample_rate: Float64):
         self.world = world
         self.yin = YIN(sample_rate, windowsize, minfreq, maxfreq)
         self.freqs = List[Float64]()
         self.confs = List[Float64]()
 
-    fn next_window(mut self, mut buffer: List[Float64]):
+    def next_window(mut self, mut buffer: List[Float64]):
         self.yin.next_window(buffer)
         self.freqs.append(self.yin.pitch)
         self.confs.append(self.yin.confidence)
         return
 
-fn main():
+def main():
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
 

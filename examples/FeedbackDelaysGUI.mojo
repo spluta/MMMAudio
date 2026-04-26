@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct DelaySynth(Representable, Movable, Copyable):
+struct DelaySynth(Movable, Copyable):
     var world: World
     comptime maxdelay = 1.0
     var main_lag: Lag[1]
@@ -20,7 +20,7 @@ struct DelaySynth(Representable, Movable, Copyable):
     var mix: Float64
     var main: Bool
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world  
         self.main_lag = Lag[1](self.world, 0.03)
         self.buf = Buffer.load("resources/Shiverer.wav")
@@ -40,7 +40,7 @@ struct DelaySynth(Representable, Movable, Copyable):
         self.main = True
 
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.play,"play")
         self.m.update(self.feedback,"feedback")
@@ -64,20 +64,13 @@ struct DelaySynth(Representable, Movable, Copyable):
         output *= self.main_lag.next(1 if self.main else 0)
         return output
 
-    fn __repr__(self) -> String:
-        return String("DelaySynth")
-
-
-struct FeedbackDelaysGUI(Representable, Movable, Copyable):
+struct FeedbackDelaysGUI(Movable, Copyable):
     var world: World
     var delay_synth: DelaySynth  # Instance of the Oscillator
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.delay_synth = DelaySynth(self.world)  # Initialize the DelaySynth with the world instance
 
-    fn __repr__(self) -> String:
-        return String("FeedbackDelays")
-
-    fn next(mut self: FeedbackDelaysGUI) -> MFloat[2]:
+    def next(mut self: FeedbackDelaysGUI) -> MFloat[2]:
         return self.delay_synth.next()  # Return the combined output sample

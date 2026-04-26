@@ -10,7 +10,7 @@ struct TestTopNFreqs(Movable, Copyable):
     var out_pairs: List[Tuple[Float64, Float64]]
     var changed: List[Changed[Int]]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         p = TopNFreqs(world[].sample_rate, 1024, num_peaks=3, sort_by_freq=True, thresh=-30.0)
         self.analyzer = FFTProcess[TopNFreqs,ifft=False,input_window_shape=WindowType.hann](self.world,p^, window_size=1024, hop_size=512)
@@ -21,7 +21,7 @@ struct TestTopNFreqs(Movable, Copyable):
         self.out_pairs = [(0.0, 0.0) for _ in range(3)]
         self.changed = [Changed[Int](0) for _ in range(3)]
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.m.update(self.freqs, "freqs")
         s = 0.0
         for i in range(len(self.sines)):

@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
+struct RisingBoolDetector[num_chans: Int = 1](Movable, Copyable):
     """A simple rising edge detector for boolean triggers. Outputs a boolean True trigger when the input transitions from False to True.
     
     Parameters:
@@ -8,13 +8,10 @@ struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     var state: MBool[Self.num_chans]
 
-    fn __init__(out self):
+    def __init__(out self):
         self.state = MBool[Self.num_chans](fill=False)
         
-    fn __repr__(self) -> String:
-        return String("RisingBoolDetector")
-    
-    fn next(mut self, trig: MBool[Self.num_chans]) -> MBool[Self.num_chans]:
+    def next(mut self, trig: MBool[Self.num_chans]) -> MBool[Self.num_chans]:
         """Check if a trigger has occurred (rising edge) per SIMD lane.
         
         Args:
@@ -29,7 +26,7 @@ struct RisingBoolDetector[num_chans: Int = 1](Representable, Movable, Copyable):
         self.state = trig
         return rising
 
-struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
+struct ToggleBool[num_chans: Int = 1](Movable, Copyable):
     """A rising edge detector for boolean triggers.
     
     Parameters:
@@ -38,17 +35,14 @@ struct ToggleBool[num_chans: Int = 1](Representable, Movable, Copyable):
     var state: MBool[Self.num_chans]
     var rbd: RisingBoolDetector[Self.num_chans]
 
-    fn __init__(out self):
+    def __init__(out self):
         """
         Initialize the ToggleBool struct.
         """
         self.state = MBool[Self.num_chans](fill=False)
         self.rbd = RisingBoolDetector[Self.num_chans]()
         
-    fn __repr__(self) -> String:
-        return String("RisingBoolDetector")
-    
-    fn next(mut self, trig: MBool[Self.num_chans]) -> MBool[Self.num_chans]:
+    def next(mut self, trig: MBool[Self.num_chans]) -> MBool[Self.num_chans]:
         """Check if a trigger has occurred (rising edge) per SIMD lane.
         
         Args:
@@ -73,7 +67,7 @@ struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
     """
     var last: Self.T  # Store the last value
 
-    fn __init__(out self, initial: Self.T):
+    def __init__(out self, initial: Self.T):
         """Initialize the Changed struct.
 
         Args:
@@ -81,7 +75,7 @@ struct Changed[T: Equatable & ImplicitlyCopyable](Movable, Copyable):
         """
         self.last = initial  # Initialize last value
 
-    fn next(mut self, val: Self.T) -> Bool:
+    def next(mut self, val: Self.T) -> Bool:
         """Check if the value has changed.
         
         Args:
@@ -104,7 +98,7 @@ struct ChangedSIMD[type: DType, size: Int,//](Movable, Copyable):
     """
     var last: SIMD[Self.type, Self.size]  # Store the last value
 
-    fn __init__(out self, initial: SIMD[Self.type, Self.size]):
+    def __init__(out self, initial: SIMD[Self.type, Self.size]):
         """Initialize the ChangedSIMD struct.
 
         Args:
@@ -112,7 +106,7 @@ struct ChangedSIMD[type: DType, size: Int,//](Movable, Copyable):
         """
         self.last = initial
 
-    fn next(mut self, val: SIMD[Self.type, Self.size]) -> SIMD[DType.bool, Self.size]:
+    def next(mut self, val: SIMD[Self.type, Self.size]) -> SIMD[DType.bool, Self.size]:
         """Check which elements in the SIMD vector have changed.
         
         Args:

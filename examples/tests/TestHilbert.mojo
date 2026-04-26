@@ -9,7 +9,7 @@ struct TestHilbert(Movable, Copyable):
     var freq: MFloat[]
     var radians: MFloat[]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.hilbert = Hilbert[WindowType.sine](2048, 1024, self.world)
         self.sine = Osc(self.world)
@@ -17,7 +17,7 @@ struct TestHilbert(Movable, Copyable):
         self.freq = 440.0
         self.radians = pi/2.0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.freq, "freq")
         self.m.update(self.radians, "radians")
         s = self.sine.next(self.freq)

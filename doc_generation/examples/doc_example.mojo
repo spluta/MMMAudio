@@ -13,7 +13,7 @@ This file serves as a template showing best practices for:
 - Examples and usage patterns
 """
 
-from math import sin, cos, pi, sqrt
+from std.math import sin, cos, pi, sqrt
 from random import random_float64
 
 
@@ -33,7 +33,7 @@ struct AudioBuffer:
     var sample_rate: Int
     var channels: Int
     
-    fn __init__(out self, size: Int, sample_rate: Int = 44100, channels: Int = 1):
+    def __init__(out self, size: Int, sample_rate: Int = 44100, channels: Int = 1):
         """Initialize an audio buffer with specified parameters.
         
         Args:
@@ -50,7 +50,7 @@ struct AudioBuffer:
         for i in range(size):
             self.data.append(0.0)
     
-    fn clear(mut self):
+    def clear(mut self):
         """Clear the buffer by setting all samples to zero.
         
         This method efficiently zeros out the entire buffer using vectorized
@@ -64,7 +64,7 @@ struct AudioBuffer:
         for i in range(self.size):
             self.data[i] = 0.0
     
-    fn get_sample(self, index: Int) -> Float64:
+    def get_sample(self, index: Int) -> Float64:
         """Get a sample at the specified index with bounds checking.
         
         Args:
@@ -81,7 +81,7 @@ struct AudioBuffer:
             return self.data[index]
         return 0.0
     
-    fn set_sample(mut self, index: Int, value: Float64):
+    def set_sample(mut self, index: Int, value: Float64):
         """Set a sample at the specified index with bounds checking.
         
         Args:
@@ -96,7 +96,7 @@ struct AudioBuffer:
             self.data[index] = value
 
 
-fn generate_sine_wave[N: Int = 1](frequency: MFloat[N], 
+def generate_sine_wave[N: Int = 1](frequency: MFloat[N], 
                                   phase: MFloat[N], 
                                   sample_rate: Float64 = 44100.0) -> MFloat[N]:
     """Generate sine wave samples at specified frequency and phase.
@@ -129,7 +129,7 @@ fn generate_sine_wave[N: Int = 1](frequency: MFloat[N],
     return sin(phase + angular_freq)
 
 
-fn linear_interpolate[N: Int = 1](x0: MFloat[N], 
+def linear_interpolate[N: Int = 1](x0: MFloat[N], 
                                   y0: MFloat[N],
                                   x1: MFloat[N], 
                                   y1: MFloat[N],
@@ -174,7 +174,7 @@ fn linear_interpolate[N: Int = 1](x0: MFloat[N],
     return y0 + dy * t
 
 
-fn apply_gain[N: Int = 1](mut signal: MFloat[N], 
+def apply_gain[N: Int = 1](mut signal: MFloat[N], 
                           gain: MFloat[N]):
     """Apply gain to audio signal in-place using SIMD operations.
     
@@ -201,7 +201,7 @@ fn apply_gain[N: Int = 1](mut signal: MFloat[N],
     signal = signal * gain
 
 
-fn generate_white_noise[N: Int = 1](amplitude: MFloat[N] = 1.0) -> MFloat[N]:
+def generate_white_noise[N: Int = 1](amplitude: MFloat[N] = 1.0) -> MFloat[N]:
     """Generate white noise with specified amplitude.
     
     This function generates uniformly distributed white noise in the range

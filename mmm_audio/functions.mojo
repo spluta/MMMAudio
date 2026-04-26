@@ -1,7 +1,7 @@
 from mmm_audio import *
 
 @always_inline
-fn dbamp[width: Int, //](db: MFloat[width]) -> MFloat[width]:
+def dbamp[width: Int, //](db: MFloat[width]) -> MFloat[width]:
     """Converts decibel values to amplitude.
 
     amplitude = 10^(dB/20).
@@ -18,7 +18,7 @@ fn dbamp[width: Int, //](db: MFloat[width]) -> MFloat[width]:
     return 10.0 ** (db / 20.0)
 
 @always_inline
-fn ampdb[width: Int, //](amp: MFloat[width]) -> MFloat[width]:
+def ampdb[width: Int, //](amp: MFloat[width]) -> MFloat[width]:
     """Converts amplitude values to decibels.
 
     dB = 20 * log10(amplitude).
@@ -35,7 +35,7 @@ fn ampdb[width: Int, //](amp: MFloat[width]) -> MFloat[width]:
     return 20.0 * log10(amp)
 
 @always_inline
-fn power_to_db(value: Float64, zero_db_ref: Float64 = 1.0, amin: Float64 = 1e-10) -> Float64:
+def power_to_db(value: Float64, zero_db_ref: Float64 = 1.0, amin: Float64 = 1e-10) -> Float64:
     """Convert a power value to decibels.
 
     This mirrors librosa's power_to_db behavior for a single scalar: 10 * log10(max(amin, value) / zero_db_ref).
@@ -51,7 +51,7 @@ fn power_to_db(value: Float64, zero_db_ref: Float64 = 1.0, amin: Float64 = 1e-10
     return 10.0 * log10(max(value, amin) / zero_db_ref)
 
 @always_inline
-fn select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans]]) -> MFloat[num_chans]:
+def select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans], ...]) -> MFloat[num_chans]:
     """Selects a value from a Span of SIMD vectors based on a floating-point index using linear interpolation.
 
     Parameters:
@@ -71,7 +71,7 @@ fn select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans]]) -> MFlo
     return linear_interp(v0, v1, index_mix)
 
 @always_inline
-fn select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float64:
+def select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float64:
     """Selects a value from a SIMD vector based on a floating-point index and using linear interpolation.
 
     Parameters:
@@ -91,7 +91,7 @@ fn select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float6
     return linear_interp(v0, v1, index_mix)
 
 @always_inline
-fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[num_chans]:
+def select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[num_chans]:
     """Selects a SIMD vector from a List of SIMD vectors based on a floating-point index using linear interpolation.
 
     Parameters:
@@ -111,7 +111,7 @@ fn select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[nu
     return linear_interp(v0, v1, index_mix)
 
 
-fn check_reversed[dtype: DType, num_chans: Int](
+def check_reversed[dtype: DType, num_chans: Int](
     in_min: SIMD[dtype, num_chans],
     in_max: SIMD[dtype, num_chans]
 ) -> Tuple[SIMD[dtype, num_chans], SIMD[dtype, num_chans], MBool[num_chans]]:
@@ -121,7 +121,7 @@ fn check_reversed[dtype: DType, num_chans: Int](
     return (in_min2, in_max2, ins_reversed)
 
 @always_inline
-fn linlin[
+def linlin[
     dtype: DType, num_chans: Int, //
 ](input: SIMD[dtype, num_chans], in_min: SIMD[dtype, num_chans] = 0, in_max: SIMD[dtype, num_chans] = 1, out_min: SIMD[dtype, num_chans] = 0, out_max: SIMD[dtype, num_chans] = 1) -> SIMD[dtype, num_chans]:
     """Maps samples from one range to another range linearly.
@@ -151,7 +151,7 @@ fn linlin[
     return clip(result, out_min2, out_max2)
 
 @always_inline
-fn expexp[num_chans: Int, //](
+def expexp[num_chans: Int, //](
     input: MFloat[num_chans], 
     in_min: MFloat[num_chans], 
     in_max: MFloat[num_chans], 
@@ -195,7 +195,7 @@ fn expexp[num_chans: Int, //](
     return clip(result, out_min2, out_max2)
 
 @always_inline
-fn linexp[num_chans: Int, //
+def linexp[num_chans: Int, //
 ](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans]) -> MFloat[num_chans]:
     """Maps samples from one linear range to another exponential range."""
     
@@ -256,7 +256,7 @@ def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chan
     return clip(result, out_min2, out_max2)
 
 @always_inline
-fn lincurve[num_chans: Int, //
+def lincurve[num_chans: Int, //
 ](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans], curve: MFloat[num_chans]) -> MFloat[num_chans]:
     """Maps samples from one linear range to another curved range.
 
@@ -292,7 +292,7 @@ fn lincurve[num_chans: Int, //
 
     return clip(out_min2 + curved * (out_max2 - out_min2), out_min2, out_max2)
 
-fn curvelin[num_chans: Int, //](
+def curvelin[num_chans: Int, //](
     input: MFloat[num_chans],
     in_min: MFloat[num_chans],
     in_max: MFloat[num_chans],
@@ -337,11 +337,11 @@ fn curvelin[num_chans: Int, //](
     answer = out_min2 + linearized * (out_max2 - out_min2)
     return clip(answer, out_min2, out_max2)
 
-fn py_to_float64(py_float: PythonObject) raises -> Float64:
+def py_to_float64(py_float: PythonObject) raises -> Float64:
     return Float64(py=py_float)
 
 @always_inline
-fn clip[
+def clip[
     dtype: DType, num_chans: Int, //
 ](x: SIMD[dtype, num_chans], lo: SIMD[dtype, num_chans], hi: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """Clips each element in the SIMD vector to the specified range.
@@ -363,11 +363,11 @@ fn clip[
 ##########This is the downside of switching to Int. 
 
 @always_inline
-fn clip(x: Int, lo: Int, hi: Int) -> Int:
+def clip(x: Int, lo: Int, hi: Int) -> Int:
     return min(max(x, lo), hi)
 
 @always_inline
-fn wrap(x: Int, lo: Int, hi: Int) -> Int:
+def wrap(x: Int, lo: Int, hi: Int) -> Int:
     range_size = hi - lo
     if range_size <= 0:
         return x
@@ -375,7 +375,7 @@ fn wrap(x: Int, lo: Int, hi: Int) -> Int:
     return wrapped
 
 @always_inline
-fn wrap[
+def wrap[
     dtype: DType, num_chans: Int, //
 ](input: SIMD[dtype, num_chans], min_val: SIMD[dtype, num_chans], max_val: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """Wraps a sample around a specified range.
@@ -411,7 +411,7 @@ fn wrap[
     return invalid_range.select(input, wrapped_sample)
 
 @always_inline
-fn quadratic_interp[
+def quadratic_interp[
     dtype: DType, num_chans: Int, //
 ](y0: SIMD[dtype, num_chans], y1: SIMD[dtype, num_chans], y2: SIMD[dtype, num_chans], x: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """Performs quadratic interpolation between three points.
@@ -444,7 +444,7 @@ fn quadratic_interp[
     return out
 
 @always_inline
-fn cubic_interp[
+def cubic_interp[
     dtype: DType, num_chans: Int, //
 ](p0: SIMD[dtype, num_chans], p1: SIMD[dtype, num_chans], p2: SIMD[dtype, num_chans], p3: SIMD[dtype, num_chans], t: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """
@@ -470,7 +470,7 @@ fn cubic_interp[
     return p1 + (((p3 - p0 - 3*p2 + 3*p1)*t + 3*(p2 + p0 - 2*p1))*t - (p3 + 2*p0 - 6*p2 + 3*p1))*t / 6.0
 
 @always_inline
-fn lagrange4[
+def lagrange4[
     dtype: DType, num_chans: Int, //
 ](sample0: SIMD[dtype, num_chans], sample1: SIMD[dtype, num_chans], sample2: SIMD[dtype, num_chans], sample3: SIMD[dtype, num_chans], sample4: SIMD[dtype, num_chans], frac: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """
@@ -505,8 +505,7 @@ fn lagrange4[
 
     comptime offsets = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
 
-    @parameter
-    for i in range(num_chans):
+    comptime for i in range(num_chans):
         var fd_vec = SIMD[dtype, 4](fd[i], fd[i], fd[i], fd[i])
 
         var fd_minus_offsets = fd_vec - offsets  # [fd-1, fd-2, fd-3, fd-4]
@@ -523,8 +522,7 @@ fn lagrange4[
     var coeff3 = (0.0 - fd * fdm1 * fdm2 * fdm4) / 6.0
     var coeff4 = fd * fdm1 * fdm2 * fdm3 / 24.0
 
-    @parameter
-    for i in range(num_chans):
+    comptime for i in range(num_chans):
         coeffs: SIMD[dtype, 4] = SIMD[dtype, 4](coeff0[i], coeff1[i], coeff2[i], coeff3[i])
 
         samples_simd = SIMD[dtype, 4](
@@ -541,7 +539,7 @@ fn lagrange4[
     return out
 
 @always_inline
-fn linear_interp[
+def linear_interp[
     dtype: DType, num_chans: Int, //
 ](p0: SIMD[dtype, num_chans], p1: SIMD[dtype, num_chans], t: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
     """
@@ -563,7 +561,7 @@ fn linear_interp[
     return p0 + ((p1 - p0) * t)
 
 @always_inline
-fn midicps[
+def midicps[
     num_chans: Int, //
 ](midi_note_number: MFloat[num_chans], reference_midi_note: Float64 = 69, reference_frequency: Float64 = 440.0) -> MFloat[num_chans]:
     """Convert MIDI note numbers to frequencies in Hz.
@@ -590,7 +588,7 @@ fn midicps[
 
 
 @always_inline
-fn cpsmidi[
+def cpsmidi[
     num_chans: Int, //
 ](freq: MFloat[num_chans], reference_midi_note: Float64 = 69.0, reference_frequency: Float64 = 440.0) -> MFloat[num_chans]:
     """Convert frequencies in Hz to MIDI note numbers.
@@ -616,7 +614,7 @@ fn cpsmidi[
     return n
 
 @always_inline
-fn sanitize[
+def sanitize[
     num_chans: Int, //
 ](mut x: MFloat[num_chans]) -> MFloat[num_chans]:
     """Sanitizes a SIMD float64 vector by zeroing out elements that are too large, too small, or NaN.
@@ -639,7 +637,7 @@ fn sanitize[
 
     return should_zero.select(0.0, x)
 
-fn rrand(min: Int, max: Int) -> Int:
+def rrand(min: Int, max: Int) -> Int:
     """Generates a random Int from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
     Args:
@@ -650,7 +648,7 @@ fn rrand(min: Int, max: Int) -> Int:
     """
     return Int(random_si64(min, max))
 
-fn rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
+def rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
     """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
     Parameters:
@@ -663,13 +661,12 @@ fn rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> 
         A random float64 sample from the specified range.
     """
     var u = MFloat[num_chans](0.0)
-    @parameter
-    for i in range(num_chans):
+    comptime for i in range(num_chans):
         u[i] = random_float64(min[i], max[i])
     return u
 
 @always_inline
-fn exprand[num_chans: Int](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
+def exprand[num_chans: Int](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
     """Generates a random float64 sample from an exponential distribution.
 
     Parameters:
@@ -682,13 +679,12 @@ fn exprand[num_chans: Int](min: MFloat[num_chans], max: MFloat[num_chans]) -> MF
         A random float64 sample from the specified range.
     """
     var u = MFloat[num_chans](0.0)
-    @parameter
-    for i in range(num_chans):
+    comptime for i in range(num_chans):
         u[i] = random_float64()
     u = linexp(u, 0.0, 1.0, min, max)
     return u
 
-fn sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
+def sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
     """Returns the sign of x: -1 if negative, 1 if positive, and 0 if zero.
     
     Parameters:
@@ -706,7 +702,7 @@ fn sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
     return pmask.select(MFloat[num_chans](1.0), nmask.select(MFloat[num_chans](-1.0), MFloat[num_chans](0.0)))
 
 # [TODO]: add endpoint argument to linspace
-fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
+def linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
     """Create evenly spaced values between start and stop.
     
     Args:
@@ -727,7 +723,7 @@ fn linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
         result[i] = start + Float64(i) * step
     return result^
 
-fn diff(arr: Span[Float64]) -> List[Float64]:
+def diff(arr: Span[Float64, ...]) -> List[Float64]:
     """Compute differences between consecutive elements.
     
     Args:
@@ -741,7 +737,7 @@ fn diff(arr: Span[Float64]) -> List[Float64]:
         result[i] = arr[i + 1] - arr[i]
     return result^
 
-fn subtract_outer(a: Span[Float64], b: Span[Float64]) -> List[List[Float64]]:
+def subtract_outer(a: Span[Float64, ...], b: Span[Float64, ...]) -> List[List[Float64]]:
     """Compute outer subtraction: a[i] - b[j] for all i, j.
     
     Args:
@@ -772,7 +768,7 @@ def coin[num_chans:Int](p: MFloat[num_chans]) -> MBool[num_chans]:
     coins = rands.lt(q)
     return coins
 
-fn rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: List[T], N: Int):
+def rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: List[T], N: Int):
     """Rotates a list to the left by N positions in-place.
 
     Args:
@@ -781,7 +777,7 @@ fn rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: Lis
     """
     n = N % len(data)
     
-    fn reverse(mut arr: List[T], start: Int, end: Int):
+    def reverse(mut arr: List[T], start: Int, end: Int):
         s = start
         e = end
         while s < e:
@@ -793,7 +789,7 @@ fn rotate_left_inplace[T: Movable & Copyable & ImplicitlyCopyable](mut data: Lis
     reverse(data, n, len(data) - 1)  # Reverse second part
     reverse(data, 0, len(data) - 1)  # Reverse entire array
 
-fn topN_indices(in_list: List[Float64], N: Int=5, thresh: Float64 = 100.0) -> List[Int]:
+def topN_indices(in_list: List[Float64], N: Int=5, thresh: Float64 = 100.0) -> List[Int]:
     """Return the indices of the top N largest values in the array.
     
     Args:
@@ -807,12 +803,12 @@ fn topN_indices(in_list: List[Float64], N: Int=5, thresh: Float64 = 100.0) -> Li
     # sort_list = in_list.copy()
     top_N = [Int(0) for _ in range(N)]
 
-    fn argsort(in_list: List[Float64]) -> List[Int]:
+    def argsort(in_list: List[Float64]) -> List[Int]:
         var indices = List[Int]()
         for i in range(len(in_list)):
             indices.append(i)
 
-        fn cmp_fn(a: Int, b: Int) capturing -> Bool:
+        def cmp_fn(a: Int, b: Int) capturing -> Bool:
             return in_list[a] > in_list[b]
 
         sort[cmp_fn](indices)
@@ -829,7 +825,7 @@ fn topN_indices(in_list: List[Float64], N: Int=5, thresh: Float64 = 100.0) -> Li
         i += 1
     return top_N^
 
-fn find_quadratic_peak(p1: Float64, p2: Float64, p3: Float64) -> Tuple[Float64, Float64]:
+def find_quadratic_peak(p1: Float64, p2: Float64, p3: Float64) -> Tuple[Float64, Float64]:
     """
     Find the vertex of a quadratic function passing through three points.
     Points are at x = 0, 1, 2 with y values p1, p2, p3.
@@ -853,16 +849,16 @@ fn find_quadratic_peak(p1: Float64, p2: Float64, p3: Float64) -> Tuple[Float64, 
     
     return (vertex_x, vertex_y)
 
-@doc_private
-fn horner[num_chans: Int](z: MFloat[num_chans], coeffs: Span[Float64]) -> MFloat[num_chans]:
+@doc_hidden
+def horner[num_chans: Int](z: MFloat[num_chans], coeffs: Span[Float64, ...]) -> MFloat[num_chans]:
     """Evaluate polynomial using Horner's method."""
     var result: MFloat[num_chans] = 0.0
     for i in range(len(coeffs) - 1, -1, -1):
         result = result * z + coeffs[i]
     return result
 
-@doc_private
-fn Li2[num_chans: Int](x: MFloat[num_chans]) -> MFloat[num_chans]:
+@doc_hidden
+def Li2[num_chans: Int](x: MFloat[num_chans]) -> MFloat[num_chans]:
     """Compute the dilogarithm (Spence's function) Li2(x) for SIMD vectors."""
 
     # Coefficients for double precision

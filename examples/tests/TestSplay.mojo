@@ -14,7 +14,7 @@ struct TestSplay(Movable, Copyable):
     var samples: InlineArray[MFloat[2], num_osc]
     var splay: SplayN[num_output_channels]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = [Osc[2](self.world) for _ in range(num_osc)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(num_osc)]
@@ -23,7 +23,7 @@ struct TestSplay(Movable, Copyable):
         self.samples = InlineArray[MFloat[2], num_osc](0.0)
         self.splay = SplayN[num_channels = num_output_channels]()
 
-    fn next(mut self) -> MFloat[num_output_channels]:
+    def next(mut self) -> MFloat[num_output_channels]:
         for i in range(num_osc):
              self.samples[i] = self.osc[i].next(self.freqs[i])
 

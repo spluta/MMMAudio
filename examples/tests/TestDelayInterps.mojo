@@ -20,7 +20,7 @@ struct TestDelayInterps(Movable, Copyable):
     var which_delay: Float64
     var mouse_onoff: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -39,7 +39,7 @@ struct TestDelayInterps(Movable, Copyable):
         self.which_delay = 0
         self.mouse_onoff = 0
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.lfo_freq,"lfo_freq")
         self.m.update(self.mix,"mix")

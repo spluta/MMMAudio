@@ -9,14 +9,14 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
     var world: World
     var m: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.m = Messenger(self.world)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         pass
 
-    fn next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
+    def next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
         for ref p in phases:
             p = MFloat[2](random_float64(0.0, 2.0 * 3.141592653589793), random_float64(0.0, 2.0 * 3.141592653589793))
 
@@ -29,7 +29,7 @@ struct PaulStretch(Movable, Copyable):
     var m: Messenger
     var dur_mult: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
         self.saw = LFSaw(self.world)
@@ -44,7 +44,7 @@ struct PaulStretch(Movable, Copyable):
         self.m = Messenger(self.world)
         self.dur_mult = 40.0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.dur_mult,"dur_mult")
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
         phase = self.saw.next(speed)*0.5 + 0.5

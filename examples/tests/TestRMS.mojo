@@ -11,7 +11,7 @@ struct TestRMS(Movable, Copyable):
     var printer: Print
     var vol: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -22,7 +22,7 @@ struct TestRMS(Movable, Copyable):
         self.printer = Print(self.world)
         self.vol = 0.0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.vol,"vol")
         
         i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer

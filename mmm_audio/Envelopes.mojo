@@ -5,7 +5,7 @@ This module provides an envelope generator class that can create complex envelop
 
 from mmm_audio import *
 
-struct EnvParams(Representable, Movable, Copyable):
+struct EnvParams(Movable, Copyable):
     """Parameters for the Env class.
 
     This struct holds the parameters for the envelope generator. It
@@ -27,7 +27,7 @@ struct EnvParams(Representable, Movable, Copyable):
     var loop: Bool
     var time_warp: Float64
 
-    fn __init__(out self, values: List[Float64] = [0,1,0], times: List[Float64] = [1,1], curves: List[Float64] = [1], loop: Bool = False, time_warp: Float64 = 1.0):
+    def __init__(out self, values: List[Float64] = [0,1,0], times: List[Float64] = [1,1], curves: List[Float64] = [1], loop: Bool = False, time_warp: Float64 = 1.0):
         """Initialize EnvParams.
 
         For information on the arguments, see the documentation of the `Env::next()` method that takes each parameter individually.
@@ -39,10 +39,7 @@ struct EnvParams(Representable, Movable, Copyable):
         self.loop = loop
         self.time_warp = time_warp
 
-    fn __repr__(self) -> String:
-        return String("EnvParams")
-
-struct Env(Representable, Movable, Copyable):
+struct Env(Movable, Copyable):
     """Envelope generator with an arbitrary number of segments."""
 
     var sweep: Sweep[1]  # Sweep for tracking time
@@ -55,7 +52,7 @@ struct Env(Representable, Movable, Copyable):
     var params: EnvParams
     var eoc: Bool
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the Env2 struct - with internal params.
 
         Args:
@@ -74,11 +71,8 @@ struct Env(Representable, Movable, Copyable):
         self.params.times=[1,1]
         self.eoc = False
 
-    fn __repr__(self) -> String:
-        return String("Env")
-
-    @doc_private
-    fn reset_vals(mut self):
+    @doc_hidden
+    def reset_vals(mut self):
         """Reset internal values."""
 
         if self.times.__len__() != (self.params.times.__len__() + 1):
@@ -94,7 +88,7 @@ struct Env(Representable, Movable, Copyable):
         else:
             self.freq = 0.0
 
-    fn next(mut self, trig: Bool = True) -> Float64:
+    def next(mut self, trig: Bool = True) -> Float64:
          """Generate the next envelope value. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
             
             Args:
@@ -133,7 +127,7 @@ struct Env(Representable, Movable, Copyable):
 
         return self.apply_phase(phase)
 
-    fn next(mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
+    def next(mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
         """Generate the next envelope value with a provided phase rather than using the internal phasor. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
             
             Args:
@@ -149,8 +143,8 @@ struct Env(Representable, Movable, Copyable):
             return self.params.values[-1]
         return self.apply_phase(phase)
 
-    @doc_private
-    fn apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
+    @doc_hidden
+    def apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
         var segment = 0
         phase2 = phase * self.dur
         while segment < len(self.times) - 1 and phase2 >= self.times[segment + 1]:
@@ -160,15 +154,15 @@ struct Env(Representable, Movable, Copyable):
         out = lincurve(phase2, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
         return out
 
-    fn get_phase(self) -> Float64:
+    def get_phase(self) -> Float64:
         """Get the current phase of the envelope (between 0 and 1)."""
         return clip(self.sweep.phase, 0.0, 1.0)
     
-fn win_env[window_type: Int,interp: Int = Interp.none](world: World, win_phase: MFloat[1]) -> MFloat[1]:
+def win_env[window_type: Int,interp: Int = Interp.none](world: World, win_phase: MFloat[1]) -> MFloat[1]:
     return world[].windows[].at_phase[window_type, Interp.linear](world, win_phase)
 
 # min_env is just a function, not a struct
-fn min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampdur: MFloat[N] = 0.001) -> MFloat[N]:
+def min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampdur: MFloat[N] = 0.001) -> MFloat[N]:
     """Simple envelope.
 
     Envelope that rises linearly from 0 to 1 over `rampdur` seconds, stays at 1 until `totaldur - rampdur`, 
@@ -211,7 +205,7 @@ struct ASREnv(Movable, Copyable):
     var eoc: Bool
     var eoc_rbd: RisingBoolDetector[1]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the ASREnv struct.
         
         Args:
@@ -224,7 +218,7 @@ struct ASREnv(Movable, Copyable):
         self.eoc = False  # End of Cycle flag
         self.eoc_rbd = RisingBoolDetector() 
 
-    fn next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
+    def next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
         """Simple ASR envelope generator.
         
         Args:
@@ -268,7 +262,7 @@ struct Compressor[num_chans: Int](Movable, Copyable):
     var changed: Changed[MFloat[1]]
     var changed2: Changed[MFloat[1]]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the Compressor struct.
 
         Args:
@@ -285,7 +279,7 @@ struct Compressor[num_chans: Int](Movable, Copyable):
         self.lag.set_lag_times(0.01, 0.1)
         self.amp.set_params(0.001, 0.01)
     
-    fn next(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[Self.num_chans]:
         """Returns the compressed signal, which is the original signal multiplied by the negative compression gain.
         
         Args:
@@ -302,7 +296,7 @@ struct Compressor[num_chans: Int](Movable, Copyable):
 
         return self.next_neg_comp(input, threshold, ratio, attack, release, knee_width) * input
 
-    fn next_neg_comp(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[1]:
+    def next_neg_comp(mut self, input: MFloat[Self.num_chans], threshold: MFloat[1] = -20.0, ratio: MFloat[1] = 4.0, attack: MFloat[1] = 0.01, release: MFloat[1] = 0.1, knee_width: MFloat[1] = 0.0) -> MFloat[1]:
         """Returns the negative compression gain (in amplitude units, not dB) for the input signal, which can be multiplied with the original signal or used as a sidechain.
         
         Args:

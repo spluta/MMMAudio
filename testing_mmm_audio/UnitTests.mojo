@@ -1,7 +1,7 @@
 from mmm_audio import *
 from testing import assert_equal, assert_almost_equal, assert_true
 from testing import TestSuite
-from math import inf, nan
+from std.math import inf, nan
 from pathlib import Path
 
 def test_Changed():

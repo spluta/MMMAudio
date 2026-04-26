@@ -10,7 +10,7 @@ struct TestSVF(Movable, Copyable):
     var cutoff: Float64
     var res: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = LFSaw(self.world)
         self.messenger = Messenger(self.world)
@@ -21,7 +21,7 @@ struct TestSVF(Movable, Copyable):
         for i in range(2):
             self.filts[i] = Biquad(self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.freq,"freq")
         sample = self.osc.next(self.freq) 
         outs = MFloat[2](0.0,0.0)

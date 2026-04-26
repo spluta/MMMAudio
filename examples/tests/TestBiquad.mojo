@@ -8,7 +8,7 @@ struct TestBiquad(Movable, Copyable):
     var cutoff: Float64
     var q: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.noise = WhiteNoise[1]()
         self.messenger = Messenger(self.world)
@@ -18,7 +18,7 @@ struct TestBiquad(Movable, Copyable):
         for i in range(2):
             self.filts.append(Biquad[1](self.world))
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.cutoff, "cutoff")
         self.messenger.update(self.q, "q")
         var sample = self.noise.next()

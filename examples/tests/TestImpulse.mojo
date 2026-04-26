@@ -13,7 +13,7 @@ struct TestImpulse(Movable, Copyable):
     var ints: List[Int]
     var phase_offsets: MFloat[2]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.synth = Impulse[2](self.world)
         self.trig = MBool[2](fill=True)
@@ -23,7 +23,7 @@ struct TestImpulse(Movable, Copyable):
         self.phase_offsets = MFloat[2](0.0, 0.0)
 
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         if self.messenger.notify_update(self.ints, "trig"):
             for i in range(min(2, len(self.ints))):
                 self.trig[i] = self.ints[i] > 0

@@ -16,15 +16,15 @@ struct BufferedMultiply(BufferedProcessable):
     var m: Messenger
     var vol: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.vol = 0.0
         self.m = Messenger(self.world)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         self.m.update(self.vol,"vol")
 
-    fn next_window(self, mut input: List[Float64]) -> None:
+    def next_window(self, mut input: List[Float64]) -> None:
         amp = dbamp(self.vol)
         for i in range(len(input)):
             input[i] *= amp
@@ -39,7 +39,7 @@ struct TestBufferedProcessAudio(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -49,7 +49,7 @@ struct TestBufferedProcessAudio(Movable, Copyable):
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         i = self.playBuf.next(self.buffer,1.0)  # Read samples from the buffer
         v = self.my_buffered_mul.process.vol
         self.ps[0].next(v,"vol")

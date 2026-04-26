@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-@doc_private
+@doc_hidden
 struct ComplexFFTProcessor[T: ComplexFFTProcessable, ifft: Bool = True](BufferedProcessable):
     """This is a private struct that the user doesn't *need* to see or use. This is the
     connective tissue between FFTProcess (which the user *does* see and uses to
@@ -18,8 +18,8 @@ struct ComplexFFTProcessor[T: ComplexFFTProcessable, ifft: Bool = True](Buffered
     var st_mags: List[SIMD[DType.float64,2]]
     var st_phases: List[SIMD[DType.float64,2]]
 
-    @doc_private
-    fn __init__(out self, world: World, var process: Self.T, window_size: Int):
+    @doc_hidden
+    def __init__(out self, world: World, var process: Self.T, window_size: Int):
         self.world = world
         self.process = process^
         self.window_size = window_size
@@ -30,22 +30,20 @@ struct ComplexFFTProcessor[T: ComplexFFTProcessable, ifft: Bool = True](Buffered
         self.st_mags = List[SIMD[DType.float64,2]](length=(self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
         self.st_phases = List[SIMD[DType.float64,2]](length=(self.window_size // 2 + 1 + 1) // 2, fill=SIMD[DType.float64,2](0.0))
 
-    fn next_window(mut self, mut input: List[Float64]) -> None:
+    def next_window(mut self, mut input: List[Float64]) -> None:
         self.fft._compute_fft(input)
         self.process.next_frame(self.fft.result)
-        @parameter
-        if Self.ifft:
+        comptime if Self.ifft:
             self.fft._compute_inverse_fft(input)
     
-    fn next_stereo_window(mut self, mut input: List[SIMD[DType.float64,2]]) -> None:
+    def next_stereo_window(mut self, mut input: List[SIMD[DType.float64,2]]) -> None:
         self.fft2._compute_fft(input)
         self.process.next_stereo_frame(self.fft2.result)
-        @parameter
-        if Self.ifft:
+        comptime if Self.ifft:
             self.fft2._compute_inverse_fft(input)
 
-    @doc_private
-    fn get_messages(mut self) -> None:
+    @doc_hidden
+    def get_messages(mut self) -> None:
         self.process.get_messages()
 
 trait ComplexFFTProcessable(Movable,Copyable):
@@ -55,11 +53,11 @@ trait ComplexFFTProcessable(Movable,Copyable):
     See `TestFFTProcess.mojo` for an example on how to create a spectral process 
     using a struct that implements FFTProcessable.
     """
-    fn next_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 1]]) -> None:
+    def next_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 1]]) -> None:
         return None
-    fn next_stereo_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 2]]) -> None:
+    def next_stereo_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 2]]) -> None:
         return None
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         return None
 
 struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable,Copyable):
@@ -76,7 +74,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_windo
     var hop_size: Int
     var buffered_process: BufferedProcess[ComplexFFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape]
 
-    fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int):
+    def __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int):
         """Initializes a `FFTProcess` struct.
 
         Args:
@@ -94,7 +92,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_windo
         p = ComplexFFTProcessor[Self.T, Self.ifft](self.world, process=process^, window_size=self.window_size)
         self.buffered_process = BufferedProcess[ComplexFFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
-    fn next(mut self, input: Float64) -> Float64:
+    def next(mut self, input: Float64) -> Float64:
         """Processes the next input sample and returns the next output sample.
         
         Args:
@@ -105,7 +103,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_windo
         """
         return self.buffered_process.next(input)
 
-    fn next_stereo(mut self, input: MFloat[2]) -> MFloat[2]:
+    def next_stereo(mut self, input: MFloat[2]) -> MFloat[2]:
         """Processes the next stereo input sample and returns the next output sample.
         
         Args:
@@ -116,7 +114,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_windo
         """
         return self.buffered_process.next_stereo(input)
 
-    fn next_from_buffer(mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
+    def next_from_buffer(mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
         """Returns the next output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
 
         Args:
@@ -129,7 +127,7 @@ struct ComplexFFTProcess[T: ComplexFFTProcessable, ifft: Bool = True,input_windo
         """
         return self.buffered_process.next_from_buffer(buffer, phase, chan)
 
-    fn next_from_stereo_buffer(mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> MFloat[2]:
+    def next_from_stereo_buffer(mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> MFloat[2]:
         """Returns the next stereo output sample from the internal buffered process. The buffered process reads a block of samples from the provided buffer at the given phase and channel on each hop.
 
         Args:

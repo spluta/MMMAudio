@@ -31,7 +31,7 @@ struct EQSynth(Movable, Copyable):
     var hs_freq: Float64
     var hs_gain: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         
         # Load the audio buffer
@@ -64,7 +64,7 @@ struct EQSynth(Movable, Copyable):
         self.hs_freq = 8000.0
         self.hs_gain = 0.0
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.ls_freq, "ls_freq")
         self.messenger.update(self.ls_gain, "ls_gain")
         self.messenger.update(self.b1_freq, "b1_freq")
@@ -93,9 +93,9 @@ struct BiquadEQ(Movable, Copyable):
     var world: World
     var eq_synth: EQSynth
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.eq_synth = EQSynth(self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         return self.eq_synth.next()

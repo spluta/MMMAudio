@@ -11,7 +11,7 @@ struct TestEnv(Movable, Copyable):
     var impulse: Impulse[]
     var mul: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.env = Env(self.world)
         self.env.params = EnvParams([0, 1.0, 0.5, 0.5, 0.0], [1, 1, 0.5, 4], [2], True, 0.1)
@@ -20,7 +20,7 @@ struct TestEnv(Movable, Copyable):
         self.impulse = Impulse(self.world)
         self.mul = 0.1
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.mul, "mul")
         trig = self.impulse.next_bool(1.0)
         self.env.params.time_warp = linexp(self.world[].mouse_x, 0.0, 1.0, 0.1, 10.0)

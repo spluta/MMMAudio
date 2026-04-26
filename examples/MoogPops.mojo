@@ -14,7 +14,7 @@ struct MoogPops(Movable, Copyable):
     var t_rand2: TRand[how_many]
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.dusts = Dust[how_many](world)
         self.filts = VAMoogLadder[how_many, 4](world)
@@ -23,7 +23,7 @@ struct MoogPops(Movable, Copyable):
         self.t_rand = TRand[how_many]()
         self.t_rand2 = TRand[how_many]()
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         
         dusts = self.dusts.next_bool(0.25, 4.0)
         freqs = self.t_exp_rand.next(8000.0, 18000.0, dusts)

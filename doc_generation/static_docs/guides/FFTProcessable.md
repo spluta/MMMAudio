@@ -1,6 +1,6 @@
 This trait requires that two functions be implemented (see below for more details).
 
-* `fn next_frame()`: This function gets passed a list of magnitudes
+* `def next_frame()`: This function gets passed a list of magnitudes
 and a list of phases that are the result of an FFT. The user should manipulate 
 these values in place so that once this function is done the values in those 
 lists are what the user wants to be used for the IFFT conversion back into 
@@ -8,7 +8,7 @@ amplitude samples. Because the FFT only happens every `hop_size` samples (and
 uses the most recent `window_size` samples), this function only gets called every
 `hop_size` samples. `hop_size` is set as a parameter in the `FFTProcessor`
 struct that the user's struct is passed to.
-* `fn get_messages()`: Because `.next_frame()` only runs every `hop_size`
+* `def get_messages()`: Because `.next_frame()` only runs every `hop_size`
 samples and a `Messenger` can only check for new messages from Python at the top 
 of every audio block, it's not guaranteed that these will line up, so this struct
 could very well miss incoming messages! To remedy this, put all your message getting

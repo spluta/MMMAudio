@@ -1,7 +1,7 @@
 from mmm_audio import *
-from math import tanh, floor, pi, exp, log, cosh
+from std.math import tanh, floor, pi, exp, log, cosh
 
-fn bitcrusher[num_chans: Int](in_samp: MFloat[num_chans], bits: Int) -> MFloat[num_chans]:
+def bitcrusher[num_chans: Int](in_samp: MFloat[num_chans], bits: Int) -> MFloat[num_chans]:
     """Simple bitcrusher function that reduces the bit depth of the input signal.
     
     Parameters:
@@ -27,12 +27,12 @@ struct Latch[num_chans: Int = 1](Copyable, Movable):
     var samp: MFloat[Self.num_chans]
     var last_trig: MBool[Self.num_chans]
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the Latch."""
         self.samp = MFloat[Self.num_chans](0)
         self.last_trig = MBool[Self.num_chans](False)
 
-    fn next(mut self, in_samp: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, in_samp: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process the input sample and trigger, returning the latched output sample.
 
@@ -52,13 +52,13 @@ struct Latch[num_chans: Int = 1](Copyable, Movable):
 
 # trait ADAAfuncs[num_chans: Int = 1](Movable, Copyable):
 
-#     fn next_norm[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
+#     def next_norm[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
 #         ...
 
-#     fn next_AD1[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
+#     def next_AD1[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
 #         ...
     
-#     fn next_AD2[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
+#     def next_AD2[num_chans: Int](mut self, input: MFloat[num_chans]) -> MFloat[num_chans]:
 #         ...
 
 # [TODO] implement 2nd order ADAA versions of hard clip, soft clip, tanh
@@ -85,7 +85,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     comptime TOL = 1.0e-5
     var G1: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.x1 = MFloat[Self.num_chans](0.0)
         if Self.os_index > 1:
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
@@ -96,9 +96,9 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         self.inv_norm_factor = 1.0 / self.norm_factor
         self.G1 = 1.0 / (2.0 * (self.norm_factor * self.norm_factor)) - 1.0 / ((self.norm_factor * self.norm_factor) * self.D * (self.D + 1))
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Transfer function: x - x^n/n"""
 
         mask: MBool[Self.num_chans] = abs(x*self.norm_factor).gt(1.0)
@@ -109,9 +109,9 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
 
         return out
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """First antiderivative: x²/2 - x^(n+1) / (n*(n+1))"""
         mask: MBool[Self.num_chans] = abs(x*self.norm_factor).gt(1.0)
 
@@ -121,9 +121,9 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
 
         return mask.select(outA, out)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Computes the first-order anti-aliased SoftClip.
 
@@ -140,7 +140,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         return out
 
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -151,19 +151,17 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
         Returns:
             The anti-aliased `soft_clip` of `x`.
         """
-        @parameter
-        if Self.os_index == 0:
+        comptime if Self.os_index == 0:
             return self._next1(x)
         else:
-            @parameter
-            for i in range(self.times_oversampling):
+            comptime for i in range(self.times_oversampling):
                 # upsample the input
                 x2 = self.upsampler.next(x, i)
                 y = self._next1(x2)
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 
-fn soft_clip[num_chans: Int](x: MFloat[num_chans], min_val: MFloat[num_chans] = -1., max_val: MFloat[num_chans] = 1.) -> MFloat[num_chans]:
+def soft_clip[num_chans: Int](x: MFloat[num_chans], min_val: MFloat[num_chans] = -1., max_val: MFloat[num_chans] = 1.) -> MFloat[num_chans]:
     """SuperCollider-style softclip with custom range."""
     var center = (min_val + max_val) / 2.0
     var range = (max_val - min_val) / 2.0
@@ -187,7 +185,7 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
     comptime TOL = 1.0e-5
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the HardClipAD.
         
         Args:
@@ -198,28 +196,28 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
         self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         mask: MBool[Self.num_chans] = abs(x).lt(1.0)
         return mask.select(x, sign(x))
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         mask: MBool[Self.num_chans] = abs(x).lt(1.0)
         return mask.select(x * x * 0.5, x * sign(x) - 0.5)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next_AD2(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next_AD2(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         mask: MBool[Self.num_chans] = abs(x).lt(1.0)
 
         return mask.select(x * x * x / 6.0, ((x * x * 0.5) + (1.0 / 6.0)) * sign(x) - (x/2))
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _calcD(mut self, x0: MFloat[Self.num_chans], x1: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _calcD(mut self, x0: MFloat[Self.num_chans], x1: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
 
         mask: MBool[Self.num_chans] = abs(x0 - x1).lt(self.TOL)
 
@@ -228,9 +226,9 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             (self._next_AD2(x0) - self._next_AD2(x0) - self._next_AD2(x1)) / (x0 - x1)
         )
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _fallback(mut self, x0: MFloat[Self.num_chans], x2: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _fallback(mut self, x0: MFloat[Self.num_chans], x2: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         x_bar = (x0 + x2) * 0.5
         delta = x_bar - x0
 
@@ -240,16 +238,16 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
             (2.0 / delta) * (self._next_AD1(x_bar) + (self._next_AD2(x0) - self._next_AD2(x_bar)) / delta)
         )
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         mask: MBool[Self.num_chans] = abs(x - self. x1).lt(self.TOL)
         out = mask.select(self._next_norm((x + self.x1) * 0.5), (self._next_AD1(x) - self._next_AD1(self.x1)) / (x - self.x1))
         self.x1 = x
         return out
 
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x`. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -260,13 +258,11 @@ struct HardClipAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         Returns:
             The anti-aliased `hard_clip` of `x`.
         """
-        @parameter
-        if Self.os_index == 0:
+        comptime if Self.os_index == 0:
             return self._next1(x)
         else:
             comptime times_oversampling = 2 ** Self.os_index
-            @parameter
-            for i in range(times_oversampling):
+            comptime for i in range(times_oversampling):
                 # upsample the input
                 x2 = self.upsampler.next(x, i)
                 y = self._next1(x2)
@@ -288,7 +284,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
     var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
     var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the TanhAD.
 
         Args:
@@ -298,15 +294,15 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
         self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
-    @doc_private
-    fn _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def _next_norm(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return tanh(x)
 
-    @doc_private
-    fn _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def _next_AD1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return log (cosh (x))
 
-    fn _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def _next1(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Computes the first-order anti-aliased `tanh` of `x`.
 
@@ -325,7 +321,7 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         return out
     
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """First-order anti-aliased `hard_clip`.
 
         Computes the first-order anti-aliased `hard_clip` of `x` using the ADAA method. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -336,28 +332,26 @@ struct TanhAD[num_chans: Int = 1, os_index: Int = 0](Copyable, Movable):
         Returns:
             The anti-aliased `hard_clip` of `x`.
         """
-        @parameter
-        if Self.os_index == 0:
+        comptime if Self.os_index == 0:
             return self._next1(x)
         else:
             comptime times_oversampling = 2 ** Self.os_index
-            @parameter
-            for i in range(times_oversampling):
+            comptime for i in range(times_oversampling):
                 # upsample the input
                 x2 = self.upsampler.next(x, i)
                 y = self._next1(x2)
                 self.oversampling.add_sample(y)
             return self.oversampling.get_sample()
 
-@doc_private
-fn buchla_cell[num_chans: Int](sig: MFloat[num_chans], sign: MFloat[num_chans], thresh: MFloat[num_chans], 
+@doc_hidden
+def buchla_cell[num_chans: Int](sig: MFloat[num_chans], sign: MFloat[num_chans], thresh: MFloat[num_chans], 
                sig_mul1: MFloat[num_chans], sign_mul: MFloat[num_chans], sig_mul2: MFloat[num_chans]) -> MFloat[num_chans]:
     """Implements the Buchla cell function."""
     var mask: MBool[num_chans] = abs(sig).gt(thresh)
 
     return mask.select((sig * sig_mul1 - (sign * sign_mul)) * sig_mul2, 0.0)
 
-fn buchla_wavefolder[num_chans: Int](input: MFloat[num_chans], var amp: Float64) -> MFloat[num_chans]:
+def buchla_wavefolder[num_chans: Int](input: MFloat[num_chans], var amp: Float64) -> MFloat[num_chans]:
     """Buchla waveshaper.
 
     Buchla waveshaper implementation as a function. Derived from Virual Analog Buchla 259e Wavefolderby Esqueda, etc. See the BuchlaWavefolder struct for an ADAA version with oversampling.
@@ -390,7 +384,7 @@ fn buchla_wavefolder[num_chans: Int](input: MFloat[num_chans], var amp: Float64)
     # Scale output
     return tanh(out / amp)
 
-@doc_private
+@doc_hidden
 struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     var G: Float64       # folder cell "gain"
     var B: Float64       # folder cell "bias"
@@ -400,7 +394,7 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
     var Bpp: Float64
     comptime one_sixth: Float64 = 1.0 / 6.0
 
-    fn __init__(out self, G: Float64, B: Float64, thresh: Float64, mix: Float64):
+    def __init__(out self, G: Float64, B: Float64, thresh: Float64, mix: Float64):
         self.G = G
         self.B = B
         self.thresh = thresh
@@ -408,15 +402,15 @@ struct BuchlaCell[num_chans: Int = 1](Copyable, Movable):
         self.Bp = 0.5 * G * (thresh*thresh) - B * thresh
         self.Bpp = Self.one_sixth * G * (thresh*thresh*thresh) - 0.5 * B * (thresh*thresh) - thresh * self.Bp
 
-    fn func(self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def func(self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         mask: MBool[Self.num_chans] = abs(x).gt(self.thresh)
         return mask.select(self.G * x - self.B * sign(x), MFloat[Self.num_chans](0.0))
 
-    fn func_AD(self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def func_AD(self, x: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         var mask: MBool[Self.num_chans] = abs(x).gt(self.thresh)
         return mask.select(0.5 * self.G * (x * x) - self.B * x * sign(x) - self.Bp, MFloat[Self.num_chans](0.0))
 
-    # fn func_AD2(self, x: Float64) -> Float64:
+    # def func_AD2(self, x: Float64) -> Float64:
     #     var sgn = sign(x)
     #     if abs(x) > self.thresh:
     #         return (Self.one_sixth * self.G * (x * x * x) 
@@ -443,7 +437,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
     var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
     var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the BuchlaWavefolder.
 
         Args:
@@ -461,31 +455,31 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
         self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
-    @doc_private
-    fn _next_norm(self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def _next_norm(self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
         x2 = x * amp
         var y: MFloat[Self.num_chans] = Self.x_mix * x2
         for i in range(len(self.cells)):
             y += self.cells[i].mix * self.cells[i].func(x2)
         return y / amp
 
-    @doc_private
-    fn _next_AD1(self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def _next_AD1(self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
         x2 = x * amp
         var y: MFloat[Self.num_chans] = 0.5 * Self.x_mix * (x2 * x2)
         for i in range(len(self.cells)):
             y += self.cells[i].mix * self.cells[i].func_AD(x2)
         return y / (amp * amp)
 
-    # fn _wave_func_AD2(self, x: Float64, amp: Float64) -> Float64:
+    # def _wave_func_AD2(self, x: Float64, amp: Float64) -> Float64:
     #     x2 = x * amp
     #     var y: Float64 = (Self.x_mix / 6.0) * (x2 * x2 * x2)
     #     for i in range(len(self.cells)):
     #         y += self.cells[i].mix * self.cells[i].func_AD2(x2)
     #     return y
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _next1(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
+    def _next1(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
         """
         Computes the first-order anti-aliased BuchlaWavefolder.
 
@@ -507,7 +501,7 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         return out
 
     @always_inline
-    fn next(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
+    def next(mut self, x: MFloat[Self.num_chans], amp: Float64) -> MFloat[Self.num_chans]:
         """First-order anti-aliased BuchlaWavefolder.
 
         Computes the first-order anti-aliased BuchlaWavefolder. If the os_index is greater than 0, oversampling is applied to the processing.
@@ -519,13 +513,11 @@ struct BuchlaWavefolder[num_chans: Int = 1, os_index: Int = 1](Copyable, Movable
         Returns:
             The anti-aliased `hard_clip` of `x`.
         """
-        @parameter
-        if Self.os_index == 0:
+        comptime if Self.os_index == 0:
             return self._next1(x, amp)
         else:
             comptime times_oversampling = 2 ** Self.os_index
-            @parameter
-            for i in range(times_oversampling):
+            comptime for i in range(times_oversampling):
                 # upsample the input
                 x2 = self.upsampler.next(x, i)
                 y = self._next1(x2, amp)

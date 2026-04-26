@@ -13,18 +13,18 @@ struct OscVoice(PolyObject):
     var triggered: Bool
     var just_offset: List[Float64]
 
-    fn check_active(mut self) -> Bool:
+    def check_active(mut self) -> Bool:
         return self.env.is_active
     
     # Poly will use this function to release the voice when it receives a note off message for the note that this voice is playing. 
-    fn set_gate(mut self, gate: Bool):
+    def set_gate(mut self, gate: Bool):
         self.gate = gate
 
     # necessary to ensure a fresh env when the voice is copied by Poly
-    fn reset_env(mut self):
+    def reset_env(mut self):
         self.env = ASREnv(self.world)
 
-    fn __init__(out self, world: World, name_space: String = ""):
+    def __init__(out self, world: World, name_space: String = ""):
         self.osc = Osc[1,Interp.sinc,0](world)
         self.tri = LFTri(world)
         self.env = ASREnv(world)
@@ -37,7 +37,7 @@ struct OscVoice(PolyObject):
         self.triggered = False
         self.just_offset = [0.0, 0.1173, 0.0391, 0.1564, -0.1369, -0.0196, -0.0978, 0.0196, 0.1369, -0.1564, 0.1760, -0.1173]
 
-    fn next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
+    def next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
         osc_frac = self.tri.next(self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.7,self.gate,2) * self.vol
 
@@ -56,7 +56,7 @@ struct WavetableOscSIMD(Movable, Copyable):
     var poly: PolyGate
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.file_name = "resources/small_wavetable8.wav"
         
@@ -69,19 +69,16 @@ struct WavetableOscSIMD(Movable, Copyable):
         self.moog_filter = VAMoogLadder[1,1](self.world)
         self.poly = PolyGate(8, 16, world, "poly")
 
-    fn __repr__(self) -> String:
-        return String("Default")
-
-    fn loadBuffer(mut self):
+    def loadBuffer(mut self):
         self.buffer = SIMDBuffer[Self.wavetables_per_channel].load(self.file_name, num_wavetables=self.wavetables_per_channel)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         if self.messenger.notify_update(self.file_name, "load_file"):
             self.loadBuffer()
 
         # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
         # the kinds of messages the Messenger can receive are defined by the type of the `note` argument in the callback function
-        fn callback(mut poly_object: OscVoice, mut vals: List[Int]):
+        def callback(mut poly_object: OscVoice, mut vals: List[Int]):
             if vals[1] > 0: # the call_back will be called for both note on and note off messages
                 midi = vals[0] + poly_object.just_offset[vals[0] % 12]
                 print(vals[0], midi)

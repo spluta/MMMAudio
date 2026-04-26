@@ -1,9 +1,7 @@
 from mmm_audio import *
-from math import exp, sqrt, tan, pi, tanh, ceil, floor
-from bit import next_power_of_two
+from std.math import exp, sqrt, tan, pi, tanh, ceil, floor
 
-from sys import simd_width_of
-from algorithm import vectorize
+from std.sys import simd_width_of
 
 struct Lag[num_chans: Int = 1](Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
@@ -18,7 +16,7 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
     var b1: MFloat[Self.num_chans]
     var lag: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World, lag: MFloat[Self.num_chans] = MFloat[Self.num_chans](0.02)):
+    def __init__(out self, world: World, lag: MFloat[Self.num_chans] = MFloat[Self.num_chans](0.02)):
         """Initialize the lag processor with given lag time in seconds.
 
         Args:
@@ -33,7 +31,7 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
         self.set_lag_time(lag)
         
     @always_inline
-    fn next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the lag processor.
         
         Args:
@@ -49,7 +47,7 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
         return self.val
 
     @always_inline
-    fn set_lag_time(mut self, lag: MFloat[Self.num_chans]):
+    def set_lag_time(mut self, lag: MFloat[Self.num_chans]):
         """Set a new lag time in seconds for each channel.
         
         Args:
@@ -59,12 +57,11 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
     
     @staticmethod
-    fn par_process[num_simd: Int, simd_width: Int](lags: Span[mut = True, Lag[simd_width]], vals: Span[mut = True, MFloat[1]]):
+    def par_process[num_simd: Int, simd_width: Int](lags: Span[mut = True, Lag[simd_width], ...], vals: Span[mut = True, MFloat[1], ...]):
         """Parallel processes a List[Lag[simd_width]]. The one dimensional list of vals is both the input and the output."""
         
         len_vals = len(vals)
-        @parameter
-        for i in range(num_simd):
+        comptime for i in range(num_simd):
             # process each lag group
             simd_val = MFloat[simd_width](0.0)
             for j in range(simd_width):
@@ -77,7 +74,7 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
                 if idx < len_vals:
                     vals[idx] = lagged_output[j]
 
-struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
+struct LagUD[num_chans: Int = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.
 
     Parameters:
@@ -91,7 +88,7 @@ struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
     var lag_up: MFloat[Self.num_chans]
     var lag_down: MFloat[Self.num_chans]
 
-    fn __init__(
+    def __init__(
         out self,
         world: World,
         lag_up: MFloat[Self.num_chans] = MFloat[Self.num_chans](0.02),
@@ -112,11 +109,8 @@ struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
         self.lag_down = 0
         self.set_lag_times(lag_up, lag_down)
 
-    fn __repr__(self) -> String:
-        return String("LagUD")
-
     @always_inline
-    fn next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, in_samp: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the lag processor.
 
         Args:
@@ -135,7 +129,7 @@ struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.val
 
     @always_inline
-    fn set_lag_times(
+    def set_lag_times(
         mut self,
         lag_up: MFloat[Self.num_chans],
         lag_down: MFloat[Self.num_chans],
@@ -151,7 +145,7 @@ struct LagUD[num_chans: Int = 1](Representable, Movable, Copyable):
         self.b1_up = exp(-6.907755278982137 / (lag_up * self.world[].sample_rate))
         self.b1_down = exp(-6.907755278982137 / (lag_down * self.world[].sample_rate))
 
-@doc_private
+@doc_hidden
 struct SVFModes:
     """Enumeration of different State Variable Filter modes.
 
@@ -180,7 +174,7 @@ struct SVFModes:
     comptime lowshelf: Int64 = 7
     comptime highshelf: Int64 = 8
 
-struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
+struct SVF[num_chans: Int = 1](Movable, Copyable):
     """A State Variable Filter struct.
 
     To use the different modes, see the mode-specific methods.
@@ -196,7 +190,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
     var ic2eq: MFloat[Self.num_chans]  # Internal state 2
     var sample_rate: Float64
     
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the SVF.
         
         Args:
@@ -206,17 +200,14 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         self.ic2eq = MFloat[Self.num_chans](0.0)
         self.sample_rate = world[].sample_rate
 
-    fn __repr__(self) -> String:
-        return String("SVF")
-
-    fn reset(mut self):
+    def reset(mut self):
         """Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream.""" 
         self.ic1eq = MFloat[Self.num_chans](0.0)
         self.ic2eq = MFloat[Self.num_chans](0.0)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _compute_coefficients[filter_type: Int64](self, frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans]]:
+    def _compute_coefficients[filter_type: Int64](self, frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans]]:
         """Compute filter coefficients based on type and parameters.
         
         Parameters:
@@ -237,8 +228,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         # Compute g (frequency warping)
         var base_g = tan(frequency * pi / self.sample_rate)
         var g: MFloat[Self.num_chans]
-        @parameter
-        if filter_type == 7:  # lowshelf
+        comptime if filter_type == 7:  # lowshelf
             g = base_g / sqrt(A)
         elif filter_type == 8:  # highshelf
             g = base_g * sqrt(A)
@@ -247,8 +237,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         
         # Compute k (resonance factor)
         var k: MFloat[Self.num_chans]
-        @parameter
-        if filter_type == 6:  # bell
+        comptime if filter_type == 6:  # bell
             k = 1.0 / (q * A)
         else:
             k = 1.0 / q
@@ -258,19 +247,17 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         
         return (g, k, mix_coefs[0], mix_coefs[1], mix_coefs[2])
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _get_mix_coefficients[filter_type: Int64](self, k: MFloat[Self.num_chans], A: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans]]:
+    def _get_mix_coefficients[filter_type: Int64](self, k: MFloat[Self.num_chans], A: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans]]:
         """Get mixing coefficients for different filter types"""
         
         mc0 = MFloat[Self.num_chans](1.0)
         mc1 = MFloat[Self.num_chans](0.0)
         mc2 = MFloat[Self.num_chans](0.0)
 
-        @parameter
-        for i in range(Self.num_chans):
-            @parameter
-            if filter_type == SVFModes.lowpass:    
+        comptime for i in range(Self.num_chans):
+            comptime if filter_type == SVFModes.lowpass:    
                 mc0[i], mc1[i], mc2[i] = 0.0, 0.0, 1.0
             elif filter_type == SVFModes.bandpass:  
                 mc0[i], mc1[i], mc2[i] = 0.0, 1.0, 0.0
@@ -293,9 +280,9 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
 
         return (mc0, mc1, mc2)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn next[filter_type: Int64](mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
+    def next[filter_type: Int64](mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the SVF filter of the given type.
         
         Parameters:
@@ -335,7 +322,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return sanitize(output)
     
     @always_inline
-    fn lpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF lowpass filter. Passes frequencies below the cutoff while attenuating frequencies above it.
         
@@ -350,7 +337,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.lowpass](input, frequency, q)
 
     @always_inline
-    fn bpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def bpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF bandpass filter. Passes a band of frequencies centered at the cutoff while attenuating frequencies above and below.
         
@@ -365,7 +352,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.bandpass](input, frequency, q)
 
     @always_inline
-    fn hpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def hpf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF highpass filter. Passes frequencies above the cutoff while attenuating frequencies below it.
 
@@ -380,7 +367,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.highpass](input, frequency, q)
 
     @always_inline
-    fn peak(mut self, input: MFloat[self.num_chans], frequency: MFloat[self.num_chans], q: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def peak(mut self, input: MFloat[self.num_chans], frequency: MFloat[self.num_chans], q: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """
         Process input through a SVF peak filter. Boosts or cuts a band of frequencies centered at the cutoff by an amount determined by q, leaving frequencies outside the band unaffected.
 
@@ -395,7 +382,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.peak](input, frequency, q)
 
     @always_inline
-    fn notch(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def notch(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF notch (band stop) filter. Attenuates a narrow band of frequencies centered at the cutoff while passing all others.
 
@@ -410,7 +397,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.notch](input, frequency, q)
 
     @always_inline
-    fn allpass(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def allpass(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF allpass filter. Passes all frequencies at equal amplitude while shifting their phase relationship around the cutoff frequency.
         
@@ -425,7 +412,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.allpass](input, frequency, q)
 
     @always_inline
-    fn bell(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def bell(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF bell (peaking EQ) filter. Boosts or cuts a band of frequencies centered at the cutoff by a specified gain amount, leaving frequencies outside the band unaffected.
         
@@ -441,7 +428,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.bell](input, frequency, q, gain_db)
 
     @always_inline
-    fn lowshelf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lowshelf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF lowshelf filter. Boosts or cuts all frequencies below the cutoff by a specified gain amount, leaving frequencies above unaffected.
 
@@ -457,7 +444,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[SVFModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
-    fn highshelf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def highshelf(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """
         Process input through a SVF highshelf filter. Boosts or cuts all frequencies above the cutoff by a specified gain amount, leaving frequencies below unaffected.
 
@@ -472,7 +459,7 @@ struct SVF[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         return self.next[SVFModes.highshelf](input, frequency, q, gain_db)
 
-struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
+struct lpf_LR4[num_chans: Int = 1](Movable, Copyable):
     """A 4th-order [Linkwitz-Riley](https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter) lowpass filter.
 
     Parameters:
@@ -483,7 +470,7 @@ struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
     var q: Float64
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the 4th-order Linkwitz-Riley lowpass filter.
         
         Args:
@@ -493,11 +480,8 @@ struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
         self.svf2 = SVF[Self.num_chans](world)
         self.q = 1.0 / sqrt(2.0)  # 1/sqrt(2) for Butterworth response
 
-    fn __repr__(self) -> String:
-        return String("lpf_LR4")
-
     @always_inline
-    fn next(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], frequency: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """A single sample through the 4th order Linkwitz-Riley lowpass filter.
         
         Args:
@@ -512,7 +496,7 @@ struct lpf_LR4[num_chans: Int = 1](Representable, Movable, Copyable):
         # Second stage
         return self.svf2.lpf(cf, frequency, self.q)  # Second stage
 
-struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
+struct OnePole[num_chans: Int = 1](Movable, Copyable):
     """One-pole IIR filter that can be configured as lowpass or highpass.
 
     Parameters:
@@ -521,17 +505,14 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     var last_samp: MFloat[Self.num_chans]  # Previous output
     var world: World
     
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the one-pole filter."""
 
         self.last_samp = MFloat[Self.num_chans](0.0)
         self.world = world
     
-    fn __repr__(self) -> String:
-        return String("OnePoleFilter")
-
-    @doc_private
-    fn next(mut self, input: MFloat[Self.num_chans], coef: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def next(mut self, input: MFloat[Self.num_chans], coef: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the filter.
 
         Args:
@@ -546,7 +527,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         self.last_samp = output
         return output
 
-    fn lpf(mut self, input: MFloat[Self.num_chans], cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lpf(mut self, input: MFloat[Self.num_chans], cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the one-pole lowpass filter with a given cutoff frequency.
 
         Args:
@@ -559,7 +540,7 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         var coef = self.coeff(cutoff_hz)
         return self.next(input, coef)
 
-    fn hpf(mut self, input: MFloat[Self.num_chans], cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def hpf(mut self, input: MFloat[Self.num_chans], cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the one-pole highpass filter with a given cutoff frequency.
 
         Args:
@@ -572,13 +553,13 @@ struct OnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         var coef = self.coeff(cutoff_hz)
         return self.next(input, -coef)
 
-    @doc_private
-    fn coeff(self, cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    @doc_hidden
+    def coeff(self, cutoff_hz: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Calculate feedback coefficient from cutoff frequency."""
         return exp(-2.0 * pi * cutoff_hz / self.world[].sample_rate)
 
-@doc_private
-fn _time_to_coef[num_chans: Int](time_s: MFloat[num_chans], sample_rate: MFloat[num_chans]) -> MFloat[num_chans]:
+@doc_hidden
+def _time_to_coef[num_chans: Int](time_s: MFloat[num_chans], sample_rate: MFloat[num_chans]) -> MFloat[num_chans]:
     mask0 = time_s.le(0.0)
     val = 1.0 / (time_s * sample_rate)
     mask = val.lt(1.0)
@@ -597,7 +578,7 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
 
     var world: World
 
-    fn __init__(out self, world: World, attack_time: MFloat[Self.num_chans] = 0.1, release_time: MFloat[Self.num_chans] = 0.1):
+    def __init__(out self, world: World, attack_time: MFloat[Self.num_chans] = 0.1, release_time: MFloat[Self.num_chans] = 0.1):
         self.world = world
         self.one_pole = OnePole[Self.num_chans](world)
         self.last_val = MFloat[Self.num_chans](0.0)
@@ -605,7 +586,7 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
 
     
-    fn set_params(mut self, attack_time: MFloat[Self.num_chans], release_time: MFloat[Self.num_chans]):
+    def set_params(mut self, attack_time: MFloat[Self.num_chans], release_time: MFloat[Self.num_chans]):
         """Adjust the attack and release time of the Amplitude tracker.
 
         Args:
@@ -616,7 +597,7 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         self.coef_att = _time_to_coef(attack_time, self.world[].sample_rate)
         self.coef_rel = _time_to_coef(release_time, self.world[].sample_rate)
     
-    fn next(mut self, sample: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, sample: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the Amplitude tracker.
 
         Args:
@@ -647,7 +628,7 @@ struct DCTrap[num_chans: Int=1](Movable, Copyable):
     var last_samp: MFloat[Self.num_chans]
     var last_inner: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the DC blocker filter.
         
         Args:
@@ -657,7 +638,7 @@ struct DCTrap[num_chans: Int=1](Movable, Copyable):
         self.last_samp = MFloat[Self.num_chans](0.0)
         self.last_inner = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, input: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the DC blocker filter.
         
         Args:
@@ -673,7 +654,7 @@ struct DCTrap[num_chans: Int=1](Movable, Copyable):
 
         return sample
 
-struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
+struct VAOnePole[num_chans: Int = 1](Movable, Copyable):
     """
     One-pole filter based on the Virtual Analog design by 
     Vadim Zavalishin in "The Art of VA Filter Design".
@@ -687,7 +668,7 @@ struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
     var last_1: MFloat[Self.num_chans]  # Previous output
     var step_val: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the VAOnePole filter.
 
         Args:
@@ -696,13 +677,8 @@ struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         self.last_1 = MFloat[Self.num_chans](0.0)
         self.step_val = 1.0 / world[].sample_rate
 
-    fn __repr__(self) -> String:
-        return String(
-            "VAOnePole"
-        )
-
     @always_inline
-    fn lpf(mut self, input: MFloat[Self.num_chans], freq: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lpf(mut self, input: MFloat[Self.num_chans], freq: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the VA one-pole lowpass filter.
 
         Args:
@@ -724,7 +700,7 @@ struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         return output
 
     @always_inline
-    fn hpf(mut self, input: MFloat[Self.num_chans], freq: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def hpf(mut self, input: MFloat[Self.num_chans], freq: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the VA one-pole highpass filter.
 
         Args:
@@ -736,7 +712,7 @@ struct VAOnePole[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         return input - self.lpf(input, freq)
 
-struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movable, Copyable):
+struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
     """Virtual Analog Moog Ladder Filter.
     
     Implementation based on the Virtual Analog design by Vadim Zavalishin in 
@@ -757,7 +733,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
     var oversampling: Oversampling[Self.num_chans, 2 ** Self.os_index]
     var upsampler: Upsampler[Self.num_chans, 2 ** Self.os_index]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the VAMoogLadder filter.
 
         Args:
@@ -772,13 +748,9 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         self.oversampling = Oversampling[Self.num_chans, 2 ** Self.os_index](world)
         self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
 
-
-    fn __repr__(self) -> String:
-        return String("VAMoogLadder")
-
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn lp4(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lp4(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the 4-pole Moog Ladder lowpass filter.
 
         Args:
@@ -831,7 +803,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
         return lp4
 
     @always_inline
-    fn next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, q: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
+    def next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, q: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
         """Process one sample through the Moog Ladder lowpass filter.
 
         Args:
@@ -843,20 +815,17 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Representable, Movabl
             The next sample of the filtered output.
         """
         
-        @parameter
-        if Self.os_index == 0:
+        comptime if Self.os_index == 0:
             return self.lp4(sig, freq, q)
         else:
             comptime times_oversampling = 2 ** Self.os_index
 
-            @parameter
-            for i in range(times_oversampling):
+            comptime for i in range(times_oversampling):
                 # upsample the input
                 sig2 = self.upsampler.next(sig, i)
 
                 var lp4 = self.lp4(sig2, freq, q)
-                @parameter
-                if Self.os_index == 0:
+                comptime if Self.os_index == 0:
                     return lp4
                 else:
                     self.oversampling.add_sample(lp4)
@@ -875,7 +844,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
     var coeffs: List[MFloat[Self.num_chans]]
     var sample_rate: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the Reson filter.
 
         Args:
@@ -886,7 +855,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         self.sample_rate = world[].sample_rate
 
     @always_inline
-    fn lpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def lpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant lowpass filter.
 
         Args:
@@ -910,7 +879,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
     @always_inline
-    fn hpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def hpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant highpass filter.
 
         Args:
@@ -926,7 +895,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
         return gain*input - self.lpf(input, freq, q, gain)
 
     @always_inline
-    fn bpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def bpf(mut self, input: MFloat[self.num_chans], freq: MFloat[self.num_chans], q: MFloat[self.num_chans], gain: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process input through a resonant bandpass filter.
 
         Args:
@@ -949,8 +918,8 @@ struct Reson[num_chans: Int = 1](Movable, Copyable):
 
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
-@doc_private
-struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
+@doc_hidden
+struct FIR[num_chans: Int = 1](Movable, Copyable):
     """Finite Impulse Response (FIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -963,7 +932,7 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
     var buffer: List[MFloat[Self.num_chans]]
     var index: Int
 
-    fn __init__(out self, world: World, num_coeffs: Int):
+    def __init__(out self, world: World, num_coeffs: Int):
         """Initialize the FIR.
 
         Args:
@@ -973,11 +942,8 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
         self.buffer = [MFloat[Self.num_chans](0.0) for _ in range(num_coeffs)]
         self.index = 0
 
-    fn __repr__(self) -> String:
-        return String("FIR")
-
     @always_inline
-    fn next(mut self: FIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self: FIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the FIR filter.
 
         Args:
@@ -994,7 +960,7 @@ struct FIR[num_chans: Int = 1](Representable, Movable, Copyable):
         self.index = (self.index + 1) % len(self.buffer)
         return output
 
-@doc_private
+@doc_hidden
 struct IIR[num_chans: Int = 1](Movable, Copyable):
     """Infinite Impulse Response (IIR) filter implementation.
 
@@ -1008,7 +974,7 @@ struct IIR[num_chans: Int = 1](Movable, Copyable):
     var fir2: FIR[Self.num_chans]
     var fb: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the IIR.
 
         Args:
@@ -1019,7 +985,7 @@ struct IIR[num_chans: Int = 1](Movable, Copyable):
         self.fb = MFloat[Self.num_chans](0.0)
 
     @always_inline
-    fn next(mut self: IIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self: IIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the IIR filter.
         
         Args:
@@ -1036,8 +1002,8 @@ struct IIR[num_chans: Int = 1](Movable, Copyable):
         self.fb = output1
         return output2
 
-@doc_private
-struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
+@doc_hidden
+struct tf2[num_chans: Int = 1](Movable, Copyable):
     """Second-order transfer function filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -1048,7 +1014,7 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
     """
     var iir: IIR[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the tf2 filter.
 
         Args:
@@ -1056,11 +1022,8 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         self.iir = IIR[Self.num_chans](world)
 
-    fn __repr__(self) -> String:
-        return String("tf2")
-
     @always_inline
-    fn next(mut self: tf2, input: MFloat[self.num_chans], b0d: MFloat[self.num_chans], b1d: MFloat[self.num_chans], b2d: MFloat[self.num_chans], a1d: MFloat[self.num_chans], a2d: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self: tf2, input: MFloat[self.num_chans], b0d: MFloat[self.num_chans], b1d: MFloat[self.num_chans], b2d: MFloat[self.num_chans], a1d: MFloat[self.num_chans], a2d: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the second-order transfer function filter.
 
         Args:
@@ -1076,9 +1039,9 @@ struct tf2[num_chans: Int = 1](Representable, Movable, Copyable):
         """
         return self.iir.next(input, b0d, b1d, b2d, a1d, a2d)
 
-@doc_private
+@doc_hidden
 @always_inline
-fn tf2s[num_chans: Int = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: MFloat[num_chans], a1: MFloat[num_chans], a0: MFloat[num_chans], w1: MFloat[num_chans], sample_rate: Float64) -> Tuple[MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans]]:
+def tf2s[num_chans: Int = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: MFloat[num_chans], a1: MFloat[num_chans], a0: MFloat[num_chans], w1: MFloat[num_chans], sample_rate: Float64) -> Tuple[MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans]]:
     var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
     var csq = c*c
     var d   = a0 + a1 * c + csq
@@ -1090,7 +1053,7 @@ fn tf2s[num_chans: Int = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: MF
 
     return (b0d, b1d, b2d, a1d, a2d)
 
-@doc_private
+@doc_hidden
 struct BiquadModes:
     """Enumeration of different Biquad Filter modes.
 
@@ -1117,7 +1080,7 @@ struct BiquadModes:
     comptime lowshelf: Int64 = 6
     comptime highshelf: Int64 = 7
 
-struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
+struct Biquad[num_chans: Int = 1](Movable, Copyable):
     """A Biquad filter struct.
 
     To use the different modes, see the mode-specific methods.
@@ -1134,7 +1097,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
 
     var sample_rate: Float64
     
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the Biquad.
         
         Args:
@@ -1144,17 +1107,14 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         self.s2 = MFloat[Self.num_chans](0.0)
         self.sample_rate = world[].sample_rate
 
-    fn __repr__(self) -> String:
-        return String("Biquad")
-
-    fn reset(mut self):
+    def reset(mut self):
         """Clears any leftover internal state so the filter starts clean after interruptions or discontinuities in the audio stream.""" 
         self.s1 = MFloat[Self.num_chans](0.0)
         self.s2 = MFloat[Self.num_chans](0.0)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn _compute_coefficients[filter_type: Int64](self, frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> Tuple[
+    def _compute_coefficients[filter_type: Int64](self, frequency: MFloat[Self.num_chans], q: MFloat[Self.num_chans], gain_db: MFloat[Self.num_chans]) -> Tuple[
         MFloat[Self.num_chans], #b0
         MFloat[Self.num_chans], #b1
         MFloat[Self.num_chans], #b2
@@ -1194,8 +1154,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         var a1 = MFloat[Self.num_chans](0.0)
         var a2 = MFloat[Self.num_chans](0.0)
 
-        @parameter
-        if filter_type == BiquadModes.lowpass:
+        comptime if filter_type == BiquadModes.lowpass:
             b1 = (1.0 - cosw0) # doing this first saves some calculations
             b0 = b1 * 0.5
             b2 = b0
@@ -1269,9 +1228,9 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         
         return (b0, b1, b2, a1, a2)
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn next[filter_type: Int64](
+    def next[filter_type: Int64](
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1307,7 +1266,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
     
      
     @always_inline
-    fn lpf(
+    def lpf(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1327,7 +1286,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.lowpass](input, frequency, q)
 
     @always_inline
-    fn hpf(
+    def hpf(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1347,7 +1306,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.highpass](input, frequency, q)
 
     @always_inline
-    fn bpf(
+    def bpf(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1367,7 +1326,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.bandpass](input, frequency, q)
 
     @always_inline
-    fn notch(
+    def notch(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1387,7 +1346,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.notch](input, frequency, q)
 
     @always_inline
-    fn allpass(
+    def allpass(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1407,7 +1366,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.allpass](input, frequency, q)
 
     @always_inline
-    fn bell(
+    def bell(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1429,7 +1388,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.bell](input, frequency, q, gain_db)
 
     @always_inline
-    fn lowshelf(
+    def lowshelf(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],
@@ -1451,7 +1410,7 @@ struct Biquad[num_chans: Int = 1](Representable, Movable, Copyable):
         return self.next[BiquadModes.lowshelf](input, frequency, q, gain_db)
 
     @always_inline
-    fn highshelf(
+    def highshelf(
         mut self,
         input: MFloat[Self.num_chans],
         frequency: MFloat[Self.num_chans],

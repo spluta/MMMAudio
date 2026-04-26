@@ -8,7 +8,7 @@ from mmm_audio import *
 # defines some DSP behavior that can be called upon by 
 # the ManyOscillators graph below.
 
-struct StereoBeatingSines(Representable, Movable, Copyable):
+struct StereoBeatingSines(Movable, Copyable):
     var world: World # pointer to the MMMWorld
     var osc1: Osc[interp=Interp.linear] # first oscillator
     var osc2: Osc[interp=Interp.linear] # second oscillator
@@ -18,7 +18,7 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
     var vol_osc: Osc[] # LFO for volume
     var vol_osc_freq: Float64 # frequency for the volume LFO
 
-    fn __init__(out self, world: World, center_freq: Float64):
+    def __init__(out self, world: World, center_freq: Float64):
         self.world = world
 
         # create two oscillators. The [2] here is *kind of* like an array
@@ -42,11 +42,8 @@ struct StereoBeatingSines(Representable, Movable, Copyable):
             center_freq - rrand(1.0, 5.0)
         )
 
-    fn __repr__(self) -> String:
-        return String("StereoBeatingSines")
-
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         # calling .next on both oscillators gets both of their next samples
         temp = self.osc1.next(self.osc_freqs[0]) + self.osc2.next(self.osc_freqs[1])
 
@@ -68,7 +65,7 @@ struct ManyOscillators(Copyable, Movable):
     var messenger: Messenger
     var num_pairs: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
 
         # initialize the list of synths
@@ -82,7 +79,7 @@ struct ManyOscillators(Copyable, Movable):
             self.synths.append(StereoBeatingSines(self.world, exprand(100.0, 1000.0)))
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         if self.messenger.notify_update(self.num_pairs,"num_pairs"):
             if len(self.synths) != Int(self.num_pairs):

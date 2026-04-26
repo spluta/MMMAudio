@@ -1,12 +1,11 @@
-from math import sqrt, floor, cos, pi, sin
-from bit import next_power_of_two
-from sys import simd_width_of
+from std.math import sqrt, floor, cos, pi, sin
+from std.sys import simd_width_of
+from std.algorithm import vectorize
 from mmm_audio import *
 
-from utils import Variant
 
 @always_inline
-fn pan2(samples: Float64, pan: Float64) -> MFloat[2]:
+def pan2(samples: Float64, pan: Float64) -> MFloat[2]:
     """
     Simple constant power panning function.
 
@@ -25,7 +24,7 @@ fn pan2(samples: Float64, pan: Float64) -> MFloat[2]:
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn pan_stereo(samples: MFloat[2], pan: Float64) -> MFloat[2]:
+def pan_stereo(samples: MFloat[2], pan: Float64) -> MFloat[2]:
     """
     Simple constant power panning function for stereo samples.
 
@@ -43,7 +42,7 @@ fn pan_stereo(samples: MFloat[2], pan: Float64) -> MFloat[2]:
     return samples_out  # Return stereo output as List
 
 @always_inline
-fn splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
+def splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -81,7 +80,7 @@ fn splay[num_simd: Int](*input: MFloat[num_simd], world: World) -> MFloat[2]:
     return out
 
 @always_inline
-fn splay[num_simd: Int](input: Span[MFloat[num_simd]], world: World) -> MFloat[2]:
+def splay[num_simd: Int](input: Span[MFloat[num_simd], ...], world: World) -> MFloat[2]:
     """
     Splay multiple input channels into stereo output.
 
@@ -119,7 +118,7 @@ fn splay[num_simd: Int](input: Span[MFloat[num_simd]], world: World) -> MFloat[2
     return out
 
 @always_inline
-fn splay[num_input_channels: Int](input: MFloat[num_input_channels], world: World) -> MFloat[2]:
+def splay[num_input_channels: Int](input: MFloat[num_input_channels], world: World) -> MFloat[2]:
     out = MFloat[2](0.0)
 
     for i in range(num_input_channels):
@@ -141,7 +140,7 @@ fn splay[num_input_channels: Int](input: MFloat[num_input_channels], world: Worl
     return out
 
 @always_inline
-fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> MFloat[simd_out_size]:
+def pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: Int, width: Float64 = 2.0, orientation: Float64 = 0.5) -> MFloat[simd_out_size]:
     """
     Pan a mono sample to N speakers arranged in a circle around the listener using azimuth panning.
 
@@ -172,11 +171,11 @@ fn pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: I
     comptime simd_width: Int = simd_width_of[DType.float64]() * 2
 
     @parameter
-    fn process_speakers[simd_width: Int](i: Int) unified {mut}:
+    def process_speakers[simd_width: Int](i: Int) unified {mut}:
         # Create index vector
         var indices = MFloat[simd_width]()
         for j in range(simd_width):
-            indices[j] = i + j
+            indices[j] = MFloat[1](i + j)
         
         # Compute chan_pos
         var pos = (constant - indices) * rwidth
@@ -204,24 +203,22 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
     """
     var mul_list: InlineArray[MFloat[Self.num_channels], Self.pan_points]
 
-    fn __init__(out self):
+    def __init__(out self):
         """
         Initialize the SplayN instance.
         """
 
         js = MFloat[self.num_channels](0.0, 1.0)
-        @parameter
-        if self.num_channels > 2:
+        comptime if self.num_channels > 2:
             for j in range(self.num_channels):
                 js[j] = Float64(j)
 
-        self.mul_list = InlineArray[MFloat[self.num_channels], Self.pan_points](0.0)
+        self.mul_list = InlineArray[MFloat[self.num_channels], Self.pan_points](fill=0.0)
         for i in range(self.pan_points):
             pan = Float64(i) * Float64(self.num_channels - 1) / Float64(self.pan_points - 1)
 
             d = abs(pan - js)
-            @parameter
-            if self.num_channels > 2:
+            comptime if self.num_channels > 2:
                 for j in range(self.num_channels):
                     if d[j] < 1.0:
                         d[j] = d[j]
@@ -232,7 +229,7 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
                 self.mul_list[i][j] = cos(d[j] * pi_over_2)
 
     @always_inline
-    fn next[num_simd: Int](mut self, input: Span[MFloat[num_simd]]) -> MFloat[self.num_channels]:
+    def next[num_simd: Int](mut self, input: Span[MFloat[num_simd], ...]) -> MFloat[self.num_channels]:
         """Evenly distributes multiple input channels to num_channels of output channels.
 
         Args:
@@ -258,7 +255,7 @@ struct SplayN[num_channels: Int = 2, pan_points: Int = 128](Movable, Copyable):
         return out
 
     @always_inline
-    fn next[num_simd: Int](mut self, *input: MFloat[num_simd]) -> MFloat[self.num_channels]:
+    def next[num_simd: Int](mut self, *input: MFloat[num_simd]) -> MFloat[self.num_channels]:
         """Evenly distributes multiple input channels to num_channels of output channels.
 
         Args:

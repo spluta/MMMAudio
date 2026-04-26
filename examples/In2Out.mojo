@@ -1,18 +1,15 @@
 from mmm_audio import *
 
 # this is the simplest possible
-struct In2Out(Representable, Movable, Copyable):
+struct In2Out(Movable, Copyable):
     var world: World
     var messenger: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.messenger = Messenger(self.world)
 
-    fn __repr__(self) -> String:
-        return String("In2Out")
-
-    fn next(mut self) -> MFloat[16]:
+    def next(mut self) -> MFloat[16]:
         if self.messenger.notify_trig("print_inputs"):
             for i in range(self.world[].num_in_chans):
                 print("input[", i, "] =", self.world[].sound_in[i])

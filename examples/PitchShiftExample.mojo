@@ -2,7 +2,7 @@ from mmm_audio import *
 
 # THE SYNTH
 
-struct PitchShiftExample(Representable, Movable, Copyable):
+struct PitchShiftExample(Movable, Copyable):
     var world: World
 
     var pitch_shift: PitchShift[num_chans=2]
@@ -21,7 +21,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
     var fb_perc: Float64
     var dc_trap: DCTrap[2]
      
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.pitch_shift = PitchShift[num_chans=2](self.world, 2.0) # the duration of the buffer needs to == grain size*(max_pitch_shift-1).
         self.messenger = Messenger(self.world)
@@ -40,7 +40,7 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.dc_trap = DCTrap[2](world)
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.in_chan, "in_chan")
 
         self.messenger.update(self.shift,"pitch_shift")
@@ -59,6 +59,3 @@ struct PitchShiftExample(Representable, Movable, Copyable):
         self.fb = self.dc_trap.next(out)
 
         return out
-
-    fn __repr__(self) -> String:
-        return String("PitchShift")

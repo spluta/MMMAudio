@@ -9,7 +9,7 @@ struct TestWriteBuffer(Copyable,Movable):
     var m: Messenger
     var counter: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.linear = Play(self.world)
@@ -17,7 +17,7 @@ struct TestWriteBuffer(Copyable,Movable):
         self.m = Messenger(self.world)
         self.counter = 0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         linear = self.linear.next[1,Interp.linear](self.buf)
         self.rec.write_next(linear)
         if self.counter == Int(self.world[].sample_rate*2.0 + 20000):

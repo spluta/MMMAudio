@@ -13,7 +13,7 @@ struct TestPatterns(Movable, Copyable):
     var prand: Prand[Int]
     var pxrand: Pxrand[Int]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.imp = Impulse[1](self.world)
         self.messenger = Messenger(world)
@@ -22,7 +22,7 @@ struct TestPatterns(Movable, Copyable):
         self.prand = Prand([0, 1, 2, 3])
         self.pxrand = Pxrand([0, 1, 2, 3])
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.which, "which")
         trig = self.imp.next_bool(1)
         if trig:

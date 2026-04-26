@@ -16,7 +16,7 @@ struct FreeverbSynth(Copyable, Movable):
     var added_space: Float64
     var mix: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world 
 
         # load the audio buffer 
@@ -36,7 +36,7 @@ struct FreeverbSynth(Copyable, Movable):
         self.m = Messenger(self.world)
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.room_size,"room_size")
         self.m.update(self.lpf_comb,"lpf_comb")
@@ -49,18 +49,15 @@ struct FreeverbSynth(Copyable, Movable):
         return out
 
 
-struct FreeverbExample(Representable, Movable, Copyable):
+struct FreeverbExample(Movable, Copyable):
     var world: World
 
     var freeverb_synth: FreeverbSynth  # Instance of the FreeverbSynth
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.freeverb_synth = FreeverbSynth(self.world)
 
-    fn __repr__(self) -> String:
-        return String("Freeverb_Graph")
-
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         #return MFloat[2](0.0)
         return self.freeverb_synth.next()  # Return the combined output sample

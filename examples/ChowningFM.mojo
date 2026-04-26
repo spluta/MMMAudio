@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct ChowningFM(Representable, Movable, Copyable):
+struct ChowningFM(Movable, Copyable):
     var world: World # pointer to the MMMWorld
     var m: Messenger
     var c_osc: Osc[1,1,1]  # Carrier oscillator
@@ -11,7 +11,7 @@ struct ChowningFM(Representable, Movable, Copyable):
     var mfreq: Float64
     var vol: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.m = Messenger(self.world)
         self.c_osc = Osc[1,1,1](self.world)
@@ -22,11 +22,8 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.mfreq = 100.0
         self.vol = -12.0
 
-    fn __repr__(self) -> String:
-        return String("ChowningFM")
-
     @always_inline
-    fn update_envs(mut self):
+    def update_envs(mut self):
         
         self.m.update(self.index_env.params.values,"index_vals")
         self.m.update(self.index_env.params.times,"index_times")
@@ -36,7 +33,7 @@ struct ChowningFM(Representable, Movable, Copyable):
         self.m.update(self.amp_env.params.curves,"amp_curves")
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.cfreq,"c_freq")
         self.m.update(self.mfreq,"m_freq")

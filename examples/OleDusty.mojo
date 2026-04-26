@@ -2,18 +2,15 @@ from mmm_audio import *
 
 # THE SYNTH
 
-struct Dusty(Representable, Movable, Copyable):
+struct Dusty(Movable, Copyable):
     var world: World  
     var dust: Dust[2] 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.dust = Dust[2](world)
 
-    fn __repr__(self) -> String:
-        return String("OleDusty")
-
-    fn next(mut self, freq: MFloat[1]) -> MFloat[2]:
+    def next(mut self, freq: MFloat[1]) -> MFloat[2]:
 
         out = self.dust.next(freq*0.125, freq*8) * 0.5
 
@@ -24,24 +21,21 @@ struct Dusty(Representable, Movable, Copyable):
 
 # THE GRAPH
 
-struct OleDusty(Representable, Movable, Copyable):
+struct OleDusty(Movable, Copyable):
     var world: World  
     var dusty: Dusty
     var reson: Reson[2]
     var freq: MFloat[1]
     var lag: Lag[1]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.dusty = Dusty(world)
         self.reson = Reson[2](world)
         self.freq = MFloat[1](200.0)
         self.lag = Lag(world, 0.1)
 
-    fn __repr__(self) -> String:
-        return String("OleDusty")
-
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         freq = linexp(self.world[].mouse_y, 0.0, 1.0, 100.0, 2000.0)
 

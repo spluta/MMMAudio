@@ -19,7 +19,7 @@ struct TestFlangerPhaser(Movable, Copyable):
     var mix: MFloat[1]
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.m = Messenger(world)
         self.buf = SIMDBuffer.load("resources/Shiverer.wav")
@@ -37,7 +37,7 @@ struct TestFlangerPhaser(Movable, Copyable):
         self.freq_offset = MFloat[1](0.)
         self.mix = MFloat[1](0.5)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.m.update(self.which_source, "which_source")
         self.m.update(self.which_fx, "which_fx")
         self.m.update(self.center, "center_freq")

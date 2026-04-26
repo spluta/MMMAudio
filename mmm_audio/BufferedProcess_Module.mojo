@@ -1,12 +1,12 @@
 from mmm_audio import *
-from math import floor
+from std.math import floor
 
 # Eventually, I think it would be better for the user defined BufferProcessable
 # struct to be where the `window_size` is set as a parameter and then this value
 # can be retrieved
 # by the BufferedProcess struct. Mojo currently doesn't allow this traits to have
 # parameters. I think `hop_size` would still be a parameter of the BufferedProcess struct.
-trait BufferedProcessable(Movable, Copyable):
+trait BufferedProcessable(Movable, Copyable, ImplicitlyDestructible):
     """Trait that user structs must implement to be used with a BufferedProcess.
     
     Requires two functions:
@@ -18,13 +18,13 @@ trait BufferedProcessable(Movable, Copyable):
     - `get_messages() -> None`: This function is called at the top of each audio block to allow the user to retrieve any messages
       they may have sent to this process. Put your [Messenger](Messenger.md) message retrieval code here. (e.g. `self.messenger.update(self.param, "param_name")`)
     """
-    fn next_window(mut self, mut samples: List[Float64]) -> None:
+    def next_window(mut self, mut samples: List[Float64]) -> None:
         return None
 
-    fn next_stereo_window(mut self, mut samples: List[MFloat[2]]) -> None:
+    def next_stereo_window(mut self, mut samples: List[MFloat[2]]) -> None:
         return None
     
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         return None
 
 struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window_shape: Int = WindowType.hann, output_window_shape: Int = WindowType.hann](Movable, Copyable):
@@ -57,10 +57,10 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
     var input_attenuation_window: List[Float64]
     var output_attenuation_window: List[Float64]
 
-    fn get_process(mut self) -> ref[self.process] Self.T:
+    def get_process(mut self) -> ref[self.process] Self.T:
         return self.process
 
-    fn __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int, hop_start: Int = 0):
+    def __init__(out self, world: World, var process: Self.T, window_size: Int, hop_size: Int, hop_start: Int = 0):
         """Initializes a BufferedProcess struct.
 
         Args:
@@ -95,7 +95,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.input_attenuation_window = Windows.make_window[Self.input_window_shape](self.window_size)
         self.output_attenuation_window = Windows.make_window[Self.output_window_shape](self.window_size)
 
-    fn next(mut self, input: Float64 = 0.0) -> Float64:
+    def next(mut self, input: Float64 = 0.0) -> Float64:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
@@ -121,8 +121,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
 
             self.process.next_window(self.passing_buffer)
 
-            @parameter
-            if Self.output:
+            comptime if Self.output:
                 for i in range(self.window_size):
                     self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
 
@@ -130,8 +129,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
-        @parameter
-        if not Self.output:
+        comptime if not Self.output:
             return 0.0
 
         outval = self.output_buffer[self.read_head]
@@ -140,7 +138,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
-    fn next_stereo(mut self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2]:
+    def next_stereo(mut self, input: SIMD[DType.float64,2]) -> SIMD[DType.float64,2]:
         """Process the next input sample and return the next output sample.
         
         This function is called in the audio processing loop for each input sample. It buffers the input samples,
@@ -166,8 +164,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
-            @parameter
-            if Self.output:
+            comptime if Self.output:
                 for i in range(self.window_size):
                     self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]
 
@@ -175,8 +172,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
     
         self.hop_counter = (self.hop_counter + 1) % self.hop_size
 
-        @parameter
-        if not Self.output:
+        comptime if not Self.output:
             return 0.0
 
         outval = self.st_output_buffer[self.read_head]
@@ -185,7 +181,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
-    fn next_from_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
+    def next_from_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[1], phase: Float64, chan: Int = 0) -> Float64:
         """Used for non-real-time, buffer-based, processing. At the onset of the next window, reads a block of window_size samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase tries to read samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
@@ -209,8 +205,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
 
             self.process.next_window(self.passing_buffer)
 
-            @parameter
-            if Self.output:
+            comptime if Self.output:
 
                 for i in range(self.window_size):
                     self.output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.passing_buffer[i] * self.output_attenuation_window[i]
@@ -228,7 +223,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         self.read_head = (self.read_head + 1) % self.window_size
         return outval
 
-    fn next_from_stereo_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> SIMD[DType.float64,2]:
+    def next_from_stereo_buffer[interp: Int = Interp.none, bWrap: Bool = False](mut self, ref buffer: SIMDBuffer[2], phase: Float64) -> SIMD[DType.float64,2]:
         """Used for non-real-time, buffer-based, processing of stereo files. At the onset of the next window, reads a window_size block of samples from the provided buffer, starting at the given phase and channel. Phase values between zero and one will read samples within the provided buffer. If the provided phase results in reading samples with an index below zero or above the duration of the buffer, zeros will be returned.
 
         Args:
@@ -251,8 +246,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
 
             self.process.next_stereo_window(self.st_passing_buffer)
 
-            @parameter
-            if Self.output:
+            comptime if Self.output:
                
                 for i in range(self.window_size):
                     self.st_output_buffer[(self.output_buffer_write_head + i) % self.window_size] += self.st_passing_buffer[i] * self.output_attenuation_window[i]

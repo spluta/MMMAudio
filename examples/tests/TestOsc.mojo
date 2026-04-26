@@ -10,12 +10,12 @@ struct TestOsc[](Movable, Copyable):
     var osc: List[Osc[]]
     var freqs: List[Float64]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = [Osc[](self.world) for _ in range(num)]
         self.freqs = [random_float64() * 2000 + 100 for _ in range(num)]
 
-    fn next(mut self) -> Float64:
+    def next(mut self) -> Float64:
         sample = 0.0
 
         for i in range(num):

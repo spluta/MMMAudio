@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct MPlotExample(Representable, Movable, Copyable):
+struct MPlotExample(Movable, Copyable):
     var world: World
     var buf: Buffer
     var play: Play
@@ -8,7 +8,7 @@ struct MPlotExample(Representable, Movable, Copyable):
     var play_data: List[Int]
     var path: String
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.play = Play(self.world)
         self.m = Messenger(self.world)
@@ -16,10 +16,7 @@ struct MPlotExample(Representable, Movable, Copyable):
         self.path = String("/Users/sam/Library/Application Support/SuperCollider/sounds/analogSynthSounds/drums/manyHits.wav")
         self.buf = Buffer.load(self.path)
 
-    fn __repr__(self) -> String:
-        return String("MPlotExample")
-
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         if self.m.notify_update(self.path, "load_sound"):
             self.buf = Buffer.load(self.path)

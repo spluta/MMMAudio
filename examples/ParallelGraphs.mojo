@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct ParallelGraphs(Representable, Movable, Copyable):
+struct ParallelGraphs(Movable, Copyable):
     var world: World  
     var osc: Osc[1,Interp.sinc,1]
     var filt: SVF[1]
@@ -8,7 +8,7 @@ struct ParallelGraphs(Representable, Movable, Copyable):
     var freq: Float64
     var pan: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc[1,Interp.sinc,1](self.world)
         self.filt = SVF[1](self.world)
@@ -16,10 +16,7 @@ struct ParallelGraphs(Representable, Movable, Copyable):
         self.freq = 440.0
         self.pan = -1.0
 
-    fn __repr__(self) -> String:
-        return String("Default")
-
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.freq,"freq")
         self.messenger.update(self.pan,"pan")
 

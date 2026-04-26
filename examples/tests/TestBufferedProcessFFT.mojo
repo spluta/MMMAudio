@@ -14,7 +14,7 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
     var mags: List[Float64]
     var phases: List[Float64]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.bin = (Self.window_size // 2) + 1
         self.m = Messenger(self.world)
@@ -23,10 +23,10 @@ struct FFTLowPass[window_size: Int](BufferedProcessable):
         self.mags = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
         self.phases = List[Float64](length=(Self.window_size // 2) + 1, fill=0.0)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         self.m.update(self.bin,"bin")
 
-    fn next_window(mut self, mut input: List[Float64]) -> None:
+    def next_window(mut self, mut input: List[Float64]) -> None:
         # self.fft.fft(input,self.complex)
         self.fft.fft(input,self.mags,self.phases)
         for i in range(self.bin,(Self.window_size // 2) + 1):
@@ -44,7 +44,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -53,7 +53,7 @@ struct TestBufferedProcessFFT(Movable, Copyable):
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         o = self.fftlowpass.next(i)
         return SIMD[DType.float64,2](o,o)

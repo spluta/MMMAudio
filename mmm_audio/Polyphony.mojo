@@ -1,25 +1,25 @@
 from mmm_audio import *
 
 trait PolyObject(Movable, Copyable):
-    fn check_active(mut self) -> Bool:
+    def check_active(mut self) -> Bool:
         """A required, user defind function to check if the voice is active. This is usually done by checking if the envelope is active or if a Play object is still playing. This function is used internally by Poly to keep track of which voices are active and which are not.
         """
         ...
 
     # set_trigger
-    fn set_trigger(mut self, trigger: Bool):
+    def set_trigger(mut self, trigger: Bool):
         """Necessary for triggered PolyObjects. This function is used internally by Poly to set the PolyObject to triggered. That way, the PolyObject can open its own envelope or trigger other parameters in the subsequent `next` call."""
         # self.trigger = trigger # usually it is just this
         pass
     
     # set_gate is helpful in polyphonic synths with ASR or ADSR envelopes
-    fn set_gate(mut self, gate: Bool):
+    def set_gate(mut self, gate: Bool):
         """Necessary for gated PolyObjects. This function is used internally by PolyGate and PolyGateSig to open and close the gate of the PolyObject."""
         # usually it is just this
         # self.gate = False
         pass
 
-    fn reset_env(mut self):
+    def reset_env(mut self):
         """Necessary for gated PolyObjects that use gated envelopes. This is needed because Poly will internally copy a living PolyObject to create a new voice, and this can result in a hung voice if the env is already active when it's copied.
         """
         # usually you just need a new env
@@ -36,14 +36,14 @@ struct PolyTrigger(Movable, Copyable):
     var num_messages: Int
     var world: World
 
-    fn __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
+    def __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
         self.poly = PolyTriggerSig(initial_num_voices=initial_num_voices, max_voices=max_voices)
         self.m = Messenger(world, name_space)
         self.num_messages = num_messages
         self.world = world
 
-    @doc_private
-    fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
+    @doc_hidden
+    def _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
         if self.world[].top_of_block:
             for i in range(len(poly_objects)):
                 self.poly.active_list[i] = poly_objects[i].check_active()
@@ -52,7 +52,7 @@ struct PolyTrigger(Movable, Copyable):
                 for i in range(len(poly_objects)):
                     poly_objects[i].set_trigger(False)
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Int])):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut vals: List[Int])):
         """This convenience function acheives all functionality of a Triggered PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and triggers PolyObjects as needed. The optional call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64] or an Int or a Float64. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python.
         """
         self._reset(poly_objects)
@@ -65,7 +65,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], vals)
     
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Float64])):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut vals: List[Float64])):
         self._reset(poly_objects)
         vals = List[Float64]()
         for i in range(self.num_messages):
@@ -76,7 +76,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], vals)
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Int)):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut val: Int)):
         self._reset(poly_objects)
         val: Int = 0
         for i in range(self.num_messages):
@@ -87,7 +87,7 @@ struct PolyTrigger(Movable, Copyable):
                 if free_voice != -1:
                     call_back(poly_objects[free_voice], val)
     
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut val: Float64)):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut val: Float64)):
         self._reset(poly_objects)
         val: Float64 = 0.0
         for i in range(self.num_messages):
@@ -111,7 +111,7 @@ struct PolyGate(Movable, Copyable):
     var int_dict: Dict[Int, Int]
     
 
-    fn __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
+    def __init__(out self, initial_num_voices: Int, max_voices: Int, world: World, name_space: String, num_messages: Int = 10):
         self.poly = PolyTriggerSig(initial_num_voices=initial_num_voices, max_voices=max_voices)
         self.m = Messenger(world, name_space)
         self.num_messages = num_messages
@@ -119,8 +119,8 @@ struct PolyGate(Movable, Copyable):
         self.string_dict = Dict[String, Int]()
         self.int_dict = Dict[Int, Int]()
 
-    @doc_private
-    fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
+    @doc_hidden
+    def _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
         if self.world[].top_of_block:
             for i in range(len(poly_objects)):
                 self.poly.active_list[i] = poly_objects[i].check_active()
@@ -130,7 +130,7 @@ struct PolyGate(Movable, Copyable):
                     poly_objects[i].set_trigger(False)
 
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Int])):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut vals: List[Int])):
         """This convenience function acheives all functionality of a Gated PolyObject synth in one function. It resets the Poly at the beginning of each block, looks for triggers from Python, and opens and closes gates for PolyObjects as needed. The call_back function is called whenever a new trigger is received from Python. `next` has to be paired with messages sent from Python as a List[Int] or a List[Float64], where the first value is the note or key to trigger and the second value is the velocity or gate of the note. A 0 in the second value will close the gate. The call_back function receives the List or value as the second argument, so the PolyObject can be controlled by the message from Python.
         """
         self._reset(poly_objects)
@@ -149,7 +149,7 @@ struct PolyGate(Movable, Copyable):
                         if freed_voice != -1:
                             call_back(poly_objects[freed_voice], vals)
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: fn (mut poly_object: T, mut vals: List[Float64])):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], call_back: def (mut poly_object: T, mut vals: List[Float64])):
         self._reset(poly_objects)
         if self.world[].top_of_block:
             vals = List[Float64]()
@@ -166,39 +166,39 @@ struct PolyGate(Movable, Copyable):
                         if freed_voice != -1:
                             call_back(poly_objects[freed_voice], vals)
 
-    fn _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: String) -> Int:
+    def _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: String) -> Int:
         trigger_grain = self.poly._find_free_voice(poly_objects, trig)
         if trigger_grain != -1:
             self._open_gate(poly_objects, key, trigger_grain)
         return trigger_grain
 
-    fn _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
+    def _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
         trigger_grain = self.poly._find_free_voice(poly_objects, trig)
         if trigger_grain != -1:
             self._open_gate(poly_objects, key, trigger_grain)
         return trigger_grain
 
-    @doc_private
-    fn _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: String) -> Int:
+    @doc_hidden
+    def _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: String) -> Int:
         active_list_index = self.string_dict.pop(key, -1)
         if active_list_index != -1:
             poly_objects[active_list_index].set_gate(False)
         return active_list_index
 
-    @doc_private
-    fn _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int) -> Int:
+    @doc_hidden
+    def _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int) -> Int:
         active_list_index = self.int_dict.pop(key, -1)
         if active_list_index != -1:
             poly_objects[active_list_index].set_gate(False)
         return active_list_index
 
-    @doc_private
-    fn _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: String, active_list_index: Int):
+    @doc_hidden
+    def _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: String, active_list_index: Int):
         poly_objects[active_list_index].set_gate(True)
         self.string_dict[key] = active_list_index
     
-    @doc_private
-    fn _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
+    @doc_hidden
+    def _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
         poly_objects[active_list_index].set_gate(True)
         self.int_dict[key] = active_list_index
 
@@ -209,7 +209,7 @@ struct PolyGateSig(Movable, Copyable):
     var num_gates: Int
     var active_dict: Dict[Int, Int]
 
-    fn __init__(out self, initial_num_voices: Int, max_voices: Int, num_gates: Int):
+    def __init__(out self, initial_num_voices: Int, max_voices: Int, num_gates: Int):
         if initial_num_voices < num_gates:
             inv = num_gates
         else:
@@ -219,7 +219,7 @@ struct PolyGateSig(Movable, Copyable):
         self.num_gates = num_gates
         self.active_dict = Dict[Int, Int]()
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], gate_sigs: List[Bool]):
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], gate_sigs: List[Bool]):
         """This function is designed to be used with polyphonic synths that have gated controls that are signals.
 
         Args:
@@ -235,21 +235,21 @@ struct PolyGateSig(Movable, Copyable):
                 else:
                     _ = self._close_gate(poly_objects, Int(i))
 
-    fn _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
+    def _find_voice_and_open_gate[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, key: Int) -> Int:
         trigger_grain = self.poly._find_free_voice(poly_objects, trig)
         if trigger_grain != -1:
             self._open_gate(poly_objects, key, trigger_grain)
         return trigger_grain
 
-    @doc_private
-    fn _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int) -> Int:
+    @doc_hidden
+    def _close_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int) -> Int:
         active_list_index = self.active_dict.pop(key, -1)
         if active_list_index != -1:
             poly_objects[active_list_index].set_gate(False)
         return active_list_index
 
-    @doc_private
-    fn _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
+    @doc_hidden
+    def _open_gate[T: PolyObject](mut self, mut poly_objects: List[T], key: Int, active_list_index: Int):
         poly_objects[active_list_index].set_gate(True)
         self.active_dict[key] = active_list_index
 
@@ -259,7 +259,7 @@ struct PolyTriggerSig(Movable, Copyable):
     var active_list: List[Bool]
     var max_voices: Int
 
-    fn __init__(out self, initial_num_voices: Int, max_voices: Int):
+    def __init__(out self, initial_num_voices: Int, max_voices: Int):
         """
         Args:
             initial_num_voices (Int): the number of voices to start with. This can be changed later by the Poly object itself if more voices need to be added.
@@ -268,29 +268,29 @@ struct PolyTriggerSig(Movable, Copyable):
         self.active_list = [False for _ in range(initial_num_voices)]
         self.max_voices = max_voices
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
         """Looks at the value of trig. If trig is True, looks for a free voice and triggers it. Returns the index of the voice that was triggered, or -1 if no voice was triggered.
         """
         self._reset(poly_objects)
         return self.find_voice_and_trigger(poly_objects, trig)
 
-    fn next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, call_back: fn (mut poly_object: T, trig: Bool)) -> Int:
+    def next[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool, call_back: def (mut poly_object: T, trig: Bool)) -> Int:
         self._reset(poly_objects)
         voice_index = self.find_voice_and_trigger(poly_objects, trig)
         if voice_index != -1:
             call_back(poly_objects[voice_index], trig)
         return voice_index
 
-    @doc_private
-    fn _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
+    @doc_hidden
+    def _reset[T: PolyObject](mut self, mut poly_objects: List[T]):
         """Must be called before any subsequent calls to find_voice_and_trigger or _find_voice_and_open_gate. This function resets the triggered state of all voices at the beginning of each block or every sample, depending on the only_top_of_block parameter.
         """
         for i in range(len(poly_objects)):
             self.active_list[i] = poly_objects[i].check_active()
             poly_objects[i].set_trigger(False)
 
-    @doc_private
-    fn _find_free_voice[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
+    @doc_hidden
+    def _find_free_voice[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
         trigger_grain = -1
         if trig:
             list_len = len(self.active_list)
@@ -309,8 +309,8 @@ struct PolyTriggerSig(Movable, Copyable):
 
         return trigger_grain
 
-    @doc_private
-    fn _find_voice(mut self, list_len: Int) -> Tuple[Int, Bool]:
+    @doc_hidden
+    def _find_voice(mut self, list_len: Int) -> Tuple[Int, Bool]:
         found = False
         counter = 0
         while not found and counter < list_len:
@@ -325,7 +325,7 @@ struct PolyTriggerSig(Movable, Copyable):
             counter = list_len  # this is the index of the next voice to be added 
             return (counter, True) 
 
-    fn find_voice_and_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
+    def find_voice_and_trigger[T: PolyObject](mut self, mut poly_objects: List[T], trig: Bool) -> Int:
         trigger_grain = self._find_free_voice(poly_objects, trig)
 
         if trigger_grain != -1:

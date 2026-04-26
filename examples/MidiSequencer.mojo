@@ -14,15 +14,15 @@ struct TrigSynthVoice(PolyObject):
     var note: List[Float64]
     var trigger: Bool
 
-    fn check_active(mut self) -> Bool:
+    def check_active(mut self) -> Bool:
         return self.env.is_active
 
 
     # Poly will use this function to trigger the voice.
-    fn set_trigger(mut self, trigger: Bool):
+    def set_trigger(mut self, trigger: Bool):
         self.trigger = trigger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.mod = Osc(self.world)
         self.car = Osc[1, Interp.linear, 0](self.world)
@@ -34,7 +34,7 @@ struct TrigSynthVoice(PolyObject):
         self.trigger = False
 
     @always_inline
-    fn next(mut self) -> Float64:
+    def next(mut self) -> Float64:
         # if there is no trigger and the envelope is not active, that means the voice should be silent - output 0.0
         if not self.env.is_active and not self.trigger:
             return 0.0
@@ -51,7 +51,7 @@ struct TrigSynthVoice(PolyObject):
             return car_value
 
     # if you want to use this voice without Poly
-    fn next(mut self, trigger: Bool) -> Float64:
+    def next(mut self, trigger: Bool) -> Float64:
         self.set_trigger(trigger)
         out = self.next()
         return out
@@ -71,7 +71,7 @@ struct MidiSequencer(Movable, Copyable):
     var bend_mul: Float64
     var poly: PolyTrigger
 
-    fn __init__(out self, world: World, num_voices: Int = 8):
+    def __init__(out self, world: World, num_voices: Int = 8):
         self.world = world
         self.num_voices = num_voices
         self.current_voice = 0
@@ -87,11 +87,11 @@ struct MidiSequencer(Movable, Copyable):
         self.poly = PolyTrigger(initial_num_voices=num_voices, max_voices=64, world=world, name_space="poly")
 
     @always_inline
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         var out = 0.0
 
         # the callback function sent to the Poly, to be called whenever a new trigger is received from Python.
-        fn call_back(mut voice: TrigSynthVoice, mut vals: List[Float64]):
+        def call_back(mut voice: TrigSynthVoice, mut vals: List[Float64]):
             voice.note = [vals[0], vals[1]]
         # the poly has an internal Messenger that receives messages from Python. these have to be in the form of a List[Float64] or a List[Int]. the callback function receives the list of ints or floats as the second argument, so the PolyObject can be controlled by the message from Python.
         self.poly.next(self.voices, call_back=call_back)

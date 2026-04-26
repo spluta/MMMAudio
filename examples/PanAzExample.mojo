@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct PanAz_Synth(Representable, Movable, Copyable):
+struct PanAz_Synth(Movable, Copyable):
     var world: World  
     var osc: Osc[1]
     var freq: Float64
@@ -10,7 +10,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
     var width: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc(self.world)
         self.freq = 440.0
@@ -20,10 +20,7 @@ struct PanAz_Synth(Representable, Movable, Copyable):
         self.width = 2.0
         self.messenger = Messenger(self.world)
 
-    fn __repr__(self) -> String:
-        return String("Default")
-
-    fn next(mut self) -> MFloat[8]:
+    def next(mut self) -> MFloat[8]:
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.num_speakers, "num_speakers")
         self.messenger.update(self.width, "width")
@@ -39,18 +36,15 @@ struct PanAz_Synth(Representable, Movable, Copyable):
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct PanAzExample(Representable, Movable, Copyable):
+struct PanAzExample(Movable, Copyable):
     var world: World
     var synth: PanAz_Synth
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.synth = PanAz_Synth(self.world)
 
-    fn __repr__(self) -> String:
-        return String("PanAzExample")
-
-    fn next(mut self) -> MFloat[8]:
+    def next(mut self) -> MFloat[8]:
 
         sample = self.synth.next()  # Get the next sample from the synth
 

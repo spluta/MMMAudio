@@ -17,7 +17,7 @@ struct MelBandsExample(Movable, Copyable):
     var print_counter: Int
     var update_modulus: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
@@ -40,7 +40,7 @@ struct MelBandsExample(Movable, Copyable):
 
         self.freqs = MelBands.mel_frequencies(num_bands,20.0,20000.0)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         
         self.m.update(self.viz_mul,"viz_mul")
         self.m.update(self.mix,"mix")

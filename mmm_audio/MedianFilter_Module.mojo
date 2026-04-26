@@ -9,7 +9,7 @@ struct MedianFilter(Movable, Copyable):
     var index: Int
     var filled_count: Int
 
-    fn __init__(out self, size: Int = 5):
+    def __init__(out self, size: Int = 5):
         self.size = size
         if self.size < 1:
             self.size = 1
@@ -20,7 +20,7 @@ struct MedianFilter(Movable, Copyable):
         self.index = 0
         self.filled_count = 0
 
-    fn process_sample(mut self, value: Float64) -> Float64:
+    def process_sample(mut self, value: Float64) -> Float64:
         self.buffer[self.index] = value
         self.index = (self.index + 1) % self.size
         if self.filled_count < self.size:

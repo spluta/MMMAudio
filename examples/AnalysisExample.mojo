@@ -9,7 +9,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
     var sr: Float64
     var yin: YIN
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.sr = self.world[].sample_rate
         self.centroid = 0.0
@@ -18,7 +18,7 @@ struct CustomAnalysis[window_size: Int = 1024](BufferedProcessable):
         self.rms = 0.0
         self.yin = YIN(self.sr,Self.window_size,min_freq=50.0, max_freq=5000.0)
 
-    fn next_window(mut self, mut frame: List[Float64]):
+    def next_window(mut self, mut frame: List[Float64]):
         self.yin.next_window(frame)
         self.pitch = self.yin.pitch
         self.pitch_conf = self.yin.confidence
@@ -39,7 +39,7 @@ struct AnalysisExample(Movable, Copyable):
     var m: Messenger
     var which: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc[2](self.world)
         self.buffer = Buffer.load("resources/Shiverer.wav")
@@ -49,7 +49,7 @@ struct AnalysisExample(Movable, Copyable):
         self.m = Messenger(self.world)
         self.which = 0.0
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         
         self.m.update(self.freq,"freq")
         self.m.update(self.which,"which")

@@ -9,7 +9,7 @@ struct TestDelay(Movable, Copyable):
     var freq: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.synth = Phasor(self.world)
         self.delay = Delay[interp = Interp.lagrange4](self.world, Int(4800))
@@ -17,7 +17,7 @@ struct TestDelay(Movable, Copyable):
         self.del_time = 0.5
         self.messenger = Messenger(world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.freq,"freq")
         # self.messenger.update(self.del_time,"del_time")
         self.del_time = self.world[].mouse_x * 0.11

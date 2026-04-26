@@ -13,7 +13,7 @@ struct TestBuffer(Copyable,Movable):
     var which: Float64
     var m: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buf = Buffer.load("resources/Shiverer.wav")
         self.none = Play(self.world)
@@ -25,7 +25,7 @@ struct TestBuffer(Copyable,Movable):
         self.which = 0.0
         self.m = Messenger(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
 
         self.m.update(self.which,"which")
         rate = self.world[].mouse_x * 20000

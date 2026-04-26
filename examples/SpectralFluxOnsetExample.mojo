@@ -11,7 +11,7 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
     var impulse_vol: Float64
     var onsetcounter: Int64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
@@ -22,7 +22,7 @@ struct SpectralFluxOnsetExample(Movable, Copyable):
         self.impulse_vol = 0.5
         self.onsetcounter = 0
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         
         self.m.update(self.onsets.thresh,"thresh")
         self.m.update(self.impulse_vol,"impulse_vol")

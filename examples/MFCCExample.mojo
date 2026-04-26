@@ -13,7 +13,7 @@ struct MFCCExample(Movable, Copyable):
     var print_counter: Int
     var update_modulus: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
@@ -23,7 +23,7 @@ struct MFCCExample(Movable, Copyable):
         self.print_counter = 0
         self.update_modulus = 50
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         
         self.m.update(self.update_modulus,"update_modulus")
         flute = self.playBuf.next(self.buffer)

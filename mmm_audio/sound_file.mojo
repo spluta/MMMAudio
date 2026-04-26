@@ -1,8 +1,8 @@
 
 
-from memory import memcpy, bitcast
-from sys import argv
-from math import sin
+from std.memory import bitcast
+from std.sys import argv
+from std.math import sin
 from mmm_audio.constants import MFloat
 
 struct WavHeader(Movable, Copyable):
@@ -19,7 +19,7 @@ struct WavHeader(Movable, Copyable):
     var duration_seconds: Float64
     var num_samples: UInt64
 
-    fn __init__(out self):
+    def __init__(out self):
         self.file_size = 0
         self.audio_format = 0
         self.num_channels = 0
@@ -32,8 +32,8 @@ struct WavHeader(Movable, Copyable):
         self.duration_seconds = 0.0
         self.num_samples = 0
 
-    @doc_private
-    fn _get_format_name(self) -> String:
+    @doc_hidden
+    def _get_format_name(self) -> String:
         """Return the audio format name based on format code."""
         if self.audio_format == 1:
             return "PCM"
@@ -52,13 +52,13 @@ struct WavHeader(Movable, Copyable):
 # Byte conversion utilities
 # ============================================================================
 
-@doc_private
-fn bytes_to_uint16_le(data: List[UInt8], offset: Int) -> UInt16:
+@doc_hidden
+def bytes_to_uint16_le(data: List[UInt8], offset: Int) -> UInt16:
     """Convert 2 bytes (little-endian) to UInt16."""
     return UInt16(data[offset]) | (UInt16(data[offset + 1]) << 8)
 
-@doc_private
-fn bytes_to_uint32_le(data: List[UInt8], offset: Int) -> UInt32:
+@doc_hidden
+def bytes_to_uint32_le(data: List[UInt8], offset: Int) -> UInt32:
     """Convert 4 bytes (little-endian) to UInt32."""
     return (
         UInt32(data[offset])
@@ -67,8 +67,8 @@ fn bytes_to_uint32_le(data: List[UInt8], offset: Int) -> UInt32:
         | (UInt32(data[offset + 3]) << 24)
     )
 
-@doc_private
-fn bytes_to_int16_le(data: List[UInt8], offset: Int) -> Float64:
+@doc_hidden
+def bytes_to_int16_le(data: List[UInt8], offset: Int) -> Float64:
     """Convert 2 bytes (little-endian) to signed Int16."""
     var bytes = SIMD[DType.uint8, 2](
         data[offset], 
@@ -77,21 +77,21 @@ fn bytes_to_int16_le(data: List[UInt8], offset: Int) -> Float64:
     
     return Float64(bitcast[DType.int16, 1](bytes))
 
-@doc_private
-fn bytes_to_int24_le(data: List[UInt8], offset: Int) -> Float64:
+@doc_hidden
+def bytes_to_int24_le(data: List[UInt8], offset: Int) -> Float64:
     """Convert 3 bytes (little-endian) to signed Int32 (24-bit audio)."""
     sign_bit = 255 if data[offset + 2] & 0x80 else 0
     var bytes = SIMD[DType.uint8, 4](
         data[offset], 
         data[offset + 1], 
         data[offset + 2], 
-        sign_bit
+        UInt8(sign_bit)
     )
     
     return Float64(bitcast[DType.int32, 1](bytes))
 
-@doc_private
-fn bytes_to_int32_le(data: List[UInt8], offset: Int) -> Float64:
+@doc_hidden
+def bytes_to_int32_le(data: List[UInt8], offset: Int) -> Float64:
     """Convert 4 bytes (little-endian) to signed Int32."""
     var bytes = SIMD[DType.uint8, 4](
         data[offset], 
@@ -104,8 +104,8 @@ fn bytes_to_int32_le(data: List[UInt8], offset: Int) -> Float64:
     # This treats the raw bits as an IEEE 754 float
     return Float64(bitcast[DType.int32, 1](bytes))
 
-@doc_private
-fn bytes_to_float32_le(data: List[UInt8], offset: Int) -> Float64:
+@doc_hidden
+def bytes_to_float32_le(data: List[UInt8], offset: Int) -> Float64:
     """Reinterprets 4 bytes from a list as a Float32."""
     # 1. Extract 4 bytes into a SIMD vector
     var bytes = SIMD[DType.uint8, 4](
@@ -119,8 +119,8 @@ fn bytes_to_float32_le(data: List[UInt8], offset: Int) -> Float64:
     # This treats the raw bits as an IEEE 754 float
     return Float64(bitcast[DType.float32, 1](bytes))
 
-@doc_private
-fn bytes_to_float64_le(data: List[UInt8], offset: Int) -> Float64:
+@doc_hidden
+def bytes_to_float64_le(data: List[UInt8], offset: Int) -> Float64:
     var bytes = SIMD[DType.uint8, 8](
         data[offset], 
         data[offset + 1], 
@@ -136,18 +136,18 @@ fn bytes_to_float64_le(data: List[UInt8], offset: Int) -> Float64:
     # This treats the raw bits as an IEEE 754 float
     return bitcast[DType.float64, 1](bytes)
 
-@doc_private
-fn check_bytes_match(data: List[UInt8], offset: Int, expected: String) -> Bool:
+@doc_hidden
+def check_bytes_match(data: List[UInt8], offset: Int, expected: String) -> Bool:
     """Check if bytes at offset match expected string."""
     if offset + len(expected) > len(data):
         return False
     for i in range(len(expected)):
-        if data[offset + i] != ord(expected[byte=i]):
+        if data[offset + i] != UInt8(ord(expected[byte=i])):
             return False
     return True
 
-@doc_private
-fn find_chunk(data: List[UInt8], start_offset: Int, chunk_id: String) raises -> Tuple[Int, UInt32]:
+@doc_hidden
+def find_chunk(data: List[UInt8], start_offset: Int, chunk_id: String) raises -> Tuple[Int, UInt32]:
     """
     Find a chunk in the WAV file data.
     
@@ -176,7 +176,7 @@ fn find_chunk(data: List[UInt8], start_offset: Int, chunk_id: String) raises -> 
 # Sample reading functions
 # ============================================================================
 
-fn read_8bit_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_8bit_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 8-bit unsigned PCM sample and normalize to [-1.0, 1.0]."""
     var bytes = SIMD[DType.uint8, 1](
         data[offset]
@@ -185,30 +185,30 @@ fn read_8bit_sample(data: List[UInt8], offset: Int) -> Float64:
     return Float64(bitcast[DType.uint8, 1](bytes))/255.0
 
 
-fn read_16bit_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_16bit_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 16-bit signed PCM sample and normalize to [-1.0, 1.0]."""
     var sample = bytes_to_int16_le(data, offset)
     return Float64(sample) / 32768.0
 
 
-fn read_24bit_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_24bit_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 24-bit signed PCM sample and normalize to [-1.0, 1.0]."""
     var sample = bytes_to_int24_le(data, offset)
     return Float64(sample) / 8388608.0  # 2^23
 
 
-fn read_32bit_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_32bit_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 32-bit signed PCM sample and normalize to [-1.0, 1.0]."""
     var sample = bytes_to_int32_le(data, offset)
     return Float64(sample) / 2147483648.0  # 2^31
 
 
-fn read_float32_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_float32_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 32-bit float sample (already normalized)."""
     return Float64(bytes_to_float32_le(data, offset))
 
 
-fn read_float64_sample(data: List[UInt8], offset: Int) -> Float64:
+def read_float64_sample(data: List[UInt8], offset: Int) -> Float64:
     """Read 64-bit float sample (already normalized)."""
     return bytes_to_float64_le(data, offset)
 
@@ -217,7 +217,7 @@ fn read_float64_sample(data: List[UInt8], offset: Int) -> Float64:
 # Main WAV reading functions
 # ============================================================================
 
-fn read_wav_header(file_name: String) raises -> WavHeader:
+def read_wav_header(file_name: String) raises -> WavHeader:
     """
     Parse WAV header from file data.
     
@@ -275,7 +275,7 @@ fn read_wav_header(file_name: String) raises -> WavHeader:
     return header^
 
 
-fn read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int = 1) raises -> List[List[Float64]]:
+def read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int = 1) raises -> List[List[Float64]]:
     """
     Read all audio samples from WAV file data.
     
@@ -309,27 +309,27 @@ fn read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int = 
 
     if num_wavetables <= 1:
         # Initialize channel lists
-        for ch in range(file_num_channels):
+        for _ in range(file_num_channels):
             samples.append(List[Float64]())
-        for sample_idx in range(num_samples):
+        for _ in range(num_samples):
             for ch in range(file_num_channels):
                 sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
                 samples[ch].append(sample_value)
                 offset += bytes_per_sample
     else:
         # Initialize channel lists
-        for ch in range(num_wavetables):
+        for _ in range(num_wavetables):
             samples.append(List[Float64]()) 
         var samples_per_wavetable = num_samples // num_wavetables
         for wavetable_idx in range(num_wavetables):
-            for sample_idx in range(samples_per_wavetable):
+            for _ in range(samples_per_wavetable):
                 sample_value = get_sample(file_data, offset + wavetable_idx * bytes_per_sample, bits_per_sample, is_pcm, is_float)
                 offset += bytes_per_sample
                 samples[wavetable_idx].append(sample_value)
     
     return samples^
 
-fn get_sample(file_data: List[UInt8], offset: Int, bits_per_sample: Int, is_pcm: Bool, is_float: Bool) -> Float64:
+def get_sample(file_data: List[UInt8], offset: Int, bits_per_sample: Int, is_pcm: Bool, is_float: Bool) -> Float64:
     sample_value = 0.0
     if is_pcm:
         # PCM format
@@ -353,7 +353,7 @@ fn get_sample(file_data: List[UInt8], offset: Int, bits_per_sample: Int, is_pcm:
             return 0.0
     return sample_value
 
-fn read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_wavetables: Int = 1) raises -> List[MFloat[num_channels]]:
+def read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_wavetables: Int = 1) raises -> List[MFloat[num_channels]]:
     """
     Read all audio samples from s WAV file and return them as a List of SIMD vectors.
     
@@ -387,7 +387,7 @@ fn read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_w
     # Read samples
     var offset = data_offset
     if num_wavetables <= 1:
-        for sample_idx in range(num_samples):
+        for _ in range(num_samples):
             SIMD_sample = MFloat[num_channels](0.0)
             read_chans = min(num_channels, filenum_channels)
             for ch in range(read_chans):
@@ -418,7 +418,7 @@ fn read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_w
 # Utility functions
 # ============================================================================
 
-fn print_wav_info(header: WavHeader):
+def print_wav_info(header: WavHeader):
     """Pretty print WAV header information."""
     print("Format:         ", header._get_format_name())
     print("Channels:       ", header.num_channels)
@@ -433,7 +433,7 @@ fn print_wav_info(header: WavHeader):
     print("File Size:      ", header.file_size, "bytes")
 
 
-fn print_sample_stats(samples: List[List[Float64]]):
+def print_sample_stats(samples: List[List[Float64]]):
     """Print statistics about the audio samples."""
     var num_channels = len(samples)
     
@@ -472,7 +472,7 @@ fn print_sample_stats(samples: List[List[Float64]]):
 
 #####################################
 
-fn write_f32(mut data: List[UInt8], value: Float32):
+def write_f32(mut data: List[UInt8], value: Float32):
     """Write a Float32 as 4 little-endian bytes."""
     var bits = bitcast[DType.uint32](value)
     data.append(UInt8(bits & 0xFF))
@@ -480,7 +480,7 @@ fn write_f32(mut data: List[UInt8], value: Float32):
     data.append(UInt8((bits >> 16) & 0xFF))
     data.append(UInt8((bits >> 24) & 0xFF))
 
-fn write_wav_file(file_name: String, samples: Span[mut=False, List[Float64]], sample_rate: Int = 44100) raises:
+def write_wav_file(file_name: String, samples: Span[mut=False, List[Float64], ...], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file."""
     var num_channels = len(samples)
     var num_samples = len(samples[0]) if num_channels > 0 else 0
@@ -496,7 +496,7 @@ fn write_wav_file(file_name: String, samples: Span[mut=False, List[Float64]], sa
     with open(file_name, "w") as f:
         f.write_bytes(data)
 
-fn write_wav_file[num_channels: Int](file_name: String, samples: Span[mut=False, MFloat[num_channels]], sample_rate: Int = 44100) raises:
+def write_wav_file[num_channels: Int](file_name: String, samples: Span[mut=False, MFloat[num_channels], ...], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file."""
     var num_samples = len(samples)
     
@@ -511,8 +511,8 @@ fn write_wav_file[num_channels: Int](file_name: String, samples: Span[mut=False,
     with open(file_name, "w") as f:
         f.write_bytes(data)
 
-@doc_private
-fn write_wav_header(
+@doc_hidden
+def write_wav_header(
     mut data: List[UInt8],
     num_samples: Int,
     sample_rate: Int = 44100,
@@ -528,15 +528,15 @@ fn write_wav_header(
     print(num_samples, sample_rate, num_channels, bits_per_sample)
     
     # Helper functions
-    fn write_str(mut d: List[UInt8], s: String):
+    def write_str(mut d: List[UInt8], s: String):
         for i in range(len(s)):
             d.append(UInt8(ord(s[byte=i])))
     
-    fn write_u16(mut d: List[UInt8], val: Int):
+    def write_u16(mut d: List[UInt8], val: Int):
         d.append(UInt8(val & 0xFF))
         d.append(UInt8((val >> 8) & 0xFF))
     
-    fn write_u32(mut d: List[UInt8], val: Int):
+    def write_u32(mut d: List[UInt8], val: Int):
         d.append(UInt8(val & 0xFF))
         d.append(UInt8((val >> 8) & 0xFF))
         d.append(UInt8((val >> 16) & 0xFF))

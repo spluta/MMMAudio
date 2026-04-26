@@ -16,7 +16,7 @@ struct TestAmpComp(Movable, Copyable):
     var knee_width: MFloat[1]
 
     var play_buf: Play
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world 
         self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
 
@@ -31,7 +31,7 @@ struct TestAmpComp(Movable, Copyable):
         self.release = 0.1
         self.knee_width = 0.0
 
-    fn next(mut self) -> MFloat[num_chans+2]:
+    def next(mut self) -> MFloat[num_chans+2]:
 
         self.m.update(self.thresh, "thresh")
         self.m.update(self.ratio, "ratio")

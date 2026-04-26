@@ -7,14 +7,14 @@ struct Tone(Movable,Copyable):
     var m: Messenger
     var gate: Bool
 
-    fn __init__(out self, world: World, namespace: String):
+    def __init__(out self, world: World, namespace: String):
         self.world = world
         self.osc = Osc(self.world)
         self.freq = 440.0
         self.m = Messenger(self.world,namespace)
         self.gate = False
 
-    fn next(mut self) -> Float64:
+    def next(mut self) -> Float64:
 
         if self.m.notify_update(self.freq,"freq"):
             print("Tone freq updated to ", self.freq)
@@ -40,7 +40,7 @@ struct MessengerExample(Copyable, Movable):
     var string: String
     var strings: List[String]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.m = Messenger(self.world)
 
@@ -56,7 +56,7 @@ struct MessengerExample(Copyable, Movable):
         self.ints = [0, 0]
         self.string = ""
         self.strings = ["", ""]
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         
         if self.m.notify_update(self.bool,"bool"):

@@ -11,19 +11,19 @@ struct Analyzer(BufferedProcessable):
     var spreads: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, world: World, sample_rate: Float64):
+    def __init__(out self, world: World, sample_rate: Float64):
         self.world = world
         self.fft = RealFFT[](windowsize)
         self.spreads = List[Float64]()
         self.sample_rate = sample_rate
 
-    fn next_window(mut self, mut buffer: List[Float64]):
+    def next_window(mut self, mut buffer: List[Float64]):
         self.fft.fft(buffer)
         val = SpectralSpread.from_mags(self.fft.mags, self.sample_rate)
         self.spreads.append(val)
         return
 
-fn main():
+def main():
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
 

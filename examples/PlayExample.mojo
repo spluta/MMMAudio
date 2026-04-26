@@ -15,7 +15,7 @@ struct BufSynth(Movable, Copyable):
     var lpf_freq_lag: Lag[]
     var messenger: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world 
         print("world memory location:", world)
 
@@ -36,7 +36,7 @@ struct BufSynth(Movable, Copyable):
 
         self.messenger = Messenger(self.world)
 
-    fn next(mut self) -> MFloat[num_chans]:
+    def next(mut self) -> MFloat[num_chans]:
         self.messenger.update(self.lpf_freq, "lpf_freq")
         self.messenger.update(self.play_rate, "play_rate")
 
@@ -51,10 +51,10 @@ struct PlayExample(Movable, Copyable):
 
     var buf_synth: BufSynth  # Instance of the BufSynth
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
 
         self.buf_synth = BufSynth(self.world)  
 
-    fn next(mut self) -> MFloat[num_chans]:
+    def next(mut self) -> MFloat[num_chans]:
         return self.buf_synth.next()  # Return the combined output sample

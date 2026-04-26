@@ -14,7 +14,7 @@ struct TestOscOversampling(Movable, Copyable):
     var messenger: Messenger
     var lag: Lag[]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc(world)
         self.osc1 = Osc[1,1,1](world)
@@ -25,7 +25,7 @@ struct TestOscOversampling(Movable, Copyable):
         self.messenger = Messenger(world)
         self.lag = Lag(world, 0.1)
 
-    fn next(mut self) -> Float64:
+    def next(mut self) -> Float64:
         self.messenger.update(self.which, "which")
         freq = self.lag.next(linexp(self.world[].mouse_x, 0.0, 1.0, 20.0, 20000.0))
 

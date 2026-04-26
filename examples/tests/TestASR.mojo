@@ -9,7 +9,7 @@ struct TestASR(Movable, Copyable):
     var curves: MFloat[2]
     var gate: Bool
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.env = ASREnv(self.world)
         self.synth = Osc(self.world)
@@ -17,7 +17,7 @@ struct TestASR(Movable, Copyable):
         self.curves = MFloat[2](1.0, 1.0)
         self.gate = False
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.curves,"curves")
         self.messenger.update(self.gate,"gate")
 

@@ -16,7 +16,7 @@ struct Grains(Movable, Copyable):
     var m: Messenger
     var max_trig_rate: Float64
      
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world  
 
         # buffer uses numpy to load a buffer into an N channel array
@@ -31,7 +31,7 @@ struct Grains(Movable, Copyable):
         self.start_frame = 0.0 
 
     @always_inline
-    fn next(mut self) -> MFloat[num_simd_chans]:
+    def next(mut self) -> MFloat[num_simd_chans]:
         self.m.update(self.max_trig_rate, "max_trig_rate")
         imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, self.max_trig_rate)  # Map mouse Y to a trigger frequency between 1 Hz and max_trig_rate
         var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
@@ -39,8 +39,7 @@ struct Grains(Movable, Copyable):
         start_frame = Int(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, Float64(self.buffer.num_frames) - 1.0))
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
-        @parameter
-        if num_output_chans == 2:
+        comptime if num_output_chans == 2:
             out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0)
 
             return MFloat[num_simd_chans](out[0], out[1]) # because pan2 outputs a SIMD vector size 2, and we require a SIMD vector of size num_simd_chans, you have to manually make the SIMD vector in this case (the compiler does not agree that num_simd_chans == 2, even though it does)

@@ -1,10 +1,10 @@
 from mmm_audio import *
-from math import ceil, floor, log2, log, exp, sqrt, cos, pi
-from math import sqrt
+from std.math import ceil, floor, log2, log, exp, sqrt, cos, pi
+from std.math import sqrt
 
 @always_inline
-@doc_private
-fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64, Float64]:
+@doc_hidden
+def parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64, Float64]:
     denom = prev - 2.0 * cur + next
     if abs(denom) < 1e-12:
         return (0.0, cur)
@@ -13,8 +13,8 @@ fn parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64
     return (p, refined_val)
 
 @always_inline
-@doc_private
-fn spectral_amp_prepare(
+@doc_hidden
+def spectral_amp_prepare(
     mags: List[Float64],
     sample_rate: Float64,
     min_freq: Float64,
@@ -65,8 +65,8 @@ fn spectral_amp_prepare(
     return True
 
 @always_inline
-@doc_private
-fn spectral_freqs_prepare(
+@doc_hidden
+def spectral_freqs_prepare(
     min_bin: Int,
     max_bin: Int,
     bin_hz: Float64,
@@ -90,7 +90,7 @@ fn spectral_freqs_prepare(
     return
 
 trait GetFloat64Featurable:
-    fn get_features(self) -> List[Float64]:...
+    def get_features(self) -> List[Float64]:...
 
 struct YIN(BufferedProcessable,GetFloat64Featurable):
     """Monophonic Frequency ('F0') Detection using the YIN algorithm (FFT-based, O(N log N) version)."""
@@ -108,7 +108,7 @@ struct YIN(BufferedProcessable,GetFloat64Featurable):
     var min_freq: Float64
     var max_freq: Float64
 
-    fn __init__(out self, sr: Float64, window_size: Int = 1024, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0):
+    def __init__(out self, sr: Float64, window_size: Int = 1024, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0):
         """Initialize the YIN pitch detector.
 
         Args:
@@ -135,11 +135,11 @@ struct YIN(BufferedProcessable,GetFloat64Featurable):
         self.yin_buffer = List[Float64](length=window_size, fill=0.0)
         self.yin_values = List[Float64](length=window_size, fill=0.0)
     
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current pitch and confidence as a List of Float64."""
         return [self.pitch, self.confidence]
 
-    fn next_window(mut self, mut frame: List[Float64]):
+    def next_window(mut self, mut frame: List[Float64]):
         """Compute the YIN pitch estimate for the given frame of audio samples.
 
         Args:
@@ -260,11 +260,11 @@ struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
     var max_freq: Float64
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral centroid value as a List of Float64."""
         return [self.centroid]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False):
         """Initialize the Spectral Centroid analyzer.
         Args:
             sr: The sample rate from the MMMWorld.
@@ -281,7 +281,7 @@ struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
         self.max_freq = max_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral centroid for a given FFT analysis.
 
         This function is to be used by FFTProcess if SpectralCentroid is passed as the "process".
@@ -293,7 +293,7 @@ struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
         self.centroid = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False) -> Float64:
         """Compute the spectral centroid for the given magnitudes of an FFT frame.
 
         This static method is useful when there is an FFT already computed, perhaps as 
@@ -348,11 +348,11 @@ struct SpectralSpread(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral spread value as a List of Float64."""
         return [self.spread]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Spread analyzer.
 
         Args:
@@ -369,12 +369,12 @@ struct SpectralSpread(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral spread for a given FFT analysis."""
         self.spread = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
         var amp = List[Float64]()
         var freqs = List[Float64]()
         var amp_sum: Float64 = 0.0
@@ -422,11 +422,11 @@ struct SpectralSkewness(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral skewness value as a List of Float64."""
         return [self.skewness]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Skewness analyzer.
 
         Args:
@@ -443,12 +443,12 @@ struct SpectralSkewness(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral skewness for a given FFT analysis."""
         self.skewness = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
         var amp = List[Float64]()
         var freqs = List[Float64]()
         var amp_sum: Float64 = 0.0
@@ -505,11 +505,11 @@ struct SpectralKurtosis(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral kurtosis value as a List of Float64."""
         return [self.kurtosis]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Kurtosis analyzer.
 
         Args:
@@ -526,12 +526,12 @@ struct SpectralKurtosis(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral kurtosis for a given FFT analysis."""
         self.kurtosis = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
         var amp = List[Float64]()
         var freqs = List[Float64]()
         var amp_sum: Float64 = 0.0
@@ -589,11 +589,11 @@ struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral rolloff value as a List of Float64."""
         return [self.rolloff]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95.0, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95.0, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Rolloff analyzer.
 
         Args:
@@ -612,7 +612,7 @@ struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral rolloff for a given FFT analysis."""
         self.rolloff = self.from_mags(
             mags,
@@ -625,7 +625,7 @@ struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
         )
 
     @staticmethod
-    fn from_mags(
+    def from_mags(
         mags: List[Float64],
         sample_rate: Float64,
         min_freq: Float64 = 20,
@@ -681,11 +681,11 @@ struct SpectralFlatness(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral flatness value (dB) as a List of Float64."""
         return [self.flatness]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Flatness analyzer.
 
         Args:
@@ -702,12 +702,12 @@ struct SpectralFlatness(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral flatness for a given FFT analysis."""
         self.flatness = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
         var amp = List[Float64]()
         var amp_sum: Float64 = 0.0
         var max_amp: Float64 = 0.0
@@ -748,11 +748,11 @@ struct SpectralCrest(FFTProcessable, GetFloat64Featurable):
     var log_freq: Bool
     var power_mag: Bool
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral crest value (dB) as a List of Float64."""
         return [self.crest]
 
-    fn __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
+    def __init__(out self, sr: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False):
         """Initialize the Spectral Crest analyzer.
 
         Args:
@@ -769,12 +769,12 @@ struct SpectralCrest(FFTProcessable, GetFloat64Featurable):
         self.log_freq = log_freq
         self.power_mag = power_mag
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the spectral crest for a given FFT analysis."""
         self.crest = self.from_mags(mags, self.sr, self.min_freq, self.max_freq, self.log_freq, self.power_mag)
 
     @staticmethod
-    fn from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
+    def from_mags(mags: List[Float64], sample_rate: Float64, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False) -> Float64:
         var amp = List[Float64]()
         var amp_sum: Float64 = 0.0
         var max_amp: Float64 = 0.0
@@ -807,15 +807,15 @@ struct RMS(BufferedProcessable, GetFloat64Featurable):
     """
     var rms: Float64
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current RMS value as a List of Float64."""
         return [self.rms]
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the RMS analyzer."""
         self.rms = 0.0
 
-    fn next_window(mut self, mut input: List[Float64]):
+    def next_window(mut self, mut input: List[Float64]):
         """Compute the RMS for the given window of audio samples.
 
         This function is to be used with a [BufferedProcess](BufferedProcess.md/#struct-bufferedprocess).
@@ -828,7 +828,7 @@ struct RMS(BufferedProcessable, GetFloat64Featurable):
         self.rms = self.from_window(input)
 
     @staticmethod
-    fn from_window(mut frame: List[Float64]) -> Float64:
+    def from_window(mut frame: List[Float64]) -> Float64:
         """Compute the RMS for the given window of audio samples.
 
         This static method is useful when there is an audio frame already available, perhaps
@@ -860,11 +860,11 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
     var fft_size: Int
     var power: Float64
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current mel band values as a List of Float64."""
         return self.bands.copy()
 
-    fn __init__(out self, sr: Float64, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, power: Float64 = 2.0):
+    def __init__(out self, sr: Float64, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, power: Float64 = 2.0):
         """Initialize the Mel Bands analyzer.
         
         Args:
@@ -890,7 +890,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         self.bands = List[Float64](length=self.num_bands, fill=0.0)
         self.make_weights()
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the mel bands for a given FFT analysis.
 
         This function is to be used by FFTProcess if MelBands is passed as the "process".
@@ -903,7 +903,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         """
         self.from_mags(mags)
 
-    fn from_mags(mut self, ref mags: List[Float64]):
+    def from_mags(mut self, ref mags: List[Float64]):
         """Compute the mel bands for a given list of magnitudes.
 
         This function is useful when there is an FFT already computed, perhaps as 
@@ -925,8 +925,8 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
                 band_energy += self.weights[i][j] * mag_val
             self.bands[i] = band_energy
     
-    @doc_private
-    fn make_weights(mut self):
+    @doc_hidden
+    def make_weights(mut self):
         """Compute the mel filter bank weights."""
 
         fftfreqs = RealFFT.fft_frequencies(sr=self.sr, n_fft=self.fft_size)
@@ -958,7 +958,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
                 self.weights[i][j] *= enorm[i]
 
     @staticmethod
-    fn mel_frequencies(n_mels: Int = 128, fmin: Float64 = 0.0, fmax: Float64 = 20000.0) -> List[Float64]:
+    def mel_frequencies(n_mels: Int = 128, fmin: Float64 = 0.0, fmax: Float64 = 20000.0) -> List[Float64]:
         """Compute an array of acoustic frequencies tuned to the mel scale.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.mel_frequencies.html).  For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.
@@ -983,7 +983,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         return hz^
 
     @staticmethod
-    fn hz_to_mel[num_chans: Int = 1](freq: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
+    def hz_to_mel[num_chans: Int = 1](freq: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
         """Convert Hz to Mels.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.hz_to_mel.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.
@@ -1018,7 +1018,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         return mels
 
     @staticmethod
-    fn mel_to_hz[num_chans: Int = 1](mel: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
+    def mel_to_hz[num_chans: Int = 1](mel: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
         """Convert mel bin numbers to frequencies.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.mel_to_hz.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.
@@ -1054,11 +1054,11 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
     var dct: DCT
     var coeffs: List[Float64]
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current MFCC values as a List of Float64."""
         return self.coeffs.copy()
 
-    fn __init__(out self, sr: Float64, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024):
+    def __init__(out self, sr: Float64, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024):
         """Initialize the MFCC analyzer.
 
         Args:
@@ -1079,7 +1079,7 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         self.db_bands = List[Float64](length=num_bands, fill=0.0)
         self.coeffs = List[Float64](length=num_coeffs, fill=0.0)
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
         """Compute the MFCCs for a given FFT analysis.
 
         This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if MFCC is passed as the "process".
@@ -1092,7 +1092,7 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         """
         self.from_mags(mags)
 
-    fn from_mags(mut self, ref mags: List[Float64]):
+    def from_mags(mut self, ref mags: List[Float64]):
         """Compute the MFCCs for a given list of magnitudes.
         
         This function is useful when there is an FFT already computed, 
@@ -1106,8 +1106,8 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         self.mel_bands.from_mags(mags)
         self.from_mel_bands_internal()
 
-    @doc_private
-    fn from_mel_bands_internal(mut self):
+    @doc_hidden
+    def from_mel_bands_internal(mut self):
         """Compute the MFCCs using self.mel_bands.bands.
         """
         comptime max_db_range: Float64 = 80.0
@@ -1126,7 +1126,7 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
 
         self.dct.process(self.db_bands, self.coeffs)
 
-    fn from_mel_bands(mut self, ref mbands: List[Float64]):
+    def from_mel_bands(mut self, ref mbands: List[Float64]):
         """Compute the MFCCs for a given list of mel band energies.
 
         This function is useful when there is a mel band analysis already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
@@ -1154,7 +1154,7 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         self.dct.process(self.db_bands, self.coeffs)
 
     @staticmethod
-    fn buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
@@ -1167,13 +1167,13 @@ struct DCT(Movable,Copyable):
     var input_size: Int
     var output_size: Int
 
-    fn __init__(out self, input_size: Int, output_size: Int):
+    def __init__(out self, input_size: Int, output_size: Int):
         self.input_size = input_size
         self.output_size = output_size
         self.weights = List[List[Float64]](length=output_size, fill=List[Float64](length=input_size, fill=0.0))
         self.make_weights()
 
-    fn process(mut self, ref input: List[Float64], mut output: List[Float64]) -> None:
+    def process(mut self, ref input: List[Float64], mut output: List[Float64]) -> None:
         """Compute the first `output_size` DCT-II coefficients for `input`.
 
         Nothing is returned from this function, but the computed DCT coefficients are stored in the `output` List passed as an argument.
@@ -1188,8 +1188,8 @@ struct DCT(Movable,Copyable):
                 acc += self.weights[k][n] * input[n]
             output[k] = acc
 
-    @doc_private
-    fn make_weights(mut self):
+    @doc_hidden
+    def make_weights(mut self):
         """Precompute the DCT-II weight matrix."""
         var n_inv = 1.0 / Float64(self.input_size)
         var scale0 = sqrt(n_inv)
@@ -1221,7 +1221,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     var flux: Float64
     var positive_only: Bool
 
-    fn __init__(out self, num_mags: Int, positive_only: Bool = False):
+    def __init__(out self, num_mags: Int, positive_only: Bool = False):
         """Initialize the Spectral Flux analyzer.
 
         Args:
@@ -1235,7 +1235,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         self.flux = 0.0
         self.positive_only = positive_only
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         """Compute the spectral flux onset value for a given FFT analysis.
 
         This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnsets is passed as the "process".
@@ -1248,11 +1248,11 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         """
         _ = self.from_mags(mags)
 
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         """Return the current spectral flux value as a List of Float64."""
         return [self.flux]
 
-    fn from_mags(mut self, ref mags: List[Float64]) -> Float64:
+    def from_mags(mut self, ref mags: List[Float64]) -> Float64:
         """Compute the spectral flux onset value for a given list of magnitudes.
 
         This function is useful when there is an FFT already computed, perhaps as part of a custom struct that implements the [FFTProcessable](FFTProcess.md/#trait-fftprocessable) trait.
@@ -1279,7 +1279,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
         return self.flux
 
 trait GetBoolFeaturable:
-    fn get_features(self) -> List[Bool]:...
+    def get_features(self) -> List[Bool]:...
 
 struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
     """Spectral Flux Onset analysis.
@@ -1294,10 +1294,10 @@ struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
     var prev_flux: Float64
     var fftp: FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann]
 
-    fn get_features(self) -> List[Bool]:
+    def get_features(self) -> List[Bool]:
         return [self.state]
 
-    fn __init__(out self, world: World, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
+    def __init__(out self, world: World, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
         self.world = world
         self.thresh = 0.5
         self.state = False
@@ -1309,7 +1309,7 @@ struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
         sfp = SpectralFlux(num_mags=(window_size // 2) + 1, positive_only=True)
         self.fftp = FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
 
-    fn next(mut self, input: SIMD[DType.float64,1]) -> Bool:
+    def next(mut self, input: SIMD[DType.float64,1]) -> Bool:
 
         _ = self.fftp.next(input)
         
@@ -1336,7 +1336,7 @@ struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
         return self.state
     
     @staticmethod
-    fn buf_analysis(world: World, buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, thresh: Float64 = 0.5, min_slice_len: Float64 = 1.0, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5) raises -> List[Int]:
+    def buf_analysis(world: World, buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, thresh: Float64 = 0.5, min_slice_len: Float64 = 1.0, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5) raises -> List[Int]:
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
 
@@ -1371,18 +1371,18 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
     var sort_by_freq: Bool
     var bin_freq: Float64
     
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         state = List[Float64]()
         for pair in self.freq_amp_pairs:
             state.append(pair[0]) # freq
             state.append(pair[1]) # amp
         return state^
 
-    fn get_features_ptr(self) -> Pointer[mut = False, List[Tuple[Float64, Float64]], origin_of(self.freq_amp_pairs)]:
+    def get_features_ptr(self) -> Pointer[mut = False, List[Tuple[Float64, Float64]], origin_of(self.freq_amp_pairs)]:
         """Return a pointer to the current List of freq, amp pairs."""
         return Pointer(to=self.freq_amp_pairs)
 
-    fn __init__(out self, sample_rate: Float64, window_size: Int, num_peaks: Int = 5, sort_by_freq: Bool = True, thresh: Float64 = -30.0):
+    def __init__(out self, sample_rate: Float64, window_size: Int, num_peaks: Int = 5, sort_by_freq: Bool = True, thresh: Float64 = -30.0):
         """Initialize the TopNFreqs process.
 
         Args:
@@ -1394,15 +1394,15 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
         """
         self.window_size = window_size
         self.freq_amp_pairs = [(0.0, 0.0) for _ in range(num_peaks)]
-        self.thresh = dbamp(thresh)*self.window_size/4.0 
+        self.thresh = dbamp(thresh)*MFloat[1](self.window_size)/4.0 
         self.num_peaks = num_peaks
         self.sort_by_freq = sort_by_freq
         self.bin_freq = sample_rate / Float64(self.window_size)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         pass
 
-    fn next_frame(mut self, mut mags: List[MFloat[]], mut phases: List[MFloat[]]) -> None:
+    def next_frame(mut self, mut mags: List[MFloat[]], mut phases: List[MFloat[]]) -> None:
         top_N = topN_indices(mags, self.num_peaks, self.thresh)
 
         for i in range(self.num_peaks):
@@ -1411,21 +1411,21 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
                 val, mag = find_quadratic_peak(mags[index-1], mags[index], mags[index+1])
 
                 if val < 1.0:
-                    low_freq = (index-1)*self.bin_freq
-                    high_freq = index*self.bin_freq
+                    low_freq = (MFloat[1](index)-1.0)*self.bin_freq
+                    high_freq = MFloat[1](index)*self.bin_freq
                     freq = lincurve(val, 0.0, 1.0, low_freq, high_freq, 0.6)
                 else:
-                    low_freq = index*self.bin_freq
-                    high_freq = (index+1)*self.bin_freq
+                    low_freq = MFloat[1](index)*self.bin_freq
+                    high_freq = (MFloat[1](index)+1.0)*self.bin_freq
                     freq = lincurve(val, 1.0, 2.0, low_freq, high_freq, -0.6)
-                self.freq_amp_pairs[i] = Tuple(freq, mag * (4.0/self.window_size))
+                self.freq_amp_pairs[i] = Tuple(freq, mag * (4.0/MFloat[1](self.window_size)))
             else:
                 self.freq_amp_pairs[i] = Tuple(0.0, 0.0)
         if self.sort_by_freq:
             self.sort_pairs_by_freq()
 
-    fn sort_pairs_by_freq(mut self):
-        fn cmp_fn(a: Tuple[Float64, Float64], b: Tuple[Float64, Float64]) capturing -> Bool:
+    def sort_pairs_by_freq(mut self):
+        def cmp_fn(a: Tuple[Float64, Float64], b: Tuple[Float64, Float64]) capturing -> Bool:
             return a[0] < b[0]
 
         sort[cmp_fn](self.freq_amp_pairs)

@@ -11,14 +11,14 @@ struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
     var clip: SoftClipAD[1,4]
     var overdrive: TanhAD[Self.num_chans]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.osc = Osc(world)
         self.clip = SoftClipAD[1,4](world)
         self.overdrive = TanhAD[Self.num_chans](world)
         self.lag = Lag(world)
 
-    fn next(mut self) -> MFloat[Self.num_chans]:
+    def next(mut self) -> MFloat[Self.num_chans]:
         sample = self.osc.next(self.world[].mouse_y * 40.0 + 20)  # Get the next white noise sample
         gain = self.lag.next(self.world[].mouse_x * (20.0)) + 1.0
 

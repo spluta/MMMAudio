@@ -1,5 +1,5 @@
-from python import PythonObject
-from python import Python
+from std.python import PythonObject
+from std.python import Python
 from mmm_audio import *
 
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
@@ -26,7 +26,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
     var messenger: Messenger
     var file_name: String
 
-    fn __init__(out self, world: World, file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
+    def __init__(out self, world: World, file_name: String, namespace: Optional[String] = None, trig_rate: Float64 = 25.0):
         """Initialize the MLP struct.
         
         Args:
@@ -63,7 +63,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
         self.reload_model(file_name)
 
-    fn reload_model(mut self: MLP, var file_name: String):
+    def reload_model(mut self: MLP, var file_name: String):
         """Reload the MLP model from a specified file.
 
         Args:
@@ -78,11 +78,8 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
         except Exception:
             print("Error reloading MLP model")
 
-    fn __repr__(self) -> String:
-        return String("MLP_Ugen(input_size: " + String(self.input_size) + ", output_size: " + String(self.output_size) + ")")
-
     @always_inline
-    fn next(mut self: MLP):
+    def next(mut self: MLP):
         """Function for Audio Thread.
 
         Call this function every sample in the audio thread. The MLP will only
@@ -101,8 +98,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
         if not self.inference_gate:
             if self.messenger.notify_update(self.fake_model_output,"fake_model_output"):
-                @parameter
-                for i in range(self.output_size):
+                comptime for i in range(self.output_size):
                     if i < len(self.fake_model_output):
                         self.model_output[Int(i)] = self.fake_model_output[i]
                         
@@ -111,8 +107,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
             if self.torch is None:
                 return 
             try:
-                @parameter
-                for i in range(Self.input_size):
+                comptime for i in range(Self.input_size):
                     self.py_input[0][i] = self.model_input[Int(i)]
                 self.py_output = self.model(self.py_input)  # Run the model with the input
             except Exception:
@@ -120,8 +115,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
 
             try:
                 py_output = self.model(self.py_input)  # Run the model with the input
-                @parameter
-                for i in range(Self.output_size):
+                comptime for i in range(Self.output_size):
                     var py_val = py_output[0][i].item()
                     self.model_output[i] = py_to_float64(py_val)
             except Exception:

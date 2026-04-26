@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct VariableOsc(Representable, Movable, Copyable):
+struct VariableOsc(Movable, Copyable):
     var world: World  
     # for efficiency we set the interpolation and oversampling in the constructor
     # so here we have sinc interpolation with 2x oversampling
@@ -14,7 +14,7 @@ struct VariableOsc(Representable, Movable, Copyable):
     var is_down: Bool
     var asr: ASREnv
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         # for efficiency we set the interpolation and oversampling in the constructor
         self.osc = Osc[2,Interp.sinc,os_index=1](self.world)
@@ -25,10 +25,7 @@ struct VariableOsc(Representable, Movable, Copyable):
         self.is_down = False
         self.asr = ASREnv(self.world)
 
-    fn __repr__(self) -> String:
-        return String("Default")
-
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.m.update(self.x, "x")
         self.m.update(self.y, "y")
         self.m.update(self.is_down, "mouse_down")

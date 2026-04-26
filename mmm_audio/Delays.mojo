@@ -1,14 +1,14 @@
 from mmm_audio import *
-from math import tanh
-from math import log
-from bit import next_power_of_two
+from std.math import tanh
+from std.math import log
+from std.bit import next_power_of_two
 
 # would be great - but in order for this to mean something we need params in structs or 
 trait Tapable(Movable, Copyable):
   ...
-#     fn tap[num_chans: Int](mut self, delay_samps: MInt[num_chans]) -> MFloat[num_chans]:
+#     def tap[num_chans: Int](mut self, delay_samps: MInt[num_chans]) -> MFloat[num_chans]:
 #       ...
-#     fn tap[num_chans: Int](mut self, delay_time: MFloat[num_chans]) -> MFloat[num_chans]:
+#     def tap[num_chans: Int](mut self, delay_time: MFloat[num_chans]) -> MFloat[num_chans]:
 #       ...
 
 struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
@@ -25,9 +25,8 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     var delay_line: Recorder[Self.num_chans]
     var two_sample_duration: Float64
     var sample_duration: Float64
-    var prev_f_idx: List[Float64]
 
-    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
+    def __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the Delay line.
 
       Args:
@@ -39,8 +38,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.max_delay_samples = Int(max_delay_time * self.world[].sample_rate)
         var size_of_buffer = self.max_delay_samples
 
-        @parameter
-        if Self.interp == Interp.linear:
+        comptime if Self.interp == Interp.linear:
           size_of_buffer += 1
         elif Self.interp == Interp.cubic or Self.interp == Interp.quad:
           size_of_buffer += 2
@@ -50,9 +48,8 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.delay_line = Recorder[Self.num_chans](self.world, size_of_buffer, self.world[].sample_rate)
         self.two_sample_duration = 2.0 / self.world[].sample_rate
         self.sample_duration = 1.0 / self.world[].sample_rate
-        self.prev_f_idx = [Self.num_chans, 0.0]
 
-    fn __init__(out self, world: World, max_delay_samples: Int = 1024):
+    def __init__(out self, world: World, max_delay_samples: Int = 1024):
       """Initialize the Delay line.
 
       Args:
@@ -64,8 +61,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.max_delay_samples = max_delay_samples
         var size_of_buffer = self.max_delay_samples
         
-        @parameter
-        if Self.interp == Interp.linear:
+        comptime if Self.interp == Interp.linear:
           size_of_buffer += 1
         elif Self.interp == Interp.cubic or Self.interp == Interp.quad:
           size_of_buffer += 2
@@ -75,20 +71,16 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.delay_line = Recorder[Self.num_chans](self.world, size_of_buffer, self.world[].sample_rate)
         self.two_sample_duration = 2.0 / self.world[].sample_rate
         self.sample_duration = 1.0 / self.world[].sample_rate
-        self.prev_f_idx = [Self.num_chans, 0.0]
-
-    fn __repr__(self) -> String:
-        return String("Delay(max_delay_time: " + String(self.max_delay_time) + ")")
 
     # kind of gross
-    fn tap[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
+    def tap[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
       return self.read(delay_samps)
 
-    fn tap[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
+    def tap[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
       return self.read(delay_time)
 
     @always_inline
-    fn read[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
+    def read[N: Int](mut self, var delay_samps: MInt[N]) -> MFloat[self.num_chans]:
       """Reads into the delay line at an exact sample delay and no interpolation.
 
       Args:
@@ -99,8 +91,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
       """
 
       idx = (self.delay_line.write_head + delay_samps) % self.delay_line.buf.num_frames
-      @parameter
-      if N == 1:
+      comptime if N == 1:
         out = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, Float64(idx[0]))
         return out
       else:
@@ -110,7 +101,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         return out
 
     @always_inline
-    fn read[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
+    def read[N: Int](mut self, var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
       """Reads into the delay line.
 
       Args:
@@ -123,10 +114,8 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         
       out = MFloat[self.num_chans](0.0)
 
-      @parameter
-      if N == 1:
-        @parameter
-        if self.interp == Interp.none:
+      comptime if N == 1:
+        comptime if self.interp == Interp.none:
           out = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, self.get_f_idx(delay_time[0]))
         elif self.interp == Interp.linear:
           out = SpanInterpolator.read_linear[bWrap=True](self.delay_line.buf.data, self.get_f_idx(delay_time[0]))
@@ -141,8 +130,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
           print("Sinc interpolation not recommended for Delays.")
       else:
         for chan in range(Self.num_chans):
-          @parameter
-          if self.interp == Interp.none:
+          comptime if self.interp == Interp.none:
             out[chan] = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, self.get_f_idx(delay_time[chan%N]))[chan]
           elif self.interp == Interp.linear:
             out[chan] = SpanInterpolator.read_linear[bWrap=True](self.delay_line.buf.data, self.get_f_idx(delay_time[chan%N]))[chan]
@@ -157,13 +145,13 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
       return out
 
     @always_inline
-    fn write(mut self, input: MFloat[self.num_chans]):
+    def write(mut self, input: MFloat[self.num_chans]):
       """Writes a single sampleinto the delay line."""
 
         self.delay_line.write_previous(input)
 
     @always_inline
-    fn next[N: Int](mut self, input: MFloat[self.num_chans], delay_samps: MInt[N]) -> MFloat[self.num_chans]:
+    def next[N: Int](mut self, input: MFloat[self.num_chans], delay_samps: MInt[N]) -> MFloat[self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it. This version uses an integer lookup into the delay line and no interpolation.
 
         Args:
@@ -180,7 +168,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         return out
 
     @always_inline
-    fn next[N: Int](mut self, input: MFloat[self.num_chans], var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
+    def next[N: Int](mut self, input: MFloat[self.num_chans], var delay_time: MFloat[N]) -> MFloat[self.num_chans]:
         """Process one sample through the delay line, first reading from the delay then writing into it.
 
         Args:
@@ -196,12 +184,12 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
 
         return out
 
-    fn zero(mut self):
+    def zero(mut self):
         """Utility function to reset the delay line buffer to zero. Can be useful to avoid unwanted noise when changing delay times or for testing."""
         self.delay_line.buf.zero()
 
     @always_inline
-    fn get_f_idx(self, delay_time: Float64) -> Float64:
+    def get_f_idx(self, delay_time: Float64) -> Float64:
         """Calculate the fractional index in the delay buffer for the given delay time.
 
         Args:
@@ -220,7 +208,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
 
 
 
-fn calc_feedback[num_chans: Int = 1](delaytime: MFloat[num_chans], decaytime: MFloat[num_chans]) -> MFloat[num_chans]:
+def calc_feedback[num_chans: Int = 1](delaytime: MFloat[num_chans], decaytime: MFloat[num_chans]) -> MFloat[num_chans]:
       """Calculate the feedback coefficient for a Comb filter or Allpass line based on desired delay time and decay time.
       
       Parameters:
@@ -253,7 +241,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Tapable):
     var delay: Delay[Self.num_chans, Self.interp]
     var fb: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
+    def __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the Comb filter.
 
       Args:
@@ -264,13 +252,13 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Tapable):
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
         self.fb = MFloat[Self.num_chans](0.0)
 
-    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_samps)
         
-    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_time)
 
-    fn next(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans] = 0.0, feedback: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans] = 0.0, feedback: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter.
         
         Args:
@@ -286,7 +274,7 @@ struct Comb[num_chans: Int = 1, interp: Int = 2](Tapable):
         self.delay.write(fb_in)  # write separately
         return delayed
 
-    fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the comb filter with decay time calculation.
         
         Args:
@@ -313,7 +301,7 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     var one_pole: OnePole[Self.num_chans]
     var fb: MFloat[Self.num_chans]
 
-    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
+    def __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the LP_Comb filter.
 
       Args:
@@ -326,14 +314,14 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.one_pole = OnePole[Self.num_chans](self.world)
         self.fb = MFloat[Self.num_chans](0.0)
 
-    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_samps)
         
-    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_time)
 
     @always_inline
-    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback: MFloat[Self.num_chans] = 0.0, lp_freq: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback: MFloat[Self.num_chans] = 0.0, lp_freq: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the comb filter.
 
         Args:
@@ -352,9 +340,6 @@ struct LP_Comb[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
 
         return out
 
-    fn __repr__(self) -> String:
-        return "LP_Comb"
-
 struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     """
     A simple allpass filter using a delay line with feedback.
@@ -366,7 +351,7 @@ struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
     var world: World
     var delay: Delay[Self.num_chans, Self.interp]
 
-    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
+    def __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the Allpass filter.
 
       Args:
@@ -377,13 +362,13 @@ struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         self.world = world
         self.delay = Delay[Self.num_chans, Self.interp](self.world, max_delay_time)
 
-    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_samps)
         
-    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_time)
 
-    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
         """Process one sample through the allpass filter. Uses a direct-form 1 structure.
 
         Args:
@@ -403,7 +388,7 @@ struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         
         return output
 
-    fn next_df2(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
+    def next_df2(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans] = 0.0, feedback_coef: MFloat[Self.num_chans] = 0.0) -> MFloat[Self.num_chans]:
       """Process one sample through the allpass filter using a direct-form 2 structure."""
 
         var delayed = self.delay.read(delay_time)
@@ -414,7 +399,7 @@ struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         
         return output
 
-    fn next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next_decaytime(mut self, input: MFloat[self.num_chans], delay_time: MFloat[self.num_chans], decay_time: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the allpass filter with decay time calculation.
         
         Args:
@@ -445,7 +430,7 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
     var fb: MFloat[Self.num_chans]
     var tanh_ad: TanhAD[Self.num_chans, Self.os_index]
 
-    fn __init__(out self, world: World, max_delay_time: Float64 = 1.0):
+    def __init__(out self, world: World, max_delay_time: Float64 = 1.0):
       """Initialize the FB_Delay.
 
       Args:
@@ -459,13 +444,13 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
         self.fb = MFloat[Self.num_chans](0.0)
         self.tanh_ad = TanhAD[Self.num_chans, Self.os_index](self.world)
 
-    fn tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_samps: MInt[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_samps)
         
-    fn tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def tap(mut self, delay_time: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         return self.delay.tap(delay_time)
 
-    fn next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans], feedback: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], delay_time: MFloat[Self.num_chans], feedback: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample or SIMD vector through the feedback delay.
         
         Args:
@@ -478,13 +463,9 @@ struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: B
         """
         var out = self.delay.next(self.fb, delay_time)  # Get the delayed sample
 
-        @parameter
-        if Self.ADAA_dist:
+        comptime if Self.ADAA_dist:
             self.fb = self.dc.next(self.tanh_ad.next((input + out) * feedback))
         else:
           self.fb = self.dc.next(tanh((input + out) * feedback))
 
         return out  # Return the delayed sample
-
-    fn __repr__(self) -> String:
-        return "FB_Delay"

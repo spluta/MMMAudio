@@ -9,16 +9,16 @@ struct Analyzer(BufferedProcessable):
     var world: World
     var rms_values: List[Float64]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.rms_values = List[Float64]()
 
-    fn next_window(mut self, mut buffer: List[Float64]):
+    def next_window(mut self, mut buffer: List[Float64]):
         val = RMS.from_window(buffer)
         self.rms_values.append(val)
         return
 
-fn main():
+def main():
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
 

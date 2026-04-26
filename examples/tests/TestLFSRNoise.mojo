@@ -9,7 +9,7 @@ struct TestLFSRNoise(Movable, Copyable):
     var width1: Int
     var width2: Int
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.lfsr = LFSRNoise[2](world)
         self.messenger = Messenger(self.world)
@@ -18,7 +18,7 @@ struct TestLFSRNoise(Movable, Copyable):
         self.width1 = 15
         self.width2 = 7
 
-    fn next(mut self) -> SIMD[DType.float64, 2]:
+    def next(mut self) -> SIMD[DType.float64, 2]:
         self.messenger.update(self.freq[0], "freq1")
         self.messenger.update(self.freq[1], "freq2")
         self.messenger.update(self.gain[0], "gain1")

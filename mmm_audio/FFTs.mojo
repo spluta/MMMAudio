@@ -1,9 +1,9 @@
 from mmm_audio import *
-from complex import *
-import math as Math
+from std.complex import *
+import std.math as Math
 
-@doc_private
-fn log2_int(n: Int) -> Int:
+@doc_hidden
+def log2_int(n: Int) -> Int:
     """Compute log base 2 of an integer (assuming n is power of 2)."""
     var result = 0
     var temp = n
@@ -40,7 +40,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
     var scale: Float64
     var window_size: Int
 
-    fn __init__(out self, window_size: Int):
+    def __init__(out self, window_size: Int):
         """Initialize the RealFFT struct.
         
         All internal buffers and lookup tables are set up here based on the Parameters.
@@ -89,8 +89,8 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         for i in range(window_size // 2):
             self.bit_reverse_lut.append(self.bit_reverse(i, self.log_n))  # Full window_size
 
-    @doc_private
-    fn bit_reverse(self,num: Int, bits: Int) -> Int:
+    @doc_hidden
+    def bit_reverse(self,num: Int, bits: Int) -> Int:
         """Reverse the bits of a number."""
         var result = 0
         var n = num
@@ -99,7 +99,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             n >>= 1
         return result
 
-    fn fft(mut self, input: List[MFloat[Self.num_chans]]):
+    def fft(mut self, input: List[MFloat[Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the internal `mags` and `phases` lists.
@@ -113,7 +113,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             self.mags[i] = self.result[i].norm()
             self.phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
-    fn fft(mut self, input: List[MFloat[Self.num_chans]], mut mags: List[MFloat[Self.num_chans]], mut phases: List[MFloat[Self.num_chans]]):
+    def fft(mut self, input: List[MFloat[Self.num_chans]], mut mags: List[MFloat[Self.num_chans]], mut phases: List[MFloat[Self.num_chans]]):
         """Compute the FFT of the input real-valued samples.
         
         The resulting magnitudes and phases are stored in the provided lists.
@@ -129,8 +129,8 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             mags[i] = self.result[i].norm()
             phases[i] = Math.atan2(self.result[i].im, self.result[i].re)
 
-    @doc_private
-    fn _compute_fft(mut self, input: List[MFloat[Self.num_chans]]):
+    @doc_hidden
+    def _compute_fft(mut self, input: List[MFloat[Self.num_chans]]):
         for i in range(self.window_size // 2):
             var real_part = input[2 * i]
             var imag_part = input[2 * i + 1]
@@ -186,7 +186,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         for i in range(self.window_size):
             self.result[i] = self.unpacked[i]
 
-    fn ifft(mut self, mut output: List[MFloat[Self.num_chans]]):
+    def ifft(mut self, mut output: List[MFloat[Self.num_chans]]):
         """Compute the inverse FFT using the internal magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -207,7 +207,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         
         self._compute_inverse_fft(output)
 
-    fn ifft(mut self, mags: List[MFloat[Self.num_chans]], phases: List[MFloat[Self.num_chans]], mut output: List[MFloat[Self.num_chans]]):
+    def ifft(mut self, mags: List[MFloat[Self.num_chans]], phases: List[MFloat[Self.num_chans]], mut output: List[MFloat[Self.num_chans]]):
         """Compute the inverse FFT using the provided magnitudes and phases.
         
         The output real-valued samples are written to the provided output list.
@@ -230,8 +230,8 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         
         self._compute_inverse_fft(output)
 
-    @doc_private
-    fn _compute_inverse_fft(mut self, mut output: List[MFloat[Self.num_chans]]):
+    @doc_hidden
+    def _compute_inverse_fft(mut self, mut output: List[MFloat[Self.num_chans]]):
         for k in range(1, self.window_size // 2):  # k=1 to size//2-1
             self.result[self.window_size - k] = self.result[k].conj()
 
@@ -270,7 +270,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             output[i] = self.reversed[i].re * self.scale
     
     @staticmethod
-    fn fft_frequencies(sr: Float64, n_fft: Int, min_bin: Int = 0, num_bins: Int = -1) -> List[Float64]:
+    def fft_frequencies(sr: Float64, n_fft: Int, min_bin: Int = 0, num_bins: Int = -1) -> List[Float64]:
         """Compute the FFT bin center frequencies.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.fft_frequencies.html).
@@ -299,7 +299,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         return freqs^
 
     @staticmethod
-    fn buf_analysis[input_window_shape: Int = WindowType.hann](buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) -> Tuple[List[List[Float64]], List[List[Float64]]]:
+    def buf_analysis[input_window_shape: Int = WindowType.hann](buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) -> Tuple[List[List[Float64]], List[List[Float64]]]:
         """Compute the Short-Time Fourier Transform (STFT) of a buffer.
 
         Parameters:
@@ -331,20 +331,20 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         except e:
             abort(String(e))
 
-@doc_private
+@doc_hidden
 struct FFTAnalysis(FFTProcessable, GetFloat64Featurable):
     var mags: List[Float64]
     var phss: List[Float64]
 
-    fn __init__(out self):
+    def __init__(out self):
         self.mags = List[Float64]()
         self.phss = List[Float64]()
 
-    fn next_frame(mut self, mags: List[Float64], phases: List[Float64]):
+    def next_frame(mut self, mags: List[Float64], phases: List[Float64]):
         self.mags = mags.copy()
         self.phss = phases.copy()
     
-    fn get_features(self) -> List[Float64]:
+    def get_features(self) -> List[Float64]:
         nmags = len(self.mags)
         features = List[Float64](length=nmags * 2, fill=0.0)
         for i in range(nmags):

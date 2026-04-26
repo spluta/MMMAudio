@@ -15,7 +15,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
     var one_samp: Float64
 
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.one_samp = 1.0 / self.world[].sample_rate
         self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, Self.window_size // 2 + 1)]
@@ -28,11 +28,11 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
         self.m = Messenger(world)
         self.one_samp = 1.0 / self.world[].sample_rate
 
-    fn get_messages(mut self):
+    def get_messages(mut self):
         self.m.update(self.delay_times, "delay_times")
         self.m.update(self.feedback, "feedback")
 
-    fn next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
+    def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         for i in range(0, len(mags)):
             read = self.delays[i].read(Float64(self.delay_times[i]) * self.one_samp)
             write = MFloat[2](mags[i] + read[0] * self.feedback[i], phases[i] + read[1] * self.feedback[i])
@@ -51,7 +51,7 @@ struct FFTBinDelays(Movable, Copyable):
     var dur_mult: Float64
     var play: Play
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
 
@@ -66,7 +66,7 @@ struct FFTBinDelays(Movable, Copyable):
         self.dur_mult = 40.0
         self.play = Play(self.world)
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         sound = self.play.next(self.buffer)
         o = self.fft_bin_delays.next(sound)
         return o

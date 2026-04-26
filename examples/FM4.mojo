@@ -28,7 +28,7 @@ struct FM4(Movable, Copyable):
 
     var osc_frac: List[MFloat[1]]
 
-    fn __init__(out self, world: World) :
+    def __init__(out self, world: World) :
         self.world = world
 
         self.over = Oversampling[2, Self.times_oversampling](world)
@@ -57,7 +57,7 @@ struct FM4(Movable, Copyable):
         self.fb = [0.0, 0.0, 0.0, 0.0]
         self.osc_frac = [0.0, 0.0, 0.0, 0.0]
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.osc0_freq, "osc0_freq")
         self.m.update(self.osc1_freq, "osc1_freq")

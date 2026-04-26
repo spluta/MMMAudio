@@ -16,14 +16,14 @@ struct BinScramble(Copyable,Movable):
     var nscrambles: Int
     var scramble_range: Int
 
-    fn __init__(out self, nbins: Int, nscrambles: Int):
+    def __init__(out self, nbins: Int, nscrambles: Int):
         self.nbins = nbins
         self.nscrambles = nscrambles
         self.swaps = List[Tuple[Int,Int]]()
         self.scramble_range = 10
         self.new_swaps()
 
-    fn new_swaps(mut self) -> None:
+    def new_swaps(mut self) -> None:
         self.swaps.clear()
         for _ in range(self.nscrambles):
             i = random.random_ui64(0, self.nbins - 1)
@@ -32,7 +32,7 @@ struct BinScramble(Copyable,Movable):
             j = random.random_ui64(minj, maxj)
             self.swaps.append((Int(i),Int(j)))
 
-    fn next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+    def next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         for (i,j) in self.swaps:
             temp_mag = magnitudes[i]
             magnitudes[i] = magnitudes[j]
@@ -48,20 +48,20 @@ struct ScrambleAndLowPass[window_size: Int = 1024](FFTProcessable):
     var bin: Int
     var bin_scramble: BinScramble
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.bin = (self.window_size // 2) + 1
         self.m = Messenger(self.world)
         self.bin_scramble = BinScramble(nbins=(self.window_size // 2) + 1, nscrambles=20)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         self.m.update(self.bin,"lpbin")
         self.m.update(self.bin_scramble.nscrambles,"nscrambles")
         self.m.update(self.bin_scramble.scramble_range,"scramble_range")
         if self.m.notify_trig("rescramble"):
             self.bin_scramble.new_swaps()
 
-    fn next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
+    def next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         self.bin_scramble.next(magnitudes,phases)
         for i in range(self.bin,(self.window_size // 2) + 1):
             magnitudes[i] *= 0.0
@@ -77,7 +77,7 @@ struct TestFFTProcess(Movable, Copyable):
     var ps: List[Print]
     var which: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
@@ -89,7 +89,7 @@ struct TestFFTProcess(Movable, Copyable):
         self.ps = List[Print](length=2,fill=Print(self.world))
         self.which = 0
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
 
         self.m.update(self.onsets.thresh,"onsets_thresh")
         self.m.update(self.onsets.min_slice_len,"onsets_min_slice_len")

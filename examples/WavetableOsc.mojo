@@ -10,7 +10,7 @@ struct OscVoice(Movable, Copyable):
     var wubb_rate: Float64
     var messenger: Messenger
 
-    fn __init__(out self, world: World, name_space: String = ""):
+    def __init__(out self, world: World, name_space: String = ""):
         self.osc = Osc[1,Interp.quad,1](world)
         self.tri = LFTri(world)
         self.env = ASREnv(world)
@@ -20,7 +20,7 @@ struct OscVoice(Movable, Copyable):
         self.messenger = Messenger(world, name_space)
         self.world = world
 
-    fn next(mut self, ref buffer: Buffer) -> MFloat[1]:
+    def next(mut self, ref buffer: Buffer) -> MFloat[1]:
         self.messenger.update(self.gate, "gate")
         self.messenger.update(self.freq, "freq")
         self.messenger.update(self.wubb_rate, "wubb_rate")
@@ -38,7 +38,7 @@ struct WavetableOsc(Movable, Copyable):
     var filter_resonance: Float64
     var moog_filter: VAMoogLadder[1,1]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.file_name = "resources/Growl 15.wav"
         self.wavetables_per_channel = 256
@@ -52,13 +52,10 @@ struct WavetableOsc(Movable, Copyable):
         self.filter_resonance = 0.5
         self.moog_filter = VAMoogLadder[1,1](self.world)
 
-    fn __repr__(self) -> String:
-        return String("Default")
-
-    fn loadBuffer(mut self):
+    def loadBuffer(mut self):
         self.buffer = Buffer.load(self.file_name, num_wavetables=self.wavetables_per_channel)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.wavetables_per_channel, "wavetables_per_channel")
         if self.messenger.notify_update(self.file_name, "load_file"):
             self.loadBuffer()

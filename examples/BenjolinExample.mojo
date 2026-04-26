@@ -39,7 +39,7 @@ struct Benjolin(Movable, Copyable):
     var outSignalL: Float64
     var outSignalR: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.m = Messenger(self.world)
         self.feedback = 0.0
@@ -82,7 +82,7 @@ struct Benjolin(Movable, Copyable):
         for _ in range(2):
             self.dctraps.append(DCTrap(self.world))
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         self.m.update(self.freq1,"freq1")
         self.m.update(self.freq2,"freq2")
@@ -153,10 +153,10 @@ struct BenjolinExample(Movable, Copyable):
     var world: World
     var benjolin: Benjolin
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.benjolin = Benjolin(self.world)
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
 
         return self.benjolin.next()  # Get the next sample from the Benjolin

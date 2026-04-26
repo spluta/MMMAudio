@@ -7,11 +7,11 @@ struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):
     Parameters:
         num_chans: Number of SIMD channels.
     """
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the WhiteNoise struct."""
         pass  # No initialization needed for white noise
 
-    fn next(self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
+    def next(self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next white noise sample.
 
         Args:
@@ -40,7 +40,7 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
     var b5: MFloat[Self.num_chans]
     var b6: MFloat[Self.num_chans]
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the PinkNoise struct."""
         self.b0 = MFloat[Self.num_chans](0.0)
         self.b1 = MFloat[Self.num_chans](0.0)
@@ -50,7 +50,7 @@ struct PinkNoise[num_chans: Int = 1](Copyable, Movable):
         self.b5 = MFloat[Self.num_chans](0.0)
         self.b6 = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
+    def next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next pink noise sample.
 
         Args:
@@ -85,11 +85,11 @@ struct BrownNoise[num_chans: Int = 1](Copyable, Movable):
 
     var last_output: MFloat[Self.num_chans]
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the BrownNoise struct."""
         self.last_output = MFloat[Self.num_chans](0.0)
 
-    fn next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
+    def next(mut self, gain: MFloat[Self.num_chans] = MFloat[Self.num_chans](1.0)) -> MFloat[Self.num_chans]:
         """Generate the next brown noise sample.
 
         Args:
@@ -116,13 +116,13 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
     var last_trig: MBool[Self.num_chans]
     var is_initialized: Bool
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the TExpRand struct."""
         self.stored_output = MFloat[Self.num_chans](0.0)
         self.last_trig = MBool[Self.num_chans](fill=False)
         self.is_initialized = False
 
-    fn next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Output the exponentially distributed random value.
 
         The value is repeated until a new trigger is received, at which point a new value is generated.
@@ -138,15 +138,13 @@ struct TExpRand[num_chans: Int = 1](Copyable, Movable):
         """
         
         if not self.is_initialized: 
-            @parameter
-            for i in range(Self.num_chans):
+            comptime for i in range(Self.num_chans):
                 self.stored_output[i] = exprand(min[i], max[i])
             self.is_initialized = True
             return self.stored_output
         
         rising_edge: MBool[Self.num_chans] = trig & ~self.last_trig
-        @parameter
-        for i in range(Self.num_chans):
+        comptime for i in range(Self.num_chans):
             if rising_edge[i]:
                 self.stored_output[i] = exprand(min[i], max[i])
         self.last_trig = trig
@@ -163,13 +161,13 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
     var last_trig: MBool[Self.num_chans]
     var is_initialized: Bool
 
-    fn __init__(out self):
+    def __init__(out self):
         """Initialize the TRand struct."""
         self.stored_output = MFloat[Self.num_chans](0.0)
         self.last_trig = MBool[Self.num_chans](fill=False)
         self.is_initialized = False
 
-    fn next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def next(mut self, min: MFloat[Self.num_chans], max: MFloat[Self.num_chans], trig: MBool[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Output uniformly distributed random value.
 
         The value is repeated until a new trigger is received, at which point a new value is generated.
@@ -185,15 +183,13 @@ struct TRand[num_chans: Int = 1](Copyable, Movable):
         """
 
         if not self.is_initialized: 
-            @parameter
-            for i in range(Self.num_chans):
+            comptime for i in range(Self.num_chans):
                 self.stored_output[i] = random_float64(min[i], max[i])
             self.is_initialized = True
             return self.stored_output
 
         rising_edge: MBool[Self.num_chans] = trig & ~self.last_trig
-        @parameter
-        for i in range(Self.num_chans):
+        comptime for i in range(Self.num_chans):
             if rising_edge[i]:
                 self.stored_output[i] = random_float64(min[i], max[i])
         self.last_trig = trig
@@ -216,7 +212,7 @@ struct LFSRNoise[num_chans: Int = 1](Copyable, Movable):
     var rising_bool_detector:   RisingBoolDetector[Self.num_chans]
     var world:                  World
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world                = world
         self.freq_mul             = 1.0 / self.world[].sample_rate
         self.state                = MInt[Self.num_chans](1)
@@ -225,9 +221,9 @@ struct LFSRNoise[num_chans: Int = 1](Copyable, Movable):
         self.mask                 = MInt[Self.num_chans](0)
         self.rising_bool_detector = RisingBoolDetector[Self.num_chans]()
 
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn step(mut self):
+    def step(mut self):
         self.state = self.state.eq(0).select(MInt[Self.num_chans](1), self.state)
         var lsb0 = self.state & 1
         var lsb1 = (self.state >> 1) & 1
@@ -236,7 +232,7 @@ struct LFSRNoise[num_chans: Int = 1](Copyable, Movable):
         self.state &= self.mask
 
     @always_inline
-    fn next(mut self, freq: SIMD[DType.float64, Self.num_chans] = 1.0, width: MInt[Self.num_chans] = 15, trig: Bool = False) -> SIMD[DType.float64, Self.num_chans]:
+    def next(mut self, freq: SIMD[DType.float64, Self.num_chans] = 1.0, width: MInt[Self.num_chans] = 15, trig: Bool = False) -> SIMD[DType.float64, Self.num_chans]:
         """Generate the next LFSR noise sample.
 
         Args:

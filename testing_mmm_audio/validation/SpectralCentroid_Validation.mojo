@@ -11,13 +11,13 @@ struct Analyzer(BufferedProcessable):
     var centroids: List[Float64]
     var sample_rate: Float64
 
-    fn __init__(out self, world: World, sample_rate: Float64):
+    def __init__(out self, world: World, sample_rate: Float64):
         self.world = world
         self.fft = RealFFT[](windowsize)
         self.centroids = List[Float64]()
         self.sample_rate = sample_rate
 
-    fn next_window(mut self, mut buffer: List[Float64]):
+    def next_window(mut self, mut buffer: List[Float64]):
         self.fft.fft(buffer)
         # Passing in the "self.sample_rate" here instead of using the world sample rate
         # because the world was causing issues. Somehow the pointer was getting losses or something.
@@ -25,7 +25,7 @@ struct Analyzer(BufferedProcessable):
         self.centroids.append(val)
         return
 
-fn main():
+def main():
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
 

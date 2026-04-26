@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
+struct Freeverb[num_chans: Int = 1](Movable, Copyable):
     """
     A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
 
@@ -23,7 +23,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     var lp_comb_lpfreq: List[Float64]
     var in_list: List[Float64]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
       """
       Initialize the Freeverb struct.
 
@@ -52,7 +52,7 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         self.in_list = [0.0]
 
     # @always_inline
-    fn next(mut self, input: MFloat[self.num_chans], room_size: MFloat[self.num_chans] = 0.0, lp_comb_lpfreq: MFloat[self.num_chans] = 1000.0, added_space: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], room_size: MFloat[self.num_chans] = 0.0, lp_comb_lpfreq: MFloat[self.num_chans] = 1000.0, added_space: MFloat[self.num_chans] = 0.0) -> MFloat[self.num_chans]:
         """Process one sample through the freeverb.
 
         Args:
@@ -89,9 +89,6 @@ struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
         out = sanitize(out)
 
         return out  # Return the delayed sample
-
-    fn __repr__(self) -> String:
-        return "LP_Comb"
 
 comptime dattoro_sr = 29761.
 
@@ -132,7 +129,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
 
     var final_taps: List[MInt[]]
 
-    fn __init__(out self, world: World, pre_delay_time: Float64 = 0.02, decay: Float64 = 0.3, input_diffusion1: Float64 = 0.75, input_diffusion2: Float64 = 0.625, decay_diffusion1: Float64 = 0.7, decay_diffusion2: Float64 = 0.5, bandwidth: Float64 = 0.9995, damping: Float64 = 0.0005):
+    def __init__(out self, world: World, pre_delay_time: Float64 = 0.02, decay: Float64 = 0.3, input_diffusion1: Float64 = 0.75, input_diffusion2: Float64 = 0.625, decay_diffusion1: Float64 = 0.7, decay_diffusion2: Float64 = 0.5, bandwidth: Float64 = 0.9995, damping: Float64 = 0.0005):
       """
       Initialize the DattorroReverb struct.
 
@@ -180,7 +177,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.final_taps = [Int(266/dattoro_sr*world[].sample_rate), Int(2974/dattoro_sr*world[].sample_rate), Int(1913/dattoro_sr*world[].sample_rate), Int(1996/dattoro_sr*world[].sample_rate), Int(1990/dattoro_sr*world[].sample_rate), Int(187/dattoro_sr*world[].sample_rate), Int(1066/dattoro_sr*world[].sample_rate), \
         Int(353/dattoro_sr*world[].sample_rate), Int(3627/dattoro_sr*world[].sample_rate), Int(1228/dattoro_sr*world[].sample_rate), Int(2673/dattoro_sr*world[].sample_rate), Int(2111/dattoro_sr*world[].sample_rate), Int(335/dattoro_sr*world[].sample_rate), Int(121/dattoro_sr*world[].sample_rate)]
 
-    fn set_all(mut self, pre_delay_time: Float64, decay: Float64, input_diffusion1: Float64, input_diffusion2: Float64, decay_diffusion1: Float64, decay_diffusion2: Float64, bandwidth: Float64, damping: Float64):
+    def set_all(mut self, pre_delay_time: Float64, decay: Float64, input_diffusion1: Float64, input_diffusion2: Float64, decay_diffusion1: Float64, decay_diffusion2: Float64, bandwidth: Float64, damping: Float64):
         """Set all the main parameters of the reverb at once.
 
         Args:
@@ -202,7 +199,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.bandwidth = bandwidth
         self.damping = damping
 
-    fn next(mut self, input: MFloat[2]) -> MFloat[2]:
+    def next(mut self, input: MFloat[2]) -> MFloat[2]:
         
         upper = (input[0] + input[1]) * 0.5
         upper = self.pre_delay.next(upper,self.pre_delay_time)
@@ -253,7 +250,7 @@ struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
     var all_passes: List[SVF[Self.num_chans]]
     var lfo: LFTri[]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         """Initialize the phaser effect.
         
         Args:
@@ -263,7 +260,7 @@ struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
         self.all_passes = [SVF[Self.num_chans](self.world) for _ in range (Self.stages)]
         self.lfo = LFTri[](world)
 
-    fn next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1] = 1000., Q: MFloat[1] = 0.7, lfo_freq: MFloat[1] = 0.7, lfo_octaves: MFloat[1] = 1., freq_offset: MFloat[1] = 0., mix: MFloat[1] = 0.5) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1] = 1000., Q: MFloat[1] = 0.7, lfo_freq: MFloat[1] = 0.7, lfo_octaves: MFloat[1] = 1., freq_offset: MFloat[1] = 0., mix: MFloat[1] = 0.5) -> MFloat[Self.num_chans]:
         """Process the input audio through the phaser effect.
 
         Args:
@@ -299,12 +296,12 @@ struct Flanger[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable, Copy
     var comb: Comb[Self.num_chans, Self.interp]
     var lfo: LFTri[]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.comb = Comb[Self.num_chans, Self.interp](self.world, max_delay_time=0.05)
         self.lfo = LFTri[](world)
 
-    fn next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1], feedback_coef: MFloat[1], lfo_freq: MFloat[1], lfo_octaves: MFloat[1], mix: MFloat[1]) -> MFloat[Self.num_chans]:
+    def next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1], feedback_coef: MFloat[1], lfo_freq: MFloat[1], lfo_octaves: MFloat[1], mix: MFloat[1]) -> MFloat[Self.num_chans]:
         """Process the input audio through the flanger effect.
 
         Args:

@@ -15,7 +15,7 @@ struct TestCombAllpass(Movable, Copyable):
     var LP_Comb: LP_Comb[1, Interp.lagrange4]
     var delay_time: Float64
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.synth = Impulse[1](self.world)
         self.messenger = Messenger(world)
@@ -27,7 +27,7 @@ struct TestCombAllpass(Movable, Copyable):
         self.LP_Comb = LP_Comb[1, Interp.lagrange4](self.world, max_delay_time=2.0)
         self.delay_time = 0.1
 
-    fn next(mut self) -> MFloat[2]:
+    def next(mut self) -> MFloat[2]:
         self.messenger.update(self.which, "which_fx")
         self.messenger.update(self.delay_time, "delay_time")
 

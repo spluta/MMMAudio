@@ -1,6 +1,6 @@
 from mmm_audio import *
-from sys import simd_width_of
-from math import floor, log2, sin
+from std.sys import simd_width_of
+from std.math import floor, log2, sin
 
 struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
     """Sinc Interpolation of `List[Float64]`s.
@@ -23,7 +23,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
     var sinc_power_f64: Float64
     var max_layer: Int
 
-    fn __init__(out self):
+    def __init__(out self):
         self.table_size = 1 << self.power  # Size of the sinc table, e.g., 16384 for power 14 (using bit shift instead of exponentiation)
         self.mask = self.table_size - 1  # Mask for wrapping indices
         self.table = SincInterpolator.build_sinc_table(self.table_size)
@@ -36,12 +36,9 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         self.sinc_power_f64 = Float64(self.power)  # Assuming sinc_power is 14
         self.max_layer = self.power - 3
 
-    fn __repr__(self) -> String:
-        return String("SincInterpolator(ripples: " + String(self.ripples) + ", table_size: " + String(self.table_size) + ")")
-
-    @doc_private
+    @doc_hidden
     @always_inline
-    fn interp_points(self: SincInterpolator, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
+    def interp_points(self: SincInterpolator, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
         """Helper function to perform quadratic interpolation on sinc table points."""
         sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
         
@@ -56,9 +53,9 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
             frac
         )
 
-    @doc_private
+    @doc_hidden
     @always_inline  
-    fn spaced_sinc[num_chans: Int, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans]], index: Int, frac: Float64, spacing: Int) -> MFloat[num_chans]:
+    def spaced_sinc[num_chans: Int, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans], ...], index: Int, frac: Float64, spacing: Int) -> MFloat[num_chans]:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
         sinc_mult = self.max_sinc_offset // spacing
         loop_count = Self.ripples * 2
@@ -72,12 +69,10 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         for sp in range(loop_count):
             offset: Int = Int(sp - Self.ripples + 1)
             
-            @parameter
-            if bWrap:
+            comptime if bWrap:
                 loc_point_unwrapped = index + offset * spacing
                 
-                @parameter
-                if mask != 0:
+                comptime if mask != 0:
                     loc_point = loc_point_unwrapped & mask
                 else:
                     loc_point = loc_point_unwrapped % data_len
@@ -102,7 +97,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         return out
 
     @always_inline
-    fn sinc_interp[num_chans: Int, bWrap: Bool = True, mask: Int = 0](self, data: Span[MFloat[num_chans]], current_index: Float64, prev_index: Float64) -> MFloat[num_chans]:
+    def sinc_interp[num_chans: Int, bWrap: Bool = True, mask: Int = 0](self, data: Span[MFloat[num_chans], ...], current_index: Float64, prev_index: Float64) -> MFloat[num_chans]:
         """Perform sinc interpolation on the given data at the specified current index.
         
         Parameters:
@@ -119,8 +114,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         index_diff = current_index - prev_index
         half_window = size_f64 * 0.5
         
-        @parameter
-        if bWrap:
+        comptime if bWrap:
             slope_samples = wrap(index_diff, -half_window, half_window)  # Handle circular buffer wrap
         else:
             slope_samples = index_diff  # No wrapping
@@ -153,9 +147,9 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         
         return sinc1 + sinc_crossfade * (sinc2 - sinc1)
 
-    @doc_private
+    @doc_hidden
     @staticmethod
-    fn build_sinc_table(table_size: Int) -> List[Float64]:
+    def build_sinc_table(table_size: Int) -> List[Float64]:
         
         # Create evenly spaced points - the width is determined by ripples
         var width = Float64(Self.ripples)

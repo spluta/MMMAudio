@@ -15,15 +15,15 @@ struct BufferedMultiply(BufferedProcessable):
     var factor: Float64
     var m: Messenger
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.factor = 0.5
         self.m = Messenger(self.world)
 
-    fn get_messages(mut self) -> None:
+    def get_messages(mut self) -> None:
         self.m.update(self.factor,"factor")
 
-    fn next_window(mut self, mut input: List[Float64]) -> None:
+    def next_window(mut self, mut input: List[Float64]) -> None:
 
         for ref v in input:
             v *= self.factor
@@ -36,7 +36,7 @@ struct TestBufferedProcess(Movable, Copyable):
     var m: Messenger
     var ps: List[Print]
 
-    fn __init__(out self, world: World):
+    def __init__(out self, world: World):
         self.world = world
         self.input = 0.1
         var multiply_process = BufferedMultiply(self.world)
@@ -44,7 +44,7 @@ struct TestBufferedProcess(Movable, Copyable):
         self.m = Messenger(self.world)
         self.ps = List[Print](length=2,fill=Print(self.world))
 
-    fn next(mut self) -> SIMD[DType.float64,2]:
+    def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.input,"input")
         self.ps[0].next(self.input,"input  ")
         o = self.my_buffered_mul.next(self.input)
