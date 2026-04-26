@@ -48,7 +48,7 @@ struct Env(Representable, Movable, Copyable):
     var sweep: Sweep[1]  # Sweep for tracking time
     var rising_bool_detector: RisingBoolDetector[1]  # Track the last trigger state
     var is_active: Bool  # Flag to indicate if the envelope is active
-    var times: List[Float64]  # List of segment durations
+    var _times: List[Float64]  # List of segment durations
     var dur: Float64  # Total duration of the envelope
     var freq: Float64  # Frequency multiplier for the envelope
     var trig_point: Float64  # Point at which the asr envelope was triggered
@@ -65,7 +65,7 @@ struct Env(Representable, Movable, Copyable):
         self.sweep = Sweep(world)
         self.rising_bool_detector = RisingBoolDetector()  # Initialize rising bool detector
         self.is_active = False
-        self.times = List[Float64]()  # Initialize times list
+        self._times = List[Float64]()  # Initialize times list
         self.dur = 0.0  # Initialize total duration
         self.freq = 0.0
         self.trig_point = 0.0
@@ -81,14 +81,14 @@ struct Env(Representable, Movable, Copyable):
     fn reset_vals(mut self):
         """Reset internal values."""
 
-        if self.times.__len__() != (self.params.times.__len__() + 1):
-            self.times.clear()
-        while self.times.__len__() < (self.params.times.__len__() + 1):
-            self.times.insert(0, 0.0)  # Ensure times list has the same length as the input times
+        if self._times.__len__() != (self.params.times.__len__() + 1):
+            self._times.clear()
+        while self._times.__len__() < (self.params.times.__len__() + 1):
+            self._times.insert(0, 0.0)  # Ensure times list has the same length as the input times
         for i in range(self.params.times.__len__()):
-            self.times[i+1] = self.times[i] + self.params.times[i]  # Copy values from input times
+            self._times[i+1] = self._times[i] + self.params.times[i]  # Copy values from input times
 
-        self.dur = self.times[-1]  # Set total duration to the last value in times
+        self.dur = self._times[-1]  # Set total duration to the last value in times
         if self.dur > 0.0:
             self.freq = 1.0 / self.dur
         else:
@@ -153,11 +153,11 @@ struct Env(Representable, Movable, Copyable):
     fn apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
         var segment = 0
         phase2 = phase * self.dur
-        while segment < len(self.times) - 1 and phase2 >= self.times[segment + 1]:
+        while segment < len(self._times) - 1 and phase2 >= self._times[segment + 1]:
             segment += 1
 
         # by the above logic, segment should never be able to be the last index of times or values 
-        out = lincurve(phase2, self.times[segment], self.times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
+        out = lincurve(phase2, self._times[segment], self._times[segment + 1], self.params.values[segment], self.params.values[segment + 1], self.params.curves[segment % len(self.params.curves)])
         return out
 
     fn get_phase(self) -> Float64:
