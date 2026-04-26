@@ -1,8 +1,4 @@
 from mmm_audio import *
-from math import tanh
-from algorithm import vectorize
-from sys import simd_width_of
-
 
 struct Freeverb[num_chans: Int = 1](Representable, Movable, Copyable):
     """
@@ -143,7 +139,7 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
       Args:
           world: A pointer to the MMMWorld instance.
           pre_delay_time: The time of the pre-delay in seconds. 0-0.5 seconds.
-          decay: The decay factor of the reverb (0-1).
+          decay: The decay factor of the reverb (0-1). Larger values will create a longer reverb tail.
           input_diffusion1: The feedback coefficient for the first two allpass filters in the early reflection stage (0-1).
           input_diffusion2: The feedback coefficient for the second two allpass filters in the early reflection stage (0-1).
           decay_diffusion1: The feedback coefficient for two allpass filters in the tank (0-1).
@@ -245,3 +241,87 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         R = accumulator.reduce_add()
 
         return MFloat[2](L, R)
+
+struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
+    """A phaser effect implemented as a series of allpass filters, with the center frequencies modulated by an LFO.
+    
+    Parameters:
+        num_chans: The number of audio channels to process (e.g. 1 for mono, 2 for stereo).
+        stages: The number of allpass filter stages to use in the phaser. More stages will create a more pronounced phasing effect. Usually between 4 and 12..
+    """
+    var world: World
+    var all_passes: List[SVF[Self.num_chans]]
+    var lfo: LFTri[]
+
+    fn __init__(out self, world: World):
+        """Initialize the phaser effect.
+        
+        Args:
+            world: The World instance.
+        """
+        self.world = world
+        self.all_passes = [SVF[Self.num_chans](self.world) for _ in range (Self.stages)]
+        self.lfo = LFTri[](world)
+
+    fn next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1] = 1000., Q: MFloat[1] = 0.7, lfo_freq: MFloat[1] = 0.7, lfo_octaves: MFloat[1] = 1., freq_offset: MFloat[1] = 0., mix: MFloat[1] = 0.5) -> MFloat[Self.num_chans]:
+        """Process the input audio through the phaser effect.
+
+        Args:
+            input: The input audio signal to process, as an MFloat vector with length equal to num_chans.
+            center_freq: The base center frequency for the allpass filters, in Hz. This is the frequency around which the phasing effect will occur.
+            Q: The resonance of the allpass filters.
+            lfo_freq: The frequency of the LFO that modulates the center frequencies of the allpass filters, in Hz.
+            lfo_octaves: The number of octaves above and below the base center frequency that the LFO will modulate. For example, if center_freq is 1000 Hz and lfo_octaves is 1, then the LFO will modulate between 500 Hz and 2000 Hz.
+            freq_offset: A fixed frequency offset applied to each subsequent allpass stage. For example, if freq_offset is 0.1 and center_freq is 1000 Hz, then the first stage will be centered at 1000 Hz, the second at 1100 Hz, the third at 1200 Hz, etc.
+            mix: The wet/dry mix of the effect. A value of 0 means only the original signal (dry), while a value of 1 means only the processed signal (wet). Values in between blend the two signals together.
+        """
+
+        allpass_out = input
+        lfo = self.lfo.next(lfo_freq)
+        center_freq_real = abs(center_freq)
+        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2**lfo_octaves), center_freq_real*(2**lfo_octaves))
+        for i in range(Self.stages):
+            freq_offset_real = 1.0 + (i * freq_offset)
+            allpass_out = self.all_passes[i].allpass(allpass_out, clip(center_freq_real * freq_offset_real, 20., 20000.), Q)
+        mix_real = clip(mix, 0., 1.)
+        wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
+        return (allpass_out * wet_dry[0]) + (input * wet_dry[1])
+
+
+struct Flanger[num_chans: Int = 1, interp: Int = Interp.lagrange4](Movable, Copyable):
+    """A flanger effect implemented as a single comb filter with the delay time modulated by an LFO.
+
+    Parameters:
+        num_chans: The number of audio channels to process (e.g. 1 for mono, 2 for stereo).
+        interp: The interpolation method to use for the delay line.
+    """
+    var world: World
+    var comb: Comb[Self.num_chans, Self.interp]
+    var lfo: LFTri[]
+
+    fn __init__(out self, world: World):
+        self.world = world
+        self.comb = Comb[Self.num_chans, Self.interp](self.world, max_delay_time=0.05)
+        self.lfo = LFTri[](world)
+
+    fn next(mut self, input: MFloat[Self.num_chans], center_freq: MFloat[1], feedback_coef: MFloat[1], lfo_freq: MFloat[1], lfo_octaves: MFloat[1], mix: MFloat[1]) -> MFloat[Self.num_chans]:
+        """Process the input audio through the flanger effect.
+
+        Args:
+            input: The input audio signal to process, as an MFloat vector with length equal to num_chans.
+            center_freq: The base delay time for the comb filter, in milliseconds. This is the delay time around which the flanging effect will occur.
+            feedback_coef: The feedback coefficient for the comb filter (0-1). Higher values will create a more pronounced flanging effect, but can also lead to self-oscillation if set too high.
+            lfo_freq: The frequency of the LFO that modulates the delay time of the comb filter, in Hz.
+            lfo_octaves: The number of octaves above and below the base center frequency that the LFO will modulate. For example, if center_freq is 1000 Hz and lfo_octaves is 1, then the LFO will modulate between 500 Hz and 2000 Hz.
+            mix: The wet/dry mix of the effect. A value of 0 means only the original signal (dry), while a value of 1 means only the processed signal (wet). Values in between blend the two signals together.
+        """
+        lfo = self.lfo.next(lfo_freq)
+        center_freq_real = abs(center_freq)
+        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2**lfo_octaves), center_freq_real*(2**lfo_octaves))
+        center_freq_real = clip(center_freq_real, 20., 20000.)
+        
+        comb = self.comb.next(input, 1./center_freq_real, feedback_coef)
+        
+        mix_real = clip(mix, 0., 1.)
+        wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
+        return (comb * wet_dry[0]) + (input * wet_dry[1])

@@ -18,7 +18,7 @@ from .Oversampling_Module import *
 from .Pan import *
 from .Player import *
 from .Recorder_Module import *
-from .Reverbs import *
+from .ReverbsDelayFX import *
 from .SincInterpolator_Module import *
 from .sound_file import *
 

@@ -3,21 +3,29 @@
 !.gitignore
 
 !.github/
+!.github/**
 !.vscode/
-!.doc_generation/
-!.examples/
+!.vscode/**
+!doc_generation/
+!doc_generation/**
+!examples/
+!examples/**
+
 !mmm_audio/
+!mmm_audio/**
 !mmm_python/
+!mmm_python/**
 !resources/
+!resources/**
 !testing_mmm_audio/
+!testing_mmm_audio/**
+
+# Un-ignore files
 !LICENSE
 !mkdocs.yml
 !README.md
 !requirements.txt
 !TODO.md
-
-tmp/*
-!tmp/.gitkeep 
 
 *.zip
 *.wav
