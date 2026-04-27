@@ -632,7 +632,7 @@ def sanitize[
     var absx = abs(x)
     too_large: MBool[num_chans] = absx.gt(MFloat[num_chans](1e15))
     too_small: MBool[num_chans] = absx.lt(MFloat[num_chans](1e-15))
-    is_nan: MBool[num_chans] = x.ne(x)
+    is_nan: MBool[num_chans] = isnan(x)
     should_zero: MBool[num_chans] = too_large | too_small | is_nan
 
     return should_zero.select(0.0, x)
