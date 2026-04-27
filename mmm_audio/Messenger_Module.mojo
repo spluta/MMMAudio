@@ -187,42 +187,42 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float list message. Error: ", error)
         return False
 
-    # def update(mut self, mut param: SIMD[DType.float64], name: String):
-    #     """Update a SIMD[DType.float64] variable with a value sent from Python.
+    def update[dtype: DType, num_chans: Int](mut self, mut param: SIMD[dtype, num_chans], name: String):
+        """Update a SIMD[DType.float64] variable with a value sent from Python.
 
-    #     Args:
-    #         param: A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.
-    #         name: A `String` to identify the SIMD[DType.float64] sent from Python.
-    #     """
-    #     if self.world[].top_of_block:
-    #         try:
-    #             var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
-    #             if opt:
-    #                 for i in range(len(opt.value())):
-    #                     param[i] = opt.value()[i]
-    #         except error:
-    #             print("Error occurred while updating float SIMD message. Error: ", error)
+        Args:
+            param: A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.
+            name: A `String` to identify the SIMD[DType.float64] sent from Python.
+        """
+        if self.world[].top_of_block:
+            try:
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    for i in range(len(opt.value())):
+                        param[i] = Scalar[dtype](opt.value()[i])
+            except error:
+                print("Error occurred while updating float SIMD message. Error: ", error)
 
-    # def notify_update(mut self, mut param: SIMD[DType.float64], name: String) -> Bool:
-    #     """Notify and update a SIMD[DType.float64] variable with a value sent from Python.
+    def notify_update[dtype: DType, num_chans: Int](mut self, mut param: SIMD[dtype, num_chans], name: String) -> Bool:
+        """Notify and update a SIMD[DType.float64] variable with a value sent from Python.
 
-    #     Args:
-    #         param: A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.
-    #         name: A `String` to identify the SIMD[DType.float64] sent from Python.
+        Args:
+            param: A `SIMD[DType.float64]` variable to be updated. The SIMD will *not* be resized to match the incoming data. It is the user's responsibility to ensure the sizes match.
+            name: A `String` to identify the SIMD[DType.float64] sent from Python.
 
-    #     Returns:
-    #         A `Bool` indicating whether the parameter was updated.
-    #     """
-    #     if self.world[].top_of_block:
-    #         try:
-    #             var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
-    #             if opt:
-    #                 for i in range(len(opt.value())):
-    #                     param[i] = opt.value()[i]
-    #                 return True
-    #         except error:
-    #             print("Error occurred while updating float SIMD message. Error: ", error)
-    #     return False
+        Returns:
+            A `Bool` indicating whether the parameter was updated.
+        """
+        if self.world[].top_of_block:
+            try:
+                var opt = self.world[].messenger_manager[].get_floats(self.get_name_with_namespace(name)[])
+                if opt:
+                    for i in range(len(opt.value())):
+                        param[i] = Scalar[dtype](opt.value()[i])
+                    return True
+            except error:
+                print("Error occurred while updating float SIMD message. Error: ", error)
+        return False
 
     # update Int
     def update(mut self, mut param: Int, name: String):

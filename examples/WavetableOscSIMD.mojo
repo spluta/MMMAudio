@@ -80,7 +80,7 @@ struct WavetableOscSIMD(Movable, Copyable):
         # the kinds of messages the Messenger can receive are defined by the type of the `note` argument in the callback function
         def callback(mut poly_object: OscVoice, mut vals: List[Int]):
             if vals[1] > 0: # the call_back will be called for both note on and note off messages
-                midi = vals[0] + poly_object.just_offset[vals[0] % 12]
+                midi = Float64(vals[0]) + poly_object.just_offset[vals[0] % 12]
                 print(vals[0], midi)
                 poly_object.freq = midicps(midi)
                 poly_object.vol = Float64(vals[1]) / 127.0

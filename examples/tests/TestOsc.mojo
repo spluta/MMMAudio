@@ -3,7 +3,7 @@ from mmm_audio import *
 
 comptime N = 1
 comptime num: Int = 5500
-comptime mul: Float64 = 0.2 / num
+comptime mul: Float64 = 0.2 / Float64(num)
 
 struct TestOsc[](Movable, Copyable):
     var world: World
@@ -13,7 +13,7 @@ struct TestOsc[](Movable, Copyable):
     def __init__(out self, world: World):
         self.world = world
         self.osc = [Osc[](self.world) for _ in range(num)]
-        self.freqs = [random_float64() * 2000 + 100 for _ in range(num)]
+        self.freqs = [rrand(100.0, 2000.0) for _ in range(num)]
 
     def next(mut self) -> Float64:
         sample = 0.0

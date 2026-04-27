@@ -15,7 +15,7 @@ struct TestSelect(Movable, Copyable):
         self.printers = List[Print](capacity=2)
         self.which = 0.0
         for i in range(8):
-            self.vs.append(i * 100)
+            self.vs.append(MFloat[1](i) * 100.0)
 
         self.printers[0] = Print(self.world)
         self.printers[1] = Print(self.world)

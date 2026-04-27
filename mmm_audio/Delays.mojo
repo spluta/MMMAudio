@@ -90,7 +90,7 @@ struct Delay[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
         A single sample read from the delay buffer with no interpolation. Use a float lookup for fractional delay with interpolation.
       """
 
-      idx = (self.delay_line.write_head + delay_samps) % self.delay_line.buf.num_frames
+      idx = (MInt[1](self.delay_line.write_head) + delay_samps) % MInt[1](self.delay_line.buf.num_frames)
       comptime if N == 1:
         out = SpanInterpolator.read_none[bWrap=True](self.delay_line.buf.data, Float64(idx[0]))
         return out

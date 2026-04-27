@@ -1,4 +1,3 @@
-from random import random_float64
 from mmm_audio import *
 
 struct WhiteNoise[num_chans: Int = 1](Copyable, Movable):

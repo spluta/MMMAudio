@@ -21,7 +21,7 @@ struct Oversampling[num_chans: Int = 1, times_oversampling: Int = 0](Movable, Co
         self.lpf = OS_LPF4[self.num_chans](world)
         self.buffer = InlineArray[MFloat[Self.num_chans], Self.times_oversampling](fill=MFloat[Self.num_chans](0.0))
         self.counter = 0
-        self.lpf.set_sample_rate(world[].sample_rate * Self.times_oversampling)
+        self.lpf.set_sample_rate(world[].sample_rate * MFloat[1](Self.times_oversampling))
         
         self.lpf.set_cutoff(0.48 * world[].sample_rate)
 
@@ -63,7 +63,7 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Movable, Copya
             world: Pointer to the MMMWorld instance.
         """
         self.lpf = OS_LPF4[Self.num_chans](world)
-        self.lpf.set_sample_rate(world[].sample_rate * Self.times_oversampling)
+        self.lpf.set_sample_rate(world[].sample_rate * MFloat[1](Self.times_oversampling))
         self.lpf.set_cutoff(0.5 * world[].sample_rate)
 
     @always_inline
@@ -78,9 +78,9 @@ struct Upsampler[num_chans: Int = 1, times_oversampling: Int = 1](Movable, Copya
             The next sample of the upsampled output.
         """
         if i == 0:
-            return self.lpf.next(input) * Self.times_oversampling
+            return self.lpf.next(input) * MFloat[1](Self.times_oversampling)
         else:
-            return self.lpf.next(MFloat[Self.num_chans](0.0)) * Self.times_oversampling
+            return self.lpf.next(MFloat[Self.num_chans](0.0)) * MFloat[1](Self.times_oversampling)
 
 struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
     """A simple 2nd-order low-pass filter for oversampling applications. Does not allow changing cutoff frequency on the fly to avoid that calculation each sample.

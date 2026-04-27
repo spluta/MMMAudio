@@ -1,12 +1,12 @@
 from mmm_audio import *
-from testing import assert_equal, assert_almost_equal, assert_true
-from testing import TestSuite
+from std.testing import assert_equal, assert_almost_equal, assert_true
+from std.testing import TestSuite
 from std.math import inf, nan
-from pathlib import Path
+from std.pathlib import Path
 
 # this should be more algorithmic
 
-def test_cpsmidi_midicps():
+def test_cpsmidi_midicps() raises:
     midi_notes = MFloat[4](60.0, 69.0, 72.0, 81.0)
     frequencies = midicps(midi_notes)
     var cwd = Path()
@@ -24,7 +24,7 @@ def test_cpsmidi_midicps():
         assert_almost_equal(midi_notes[i], py_answer[i], "Test: cpsmidi and midicps inversion failed")
 
 
-def test_linlin():
+def test_linlin() raises:
     x = MFloat[4](0.0, 0.5, 1.0, 1.5)
     result = linlin(x, 0.0, 1.0, -1.0, 1.0)
     expected = MFloat[4](-1.0, 0.0, 1.0, 1.0)
@@ -38,7 +38,7 @@ def test_linlin():
         py_answer.append(py_to_float64(mmm_python.linlin(x[i], 0.0, 1.0, -1.0, 1.0)))
         assert_almost_equal(result[i], py_answer[i], "Test: linlin mismatch at index " + String(i))
 
-def test_linlin2():
+def test_linlin2() raises:
     x = MFloat[4](0.0, 0.5, 1.0, 1.5)
     result = linlin(x, 0.0, 1.0, 1.0, -1.0)
     expected = MFloat[4](1.0, 0.0, -1.0, -1.0)
@@ -53,7 +53,7 @@ def test_linlin2():
         assert_almost_equal(result[i], py_answer[i], "Test: linlin mismatch at index " + String(i))
 
 
-def test_linexp():
+def test_linexp() raises:
     x = MFloat[4](0.0, 0.5, 1.0, 1.5)
     result = linexp(x, 0.0, 1.0, 1.0, 10.0)
     expected = MFloat[4](1.0, 3.1622776601683795, 10.0, 10.0)
@@ -67,7 +67,7 @@ def test_linexp():
         py_answer.append(py_to_float64(mmm_python.linexp(x[i], 0.0, 1.0, 1.0, 10.0)))
         assert_almost_equal(result[i], py_answer[i], "Test: linexp mismatch at index " + String(i))
 
-def test_linexp2():
+def test_linexp2() raises:
     x = MFloat[4](2.0, 3.1622776601683795, 10.0, 15.0)
     result = linexp(x, 1.0, 10.0, 10.0, 0.001)
     expected = MFloat[4](3.5938136638046, 1.093925400505, 0.001, 0.001)
@@ -90,7 +90,7 @@ def test_linexp2():
         assert_almost_equal(result[i], py_answer[i], "Test: linexp mismatch at index " + String(i))
 
 
-def test_lincurve():
+def test_lincurve() raises:
     x = MFloat[4](0.234, 0.5, 1.0, 1.5)
     curve = [2.0, -2.0, 3.5, 0.5]
     expected = [
@@ -112,7 +112,7 @@ def test_lincurve():
             py_answer[i2]=(py_to_float64(mmm_python.lincurve(x[i2], 0.0, 1.0, 1.0, 10.0, curve[i])))
         assert_almost_equal(result, py_answer, "Test: lincurve mismatch at index " + String(i))
 
-def test_lincurve2():
+def test_lincurve2() raises:
     x = MFloat[4](0.234, 0.5, 1.0, 1.5)
     curve = [2.0, -2.0, 3.5, 0.5]
     expected = [
@@ -136,7 +136,7 @@ def test_lincurve2():
 
 
 
-def test_curvelin():
+def test_curvelin() raises:
     x = MFloat[4](0.234, 0.5, 1.0, 1.5)
     curve = [2.0, -2.0, 3.5, 0.5]
     expected = [
@@ -157,7 +157,7 @@ def test_curvelin():
             py_answer[i2]=(py_to_float64(mmm_python.curvelin(x[i2], 0.0, 1.0, 1.0, 10.0, curve[i])))
         assert_almost_equal(result, py_answer, "Test: curvelin mismatch at index " + String(i)) 
 
-def test_curvelin2():
+def test_curvelin2() raises:
     x = MFloat[4](0.234, 0.5, 1.0, 1.5)
     curve = [2.0, -2.0, 3.5, 0.5]
     expected = [
@@ -179,7 +179,7 @@ def test_curvelin2():
             py_answer[i2]=(py_to_float64(mmm_python.curvelin(x[i2], 0.0, 1.0, 10.0, 1.0, curve[i])))
             assert_almost_equal(expected[i][i2], py_answer[i2], "Test: curvelin mismatch at index " + String(i)) 
 
-def test_explin():
+def test_explin() raises:
     x = MFloat[4](1.0, 3.1622776601683795, 10.0, 15.0)
     result = explin(x, 1.0, 10.0, 0.0, 1.0)
     expected = MFloat[4](0.0, 0.5, 1.0, 1.0)
@@ -193,7 +193,7 @@ def test_explin():
         py_answer.append(py_to_float64(mmm_python.explin(x[i], 1.0, 10.0, 0.0, 1.0)))
         assert_almost_equal(result[i], py_answer[i], "Test: explin mismatch at index " + String(i))
 
-def test_explin2():
+def test_explin2() raises:
     x = MFloat[4](0.234, 0.5, 1.0, 1.5)
     expected = MFloat[4](2.8923524277696, 1.9030899869919, 1.0, 1.0)
 
@@ -208,7 +208,7 @@ def test_explin2():
         py_answer[i2]=(py_to_float64(mmm_python.explin(x[i2], 0.001, 1.0, 10.0, 1.0)))
     assert_almost_equal(expected, py_answer, "Test: explin mismatch at index ") 
 
-def test_expexp():
+def test_expexp() raises:
     x = MFloat[4](1.0, 3.1622776601683795, 10.0, 15.0)
     result = expexp(x, 1.0, 10.0, 1.0, 10.0)
     expected = MFloat[4](1.0, 3.1622776601683795, 10.0, 10.0)
@@ -222,7 +222,7 @@ def test_expexp():
         py_answer.append(py_to_float64(mmm_python.expexp(x[i], 1.0, 10.0, 1.0, 10.0)))
         assert_almost_equal(result[i], py_answer[i], "Test: expexp mismatch at index " + String(i))
 
-def test_expexp2():
+def test_expexp2() raises:
     x = MFloat[4](2.0, 3.1622776601683795, 10.0, 15.0)
     result = expexp(x, 1.0, 10.0, 10.0, 0.001)
     expected = MFloat[4](0.625, 0.1, 0.001, 0.001)
@@ -244,6 +244,6 @@ def test_expexp2():
         py_answer.append(py_to_float64(mmm_python.expexp(x[i], 1.0, 10.0, 10.0, 0.001)))
         assert_almost_equal(result[i], py_answer[i], "Test: expexp mismatch at index " + String(i))
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
     # test_mel_bands()

@@ -189,7 +189,7 @@ struct OscType:
     | OscType.saw                  | 2     |
     | OscType.square               | 3     |
     """
-    comptime sine: Int = 0
-    comptime triangle: Int = 1
-    comptime saw: Int = 2
-    comptime square: Int = 3
+    comptime sine: MInt[1] = 0
+    comptime triangle: MInt[1] = 1
+    comptime saw: MInt[1] = 2
+    comptime square: MInt[1] = 3

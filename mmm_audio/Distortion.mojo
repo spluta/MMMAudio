@@ -79,7 +79,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
     var x1: MFloat[Self.num_chans]
     var oversampling: Oversampling[Self.num_chans, Self.times_oversampling]
     var upsampler: Upsampler[Self.num_chans, Self.times_oversampling]
-    var D: Int
+    var D: Float64
     var norm_factor: Float64
     var inv_norm_factor: Float64
     comptime TOL = 1.0e-5
@@ -91,7 +91,7 @@ struct SoftClipAD[num_chans: Int = 1, os_index: Int = 0, degree: Int = 3](Copyab
             print("SoftClipAD: os_index greater than 1 not supported yet. It will not sound good.")
         self.oversampling = Oversampling[Self.num_chans, Self.times_oversampling](world)
         self.upsampler = Upsampler[Self.num_chans, 2 ** Self.os_index](world)
-        self.D = Self.degree // 2 * 2 + 1  # ensure degree is odd
+        self.D = Float64(Self.degree // 2 * 2 + 1)  # ensure degree is odd
         self.norm_factor = (self.D - 1) / self.D
         self.inv_norm_factor = 1.0 / self.norm_factor
         self.G1 = 1.0 / (2.0 * (self.norm_factor * self.norm_factor)) - 1.0 / ((self.norm_factor * self.norm_factor) * self.D * (self.D + 1))

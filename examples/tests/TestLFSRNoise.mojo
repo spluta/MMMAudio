@@ -26,5 +26,5 @@ struct TestLFSRNoise(Movable, Copyable):
         self.messenger.update(self.width1, "width1")
         self.messenger.update(self.width2, "width2")
 
-        var sample = self.lfsr.next(self.freq, MInt[2](self.width1, self.width2), False)
+        var sample = self.lfsr.next(self.freq, MInt[2](MInt[1](self.width1), MInt[1](self.width2)), False)
         return sample * self.gain

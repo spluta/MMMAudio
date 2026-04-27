@@ -1,5 +1,4 @@
 from std.math import sin, floor
-from random import random_float64
 from mmm_audio import *
 
 struct Phasor[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
@@ -222,8 +221,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](M
                     ](
                         world = self.world,
                         data=self.world[].osc_buffers[].buffers[osc_type[chan]],
-                        f_idx=phase[chan] * OscBuffersSize,
-                        prev_f_idx=self.last_phase[chan] * OscBuffersSize
+                        f_idx=phase[chan] * Float64(OscBuffersSize),
+                        prev_f_idx=self.last_phase[chan] * Float64(OscBuffersSize)
                     )
             self.last_phase = phase
             return out
@@ -242,8 +241,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](M
                     ](
                         world = self.world,
                         data=self.world[].osc_buffers[].buffers[osc_type[chan]],
-                        f_idx=phase[chan] * OscBuffersSize,
-                        prev_f_idx=self.last_phase[chan] * OscBuffersSize
+                        f_idx=phase[chan] * Float64(OscBuffersSize),
+                        prev_f_idx=self.last_phase[chan] * Float64(OscBuffersSize)
                     )
                 self.oversampling.add_sample(sample)  # Get the next sample from the Oscillator buffer using sinc interpolation
                 self.last_phase = phase
@@ -268,8 +267,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](M
         ](
             world = self.world,
             data=self.world[].osc_buffers[].basic_waveforms,
-            f_idx=phase * OscBuffersSize,
-            prev_f_idx=last_phase * OscBuffersSize
+            f_idx=phase * Float64(OscBuffersSize),
+            prev_f_idx=last_phase * Float64(OscBuffersSize)
         )
 
     @always_inline
@@ -278,7 +277,7 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](M
             freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), 
             phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), 
             trig: Bool = False, 
-            osc_types: List[Int] = [OscType.sine,OscType.triangle,OscType.saw,OscType.square], 
+            osc_types: List[MInt[1]] = [OscType.sine,OscType.triangle,OscType.saw,OscType.square], 
             osc_frac: MFloat[self.num_chans] = MFloat[self.num_chans](0.0)
         ) -> MFloat[self.num_chans]:
         """Variable Wavetable Oscillator using built-in waveforms. Generates the next oscillator sample on a variable 
@@ -306,8 +305,8 @@ struct Osc[num_chans: Int = 1, interp: Int = Interp.linear, os_index: Int = 0](M
 
         var osc_type0: MInt[self.num_chans] = MInt[self.num_chans](scaled_osc_frac)
         var osc_type1 = MInt[self.num_chans](osc_type0 + 1)
-        osc_type0 = clip(osc_type0, 0,  max_osc_frac)
-        osc_type1 = clip(osc_type1, 0, max_osc_frac)
+        osc_type0 = clip(osc_type0, 0,  MInt[1](max_osc_frac))
+        osc_type1 = clip(osc_type1, 0, MInt[1](max_osc_frac))
         
         comptime for i in range(self.num_chans):
             osc_type0[i] = osc_types[osc_type0[i]]
@@ -642,7 +641,7 @@ struct Dust[num_chans: Int = 1] (Movable, Copyable):
         self.impulse = Phasor[Self.num_chans](world)
         # this will cause all Dusts to start at a different phase
         for i in range(self.num_chans):
-            self.impulse.phase[i] = random_float64(0.0, 1.0)
+            self.impulse.phase[i] = rrand(0.0, 1.0)
         self.freq = MFloat[Self.num_chans](1.0)
 
     def next(mut self: Dust, low: MFloat[self.num_chans] = 100.0, high: MFloat[self.num_chans] = 2000.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill= False)) -> MFloat[self.num_chans]:
@@ -701,7 +700,7 @@ struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Movable, Copyable
 
     # history_index: the index of the history list that the impulse's phase is moving *away* from
     # phase is moving *towards* history_index + 1
-    var history_index: List[Int8]
+    var history_index: List[Int]
 
     def __init__(out self, world: World):
         """
@@ -822,7 +821,7 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
     var rising_bool_detector: RisingBoolDetector[Self.num_chans]  # Track the last reset state
     var world: World  # Pointer to the MMMWorld instance
     var freq: MFloat[Self.num_chans]
-    var curve: Int  # 0 = linlin, 1 = linexp, 2 = lincurve
+    var curve: MFloat[1]
 
     def __init__(out self, world: World):
         """
@@ -835,7 +834,7 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
         self.freq_mul = 1.0 / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[Self.num_chans]()
         self.freq = MFloat[Self.num_chans](0.0)
-        self.curve = 2
+        self.curve = 2.0
 
     @always_inline
     def next(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = True) -> MFloat[self.num_chans]:
@@ -884,8 +883,8 @@ struct OscBuffers(Movable, Copyable):
             ](
                 world=world,
                 data=self.buffers[osc_type],
-                f_idx=phase * OscBuffersSize,
-                prev_f_idx=prev_phase * OscBuffersSize
+                f_idx=phase * Float64(OscBuffersSize),
+                prev_f_idx=prev_phase * Float64(OscBuffersSize)
             )
         else:
             return 0.0
@@ -899,8 +898,8 @@ struct OscBuffers(Movable, Copyable):
         ](
             world=world,
             data=self.basic_waveforms,
-            f_idx=phase * OscBuffersSize,
-            prev_f_idx=prev_phase * OscBuffersSize
+            f_idx=phase * Float64(OscBuffersSize),
+            prev_f_idx=prev_phase * Float64(OscBuffersSize)
         )
 
     @doc_hidden

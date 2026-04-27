@@ -15,7 +15,7 @@ struct TestBiquad(Movable, Copyable):
         self.filts = List[Biquad[1]](capacity=2)
         self.cutoff = 1000.0
         self.q = 1.0
-        for i in range(2):
+        for _ in range(2):
             self.filts.append(Biquad[1](self.world))
 
     def next(mut self) -> MFloat[2]:

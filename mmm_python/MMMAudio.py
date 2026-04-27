@@ -367,16 +367,16 @@ class MMMAudio:
         # =========================================================================
         try:
             from mmm_python.make_solo_graph import make_solo_graph
-            # import importlib
+            import importlib
             
-            # # make_solo_graph(graph_name, package_name)
-            # # MMMAudioBridge = importlib.import_module(f"{graph_name}Bridge")
+            make_solo_graph(graph_name, package_name)
+            MMMAudioBridge = importlib.import_module(f"{graph_name}Bridge")
             # MMMAudioBridge = importlib.import_module("GrainsBridge").MMMAudioBridge
-            import GrainsBridge as MMMAudioBridge
+            # import GrainsBridge as MMMAudioBridge
 
             bridge_file = graph_name + "Bridge" + ".mojo"
-            # if os.path.exists(bridge_file):
-            #     os.remove(bridge_file)
+            if os.path.exists(bridge_file):
+                os.remove(bridge_file)
         except Exception as e:
             print(f"[PID {pid}] Error loading Mojo bridge: {e}")
             sys.stdout.flush()

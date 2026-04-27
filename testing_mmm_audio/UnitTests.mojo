@@ -1,10 +1,10 @@
 from mmm_audio import *
-from testing import assert_equal, assert_almost_equal, assert_true
-from testing import TestSuite
+from std.testing import assert_equal, assert_almost_equal, assert_true
+from std.testing import TestSuite
 from std.math import inf, nan
-from pathlib import Path
+from std.pathlib import Path
 
-def test_Changed():
+def test_Changed() raises:
     # Test with Bool
     changed_bool = Changed(False)
     assert_equal(changed_bool.next(False), False, "Changed failed for Bool: No change should return False")
@@ -38,7 +38,7 @@ def test_Changed():
     assert_equal(changed_floats.next(MFloat[4](1.0, 0.0, 1.0, 1.0)), True, "Changed failed for Float64: Change should return True")
     assert_equal(changed_floats.next(MFloat[4](1.0, 1.0, 1.0, 1.0)), True, "Changed failed for Float64: No change should return False")
 
-def test_ChangedSIMD():
+def test_ChangedSIMD() raises:
     changed_bool = ChangedSIMD(MBool[4](False, False, False, False))
     assert_equal(changed_bool.next(MBool[4](False, False, False, False)), MBool[4](False, False, False, False), "Changed failed for Bool: No change should return False")
     assert_equal(changed_bool.next(MBool[4](True, False, True, True)), MBool[4](True, False, True, True), "Changed failed for Bool: Change should return True")
@@ -56,7 +56,7 @@ def test_ChangedSIMD():
     assert_equal(changed_float.next(MFloat[4](1.0, 0.0, 1.0, 1.0)), MBool[4](True, False, True, True), "Changed failed for Float64: Change should return True")
     assert_equal(changed_float.next(MFloat[4](1.0, 1.0, 1.0, 1.0)), MBool[4](False, True, False, False), "Changed failed for Float64: No change should return False")
 
-def test_sound_file_reader():
+def test_sound_file_reader() raises:
     try:
         # Quick one-liner to read audio
         file = "resources/Shiverer.wav"
@@ -87,7 +87,7 @@ def test_sound_file_reader():
     except err:
         print("Error reading WAV file: ", err)
 
-def test_linear_interp():
+def test_linear_interp() raises:
     a = MFloat[4](0.0, 10.0, 20.0, 30.0)
     b = MFloat[4](10.0, 20.0, 30.0, 40.0)
     t = MFloat[4](0.0, 0.5, 1.0, 0.25)
@@ -95,7 +95,7 @@ def test_linear_interp():
     expected = MFloat[4](0.0, 15.0, 30.0, 32.5)
     assert_almost_equal(result, expected, "Test: lerp function failed")
 
-def test_sanitize():
+def test_sanitize() raises:
     nan = nan[DType.float64]()
     pos_inf = inf[DType.float64]()
     neg_inf = -inf[DType.float64]()
@@ -104,7 +104,7 @@ def test_sanitize():
     expected = MFloat[4](1.0, 0.0, 0.0, 0.0)
     assert_almost_equal(sanitized, expected, "Test: sanitize function failed: ")
 
-def test_mel_to_hz():
+def test_mel_to_hz() raises:
     """Compare mel_to_hz against librosa's implementation."""
     librosa_results = MFloat[8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
     mels = MFloat[8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
@@ -113,7 +113,7 @@ def test_mel_to_hz():
         mmm_results[i] = MelBands.mel_to_hz(mels[i])
     assert_almost_equal(mmm_results, librosa_results, "Test: mel_to_hz function failed")
 
-def test_hz_to_mel():
+def test_hz_to_mel() raises:
     """Compare hz_to_mel against librosa's implementation."""
     librosa_results = MFloat[8](100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0)
     hz_values = MFloat[8](345123.07093968056, 334060977.5717811, 323353453109.8285, 312989132696839.3, 3.029570157490985e+17, 2.932464542802523e+20, 2.8384714159964454e+23, 2.747491013729005e+26)
@@ -122,7 +122,7 @@ def test_hz_to_mel():
         mmm_results[i] = MelBands.hz_to_mel(hz_values[i])
     assert_almost_equal(mmm_results, librosa_results, "Test: hz_to_mel function failed")
 
-def test_diff():
+def test_diff() raises:
     arr = List[Float64]([1.0, 2.5, 4.0, 7.0, 10.0])
     expected = List[Float64]([1.5, 1.5, 3.0, 3.0])
     result = diff(arr)
@@ -131,7 +131,7 @@ def test_diff():
     expected_simd = MFloat[4](expected[0], expected[1], expected[2], expected[3])
     assert_almost_equal(result_simd, expected_simd, "Test: diff function failed")
 
-def test_linspace():
+def test_linspace() raises:
     start = 0.0
     stop = 1.0
     num = 8
@@ -140,7 +140,7 @@ def test_linspace():
     expected = MFloat[8](0.0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1.0)
     assert_almost_equal(result_simd, expected, "Test: linspace function failed")
 
-def test_mel_frequencies():
+def test_mel_frequencies() raises:
     num_mel_bins = 32
     fmin = 20.0
     fmax = 20000.0
@@ -151,7 +151,7 @@ def test_mel_frequencies():
     expected = MFloat[32](20.0, 145.31862602399627, 270.63725204799255, 395.95587807198876, 521.274504095985, 646.5931301199813, 771.9117561439776, 897.2303821679739, 1023.526754399107, 1164.733656827089, 1325.421622361244, 1508.2782803824396, 1716.3620486443097, 1953.15328765427, 2222.6125123704865, 2529.2466348500357, 2878.184345807327, 3275.2618958971248, 3727.120711479871, 4241.318477567799, 4826.455545899264, 5492.318782413196, 6250.04526008295, 7112.308534997669, 8093.530621301341, 9210.123210432963, 10480.762169244366, 11926.699908187227, 13572.120844166513, 15444.545903449043, 17575.292830248403, 19999.999999999996)
     assert_almost_equal(result_simd, expected, "Test: mel_frequencies function failed")
 
-def test_fft_frequencies():
+def test_fft_frequencies() raises:
     sample_rate = 44100.0
     n_fft = 512
     result = RealFFT.fft_frequencies(sample_rate, n_fft)
@@ -161,7 +161,7 @@ def test_fft_frequencies():
     expected = MFloat[8](0.0, 86.1328125, 172.265625, 258.3984375, 344.53125, 430.6640625, 516.796875, 602.9296875)
     assert_almost_equal(result_simd, expected, "Test: fft_frequencies function failed")
 
-def test_dct():
+def test_dct()  raises:
     dct = DCT(4,3)
     input_vals = List[Float64]([1.0, 2.0, 3.0, 4.0])
     output_vals = List[Float64](length=3, fill=0.0)
@@ -171,7 +171,7 @@ def test_dct():
     for i in range(len(output_vals)):
         assert_almost_equal(output_vals[i], expected[i], "Test: DCT coefficient mismatch")
 
-def test_mfcc_paths_consistency():
+def test_mfcc_paths_consistency() raises:
     """Ensure MFCC outputs match across next_frame, from_mags, and from_mel_bands."""
     comptime fft_size: Int = 64
     comptime num_bands: Int = 8
@@ -201,9 +201,9 @@ def test_mfcc_paths_consistency():
         assert_almost_equal(mfcc_next.coeffs[i], mfcc_mags.coeffs[i], "Test: MFCC next_frame vs from_mags mismatch")
         assert_almost_equal(mfcc_next.coeffs[i], mfcc_bands.coeffs[i], "Test: MFCC next_frame vs from_mel_bands mismatch")
 
-def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
+def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]() raises:
     w = alloc[MMMWorld](1) 
-    w.init_pointee_move(MMMWorld(sample_rate = sr))
+    w.init_pointee_move(MMMWorld(sample_rate = MFloat[1](sr)))
     melbands = MelBands(w[].sample_rate, num_bands=n_mels,min_freq=20.0,max_freq=20000.0,fft_size=n_fft)
 
     print("=======================================")
@@ -244,7 +244,7 @@ def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]():
 
     compare_long_lists(weights_flat, expected_flat)
 
-def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64], verbose: Bool = False):
+def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64], verbose: Bool = False) raises:
     assert_equal(len(a), len(b), "Lists are of different lengths")
     a_simd = SIMD[DType.float64,chunk_size]()
     b_simd = SIMD[DType.float64,chunk_size]()
@@ -259,10 +259,10 @@ def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64],
             assert_almost_equal(a_simd,b_simd)
         i += 1
 
-def test_all_mel_bands_weights():
+def test_all_mel_bands_weights() raises:
     _test_mel_bands_weights[40,512,44100]()
 
 
-def main():
+def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
     # test_mel_bands()

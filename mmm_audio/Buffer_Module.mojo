@@ -1,7 +1,7 @@
 from mmm_audio import *
 from std.math import sin, log2, ceil, floor
 from std.sys import simd_width_of
-from pathlib import Path
+from std.pathlib import Path
 
 
 struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):

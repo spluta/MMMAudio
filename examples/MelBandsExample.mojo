@@ -35,7 +35,7 @@ struct MelBandsExample(Movable, Copyable):
             self.lags.append(Lag(self.world,512.0 / self.world[].sample_rate))
 
         self.oscs = List[SinOsc[]]()
-        for i in range(num_bands):
+        for _ in range(num_bands):
             self.oscs.append(SinOsc(self.world))
 
         self.freqs = MelBands.mel_frequencies(num_bands,20.0,20000.0)

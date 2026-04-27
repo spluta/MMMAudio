@@ -82,7 +82,7 @@ struct FM4(Movable, Copyable):
         self.m.update(self.osc_frac[3], "osc_frac3")
 
 
-        for i in range(Self.times_oversampling):
+        for _ in range(Self.times_oversampling):
             fm_0 = self.fb[1] * self.osc0_mul[0] + self.fb[2] * self.osc0_mul[1]
 
             osc0 = self.osc0.next_basic_waveforms(self.osc0_freq + fm_0, osc_frac=self.osc_frac[0])

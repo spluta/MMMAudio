@@ -174,8 +174,8 @@ struct DattorroReverb[interp: Int = Interp.none](Movable, Copyable):
         self.del2 = Delay[2, interp = Self.interp](world, 0.17)
         self.trap = DCTrap[2](world)
 
-        self.final_taps = [Int(266/dattoro_sr*world[].sample_rate), Int(2974/dattoro_sr*world[].sample_rate), Int(1913/dattoro_sr*world[].sample_rate), Int(1996/dattoro_sr*world[].sample_rate), Int(1990/dattoro_sr*world[].sample_rate), Int(187/dattoro_sr*world[].sample_rate), Int(1066/dattoro_sr*world[].sample_rate), \
-        Int(353/dattoro_sr*world[].sample_rate), Int(3627/dattoro_sr*world[].sample_rate), Int(1228/dattoro_sr*world[].sample_rate), Int(2673/dattoro_sr*world[].sample_rate), Int(2111/dattoro_sr*world[].sample_rate), Int(335/dattoro_sr*world[].sample_rate), Int(121/dattoro_sr*world[].sample_rate)]
+        self.final_taps = [MInt[1](266/dattoro_sr*world[].sample_rate), MInt[1](2974/dattoro_sr*world[].sample_rate), MInt[1](1913/dattoro_sr*world[].sample_rate), MInt[1](1996/dattoro_sr*world[].sample_rate), MInt[1](1990/dattoro_sr*world[].sample_rate), MInt[1](187/dattoro_sr*world[].sample_rate), MInt[1](1066/dattoro_sr*world[].sample_rate), \
+        MInt[1](353/dattoro_sr*world[].sample_rate), MInt[1](3627/dattoro_sr*world[].sample_rate), MInt[1](1228/dattoro_sr*world[].sample_rate), MInt[1](2673/dattoro_sr*world[].sample_rate), MInt[1](2111/dattoro_sr*world[].sample_rate), MInt[1](335/dattoro_sr*world[].sample_rate), MInt[1](121/dattoro_sr*world[].sample_rate)]
 
     def set_all(mut self, pre_delay_time: Float64, decay: Float64, input_diffusion1: Float64, input_diffusion2: Float64, decay_diffusion1: Float64, decay_diffusion2: Float64, bandwidth: Float64, damping: Float64):
         """Set all the main parameters of the reverb at once.
@@ -278,7 +278,7 @@ struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
         center_freq_real = abs(center_freq)
         center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2**lfo_octaves), center_freq_real*(2**lfo_octaves))
         for i in range(Self.stages):
-            freq_offset_real = 1.0 + (i * freq_offset)
+            freq_offset_real = 1.0 + (MFloat[1](i) * freq_offset)
             allpass_out = self.all_passes[i].allpass(allpass_out, clip(center_freq_real * freq_offset_real, 20., 20000.), Q)
         mix_real = clip(mix, 0., 1.)
         wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))

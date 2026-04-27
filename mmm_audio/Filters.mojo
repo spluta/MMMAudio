@@ -739,7 +739,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         Args:
             world: Pointer to the MMMWorld.
         """
-        self.nyquist = world[].sample_rate * 0.5 * (2 ** Self.os_index)
+        self.nyquist = world[].sample_rate * 0.5 * (2.0 ** Self.os_index)
         self.step_val = 1.0 / self.nyquist
         self.last_1 = MFloat[Self.num_chans](0.0)
         self.last_2 = MFloat[Self.num_chans](0.0)

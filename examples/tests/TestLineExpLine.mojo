@@ -38,4 +38,4 @@ struct TestLineExpLine[](Movable, Copyable):
 
         line, expline, curveline = self.osc.next(line), self.osc2.next(expline), self.osc3.next(curveline)
 
-        return select(self.which, MFloat[2](line), MFloat[2](expline), MFloat[2](curveline), splay(line, expline, curveline, world=self.world) ) * 0.1
+        return select(MFloat[1](self.which), MFloat[2](line), MFloat[2](expline), MFloat[2](curveline), splay(line, expline, curveline, world=self.world) ) * 0.1

@@ -1,7 +1,5 @@
 from mmm_audio import *
 
-from random import random_float64
-
 comptime window_size = 2048
 comptime hop_size = window_size // 2
 

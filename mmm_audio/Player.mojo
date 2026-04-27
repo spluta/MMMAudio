@@ -528,7 +528,7 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
                 self.pitch_ratios[i] = pitch_ratio * linexp(clip(random_float64(-pitch_dispersion, pitch_dispersion), -1.0, 1.0), -1.0, 1.0, 0.25, 4.0)
                 added_delay = random_float64(added_delay_low, added_delay_high)
                 if self.pitch_ratios[i] <= 1.0:
-                    start_frame = Int(self.recorder.write_head - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
+                    start_frame = Int(Float64(self.recorder.write_head) - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
                 else:
                     start_frame = Int(Float64(self.recorder.write_head) - ((grain_dur * self.world[].sample_rate) * (self.pitch_ratios[i]-1.0)) - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
 

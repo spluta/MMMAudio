@@ -1,6 +1,5 @@
 
 from mmm_audio import *
-from random import random
 
 # User defined struct that implements FFTProcessable
 struct FFTLowPass[window_size: Int = 1024](FFTProcessable):

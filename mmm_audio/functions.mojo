@@ -65,7 +65,7 @@ def select[num_chans: Int](index: Float64, vals: Span[MFloat[num_chans], ...]) -
         The interpolated value.
     """
     index_int = Int(index) % len(vals)
-    index_mix: Float64 = index - index_int
+    index_mix: Float64 = index - Float64(index_int)
     v0 = vals[index_int]
     v1 = vals[(index_int + 1) % len(vals)]
     return linear_interp(v0, v1, index_mix)
@@ -85,7 +85,7 @@ def select[num_chans: Int, //](index: Float64, vals: MFloat[num_chans]) -> Float
         The interpolated value.
     """
     index_int = Int(index) % len(vals)
-    index_mix: Float64 = index - index_int
+    index_mix: Float64 = index - Float64(index_int)
     v0 = vals[index_int]
     v1 = vals[(index_int + 1) % len(vals)]
     return linear_interp(v0, v1, index_mix)
@@ -105,7 +105,7 @@ def select[num_chans: Int](index: Float64, *vals: MFloat[num_chans]) -> MFloat[n
         The interpolated value.
     """
     index_int = Int(index) % len(vals)
-    index_mix: Float64 = index - index_int
+    index_mix: Float64 = index - Float64(index_int)
     v0 = vals[index_int]
     v1 = vals[(index_int + 1) % len(vals)]
     return linear_interp(v0, v1, index_mix)
@@ -646,7 +646,7 @@ def rrand(min: Int, max: Int) -> Int:
     Returns:
         A random float64 sample from the specified range.
     """
-    return Int(random_si64(min, max))
+    return Int(rrand(Float64(min), Float64(max)+0.99999999999999))
 
 def rrand[num_chans: Int = 1](min: MFloat[num_chans], max: MFloat[num_chans]) -> MFloat[num_chans]:
     """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.

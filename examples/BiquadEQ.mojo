@@ -7,7 +7,7 @@ struct EQSynth(Movable, Copyable):
     """
     var world: World
     var buffer: Buffer
-    var num_chans: Int64
+    var num_chans: MInt[1]
     var play_buf: Play
     var lowshelf: Biquad[2]
     var bell1: Biquad[2]
@@ -36,7 +36,7 @@ struct EQSynth(Movable, Copyable):
         
         # Load the audio buffer
         self.buffer = Buffer.load("resources/Shiverer.wav")
-        self.num_chans = self.buffer.num_chans
+        self.num_chans = MInt[1](self.buffer.num_chans)
         
         # without printing this, the compiler wants to free the buffer for some reason
         print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")

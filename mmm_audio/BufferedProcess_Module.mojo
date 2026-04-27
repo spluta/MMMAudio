@@ -200,7 +200,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         if self.hop_counter == 0:
 
             for i in range(self.window_size):
-                index = phase * buffer.num_frames_f64 + i * buffer.sample_rate / self.world[].sample_rate
+                index = phase * buffer.num_frames_f64 + Float64(i) * buffer.sample_rate / self.world[].sample_rate
                 self.passing_buffer[i] = SpanInterpolator.read[interp=interp, bWrap=bWrap](self.world, buffer.data, index, 0.0) * self.input_attenuation_window[i]
 
             self.process.next_window(self.passing_buffer)
@@ -241,7 +241,7 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
         if self.hop_counter == 0:
            
             for i in range(self.window_size):
-                index = (phase * buffer.num_frames_f64) + i
+                index = (phase * buffer.num_frames_f64) + Float64(i)
                 self.st_passing_buffer[i] = SpanInterpolator.read[interp=interp, bWrap=bWrap](self.world, buffer.data, index, 0.0) * self.input_attenuation_window[i]
 
             self.process.next_stereo_window(self.st_passing_buffer)

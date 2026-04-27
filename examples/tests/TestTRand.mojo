@@ -1,7 +1,7 @@
 from mmm_audio import *
-from testing import assert_true
+from std.testing import assert_true
 
-def main():
+def main() raises:
     # Test TRand
     trand = TRand()
     

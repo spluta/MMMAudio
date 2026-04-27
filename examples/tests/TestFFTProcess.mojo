@@ -1,6 +1,5 @@
 
 from mmm_audio import *
-from random import random
 
 comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
@@ -26,10 +25,10 @@ struct BinScramble(Copyable,Movable):
     def new_swaps(mut self) -> None:
         self.swaps.clear()
         for _ in range(self.nscrambles):
-            i = random.random_ui64(0, self.nbins - 1)
+            i = rrand(0, self.nbins - 1)
             minj = max(i - self.scramble_range,0)
             maxj = min(i + self.scramble_range, self.nbins - 1)
-            j = random.random_ui64(minj, maxj)
+            j = rrand(minj, maxj)
             self.swaps.append((Int(i),Int(j)))
 
     def next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:

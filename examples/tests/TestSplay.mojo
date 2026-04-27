@@ -17,10 +17,10 @@ struct TestSplay(Movable, Copyable):
     def __init__(out self, world: World):
         self.world = world
         self.osc = [Osc[2](self.world) for _ in range(num_osc)]
-        self.freqs = [random_float64() * 2000 + 100 for _ in range(num_osc)]
+        self.freqs = [rrand(100.0, 2000.0) for _ in range(num_osc)]
         self.mult = 0.2 / Float64(num_osc)
         # self.samples = [MFloat[2](0.0) for _ in range(num_osc)]
-        self.samples = InlineArray[MFloat[2], num_osc](0.0)
+        self.samples = InlineArray[MFloat[2], num_osc](fill=0.0)
         self.splay = SplayN[num_channels = num_output_channels]()
 
     def next(mut self) -> MFloat[num_output_channels]:

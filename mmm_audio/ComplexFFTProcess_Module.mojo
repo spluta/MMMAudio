@@ -46,7 +46,7 @@ struct ComplexFFTProcessor[T: ComplexFFTProcessable, ifft: Bool = True](Buffered
     def get_messages(mut self) -> None:
         self.process.get_messages()
 
-trait ComplexFFTProcessable(Movable,Copyable):
+trait ComplexFFTProcessable(Movable,Copyable, ImplicitlyDestructible):
     """Implement this trait in a custom struct to pass to `FFTProcess`
     as a Parameter.
 
