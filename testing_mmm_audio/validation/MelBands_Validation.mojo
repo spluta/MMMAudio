@@ -8,7 +8,7 @@ struct MelBandsTestSuite(FFTProcessable):
     var melbands: MelBands[]
     var data: List[List[Float64]]
 
-    def __init__(out self, w: UnsafePointer[MMMWorld, ...]):
+    def __init__(out self, w: World):
         self.melbands = MelBands[](w[].sample_rate,num_bands=nbands,min_freq=20.0,max_freq=20000.0,fft_size=fftsize)
         self.data = List[List[Float64]]()
 

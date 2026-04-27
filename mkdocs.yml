@@ -1,6 +1,6 @@
 site_name: MMMAudio Documentation
-site_description: Creative Coding Environment leveraging Python/Mojo interop where python acts as a scripting language for Mojo acting as an audio processing engine
-site_author: Sam Pluta
+site_description: Creative Coding Environment leveraging Python/Mojo interop where Python acts as a scripting language for Mojo acting as an audio engine
+site_author: Sam Pluta & Ted Moore
 site_url: https://spluta.github.io/MMMAudio/
 docs_dir: doc_generation/docs_md
 site_dir: site
@@ -51,6 +51,7 @@ nav:
       - Analysis: api/Analysis.md
       - Buffer: api/Buffer.md
       - BufferedProcess: api/BufferedProcess.md
+      - Data: api/Data.md
       - Delays: api/Delays.md
       - Distortion: api/Distortion.md
       - Env: api/Envelopes.md

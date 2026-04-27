@@ -11,7 +11,7 @@ struct MFCCTestSuite(FFTProcessable):
     var mfcc: MFCC
     var data: List[List[Float64]]
 
-    def __init__(out self, w: LegacyUnsafePointer[MMMWorld]):
+    def __init__(out self, w: World):
         self.mfcc = MFCC[](w[].sample_rate,num_coeffs=num_coeffs,num_bands=num_bands,min_freq=min_freq,max_freq=max_freq,fft_size=fftsize)
         self.data = List[List[Float64]]()
 
