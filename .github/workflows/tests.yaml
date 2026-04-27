@@ -34,10 +34,6 @@ jobs:
           python --version
           mojo --version
 
-      - name: Create Librosa Results for Testing Against
-        run: |
-          python testing_mmm_audio/validation/librosa_results_for_testing_against.py
-
       - name: Run UnitTests.mojo
         id: run-tests
         run: |
