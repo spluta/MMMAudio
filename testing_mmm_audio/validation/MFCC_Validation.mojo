@@ -19,7 +19,7 @@ struct MFCCTestSuite(FFTProcessable):
         self.mfcc.next_frame(mags, phases)
         self.data.append(self.mfcc.coeffs.copy())
 
-def main():
+def main() raises:
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
     mfcc_ts = MFCCTestSuite(w)
@@ -30,21 +30,18 @@ def main():
 
     print("Number of frames processed: ", len(fftprocess.buffered_process.process.process.data))
 
-    try:
-        with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "w") as f:
-            f.write("windowsize," + String(fftsize) + "\n")
-            f.write("hopsize," + String(hopsize) + "\n")
-            f.write("num_coeffs," + String(num_coeffs) + "\n")
-            f.write("num_bands," + String(num_bands) + "\n")
-            f.write("min_freq," + String(min_freq) + "\n")
-            f.write("max_freq," + String(max_freq) + "\n")
-            f.write("Coefficients\n")
-            for i, frame in enumerate(fftprocess.buffered_process.process.process.data):
-                if i > 0:
-                    f.write("\n")
-                for j, coeff in enumerate(frame):
-                    if j > 0:
-                        f.write(",")
-                    f.write(String(coeff))
-    except e:
-        print("Error writing results to CSV: " + String(e))
+    with open("testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "w") as f:
+        f.write("windowsize," + String(fftsize) + "\n")
+        f.write("hopsize," + String(hopsize) + "\n")
+        f.write("num_coeffs," + String(num_coeffs) + "\n")
+        f.write("num_bands," + String(num_bands) + "\n")
+        f.write("min_freq," + String(min_freq) + "\n")
+        f.write("max_freq," + String(max_freq) + "\n")
+        f.write("Coefficients\n")
+        for i, frame in enumerate(fftprocess.buffered_process.process.process.data):
+            if i > 0:
+                f.write("\n")
+            for j, coeff in enumerate(frame):
+                if j > 0:
+                    f.write(",")
+                f.write(String(coeff))
