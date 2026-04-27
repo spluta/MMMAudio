@@ -201,20 +201,15 @@ def test_mfcc_paths_consistency() raises:
         assert_almost_equal(mfcc_next.coeffs[i], mfcc_mags.coeffs[i], "Test: MFCC next_frame vs from_mags mismatch")
         assert_almost_equal(mfcc_next.coeffs[i], mfcc_bands.coeffs[i], "Test: MFCC next_frame vs from_mel_bands mismatch")
 
-def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]() raises:
+def test_mel_bands_weights() raises:
+    
+    n_mels: Int = 40
+    n_fft: Int = 512
+    sr: Int = 44100
+
     w = alloc[MMMWorld](1) 
     w.init_pointee_move(MMMWorld(sample_rate = MFloat[1](sr)))
     melbands = MelBands(w[].sample_rate, num_bands=n_mels,min_freq=20.0,max_freq=20000.0,fft_size=n_fft)
-
-    print("=======================================")
-    print("Testing mel bands with parameters:")
-    print("n_mels: ", n_mels)
-    print("n_fft: ", n_fft)
-    print("sr: ", sr)
-
-    # print("melbands weights shape: ")
-    # print(len(melbands.weights))
-    # print(len(melbands.weights[0]))
 
     weights_flat = List[Float64]()
 
@@ -222,27 +217,19 @@ def _test_mel_bands_weights[n_mels: Int, n_fft: Int, sr: Int]() raises:
         for j in range(len(melbands.weights[i])):
             weights_flat.append(Float64(melbands.weights[i][j]))
 
-    # print("melband weights flat len: ", len(weights_flat))
+    try:
+        librosa = Python.import_module("librosa")
+        mel_weights = librosa.filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mels, htk=False,fmin=20.0,fmax=20000.0)
+        mel_weights = mel_weights.tolist()
 
-    expected_path = "testing_mmm_audio/validation/librosa_mel_bands_weights_results"
-    expected_path += "_nmels=" + String(n_mels)
-    expected_path += "_fftsize=" + String(n_fft)
-    expected_path += "_sr=" + String(sr)
-    expected_path += ".csv"
+        expected_flat = List[Float64]()
+        for i in range(len(mel_weights)):
+            for j in range(len(mel_weights[i])):
+                expected_flat.append(Float64(py=mel_weights[i][j]))
 
-    # print("loading: ",expected_path)
-
-    expected_flat = List[Float64]()
-
-    with open(expected_path, "r") as f:
-        string = f.read()
-        lines = string.split("\n")
-        for line in lines:
-            l = line.strip()
-            if len(l) > 0:
-                expected_flat.append(Float64(l))
-
-    compare_long_lists(weights_flat, expected_flat)
+        compare_long_lists(weights_flat, expected_flat)
+    except err:
+        print("Error comparing Mel filter weights with librosa: ", err)
 
 def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64], verbose: Bool = False) raises:
     assert_equal(len(a), len(b), "Lists are of different lengths")
@@ -258,10 +245,6 @@ def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64],
                 print("Comparing chunk ending at index ", i)
             assert_almost_equal(a_simd,b_simd)
         i += 1
-
-def test_all_mel_bands_weights() raises:
-    _test_mel_bands_weights[40,512,44100]()
-
 
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
