@@ -1,8 +1,7 @@
 from mmm_audio import *
 from std.testing import assert_true
 
-def main() raises:
-    # Test TRand
+def test_trand() raises:
     trand = TRand()
     
     trand0 = trand.next(10.0,20.0,False)

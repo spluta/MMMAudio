@@ -28,7 +28,7 @@ struct TestTopNFreqs(Movable, Copyable):
              s += self.sines[i].next(self.freqs[i])
         _ = self.analyzer.next(s)
 
-        out_pairs = self.analyzer.buffered_process.process.process.get_features_ptr()  # Get a pointer to the freq, amp pairs
+        out_pairs = self.analyzer.get_process().get_features_ptr()  # Get a pointer to the freq, amp pairs
 
         for i in range(3):
             self.world[].print("hearing ", out_pairs[][i][0], "Hz with amplitude", out_pairs[][i][1], n_blocks = 20, end = " ")

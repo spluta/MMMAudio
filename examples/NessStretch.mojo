@@ -89,7 +89,6 @@ struct NessStretch(Movable, Copyable):
         o = MFloat[2](0.0, 0.0)
         for ref n in self.ness_stretches:
             o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
-        # o += self.ness_stretches[1].buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
         return o * 0.5
 
 

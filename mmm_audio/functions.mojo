@@ -284,11 +284,11 @@ def lincurve[num_chans: Int, //
 
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
 
-    normalized = outs_reversed.select(1 - normalized, normalized)
+    normalized = outs_reversed.select(1.0 - normalized, normalized)
     # temp_curve = outs_reversed.select(temp_curve, temp_curve)
 
     grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)  # e^curve
-    curved = (grow ** normalized - 1) / (grow - 1)
+    curved = (grow ** normalized - 1.0) / (grow - 1.0)
 
     return clip(out_min2 + curved * (out_max2 - out_min2), out_min2, out_max2)
 
