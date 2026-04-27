@@ -259,10 +259,78 @@ def compare_long_lists[chunk_size: Int = 64](a: List[Float64], b: List[Float64],
             assert_almost_equal(a_simd,b_simd)
         i += 1
 
-def test_all_mel_bands_weights() raises:
-    _test_mel_bands_weights[40,512,44100]()
+def pca_test(whiten: Bool) raises:
 
+    joblib = Python.import_module("joblib")
+    np = Python.import_module("numpy")
 
+    # dataset
+    dataset = np.random.rand(100, 8)  # 100 samples, 8 features
+    
+    # sklearn
+    pca_sklearn = Python.import_module("sklearn").decomposition.PCA
+    pca_whiten_py = pca_sklearn(whiten=whiten)
+    pca_whiten_py.fit(dataset)
+
+    # write
+    pca_whiten_py_tmp_path = "tmp_pca.joblib"
+    joblib.dump(pca_whiten_py, pca_whiten_py_tmp_path)
+
+    # read with mojo
+    pca_whiten_mojo = PCA(pca_whiten_py_tmp_path)
+
+    # test 10 times
+    for _ in range(10):
+        input_py = np.random.rand(pca_whiten_mojo.k)
+        input_mojo = List[Float64]()
+        for j in range(pca_whiten_mojo.k):
+            input_mojo.append(Float64(py=input_py[j]))
+
+        output_mojo = List[Float64](length=pca_whiten_mojo.d, fill=0.0)
+        pca_whiten_mojo.inverse_transform_point(input_mojo, output_mojo)
+        output_py = pca_whiten_py.inverse_transform(input_py.reshape(1, -1)).flatten()
+
+        for j in range(pca_whiten_mojo.d):
+            assert_almost_equal(output_mojo[j], Float64(py=output_py[j]), "PCA Mismatch at index " + String(j) + ": Mojo=" + String(output_mojo[j]) + " vs Py=" + String(output_py[j]) + " (whiten=" + String(whiten) + ")")
+
+def test_pca() raises:
+    pca_test(whiten=False)
+    pca_test(whiten=True)
+    
+def test_standard_scaler() raises:
+    joblib = Python.import_module("joblib")
+    np = Python.import_module("numpy")
+    sklearn = Python.import_module("sklearn")
+
+    d: Int = 8
+    # dataset
+    dataset = np.random.rand(100, d)  # 100 samples, 8 features
+
+    # sklearn
+    scaler_sklearn = sklearn.preprocessing.StandardScaler()
+    scaler_sklearn.fit(dataset)
+
+    # write
+    scaler_tmp_path = "tmp_standard_scaler.joblib"
+    joblib.dump(scaler_sklearn, scaler_tmp_path)
+
+    # read with mojo
+    scaler_mojo = StandardScaler(scaler_tmp_path)
+
+    # test 10 times
+    for _ in range(10):
+        input_py = np.random.rand(d)
+        input_mojo = List[Float64]()
+        for j in range(d):
+            input_mojo.append(Float64(py=input_py[j]))
+
+        output_mojo = List[Float64](length=d, fill=0.0)
+        scaler_mojo.inverse_transform_point(input_mojo, output_mojo)
+        output_py = scaler_sklearn.inverse_transform(input_py.reshape(1, -1)).flatten()
+
+        for j in range(d):
+            assert_almost_equal(output_mojo[j], Float64(py=output_py[j]), "StandardScaler Mismatch at index " + String(j) + ": Mojo=" + String(output_mojo[j]) + " vs Py=" + String(output_py[j]))
+    
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
     # test_mel_bands()

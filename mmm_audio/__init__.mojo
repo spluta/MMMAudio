@@ -3,6 +3,7 @@ from .MMMWorld_Module import *
 from .Analysis import *
 from .Buffer_Module import *
 from .BufferedProcess_Module import *
+from .Data import *
 from .Delays import *
 from .Distortion import *
 from .Envelopes import *
