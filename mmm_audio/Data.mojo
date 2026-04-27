@@ -3,7 +3,11 @@ from std.python import PythonObject, Python
 from std.math import sqrt 
 
 struct StandardScaler(Copyable, Movable):
-    """This is not a *full* StandardScaler implementation. It is only designed 
+    """StandardScaler (inverse transform only).
+
+    Mean of 0 and standard deviation of 1.
+    
+    This is not a *full* StandardScaler implementation. It is only designed 
     to load a "fit" sklearn StandardScaler object from Python that can then be used 
     to inverse_transform_point points from the scaled space back to the original space.
     The pattern of use here would be to do the data analysis and machine learning in Python
@@ -57,7 +61,9 @@ struct StandardScaler(Copyable, Movable):
             output[i] = (input[i] * self.scale[i]) + self.mean[i]
 
 struct PCA(Copyable, Movable):
-    """This is not a *full* PCA implementation. It is only designed to load a "fit" sklearn 
+    """Principle Component Analysis (PCA) (inverse transform only).
+    
+    This is not a *full* PCA implementation. It is only designed to load a "fit" sklearn 
     [PCA](https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html)
     from Python that can then be used to inverse_transform_point points from the PCA space 
     back to the original space. The pattern of use here would be to do the data analysis 
