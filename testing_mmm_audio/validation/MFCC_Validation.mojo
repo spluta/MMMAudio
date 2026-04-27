@@ -19,7 +19,7 @@ struct MFCCTestSuite(FFTProcessable):
         self.mfcc.next_frame(mags, phases)
         self.data.append(self.mfcc.coeffs.copy())
 
-def main():
+def main() raises:
     w = alloc[MMMWorld](1)
     w.init_pointee_move(MMMWorld(44100.0))
     mfcc_ts = MFCCTestSuite(w)

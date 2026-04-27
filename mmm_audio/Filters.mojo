@@ -831,6 +831,16 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
                     self.oversampling.add_sample(lp4)
             return self.oversampling.get_sample()
 
+    @always_inline
+    def hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+        """4-pole highpass via LP subtraction (does not work with no oversampling)."""
+        return sig - self.lp4(sig, freq, q)
+
+    @always_inline
+    def lpf_hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans]]:
+        """4-pole highpass via LP subtraction (does not work with no oversampling)."""
+        return self.lp4(sig, freq, q), self.hpf(sig, freq, q)
+
 struct Reson[num_chans: Int = 1](Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
 
