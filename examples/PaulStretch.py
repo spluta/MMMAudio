@@ -14,5 +14,9 @@ mmm_audio.send_float("dur_mult", 10.0)
 mmm_audio.send_float("dur_mult", 100.0)
 mmm_audio.send_float("dur_mult", 40.0)
 mmm_audio.send_float("dur_mult", 10000.0)
+mmm_audio.send_float("dur_mult", 2.0)
+
+mmm_audio.send_bool("rtpghi", True) # try RTPGHI
+mmm_audio.send_bool("rtpghi", False)
 
 mmm_audio.stop_audio()
