@@ -16,7 +16,12 @@ mmm_audio.send_float("dur_mult", 40.0)
 mmm_audio.send_float("dur_mult", 10000.0)
 mmm_audio.send_float("dur_mult", 2.0)
 
-mmm_audio.send_bool("rtpghi", True) # try RTPGHI
-mmm_audio.send_bool("rtpghi", False)
+mmm_audio.send_float("rtpghi_mix", 1.0) # try RTPGHI
+mmm_audio.send_float("rtpghi_mix", 0.0) # try random phases (the default)
+
+# only 30% random phases, different dur_mult benefit from 
+# # different rtpghi_mix values, so experiment with both
+mmm_audio.send_float("rtpghi_mix", 0.85)
+
 
 mmm_audio.stop_audio()

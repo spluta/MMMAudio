@@ -7,7 +7,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
     comptime bins = (Self.window_size // 2) + 1
     var world: World
     var m: Messenger
-    var rtpghi: Bool
+    var rtpghi_mix: Float64
     var rtpghiL: RTPGHI
     var rtpghiR: RTPGHI
     var l_mags: List[Float64]
@@ -19,7 +19,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
         self.world = world
         self.m = Messenger(self.world)
 
-        self.rtpghi = False
+        self.rtpghi_mix = 0.0
         self.rtpghiL = RTPGHI(Self.window_size, hop_size)
         self.rtpghiR = RTPGHI(Self.window_size, hop_size)
         self.l_mags = List[Float64](length=Self.bins, fill=0.0)
@@ -28,14 +28,14 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
         self.r_phases = List[Float64](length=Self.bins, fill=0.0)
 
     def get_messages(mut self):
-        self.m.update(self.rtpghi, "rtpghi")
+        self.m.update(self.rtpghi_mix, "rtpghi_mix")
 
     def next_stereo_frame(
         mut self, 
         mut mags: List[MFloat[2]], 
         mut phases: List[MFloat[2]]
     ) -> None:
-        if self.rtpghi:
+        if self.rtpghi_mix > 0.0:
             # Extract mono channels from stereo input
             for i in range(Self.bins):
                 self.l_mags[i] = mags[i][0]
@@ -53,15 +53,15 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
                 mags[i][1] = self.r_mags[i]
                 phases[i][0] = self.l_phases[i]
                 phases[i][1] = self.r_phases[i]
-        else:
-            # Random phase mode
+
+        if self.rtpghi_mix < 1.0:
             for ref p in phases:
-                p = MFloat[2](
+                offset = MFloat[2](
                     random_float64(0.0, Math.tau),
                     random_float64(0.0, Math.tau)
                 )
+                p = (p + (offset * (1.0 - self.rtpghi_mix))) % Math.tau
 
-# User's Synth
 struct PaulStretch(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]

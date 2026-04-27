@@ -581,13 +581,14 @@ struct RTPGHI(Copyable, Movable):
             phases: Output phase spectrum for frame n-1 (bins elements, radians).
             tolerance: Relative magnitude threshold for phase reconstruction.
         """
-        # Store the previous frame's linear magnitudes for output before shifting
-        # (these are the magnitudes that correspond to the phases we'll compute)
         
-        # Shift the frame buffers
-        # n-2 <- n-1, n-1 <- n, n <- new input
         for i in range(self.bins):
+            # Store the previous frame's linear magnitudes for output before shifting
+            # (these are the magnitudes that correspond to the phases we'll compute)
             self.output_mags[i] = self.mag_n_minus_1[i]  # Store n-1 mags for output
+            
+            # Shift the frame buffers
+            # n-2 <- n-1, n-1 <- n, n <- new input
             self.log_mag_n_minus_2[i] = self.log_mag_n_minus_1[i]
             self.log_mag_n_minus_1[i] = self.log_mag_n[i]
             # Compute log magnitude for new frame, with floor for numerical stability
@@ -730,7 +731,7 @@ fn _compute_phi_t(log_mag: List[Float64], mut phi_t: List[Float64], fft_size: In
     var coef = (a * M) / (2.0 * gamma)
     
     # DC bin (m=0): set derivative to 0, keep only the constant term
-    phi_t[0] = 0.0  # 2π * a * 0 / M = 0
+    phi_t[0] = 0.0
     
     # Middle bins: centered difference for frequency derivative
     for m in range(1, bins - 1):
