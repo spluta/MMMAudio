@@ -1,6 +1,7 @@
 from mmm_audio import *
 from std.complex import *
 import std.math as Math
+from std.random import random_float64
 
 @doc_hidden
 def log2_int(n: Int) -> Int:

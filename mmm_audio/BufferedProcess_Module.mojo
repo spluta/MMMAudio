@@ -197,6 +197,9 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             The next output sample.
         """
         
+        if self.world[].top_of_block:
+            self.process.get_messages()
+
         if self.hop_counter == 0:
 
             for i in range(self.window_size):
@@ -238,6 +241,9 @@ struct BufferedProcess[T: BufferedProcessable, output: Bool = True, input_window
             The next output sample.
         """
         
+        if self.world[].top_of_block:
+            self.process.get_messages()
+            
         if self.hop_counter == 0:
            
             for i in range(self.window_size):
