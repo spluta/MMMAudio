@@ -21,45 +21,27 @@ def PyInit_MBufAnalysisBridge() -> PythonObject:
     except e:
         abort(String("error creating Python Mojo module:", e))
 
-# [TODO]: also pass in a string that let's us know what *analysis* it comes from
-def getInt(py_dict: PythonObject, key: String, default: Optional[Int] = None) raises -> Int:
+def get_at_key[T: ConvertibleFromPython & ImplicitlyCopyable & Writable](analysis: String, py_dict: PythonObject, key: String, default: Optional[T] = None) raises -> T:
     if key in py_dict:
-        return Int(py=py_dict[key])
+        return T(py=py_dict[key])
     else:
         if default is None:
-            abort(String("MBufAnalysis requires a '", key, "' key in the input dictionary"))
+            abort(String("MBufAnalysis", analysis, "requires a '", key, "' key in the input dictionary"))
         else:
-            print("No '", key, "' key in input dictionary, defaulting to ", default)
+            print("MBufAnalysis", analysis, ": No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
-def getFloat64(py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
+# the above get_at_key doesn't work with Float64 🤷🏼
+# it can stay as a separate function until Modular
+# fixes what looks like a bug
+def getFloat64(analysis: String, py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
     if key in py_dict:
-        return py_to_float64(py_dict[key])
+        return Float64(py=py_dict[key])
     else:
         if default is None:
-            abort(String("MBufAnalysis requires a '", key, "' key in the input dictionary"))
+            abort(String("MBufAnalysis", analysis, "requires a '", key, "' key in the input dictionary"))
         else:
-            print("No '", key, "' key in input dictionary, defaulting to ", default)
-            return default.value()
-
-def getBool(py_dict: PythonObject, key: String, default: Optional[Bool] = None) raises -> Bool:
-    if key in py_dict:
-        return Bool(py=py_dict[key])
-    else:
-        if default is None:
-            abort(String("MBufAnalysis requires a '", key, "' key in the input dictionary"))
-        else:
-            print("No '", key, "' key in input dictionary, defaulting to ", default)
-            return default.value()
-
-def getString(py_dict: PythonObject, key: String, default: Optional[String] = None) raises -> String:
-    if key in py_dict:
-        return String(py=py_dict[key])
-    else:
-        if default is None:
-            abort(String("MBufAnalysis requires a '", key, "' key in the input dictionary"))
-        else:
-            print("No '", key, "' key in input dictionary, defaulting to ", default)
+            print("MBufAnalysis", analysis, ": No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
 struct AnalysisParams:
@@ -71,10 +53,10 @@ struct AnalysisParams:
 
     def __init__(out self, py_dict: PythonObject) raises:
 
-        self.buf = Buffer.load(getString(py_dict, "path"))
-        self.chan = getInt(py_dict, "chan", 0)
-        self.start_frame = getInt(py_dict, "start_frame", 0)
-        self.num_frames = getInt(py_dict, "num_frames", Int(self.buf.num_frames - self.start_frame))
+        self.buf = Buffer.load(get_at_key[String]("AnalysisParams", py_dict, "path"))
+        self.chan = get_at_key[Int]("AnalysisParams", py_dict, "chan", 0)
+        self.start_frame = get_at_key[Int]("AnalysisParams", py_dict, "start_frame", 0)
+        self.num_frames = get_at_key[Int]("AnalysisParams", py_dict, "num_frames", Int(self.buf.num_frames - self.start_frame))
 
 struct MBufAnalysisBridge:
 
@@ -82,12 +64,12 @@ struct MBufAnalysisBridge:
     def mel_bands(py_dict: PythonObject) raises -> PythonObject:
 
         ap = AnalysisParams(py_dict)
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
-        num_bands = getInt(py_dict, "num_bands", 40)
-        min_freq = getFloat64(py_dict, "min_freq", 20.0)
-        max_freq = getFloat64(py_dict, "max_freq", 20000.0)
-        
+        window_size = get_at_key[Int]("mel_bands", py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("mel_bands", py_dict, "hop_size", window_size // 2)
+        num_bands = get_at_key[Int]("mel_bands", py_dict, "num_bands", 40)
+        min_freq: Float64 = getFloat64("mel_bands", py_dict, "min_freq", 20.0)
+        max_freq: Float64 = getFloat64("mel_bands", py_dict, "max_freq", 20000.0)
+
         mel_bands = MelBands(ap.buf.sample_rate, num_bands, min_freq, max_freq, window_size)
         result = MBufAnalysis.fft_process[WindowType.hann](mel_bands, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
 
@@ -97,15 +79,15 @@ struct MBufAnalysisBridge:
     def mfcc(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
-        num_bands = getInt(py_dict, "num_bands", 40)
-        num_coeffs = getInt(py_dict, "num_coeffs", 13)
-        min_freq = getFloat64(py_dict, "min_freq", 20.0)
-        max_freq = getFloat64(py_dict, "max_freq", 20000.0)
+        num_bands = get_at_key[Int]("mfcc", py_dict, "num_bands", 40)
+        num_coeffs = get_at_key[Int]("mfcc", py_dict, "num_coeffs", 13)
+        min_freq = getFloat64("mfcc", py_dict, "min_freq", 20.0)
+        max_freq = getFloat64("mfcc", py_dict, "max_freq", 20000.0)
 
         # # run the analysis
         mfcc = MFCC(ap.buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq)
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+        window_size = get_at_key[Int]("mfcc", py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("mfcc", py_dict, "hop_size", window_size // 2)
         result = MBufAnalysis.fft_process[WindowType.hann](mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
@@ -115,12 +97,12 @@ struct MBufAnalysisBridge:
     def top_n_freqs(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
-        num_peaks = getInt(py_dict, "num_peaks", 5)
-        thresh = getFloat64(py_dict, "thresh", -30.0)
-        sort_by_freq = getBool(py_dict, "sort_by_freq", False)
+        num_peaks = get_at_key[Int]("top_n_freqs",py_dict, "num_peaks", 5)
+        thresh = getFloat64("top_n_freqs",py_dict, "thresh", -30.0)
+        sort_by_freq = get_at_key[Bool]("top_n_freqs",py_dict, "sort_by_freq", False)
 
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+        window_size = get_at_key[Int]("top_n_freqs",py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("top_n_freqs",py_dict, "hop_size", window_size // 2)
 
         # # run the analysis
         top_n_freqs = TopNFreqs(ap.buf.sample_rate, window_size, num_peaks, sort_by_freq, thresh)
@@ -137,8 +119,8 @@ struct MBufAnalysisBridge:
 
         # # run the analysis
         rms = RMS()
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+        window_size = get_at_key[Int]("rms",py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("rms",py_dict, "hop_size", window_size // 2)
         result = MBufAnalysis.buffered_process(rms, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
@@ -151,15 +133,15 @@ struct MBufAnalysisBridge:
         ap = AnalysisParams(py_dict)
 
         # params specific to this analysis
-        min_freq = getFloat64(py_dict, "min_freq", 20.0)
-        max_freq = getFloat64(py_dict, "max_freq", 20000.0)
+        min_freq = getFloat64("yin",py_dict, "min_freq", 20.0)
+        max_freq = getFloat64("yin",py_dict, "max_freq", 20000.0)
 
         # define the window function that will be called for each window of audio. 
         # It has to be a function that takes a List[Float64] and returns a List[Float64] 
         # (even if it's just one value) so that it's consistent with other analyses we 
         # might want to add later
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+        window_size = get_at_key[Int]("yin",py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("yin",py_dict, "hop_size", window_size // 2)
         yin = YIN(ap.buf.sample_rate, window_size, min_freq=min_freq, max_freq=max_freq)
 
         # run the analysis
@@ -172,11 +154,11 @@ struct MBufAnalysisBridge:
     def spectral_centroid(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
-        min_freq = getFloat64(py_dict, "min_freq", 20.0)
-        max_freq = getFloat64(py_dict, "max_freq", 20000.0)
-        power_mag = getBool(py_dict, "power_mag", False)
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
+        min_freq = getFloat64("spectral_centroid",py_dict, "min_freq", 20.0)
+        max_freq = getFloat64("spectral_centroid",py_dict, "max_freq", 20000.0)
+        power_mag = get_at_key[Bool]("spectral_centroid",py_dict, "power_mag", False)
+        window_size = get_at_key[Int]("spectral_centroid",py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("spectral_centroid",py_dict, "hop_size", window_size // 2)
 
         # # run the analysis
         sc = SpectralCentroid(ap.buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
@@ -189,11 +171,11 @@ struct MBufAnalysisBridge:
     def spectral_flux_onsets(py_dict: PythonObject) raises -> PythonObject:
         # make the analysis params instance
         analysis_params = AnalysisParams(py_dict)
-        thresh = getFloat64(py_dict, "thresh", 0.01)
-        window_size = getInt(py_dict, "window_size", 1024)
-        hop_size = getInt(py_dict, "hop_size", window_size // 2)
-        filter_size = getInt(py_dict, "filter_size", 5)
-        min_slice_len = getFloat64(py_dict, "min_slice_len", 0.1)
+        thresh = getFloat64("spectral_flux_onsets",py_dict, "thresh", 0.01)
+        window_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "hop_size", window_size // 2)
+        filter_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "filter_size", 5)
+        min_slice_len = getFloat64("spectral_flux_onsets",py_dict, "min_slice_len", 0.1)
         
         w = alloc[MMMWorld](1) 
         w.init_pointee_move(MMMWorld(analysis_params.buf.sample_rate))
