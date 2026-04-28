@@ -765,6 +765,9 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
             
         # k is the feedback coefficient of the entire circuit
         var k = 4.0 * q
+
+        comptime os_factor = Float64(2 ** Self.os_index)
+        var compensation = 1.0 + k * os_factor * 0.25
         
         var omegaWarp = tan(pi * cf * self.step_val)
         var g = omegaWarp / (1.0 + omegaWarp)
@@ -800,7 +803,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         self.last_3 = lp3
         self.last_4 = lp4
 
-        return lp4
+        return lp4 * compensation
 
     @always_inline
     def next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, q: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
@@ -831,15 +834,16 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
                     self.oversampling.add_sample(lp4)
             return self.oversampling.get_sample()
 
-    @always_inline
-    def hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-        """4-pole highpass via LP subtraction (does not work with no oversampling)."""
-        return sig - self.lp4(sig, freq, q)
+    # doesn't really work. not sure why but the freq doesn't go up to nyquist.
+    # @always_inline
+    # def hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    #     """4-pole highpass via LP subtraction (does not work with oversampling)."""
+    #     return sig - self.lp4(sig, freq, q)
 
-    @always_inline
-    def lpf_hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans]]:
-        """4-pole highpass via LP subtraction (does not work with no oversampling)."""
-        return self.lp4(sig, freq, q), self.hpf(sig, freq, q)
+    # @always_inline
+    # def lpf_hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans]]:
+    #     """4-pole highpass via LP subtraction (does not work with oversampling)."""
+    #     return self.lp4(sig, freq, q), self.hpf(sig, freq, q)
 
 struct Reson[num_chans: Int = 1](Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
