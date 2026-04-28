@@ -37,6 +37,8 @@ MMMAudio uses `pyAudio` (`portaudio`) for audio input/output and `hid` for HID c
 
 ### 1 Install pixi with homebrew or curl.
 
+See [pixi's installation instructions](https://pixi.prefix.dev/latest/installation/).
+
 ### 2 In the MMMAudio directory, type:
 
 ```shell
