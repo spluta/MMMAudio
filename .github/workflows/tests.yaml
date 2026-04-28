@@ -20,18 +20,26 @@ jobs:
         with:
           python-version: '3.13.12'
 
-      - name: Install Mojo
+      - name: Install pixi
         run: |
-          python -m pip install --upgrade pip
-          pip install mojo==0.26.2.0
-      
+          curl -fsSL https://pixi.sh/install.sh | sh
+
       - name: Install portaudio
         run: |
           brew install portaudio
 
-      - name: Install Python Dependencies
+      - name: pixi install
         run: |
-          pip install librosa numpy matplotlib scipy pyaudio
+          pixi install
+
+      # - name: Install Mojo
+      #   run: |
+      #     python -m pip install --upgrade pip
+      #     pip install mojo==0.26.2.0
+      
+      # - name: Install Python Dependencies
+      #   run: |
+      #     pip install librosa numpy matplotlib scipy pyaudio
 
       - name: Print Versions
         run: |
