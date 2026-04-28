@@ -32,29 +32,12 @@ jobs:
         run: |
           pixi install
 
-      # - name: Install Mojo
-      #   run: |
-      #     python -m pip install --upgrade pip
-      #     pip install mojo==0.26.2.0
-      
-      # - name: Install Python Dependencies
-      #   run: |
-      #     pip install librosa numpy matplotlib scipy pyaudio
-
       - name: Print Versions
         run: |
           pixi run python --version
           pixi run mojo --version
 
-      - name: Run UnitTests.mojo
+      - name: Run Tests
         id: run-tests
         run: |
-          mojo -debug-level=full testing_mmm_audio/UnitTests.mojo
-
-      - name: Test Building Mojo Files
-        run: |
-          python testing_mmm_audio/test_build_mojo_files.py
-        
-      - name: Validate Against Snapshots
-        run: |
-          python testing_mmm_audio/validation/validate_against_snapshot.py
+          pixi run mojo test_all
