@@ -50,15 +50,6 @@ struct Play(Movable, Copyable):
             The next sample(s) from the buf as a SIMD vector.
         """
 
-        # [TODO] I think we need to make sure these are within valid ranges:
-        # * start_frame - [not this one because it will just give a 0 output if out of range]
-        # * start_chan
-        # * N in correspondence with start_chan and buf channels
-        # * num_frames in correspondence with start_frame and buf length
-
-        out = MFloat[num_chans](0.0)
-
-
         # Check for Trigger and if so, Update Values
         # ==========================================
         if self.rising_bool_detector.next(trig) and buf.num_frames_f64 > 0.0:
@@ -71,7 +62,7 @@ struct Play(Movable, Copyable):
                 self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
         
         if not self.active:
-            return out  # Return zeros if not active
+            return 0.0  # Return zeros if not active
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
@@ -130,8 +121,6 @@ struct Play(Movable, Copyable):
             The next sample(s) from the buf as a SIMD vector.
         """
 
-        out = MFloat[num_chans](0.0)
-
         # Check for Trigger and if so, Update Values
         # ==========================================
         if self.rising_bool_detector.next(trig) and buf.num_frames_f64 > 0.0:
@@ -144,7 +133,7 @@ struct Play(Movable, Copyable):
                 self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
         
         if not self.active:
-            return out  # Return zeros if not active
+            return 0.0  # Return zeros if not active
 
         # Use Values to Calculate Frequency and Advance Phase
         # ===================================================
