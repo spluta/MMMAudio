@@ -701,24 +701,28 @@ def sign[num_chans:Int,//](x: MFloat[num_chans]) -> MFloat[num_chans]:
 
     return pmask.select(MFloat[num_chans](1.0), nmask.select(MFloat[num_chans](-1.0), MFloat[num_chans](0.0)))
 
-# [TODO]: add endpoint argument to linspace
-def linspace(start: Float64, stop: Float64, num: Int) -> List[Float64]:
+def linspace(start: Float64, stop: Float64, num: Int, endpoint: Bool = True) -> List[Float64]:
     """Create evenly spaced values between start and stop.
     
     Args:
         start: The starting value.
         stop: The ending value.
         num: Number of samples to generate.
+        endpoint: Whether to include the stop value in the output (default: True).
     
     Returns:
         A List of Float64 values evenly spaced between start and stop.
     """
-    var result = List[Float64](length=num, fill=0.0)
+    result = List[Float64](length=num, fill=0.0)
     if num == 1:
         result[0] = start
         return result^
     
-    var step = (stop - start) / Float64(num - 1)
+    if endpoint:
+        step = (stop - start) / Float64(num - 1)
+    else:
+        step = (stop - start) / Float64(num)
+
     for i in range(num):
         result[i] = start + Float64(i) * step
     return result^

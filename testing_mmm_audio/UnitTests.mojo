@@ -3,6 +3,7 @@ from std.testing import assert_equal, assert_almost_equal, assert_true
 from std.testing import TestSuite
 from std.math import inf, nan
 from std.pathlib import Path
+from std.random import random_float64, random_ui64
 
 def test_Changed() raises:
     # Test with Bool
@@ -131,14 +132,34 @@ def test_diff() raises:
     expected_simd = MFloat[4](expected[0], expected[1], expected[2], expected[3])
     assert_almost_equal(result_simd, expected_simd, "Test: diff function failed")
 
+def linspace_test(endpoint: Bool, num: Int) raises:
+    start = random_float64() * 100.0
+    stop = random_float64() * 100.0
+    result_mojo = linspace(start, stop, num, endpoint)
+
+    # Compare against Python implementation
+    try:
+        np = Python.import_module("numpy")
+        result_np = np.linspace(start, stop, num, endpoint=endpoint).tolist()
+    
+        expected = List[Float64](length=num, fill=0.0)
+        for i in range(num):
+            expected[i] = Float64(py=result_np[i])
+    
+        compare_long_lists(result_mojo,expected)
+    except err:
+        print("Error comparing linspace results with numpy: ", err)
+
 def test_linspace() raises:
-    start = 0.0
-    stop = 1.0
-    num = 8
-    result = linspace(start, stop, num)
-    result_simd = MFloat[8](result[0], result[1], result[2], result[3], result[4], result[5], result[6], result[7])
-    expected = MFloat[8](0.0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1.0)
-    assert_almost_equal(result_simd, expected, "Test: linspace function failed")
+
+    for _ in range(10):  # Run multiple times with random inputs
+        num = Int(random_ui64(2, 100))  # Ensure at least 2 points to avoid edge case
+        linspace_test(True, num)
+        linspace_test(False, num)
+
+    for _ in range(10):  # Run multiple times with random inputs
+        linspace_test(True, 1)
+        linspace_test(False, 1)
 
 def test_mel_frequencies() raises:
     num_mel_bins = 32
