@@ -11,14 +11,10 @@ args = [
 ]
 cmd = "python testing_mmm_audio/validation/run_all_validations.py {{ plots }}"
 
-[tasks.make_librosa_results]
-cmd = "python testing_mmm_audio/validation/librosa_results_for_testing_against.py"
-
 [tasks.validate_snapshot]
 cmd = "python testing_mmm_audio/validation/validate_against_snapshot.py"
 
 [tasks.unit_tests]
-depends-on = ["make_librosa_results"]
 cmd = "mojo testing_mmm_audio/UnitTests.mojo"
 
 [tasks.test_building]
