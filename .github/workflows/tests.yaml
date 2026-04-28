@@ -27,7 +27,7 @@ jobs:
 
       - name: Install Python Dependencies
         run: |
-          pip install librosa numpy matplotlib scipy
+          pip install librosa numpy matplotlib scipy pyaudio
 
       - name: Print Versions
         run: |
