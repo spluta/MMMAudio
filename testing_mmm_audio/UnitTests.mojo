@@ -378,7 +378,7 @@ def test_linlin() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.linlin(x[i], 0.0, 1.0, -1.0, 1.0)))
@@ -392,7 +392,7 @@ def test_linlin2() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.linlin(x[i], 0.0, 1.0, 1.0, -1.0)))
@@ -407,7 +407,7 @@ def test_linexp() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.linexp(x[i], 0.0, 1.0, 1.0, 10.0)))
@@ -422,7 +422,7 @@ def test_linexp2() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.linexp(x[i], 1.0, 10.0, 10.0, 0.001)))
@@ -452,7 +452,7 @@ def test_lincurve() raises:
 
         var cwd = Path()
         Python.add_to_path(cwd.path)
-        mmm_python = Python.import_module("mmm_python")
+        mmm_python = Python.import_module("mmm_python.functions")
         py_answer = SIMD[DType.float64, 4]()
         for i2 in range(len(x)):
             py_answer[i2]=(py_to_float64(mmm_python.lincurve(x[i2], 0.0, 1.0, 1.0, 10.0, curve[i])))
@@ -476,7 +476,7 @@ def test_lincurve2() raises:
 
         var cwd = Path()
         Python.add_to_path(cwd.path)
-        mmm_python = Python.import_module("mmm_python")
+        mmm_python = Python.import_module("mmm_python.functions")
         py_answer = SIMD[DType.float64, 4]()
         for i2 in range(len(x)):
             py_answer[i2]=(py_to_float64(mmm_python.lincurve(x[i2], 0.0, 1.0, 10.0, 1.0, curve[i])))
@@ -499,7 +499,7 @@ def test_curvelin() raises:
 
         var cwd = Path()
         Python.add_to_path(cwd.path)
-        mmm_python = Python.import_module("mmm_python")
+        mmm_python = Python.import_module("mmm_python.functions")
         py_answer = SIMD[DType.float64, 4]()
         for i2 in range(len(x)):
             py_answer[i2]=(py_to_float64(mmm_python.curvelin(x[i2], 0.0, 1.0, 1.0, 10.0, curve[i])))
@@ -521,7 +521,7 @@ def test_curvelin2() raises:
 
         var cwd = Path()
         Python.add_to_path(cwd.path)
-        mmm_python = Python.import_module("mmm_python")
+        mmm_python = Python.import_module("mmm_python.functions")
         py_answer = SIMD[DType.float64, 4]()
         for i2 in range(len(x)):
             py_answer[i2]=(py_to_float64(mmm_python.curvelin(x[i2], 0.0, 1.0, 10.0, 1.0, curve[i])))
@@ -535,7 +535,7 @@ def test_explin() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.explin(x[i], 1.0, 10.0, 0.0, 1.0)))
@@ -550,7 +550,7 @@ def test_explin2() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = SIMD[DType.float64, 4]()
     for i2 in range(len(x)):
         py_answer[i2]=(py_to_float64(mmm_python.explin(x[i2], 0.001, 1.0, 10.0, 1.0)))
@@ -564,7 +564,7 @@ def test_expexp() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.expexp(x[i], 1.0, 10.0, 1.0, 10.0)))
@@ -578,7 +578,7 @@ def test_expexp2() raises:
 
     var cwd = Path()
     Python.add_to_path(cwd.path)
-    mmm_python = Python.import_module("mmm_python")
+    mmm_python = Python.import_module("mmm_python.functions")
     py_answer = List[Float64]()
     for i in range(len(x)):
         py_answer.append(py_to_float64(mmm_python.expexp(x[i], 1.0, 10.0, 10.0, 0.001)))
