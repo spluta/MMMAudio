@@ -131,7 +131,32 @@ struct PCA(Copyable, Movable):
         except e:
             abort("Error importing sklearn.decomposition module:" + String(e))
 
-    # TODO: transform_point
+    fn transform_point(mut self, input: List[Float64], mut output: List[Float64]):
+        """Transform a single point from original space to PCA space.
+        
+        Nothing is returned, the result is written to the output list.
+
+        Args:
+            input: List of length d (original dimensionality).
+            output: List of length k (number of principal components kept) that will be filled with the result.
+        """
+        # Center the input by subtracting the mean: x = input - mean
+        for j in range(self.d):
+            self.x[j] = input[j] - self.mean[j]
+
+        if self.whiten:
+            for i in range(self.k):
+                var dot_val = 0.0
+                for j in range(self.d):
+                    dot_val += self.x[j] * self.components[i][j]
+                var s = sqrt(self.evals[i])
+                output[i] = dot_val / s
+        else:
+            for i in range(self.k):
+                var dot_val = 0.0
+                for j in range(self.d):
+                    dot_val += self.x[j] * self.components[i][j]
+                output[i] = dot_val
 
     fn inverse_transform_point(mut self, input: List[Float64], mut output: List[Float64]):
         """Inverse transform a single point from PCA space back to original space.

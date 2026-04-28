@@ -277,28 +277,41 @@ def pca_test(whiten: Bool) raises:
     
     # sklearn
     pca_sklearn = Python.import_module("sklearn").decomposition.PCA
-    pca_whiten_py = pca_sklearn(whiten=whiten)
-    pca_whiten_py.fit(dataset)
+    pca_py = pca_sklearn(whiten=whiten)
+    pca_py.fit(dataset)
 
     # write
-    pca_whiten_py_tmp_path = "tmp_pca.joblib"
-    joblib.dump(pca_whiten_py, pca_whiten_py_tmp_path)
+    pca_py_tmp_path = "tmp_pca.joblib"
+    joblib.dump(pca_py, pca_py_tmp_path)
 
     # read with mojo
-    pca_whiten_mojo = PCA(pca_whiten_py_tmp_path)
+    pca_mojo = PCA(pca_py_tmp_path)
 
-    # test 10 times
+    # test 10 transforms
     for _ in range(10):
-        input_py = np.random.rand(pca_whiten_mojo.k)
+        input_py = np.random.rand(8)
         input_mojo = List[Float64]()
-        for j in range(pca_whiten_mojo.k):
+        for j in range(8):
+            input_mojo.append(Float64(py=input_py[j]))
+        
+        output_mojo = List[Float64](length=pca_mojo.k, fill=0.0)
+        pca_mojo.transform_point(input_mojo, output_mojo)
+        output_py = pca_py.transform(input_py.reshape(1, -1)).flatten()
+        for j in range(pca_mojo.k):
+            assert_almost_equal(output_mojo[j], Float64(py=output_py[j]), "PCA Mismatch at index " + String(j) + ": Mojo=" + String(output_mojo[j]) + " vs Py=" + String(output_py[j]) + " (whiten=" + String(whiten) + ")")
+
+    # test 10 inverse transforms
+    for _ in range(10):
+        input_py = np.random.rand(pca_mojo.k)
+        input_mojo = List[Float64]()
+        for j in range(pca_mojo.k):
             input_mojo.append(Float64(py=input_py[j]))
 
-        output_mojo = List[Float64](length=pca_whiten_mojo.d, fill=0.0)
-        pca_whiten_mojo.inverse_transform_point(input_mojo, output_mojo)
-        output_py = pca_whiten_py.inverse_transform(input_py.reshape(1, -1)).flatten()
+        output_mojo = List[Float64](length=pca_mojo.d, fill=0.0)
+        pca_mojo.inverse_transform_point(input_mojo, output_mojo)
+        output_py = pca_py.inverse_transform(input_py.reshape(1, -1)).flatten()
 
-        for j in range(pca_whiten_mojo.d):
+        for j in range(pca_mojo.d):
             assert_almost_equal(output_mojo[j], Float64(py=output_py[j]), "PCA Mismatch at index " + String(j) + ": Mojo=" + String(output_mojo[j]) + " vs Py=" + String(output_py[j]) + " (whiten=" + String(whiten) + ")")
 
 def test_pca() raises:
