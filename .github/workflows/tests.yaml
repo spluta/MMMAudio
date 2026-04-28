@@ -20,24 +20,16 @@ jobs:
         with:
           python-version: '3.13.12'
 
-      - name: Install portaudio
+      - name: brew installs
         run: |
           brew install portaudio
-
-      - name: Install pixi
-        run: |
           brew install pixi
 
       - name: run 'pixi install'
         run: |
           pixi install
 
-      - name: Print Versions
-        run: |
-          pixi run python --version
-          pixi run mojo --version
-
       - name: Run Tests
         id: run-tests
         run: |
-          pixi run mojo test_all
+          pixi run test_all
