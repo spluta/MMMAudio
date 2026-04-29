@@ -210,7 +210,7 @@ def lincurve(
 
     if out_min > out_max:
         normalized = 1 - normalized
-        # curve = -curve
+        curve = -curve
 
     # Apply curve transformation using unified formula
     if abs(curve) < 1e-6:

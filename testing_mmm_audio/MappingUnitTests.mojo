@@ -123,8 +123,10 @@ def test_lincurve2() raises:
     ]
     for i in range(len(curve)):
         result = lincurve(x, 0.0, 1.0, 10.0, 1.0, curve[i])
+
+        print(result)
         
-        # assert_almost_equal(result, expected[i], "Test: lincurve function failed")
+        assert_almost_equal(result, expected[i], "Test: lincurve function failed")
 
         var cwd = Path()
         Python.add_to_path(cwd.path)

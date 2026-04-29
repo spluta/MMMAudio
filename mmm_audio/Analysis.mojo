@@ -1410,6 +1410,7 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
             if index > 0 and index < len(mags) - 1:
                 val, mag = find_quadratic_peak(mags[index-1], mags[index], mags[index+1])
 
+                # the if part of this is correct. the else part is very close, but not totally right
                 if val < 1.0:
                     low_freq = (MFloat[1](index)-1.0)*self.bin_freq
                     high_freq = MFloat[1](index)*self.bin_freq
@@ -1417,7 +1418,7 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
                 else:
                     low_freq = MFloat[1](index)*self.bin_freq
                     high_freq = (MFloat[1](index)+1.0)*self.bin_freq
-                    freq = lincurve(val, 1.0, 2.0, low_freq, high_freq, -0.6)
+                    freq = lincurve(val, 1.0, 2.0, low_freq, high_freq, -0.25)
                 self.freq_amp_pairs[i] = Tuple(freq, mag * (4.0/MFloat[1](self.window_size)))
             else:
                 self.freq_amp_pairs[i] = Tuple(0.0, 0.0)
