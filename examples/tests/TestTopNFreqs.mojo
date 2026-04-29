@@ -24,15 +24,14 @@ struct TestTopNFreqs(Movable, Copyable):
     def next(mut self) -> MFloat[2]:
         self.m.update(self.freqs, "freqs")
         s = 0.0
+        mul = linlin(self.world[].mouse_x, 0., 1., 1., 1.2)
         for i in range(len(self.sines)):
-             s += self.sines[i].next(self.freqs[i])
+             s += self.sines[i].next(self.freqs[i] * mul)
         _ = self.analyzer.next(s)
 
         out_pairs = self.analyzer.get_process().get_features_ptr()  # Get a pointer to the freq, amp pairs
-
-        for i in range(3):
-            self.world[].print("hearing ", out_pairs[][i][0], "Hz with amplitude", out_pairs[][i][1], n_blocks = 20, end = " ")
-        self.world[].print("")
+        self.world[].print(self.freqs[0]*mul, self.freqs[1]*mul, self.freqs[2]*mul, n_blocks = 20) 
+        self.world[].print(out_pairs[][0][0], out_pairs[][1][0], out_pairs[][2][0], n_blocks = 20)
 
         o = splay(
             [self.out_sines[i].next(out_pairs[][i][0]) * out_pairs[][i][1] for i in range(3)],
