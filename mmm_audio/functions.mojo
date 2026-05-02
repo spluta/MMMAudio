@@ -319,7 +319,6 @@ def curvelin[num_chans: Int, //](
 
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
 
-
     grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)
     linearized = log(normalized * (grow - 1) + 1) / temp_curve
     linearized = outs_reversed.select(1 - linearized, linearized) 
@@ -399,6 +398,15 @@ def wrap[
 
     # Return original input where range is invalid, wrapped result otherwise
     return invalid_range.select(input, wrapped_sample)
+
+def fold[dtype: DType, num_chans: Int](x: SIMD[dtype, num_chans], lo: SIMD[dtype, num_chans], hi: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
+    lo2, hi2, _ = check_reversed(lo, hi)
+    range_size = hi2 - lo2
+    wrapped = (x - lo2) % (2 * range_size)
+
+    mask = wrapped.lt(range_size)
+    folded = mask.select(wrapped, (2 * range_size - wrapped))
+    return folded + lo2
 
 @always_inline
 def quadratic_interp[

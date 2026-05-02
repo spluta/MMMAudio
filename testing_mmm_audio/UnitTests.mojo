@@ -351,7 +351,51 @@ def test_standard_scaler() raises:
 
         for j in range(d):
             assert_almost_equal(output_mojo[j], Float64(py=output_py[j]), "StandardScaler Mismatch at index " + String(j) + ": Mojo=" + String(output_mojo[j]) + " vs Py=" + String(output_py[j]))
+
+def test_fold() raises:
+    """Comprehensive test for the fold function with 8 different test cases."""
+    comptime dtype = DType.float32
     
+    # Test 1: Values within range stay unchanged
+    var x1 = SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0)
+    var result1 = fold(x1, SIMD[dtype, 4](0.0), SIMD[dtype, 4](5.0))
+    assert_almost_equal(result1, SIMD[dtype, 4](1.0, 2.0, 3.0, 4.0))
+    
+    # Test 2: Values above range fold back
+    var x2 = SIMD[dtype, 4](12.0, 15.0, 20.0, 25.0)
+    var result2 = fold(x2, SIMD[dtype, 4](0.0), SIMD[dtype, 4](10.0))
+    assert_almost_equal(result2, SIMD[dtype, 4](8.0, 5.0, 0.0, 5.0))
+    
+    # Test 3: Values below range fold back
+    var x3 = SIMD[dtype, 4](-2.0, -5.0, -10.0, -15.0)
+    var result3 = fold(x3, SIMD[dtype, 4](0.0), SIMD[dtype, 4](10.0))
+    assert_almost_equal(result3, SIMD[dtype, 4](2.0, 5.0, 10.0, 5.0))
+    
+    # Test 4: Values at exact boundaries
+    var x4 = SIMD[dtype, 4](0.0, 10.0, 0.0, 10.0)
+    var result4 = fold(x4, SIMD[dtype, 4](0.0), SIMD[dtype, 4](10.0))
+    assert_almost_equal(result4, SIMD[dtype, 4](0.0, 10.0, 0.0, 10.0))
+    
+    # Test 5: Reversed bounds (lo > hi) handled correctly
+    var x5 = SIMD[dtype, 4](1.0, 12.0, -2.0, 5.0)
+    var result5 = fold(x5, SIMD[dtype, 4](10.0), SIMD[dtype, 4](0.0))
+    assert_almost_equal(result5, SIMD[dtype, 4](1.0, 8.0, 2.0, 5.0))
+    
+    # Test 6: Negative range [-5, 5]
+    var x6 = SIMD[dtype, 4](7.0, -7.0, 0.0, 12.0)
+    var result6 = fold(x6, SIMD[dtype, 4](-5.0), SIMD[dtype, 4](5.0))
+    assert_almost_equal(result6, SIMD[dtype, 4](3.0, -3.0, 0.0, -2.0))
+    
+    # Test 7: Small range [0, 1] with various values
+    var x7 = SIMD[dtype, 4](0.5, 1.5, 2.3, -3.25)
+    var result7 = fold(x7, SIMD[dtype, 4](0.0), SIMD[dtype, 4](1.0))
+    assert_almost_equal(result7, SIMD[dtype, 4](0.5, 0.5, 0.3, 0.75))
+    
+    # Test 8: Non-zero based range [5, 15]
+    var x8 = SIMD[dtype, 4](3.0, 17.0, 10.0, 25.0)
+    var result8 = fold(x8, SIMD[dtype, 4](5.0), SIMD[dtype, 4](15.0))
+    assert_almost_equal(result8, SIMD[dtype, 4](7.0, 13.0, 10.0, 5.0))    
+
 def main() raises:
     TestSuite.discover_tests[__functions_in_module()]().run()
     # test_mel_bands()
