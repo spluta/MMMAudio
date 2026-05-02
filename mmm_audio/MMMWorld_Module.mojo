@@ -164,6 +164,7 @@ struct WindowType:
     | WindowType.sine     | 5     |
     | WindowType.tri      | 6     |
     | WindowType.pan2     | 7     |
+    | WindowType.user_defined | 8 | 
     """
 
     comptime rect: Int = 0
@@ -174,6 +175,7 @@ struct WindowType:
     comptime sine: Int = 5
     comptime tri: Int = 6
     comptime pan2: Int = 7
+    comptime user_defined: Int = 8
 
 struct OscType:
     """Oscillator types for selecting waveform types.
