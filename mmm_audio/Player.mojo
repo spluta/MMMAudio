@@ -464,7 +464,7 @@ struct TGrains(Movable, Copyable):
     gain: Float64 = 1.0, 
     num_speakers: Int = 2,
     buf_chan: Int = 0) -> MFloat[num_simd_chans]:
-        """Generate the next set of grains. Uses azimuth panning for N channel output.
+        """Generate the next set of grains. Uses azimuth panning for N channel output of a 1 channel grain.
 
         Parameters:
             num_simd_chans: The size of the output SIMD vector. Must be a power of two that is at least as large as num_speakers.
