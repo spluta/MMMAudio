@@ -40,12 +40,11 @@ struct Grains(Movable, Copyable):
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
         comptime if num_output_chans == 2:
-            out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0)
+            out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
 
             return MFloat[num_simd_chans](out[0], out[1]) # because pan2 outputs a SIMD vector size 2, and we require a SIMD vector of size num_simd_chans, you have to manually make the SIMD vector in this case (the compiler does not agree that num_simd_chans == 2, even though it does)
         else:
             # pan each channel separately to num_output_chans speakers
-            out0 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 0, random_float64(-1.0, 1.0), 1.0, num_output_chans)
-            out1 = self.tgrains2.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, 1, random_float64(-1.0, 1.0), 1.0, num_output_chans)
-
-            return out0 + out1
+            out_az = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, [random_float64(-1.0, 1.0), random_float64(-1.0, 1.0)], 1.0, num_output_chans, [0, 1])
+  
+            return out_az
