@@ -406,6 +406,11 @@ struct TGrains(Movable, Copyable):
         self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
     def set_user_defined_env(mut self, env: Env):
+        """Set a user-defined envelope for all grains. This allows you to use a custom envelope shape instead of the built-in window types.
+        
+        Args:
+            env: An Env object that defines the envelope shape. The envelope will be triggered with each grain and will use the grain's internal phase to determine the current position in the envelope.
+        """
         for ref grain in self.grains:
             grain.user_defined_env = env.copy()
 
@@ -423,7 +428,7 @@ struct TGrains(Movable, Copyable):
         
         Parameters:
             num_playback_chans: Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_user_defined_env function to assign an Env to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
         Args:.
