@@ -614,7 +614,7 @@ def cpsmidi[
 @always_inline
 def sanitize[
     num_chans: Int, //
-](mut x: MFloat[num_chans]) -> MFloat[num_chans]:
+](x: MFloat[num_chans]) -> MFloat[num_chans]:
     """Sanitizes a SIMD float64 vector by zeroing out elements that are too large, too small, or NaN.
     
     Parameters:
