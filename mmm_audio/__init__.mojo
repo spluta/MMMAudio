@@ -14,6 +14,7 @@ from .MBufAnalysisBridge import *
 from .MLP_Module import *
 from .MedianFilter_Module import *
 from .Noise import *
+from .ODESolver import *
 from .Oscillators import *
 from .Oversampling_Module import *
 from .Pan import *
