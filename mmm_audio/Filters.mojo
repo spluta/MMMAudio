@@ -56,23 +56,30 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
         self.lag = lag
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
     
-    @staticmethod
-    def par_process[num_simd: Int, simd_width: Int](lags: Span[mut = True, Lag[simd_width], ...], vals: Span[mut = True, MFloat[1], ...]):
-        """Parallel processes a List[Lag[simd_width]]. The one dimensional list of vals is both the input and the output."""
-        
-        len_vals = len(vals)
-        comptime for i in range(num_simd):
+struct ParLag[num_lags: Int](Movable, Copyable):
+    comptime simd_width = simd_width_of[DType.float64]() * 2
+    comptime num_simd = Self.num_lags // Self.simd_width  # Calculate number of SIMD groups needed
+    var lags : List[Lag[Self.simd_width]]
+
+    def __init__(out self, world: World, lag_time: Float64):
+        self.lags = [Lag[Self.simd_width](world, lag_time) for _ in range(Self.num_simd)]
+
+    def next(mut self, vals: Span[MFloat[1], ...]) -> InlineArray[MFloat[1], Self.num_simd * Self.simd_width]:
+        """Process a list of values through the parallel lags. The length of vals should be equal to num_lags."""
+        var outs = InlineArray[MFloat[1], Self.num_simd * Self.simd_width](fill=0.0)
+        comptime for i in range(Self.num_simd):
             # process each lag group
-            simd_val = MFloat[simd_width](0.0)
-            for j in range(simd_width):
-                idx = i * simd_width + j
-                if idx < len_vals:
+            simd_val = MFloat[Self.simd_width](0.0)
+            for j in range(Self.simd_width):
+                idx = i * Self.simd_width + j
+                if idx < len(vals):
                     simd_val[j] = vals[idx]
-            lagged_output = lags[i].next(simd_val)
-            for j in range(simd_width):
-                idx = i * simd_width + j
-                if idx < len_vals:
-                    vals[idx] = lagged_output[j]
+            lagged_output = self.lags[i].next(simd_val)
+            for j in range(Self.simd_width):
+                idx = i * Self.simd_width + j
+                if idx < len(vals):
+                    outs[idx] = lagged_output[j]
+        return outs
 
 struct LagUD[num_chans: Int = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.
