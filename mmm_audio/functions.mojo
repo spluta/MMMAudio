@@ -242,7 +242,6 @@ def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chan
     
     in_min2, in_max2, _ = check_reversed(in_min, in_max)
     input2 = clip(input, in_min2, in_max2)
-    # Apply logarithmic scaling to normalize to 0-1
     ratio = in_max2 / in_min2
     normalized = math.log(input2 / in_min2) / math.log(ratio)
     
@@ -258,39 +257,30 @@ def explin[num_chans: Int, //](input: MFloat[num_chans], in_min: MFloat[num_chan
 @always_inline
 def lincurve[num_chans: Int, //
 ](input: MFloat[num_chans], in_min: MFloat[num_chans], in_max: MFloat[num_chans], out_min: MFloat[num_chans], out_max: MFloat[num_chans], curve: MFloat[num_chans]) -> MFloat[num_chans]:
-    """Maps samples from one linear range to another curved range.
-
-    Parameters:
-        num_chans: Size of the SIMD vector - defaults to 1. This parameter is inferred by the values passed to the function.
-
-    Args:
-        input: The samples to map.
-        in_min: The minimum of the input range.
-        in_max: The maximum of the input range.
-        out_min: The minimum of the output range (must be > 0).
-        out_max: The maximum of the output range (must be > 0).
-        curve: The curve factor. Positive values create an exponential-like curve, negative values create a logarithmic-like curve, and zero results in a linear mapping.
-
-    Returns:
-        The curved mapped samples in the output range.
-    """
-    curve_zero: MBool[num_chans] = curve.eq(0.0)
-    temp_curve: MFloat[num_chans] = curve_zero.select(0.0001, curve)
-
+    
+    # Handle near-zero curve (linear case)
+    curve_near_zero: MBool[num_chans] = abs(curve).lt(0.001)
+    
     in_min2, in_max2, _ = check_reversed(in_min, in_max)
-
     input2 = clip(input, in_min2, in_max2)
     normalized = (input2 - in_min2) / (in_max2 - in_min2)
-
+    
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
-
     normalized = outs_reversed.select(1.0 - normalized, normalized)
-    # temp_curve = outs_reversed.select(temp_curve, temp_curve)
 
-    grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)  # e^curve
-    curved = (grow ** normalized - 1.0) / (grow - 1.0)
+    curve2 = outs_reversed.select(-curve, curve)
 
-    return clip(out_min2 + curved * (out_max2 - out_min2), out_min2, out_max2)
+    denom = 1.0 - exp(curve2)
+    numer = 1.0 - exp(normalized * curve2)
+    
+    curved = numer / denom
+    
+    linear_result = normalized
+    curved_result = curved
+    
+    final_normalized = curve_near_zero.select(linear_result, curved_result)
+    
+    return clip(out_min2 + final_normalized * (out_max2 - out_min2), out_min2, out_max2)
 
 def curvelin[num_chans: Int, //](
     input: MFloat[num_chans],
@@ -328,7 +318,6 @@ def curvelin[num_chans: Int, //](
     normalized = (input2 - in_min2) / (in_max2 - in_min2)
 
     out_min2, out_max2, outs_reversed = check_reversed(out_min, out_max)
-
 
     grow = pow(MFloat[num_chans](2.71828182845904523536), temp_curve)
     linearized = log(normalized * (grow - 1) + 1) / temp_curve
@@ -409,6 +398,15 @@ def wrap[
 
     # Return original input where range is invalid, wrapped result otherwise
     return invalid_range.select(input, wrapped_sample)
+
+def fold[dtype: DType, num_chans: Int](x: SIMD[dtype, num_chans], lo: SIMD[dtype, num_chans], hi: SIMD[dtype, num_chans]) -> SIMD[dtype, num_chans]:
+    lo2, hi2, _ = check_reversed(lo, hi)
+    range_size = hi2 - lo2
+    wrapped = (x - lo2) % (2 * range_size)
+
+    mask = wrapped.lt(range_size)
+    folded = mask.select(wrapped, (2 * range_size - wrapped))
+    return folded + lo2
 
 @always_inline
 def quadratic_interp[
@@ -616,7 +614,7 @@ def cpsmidi[
 @always_inline
 def sanitize[
     num_chans: Int, //
-](mut x: MFloat[num_chans]) -> MFloat[num_chans]:
+](x: MFloat[num_chans]) -> MFloat[num_chans]:
     """Sanitizes a SIMD float64 vector by zeroing out elements that are too large, too small, or NaN.
     
     Parameters:

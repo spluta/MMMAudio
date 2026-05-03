@@ -126,6 +126,10 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
         if rotate_back:
             rotate_left_inplace(self.data, len(self.data) - write_head)
 
+    def get_num_chans(self) -> Int:
+        """Get the number of channels in the SIMDBuffer."""
+        return Self.num_chans
+
 
 struct Buffer(Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.

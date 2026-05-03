@@ -194,6 +194,7 @@ struct Grain(PolyObject):
     var rising_bool_detector: RisingBoolDetector[1]
     var play_buf: Play
     var trigger: Bool
+    var user_defined_env: Env
 
     # These are the functions that need to be implemented for the PolyObject trait:
     def check_active(mut self) -> Bool:
@@ -218,16 +219,19 @@ struct Grain(PolyObject):
         self.rising_bool_detector = RisingBoolDetector() 
         self.play_buf = Play(world)
         self.trigger = False
+        self.user_defined_env = Env(world)
 
     @always_inline
     def next_pan2[num_playback_chans: Int = 1, win_type: Int = 0, bWrap: Bool = False](mut self, 
-    mut buffer: SIMDBuffer, 
+    mut buffer: SIMDBuffer,
     rate: Float64 = 1.0, 
     loop: Bool = False, 
     start_frame: Int = 0, 
     duration: Float64 = 0.0, 
     pan: Float64 = 0.0, 
-    gain: Float64 = 1.0) -> MFloat[2]:
+    gain: Float64 = 1.0,
+    start_chan: Int = 0
+    ) -> MFloat[2]:
         """Generate the next grain and pan it to stereo using pan2. Depending on num_playback_chans, will either pan a mono signal out 2 channels using pan2 or a stereo signal out 2 channels using pan_stereo.
 
         Parameters:
@@ -243,15 +247,16 @@ struct Grain(PolyObject):
             duration: Duration of the grain in seconds.
             pan: Panning position from -1.0 (left) to 1.0 (right).
             gain: Amplitude scaling factor for the grain.
+            start_chan: The first buffer channel to read from for the grain (default: 0). If num_playback_chans is 2, the grain will read from start_chan and start_chan+1 for the left and right channels, respectively.
         """
         
-        var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, pan, gain)
+        var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, gain)
 
         comptime if num_playback_chans == 1:
-            panned = pan2(sample[0], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
+            panned = pan2(sample[start_chan], self.pan) #self.panner.next(sample[0], self.pan)  # Return the output samples
             return panned
         else:
-            panned = pan_stereo(MFloat[2](sample[0], sample[1]), self.pan) #self.panner.next(sample[0], sample[1], self.pan)  # Return the output samples
+            panned = pan_stereo(MFloat[2](sample[start_chan], sample[(start_chan + 1) % buffer.get_num_chans()]), self.pan) 
             return panned  # Return the output samples
 
     @always_inline
@@ -261,10 +266,10 @@ struct Grain(PolyObject):
     loop: Bool = False, 
     start_frame: Int = 0, 
     duration: Float64 = 0.0, 
-    buffer_chan: Int = 0, 
     pan: Float64 = 0.0, 
     gain: Float64 = 1.0, 
-    num_speakers: Int = 4) -> MFloat[num_simd_chans]:
+    num_speakers: Int = 4,
+    buffer_chan: Int = 0, ) -> MFloat[num_simd_chans]:
         """Generate the next grain and pan it to N speakers using azimuth panning.
 
         Parameters:
@@ -278,15 +283,52 @@ struct Grain(PolyObject):
             loop: Whether to loop the grain (default: False).
             start_frame: Starting frame position in the buffer.
             duration: Duration of the grain in seconds.
-            buffer_chan: The buffer channel to read from for the grain (default: 0).
             pan: Panning position from 0.0 to 1.0.
             gain: Amplitude scaling factor for the grain.
             num_speakers: Number of speakers to pan to.
+            buffer_chan: The buffer channel to read from for the grain (default: 0).
         """
         
-        var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, pan, gain)
+        var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, gain)
 
-        panned = pan_az[num_simd_chans](sample[buffer_chan], self.pan, num_speakers) 
+        panned = pan_az[num_simd_chans](sample[buffer_chan], pan, num_speakers) 
+
+        return panned
+
+    @always_inline
+    def next_pan_az[num_simd_chans: Int = 4, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    mut buffer: SIMDBuffer, 
+    rate: Float64 = 1.0, 
+    loop: Bool = False, 
+    start_frame: Int = 0, 
+    duration: Float64 = 0.0, 
+    pan: List[Float64] = [0.0], 
+    gain: Float64 = 1.0, 
+    num_speakers: Int = 4,
+    buffer_chans: List[Int] = [0]) -> MFloat[num_simd_chans]:
+        """Generate the next grain and pan it to N speakers using azimuth panning.
+
+        Parameters:
+            num_simd_chans: Number of output channels (speakers). Must be a power of two that is at least as large as num_speakers.
+            win_type: Type of window to apply to the grain (default is Hann window (WindowType.hann) See [WindowType](MMMWorld.md/#struct-windowtype) for all options.).
+            bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
+
+        Args:
+            buffer: Audio buffer containing the source sound.
+            rate: Playback rate of the grain (1.0 = normal speed).
+            loop: Whether to loop the grain (default: False).
+            start_frame: Starting frame position in the buffer.
+            duration: Duration of the grain in seconds.
+            pan: A list of panning positions from 0.0 to 1.0.
+            gain: Amplitude scaling factor for the grain.
+            num_speakers: Number of speakers to pan to.
+            buffer_chans: A list of buffer channels to read from for the grain (default: [0]).
+        """
+        
+        var sample = self.next[win_type=win_type, bWrap=bWrap](buffer, rate, loop, start_frame, duration, gain)
+        panned = MFloat[num_simd_chans](0.0)
+        for i in range(len(buffer_chans)):
+            panned += pan_az[num_simd_chans](sample[buffer_chans[i%len(buffer_chans)]], pan[i%len(pan)], num_speakers) 
 
         return panned
 
@@ -296,7 +338,6 @@ struct Grain(PolyObject):
     loop: Bool = False, 
     start_frame: Int = 0, 
     duration: Float64 = 0.0, 
-    pan: Float64 = 0.0, 
     gain: Float64 = 1.0) -> MFloat[num_chans]:
         """Generate the next unpanned grain. This is called internally by the panning functions, but can also be used directly if panning is not needed. The grain will always have the channel size of the SIMDBuffer.
 
@@ -311,7 +352,6 @@ struct Grain(PolyObject):
             loop: Whether to loop the grain (default: False).
             start_frame: Starting frame position in the buffer.
             duration: Duration of the grain in seconds.
-            pan: Panning position from -1.0 (left) to 1.0 (right).
             gain: Amplitude scaling factor for the grain.
         """
         trig2 = False
@@ -320,7 +360,6 @@ struct Grain(PolyObject):
             self.num_frames =  Int(duration * buffer.sample_rate*rate)  # Calculate end frame based on duration
             self.rate = rate
             self.gain = gain
-            self.pan = pan
             trig2 = True
         
         # Get samples from Play with a new trigger
@@ -332,7 +371,10 @@ struct Grain(PolyObject):
         else:
             win_phase = 0.0  # Use the phase
 
-        win = win_env[win_type, Interp.linear](self.world, win_phase)
+        comptime if win_type == WindowType.user_defined:
+            win = self.user_defined_env.next(trig2, win_phase)
+        else:
+            win = win_env[win_type, Interp.linear](self.world, win_phase)
         # this only works with 1 or 2 channels, if you try to do more, it will just return 2 channels
         sample = sample * win * self.gain  # Apply the window to the sample
         
@@ -363,21 +405,30 @@ struct TGrains(Movable, Copyable):
         self.trig = False  
         self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
 
+    def set_user_defined_env(mut self, env: Env):
+        """Set a user-defined envelope for all grains. This allows you to use a custom envelope shape instead of the built-in window types.
+        
+        Args:
+            env: An Env object that defines the envelope shape. The envelope will be triggered with each grain and will use the grain's internal phase to determine the current position in the envelope.
+        """
+        for ref grain in self.grains:
+            grain.user_defined_env = env.copy()
+
     @always_inline
     def next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
-    mut buffer: SIMDBuffer, 
+    mut buffer: SIMDBuffer,
     rate: Float64 = 1.0, 
     trig: Bool = False, 
     start_frame: Int = 0, 
-    duration: Float64 = 0.1, 
-    buf_chan: Int = 0, 
+    duration: Float64 = 0.1,
     pan: Float64 = 0.0, 
-    gain: Float64 = 1.0) -> MFloat[2]:
+    gain: Float64 = 1.0,
+    buf_chan: Int = 0,) -> MFloat[2]:
         """Generate the next set of grains. Uses pan2 to pan to 2 channels. Depending on num_playback_chans, will either pan a mono signal out 2 channels or a stereo signal out 2 channels.
         
         Parameters:
             num_playback_chans: Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_user_defined_env function to assign an Env to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
         Args:.
@@ -386,9 +437,9 @@ struct TGrains(Movable, Copyable):
             trig: Trigger signal (>0 to start a new grain).
             start_frame: Starting frame position in the buffer.
             duration: Duration of each grain in seconds.
-            buf_chan: Channel in the buffer to read from.
             pan: Panning position from -1.0 (left) to 1.0 (right).
             gain: Amplitude scaling factor for the grains.
+            buf_chan: The first buffer channel to read from for the grain (default: 0).
 
         Returns:
             List of output samples for all channels.
@@ -398,7 +449,7 @@ struct TGrains(Movable, Copyable):
         out = MFloat[2](0.0, 0.0)
         for i in range(len(self.grains)):
             if self.poly.active_list[i]:  # Only process grains that are active
-                out += self.grains[i].next_pan2[num_playback_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, pan, gain)
+                out += self.grains[i].next_pan2[num_playback_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, pan, gain, buf_chan)
 
         return out
 
@@ -408,12 +459,12 @@ struct TGrains(Movable, Copyable):
     rate: Float64 = 1.0, 
     trig: Bool = False, 
     start_frame: Int = 0, 
-    duration: Float64 = 0.1, 
-    buf_chan: Int = 0, 
+    duration: Float64 = 0.1,
     pan: Float64 = 0.0, 
     gain: Float64 = 1.0, 
-    num_speakers: Int = 2) -> MFloat[num_simd_chans]:
-        """Generate the next set of grains. Uses azimuth panning for N channel output.
+    num_speakers: Int = 2,
+    buf_chan: Int = 0) -> MFloat[num_simd_chans]:
+        """Generate the next set of grains. Uses azimuth panning for N channel output of a 1 channel grain.
 
         Parameters:
             num_simd_chans: The size of the output SIMD vector. Must be a power of two that is at least as large as num_speakers.
@@ -426,10 +477,10 @@ struct TGrains(Movable, Copyable):
             trig: Trigger signal (>0 to start a new grain).
             start_frame: Starting frame position in the buffer.
             duration: Duration of each grain in seconds.
-            buf_chan: Channel in the buffer to read from.
             pan: Panning position from -1.0 (left) to 1.0 (right).
             gain: Amplitude scaling factor for the grains.
             num_speakers: Number of speakers to pan to. Must be fewer than or equal to num_simd_chans.
+            buf_chan: Channel in the buffer to read from.
 
         Returns:
             Output samples for all channels as a SIMD vector.
@@ -439,9 +490,89 @@ struct TGrains(Movable, Copyable):
         out = MFloat[num_simd_chans](0.0)
         for i in range(len(self.grains)):
             if self.poly.active_list[i]:  # Only process grains that are active
-                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, buf_chan, pan, gain, num_speakers)
+                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, pan, gain, num_speakers, buf_chan)
 
         return out
+
+    @always_inline
+    def next_pan_az[num_simd_chans: Int = 2, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    mut buffer: SIMDBuffer, 
+    rate: Float64 = 1.0, 
+    trig: Bool = False, 
+    start_frame: Int = 0, 
+    duration: Float64 = 0.1,
+    pan: List[Float64] = [0.0], 
+    gain: Float64 = 1.0, 
+    num_speakers: Int = 2,
+    buf_chans: List[Int] = [0]) -> MFloat[num_simd_chans]:
+        """Generate the next set of grains. Uses azimuth panning to place N buffer channels in N unique positions.
+
+        Parameters:
+            num_simd_chans: The size of the output SIMD vector. Must be a power of two that is at least as large as num_speakers.
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
+        
+        Args:
+            buffer: Audio buffer containing the source sound.
+            rate: Playback rate of the grains (1.0 = normal speed).
+            trig: Trigger signal (>0 to start a new grain).
+            start_frame: Starting frame position in the buffer.
+            duration: Duration of each grain in seconds.
+            pan: A list of panning position from -1.0 (left) to 1.0 (right).
+            gain: Amplitude scaling factor for the grains.
+            num_speakers: Number of speakers to pan to. Must be fewer than or equal to num_simd_chans.
+            buf_chans: A list of channels in the buffer to read from.
+
+        Returns:
+            Output samples for all channels as a SIMD vector.
+        """
+        _ = self.poly.next(self.grains, trig)
+
+        out = MFloat[num_simd_chans](0.0)
+        for i in range(len(self.grains)):
+            if self.poly.active_list[i]:  # Only process grains that are active
+                out += self.grains[i].next_pan_az[num_simd_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, pan, gain, num_speakers, buf_chans)
+
+        return out
+
+    @always_inline
+    def next_all_chans[num_chans: Int, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
+    mut buffer: SIMDBuffer[num_chans], 
+    rate: Float64 = 1.0, 
+    trig: Bool = False, 
+    start_frame: Int = 0, 
+    duration: Float64 = 0.1,
+    gain: Float64 = 1.0) -> MFloat[num_chans]:
+        """Generate the next set of grains. Returns all channels of the buffer with no panning as a num_chans sized SIMD vector.
+        
+        Parameters:
+            num_chans: An inferred parameter based on the size of the input buffer. 
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
+
+        Args:.
+            buffer: Audio buffer containing the source sound.
+            rate: Playback rate of the grains (1.0 = normal speed).
+            trig: Trigger signal (>0 to start a new grain).
+            start_frame: Starting frame position in the buffer.
+            duration: Duration of each grain in seconds.
+            gain: Amplitude scaling factor for the grains.
+
+        Returns:
+            List of output samples for all channels.
+        """
+        _ = self.poly.next(self.grains, trig)
+
+        out = MFloat[num_chans](0.0)
+        for i in range(len(self.grains)):
+            if self.poly.active_list[i]:  # Only process grains that are active
+                out += self.grains[i].next[num_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, gain)
+
+        return out
+    
+    def reset(mut self):
+        for ref grain in self.grains:
+            grain.play_buf.active = False
 
 
 struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, Copyable):
@@ -522,6 +653,6 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
                     start_frame = Int(Float64(self.recorder.write_head) - ((grain_dur * self.world[].sample_rate) * (self.pitch_ratios[i]-1.0)) - (added_delay * self.world[].sample_rate)) % self.recorder.buf.num_frames
 
             if self.poly.active_list[i]:
-                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratios[i], False, start_frame, grain_dur, 0.0, gain)
+                out += self.grains[i].next[Self.num_chans, win_type=Self.win_type, bWrap=True](self.recorder.buf, self.pitch_ratios[i], False, start_frame, grain_dur, gain)
 
         return out
