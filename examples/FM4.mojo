@@ -97,4 +97,4 @@ struct FM4(Movable, Copyable):
 
             self.over.add_sample(MFloat[2](osc0, osc1))
         
-        return self.over.get_sample()
+        return self.over.get_sample() * 0.25

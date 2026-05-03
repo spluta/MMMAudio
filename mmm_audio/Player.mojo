@@ -471,7 +471,7 @@ struct TGrains(Movable, Copyable):
         """Generate the next set of grains. Returns all channels of the buffer with no panning as a num_chans sized SIMD vector.
         
         Parameters:
-            num_chans: An inferred parameter based on the size of the input buffer. 
+            num_chans: An inferred parameter based on the size of the input buffer.
             win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 

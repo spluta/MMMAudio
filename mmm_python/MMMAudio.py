@@ -138,6 +138,30 @@ class MMMAudio:
         self.start_process(audio_init_timeout)
 
     @classmethod
+    def compile(cls, graph_name: str, package_name: str):
+        """Compile the Mojo graph and create the bridge module. This is automatically called when the audio process starts, but can be called manually if you want to compile without starting the audio process."""
+        import os
+        try:
+            from mmm_python.make_solo_graph import make_solo_graph
+            import importlib
+            
+            make_solo_graph(graph_name, package_name)
+            MMMAudioBridge = importlib.import_module(f"{graph_name}Bridge")
+            
+            # MMMAudioBridge = importlib.import_module("GrainsBridge").MMMAudioBridge
+            # import GrainsBridge as MMMAudioBridge
+
+            bridge_file = graph_name + "Bridge" + ".mojo"
+            if os.path.exists(bridge_file):
+                os.remove(bridge_file)
+            print(f"Compiled Mojo graph '{graph_name}' from package '{package_name}'. It is ready to run.")
+            return MMMAudioBridge
+        except Exception as e:
+            print(f"Error compiling Mojo bridge: {e}")
+            sys.stdout.flush()
+            return None
+
+    @classmethod
     def exit_all(cls):
         """Handle Ctrl+C signal"""
         print("\nReceived Ctrl+C, stopping audio...")
@@ -365,22 +389,8 @@ class MMMAudio:
         # =========================================================================
         # Initialize Mojo bridge
         # =========================================================================
-        try:
-            from mmm_python.make_solo_graph import make_solo_graph
-            import importlib
-            
-            make_solo_graph(graph_name, package_name)
-            MMMAudioBridge = importlib.import_module(f"{graph_name}Bridge")
-            # MMMAudioBridge = importlib.import_module("GrainsBridge").MMMAudioBridge
-            # import GrainsBridge as MMMAudioBridge
-
-            bridge_file = graph_name + "Bridge" + ".mojo"
-            if os.path.exists(bridge_file):
-                os.remove(bridge_file)
-        except Exception as e:
-            print(f"[PID {pid}] Error loading Mojo bridge: {e}")
-            sys.stdout.flush()
-            return
+        
+        MMMAudioBridge = MMMAudio.compile(graph_name, package_name)
         
         # =========================================================================
         # Initialize PyAudio and get device info
