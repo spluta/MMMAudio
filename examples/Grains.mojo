@@ -34,7 +34,7 @@ struct Grains(Movable, Copyable):
     def next(mut self) -> MFloat[num_simd_chans]:
         self.m.update(self.max_trig_rate, "max_trig_rate")
         imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, self.max_trig_rate)  # Map mouse Y to a trigger frequency between 1 Hz and max_trig_rate
-        var impulse = self.impulse.next_bool(imp_freq, 0, True)  # Get the next impulse sample
+        var impulse = self.impulse.next_bool(imp_freq, 0, True)
 
         start_frame = Int(linlin(self.world[].mouse_x, 0.0, 1.0, 0.0, Float64(self.buffer.num_frames) - 1.0))
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
@@ -42,9 +42,10 @@ struct Grains(Movable, Copyable):
         comptime if num_output_chans == 2:
             out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
 
-            return MFloat[num_simd_chans](out[0], out[1]) # because pan2 outputs a SIMD vector size 2, and we require a SIMD vector of size num_simd_chans, you have to manually make the SIMD vector in this case (the compiler does not agree that num_simd_chans == 2, even though it does)
+            return MFloat[num_simd_chans](out[0], out[1])
         else:
             # pan each channel separately to num_output_chans speakers
-            out_az = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, [random_float64(-1.0, 1.0), random_float64(-1.0, 1.0)], 1.0, num_output_chans, [0, 1])
+            out_az1 = self.tgrains.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0, num_output_chans, 0)
+            out_az2 = self.tgrains2.next_pan_az[num_simd_chans=num_simd_chans](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0, num_output_chans, 1)
   
-            return out_az
+            return out_az1 + out_az2

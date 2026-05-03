@@ -28,8 +28,6 @@ class OSCServer:
         self.transport = None
         self.osc_msg_handler = osc_msg_handler if osc_msg_handler else self.default_handler
         self.dispatcher = Dispatcher()
-        
-        
 
     def filter_handler(self, client_address, key, *args):
         if self.in_ip == "0.0.0.0" or self.in_ip == client_address[0]:
@@ -78,9 +76,6 @@ class OSCServer:
         else:
             print("OSC Server stopped successfully")
         
-        # # Clear clients
-        # with self._clients_lock:
-        #     self._clients.clear()
     
     def _run_server(self):
         """Run the server in its own event loop"""
