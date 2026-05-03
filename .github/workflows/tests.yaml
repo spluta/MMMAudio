@@ -20,29 +20,16 @@ jobs:
         with:
           python-version: '3.13.12'
 
-      - name: Install Mojo
+      - name: brew installs
         run: |
-          python -m pip install --upgrade pip
-          pip install mojo==0.26.2.0
+          brew install portaudio
+          brew install pixi
 
-      - name: Install Python Dependencies
+      - name: run 'pixi install'
         run: |
-          pip install librosa numpy matplotlib scipy
+          pixi install
 
-      - name: Print Versions
-        run: |
-          python --version
-          mojo --version
-
-      - name: Run UnitTests.mojo
+      - name: Run Tests
         id: run-tests
         run: |
-          mojo -debug-level=full testing_mmm_audio/UnitTests.mojo
-
-      - name: Test Building Mojo Files
-        run: |
-          python testing_mmm_audio/test_build_mojo_files.py
-        
-      - name: Validate Against Snapshots
-        run: |
-          python testing_mmm_audio/validation/validate_against_snapshot.py
+          pixi run test_all
