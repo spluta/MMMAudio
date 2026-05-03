@@ -804,6 +804,13 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         self.last_4 = lp4
 
         return lp4 * compensation
+    
+    def reset(mut self):
+        """Clears filter's internal state.""" 
+        self.last_1 = MFloat[Self.num_chans](0.0)
+        self.last_2 = MFloat[Self.num_chans](0.0)
+        self.last_3 = MFloat[Self.num_chans](0.0)
+        self.last_4 = MFloat[Self.num_chans](0.0)
 
     @always_inline
     def next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, q: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
