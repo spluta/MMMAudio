@@ -46,6 +46,11 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
 
         return self.val
 
+    def _next2(mut self, in_samp: MFloat[2]) -> MFloat[2]:
+        temp = MFloat[Self.num_chans](0.0)
+        temp2 = self.next(temp)
+        return MFloat[2](temp2[0], temp2[1])
+
     @always_inline
     def set_lag_time(mut self, lag: MFloat[Self.num_chans]):
         """Set a new lag time in seconds for each channel.
@@ -58,7 +63,7 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
     
 struct ParLag[num_lags: Int](Movable, Copyable):
     comptime simd_width = simd_width_of[DType.float64]() * 2
-    comptime num_simd = Self.num_lags // Self.simd_width  # Calculate number of SIMD groups needed
+    comptime num_simd = Self.num_lags // Self.simd_width + (1 if Self.num_lags % Self.simd_width != 0 else 0)
     var lags : List[Lag[Self.simd_width]]
 
     def __init__(out self, world: World, lag_time: Float64):
@@ -70,14 +75,14 @@ struct ParLag[num_lags: Int](Movable, Copyable):
         comptime for i in range(Self.num_simd):
             # process each lag group
             simd_val = MFloat[Self.simd_width](0.0)
-            for j in range(Self.simd_width):
-                idx = i * Self.simd_width + j
-                if idx < len(vals):
+            comptime for j in range(Self.simd_width):
+                comptime idx = i * Self.simd_width + j
+                comptime if idx < Self.num_lags:
                     simd_val[j] = vals[idx]
             lagged_output = self.lags[i].next(simd_val)
-            for j in range(Self.simd_width):
-                idx = i * Self.simd_width + j
-                if idx < len(vals):
+            comptime for j in range(Self.simd_width):
+                comptime idx = i * Self.simd_width + j
+                comptime if idx < Self.num_lags:
                     outs[idx] = lagged_output[j]
         return outs
 
