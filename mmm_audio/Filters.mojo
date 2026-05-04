@@ -61,7 +61,12 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
         self.lag = lag
         self.b1 = exp(-6.907755278982137 / (lag * self.world[].sample_rate))
     
-struct ParLag[num_lags: Int](Movable, Copyable):
+struct Lags[num_lags: Int](Movable, Copyable):
+    """A convenience struct for processing a list of lags (which are processed in parallel using SIMD). The number of lags is determined at compile time by the num_lags parameter. The outputs of the lags can be accessed using the [] operator, just like accessing values in a List: `lags[0]`.
+
+    Parameters:
+        num_lags: The total number of lags.
+    """
     comptime simd_width = simd_width_of[DType.float64]() * 2
     comptime num_simd = Self.num_lags // Self.simd_width + (1 if Self.num_lags % Self.simd_width != 0 else 0)
     var lags : List[Lag[Self.simd_width]]
@@ -70,9 +75,8 @@ struct ParLag[num_lags: Int](Movable, Copyable):
         self.lags = [Lag[Self.simd_width](world, lag_time) for _ in range(Self.num_simd)]
 
     def next(mut self, vals: Span[MFloat[1], ...]):
-        """Process a list of values through the parallel lags. The length of vals should be equal to num_lags."""
+        """Process a Span (List or InlineArray) of Floats through the lags. The length of vals should be equal to num_lags."""
         comptime for i in range(Self.num_simd):
-            # process each lag group
             simd_val = MFloat[Self.simd_width](0.0)
             comptime for j in range(Self.simd_width):
                 comptime idx = i * Self.simd_width + j
@@ -89,7 +93,6 @@ struct ParLag[num_lags: Int](Movable, Copyable):
         simd_index = idx // Self.simd_width
         lane_index = idx % Self.simd_width
         self.lags[simd_index].val[lane_index] = value
-
 
 struct LagUD[num_chans: Int = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.

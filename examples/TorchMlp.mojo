@@ -11,7 +11,7 @@ struct TorchSynth(Movable, Copyable):
     var osc2: Osc[1, Interp.sinc, 1]
 
     var model: MLP[2, model_out_size]  # Instance of the MLP model - 2 inputs, model_out_size outputs
-    var lags: ParLag[model_out_size]  # A ParLag (Lags processed in parallel) for smoothing the model outputs
+    var lags: Lags[model_out_size]  # A Lags (Lags processed in parallel) for smoothing the model outputs
 
     var fb: Float64
 
@@ -34,8 +34,8 @@ struct TorchSynth(Movable, Copyable):
         # load the trained model
         self.model = MLP(self.world,"examples/nn_trainings/model_traced.pt", "mlp1", trig_rate=25.0)
 
-        # make a lag for each output of the nn - pair them in twos for SIMD processing
-        self.lags = ParLag[model_out_size](self.world, 1/25.0)  # Assuming the model updates at 25 Hz
+        # Lags is a utility for processing multiple lag lines in parallel
+        self.lags = Lags[model_out_size](self.world, 1/25.0)  # Assuming the model updates at 25 Hz
 
         # create a feedback variable so each of the oscillators can feedback on each sample
         self.fb = 0.0
