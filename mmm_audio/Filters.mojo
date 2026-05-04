@@ -69,9 +69,8 @@ struct ParLag[num_lags: Int](Movable, Copyable):
     def __init__(out self, world: World, lag_time: Float64):
         self.lags = [Lag[Self.simd_width](world, lag_time) for _ in range(Self.num_simd)]
 
-    def next(mut self, vals: Span[MFloat[1], ...]) -> InlineArray[MFloat[1], Self.num_simd * Self.simd_width]:
+    def next(mut self, vals: Span[MFloat[1], ...]):
         """Process a list of values through the parallel lags. The length of vals should be equal to num_lags."""
-        var outs = InlineArray[MFloat[1], Self.num_simd * Self.simd_width](fill=0.0)
         comptime for i in range(Self.num_simd):
             # process each lag group
             simd_val = MFloat[Self.simd_width](0.0)
@@ -79,12 +78,18 @@ struct ParLag[num_lags: Int](Movable, Copyable):
                 comptime idx = i * Self.simd_width + j
                 comptime if idx < Self.num_lags:
                     simd_val[j] = vals[idx]
-            lagged_output = self.lags[i].next(simd_val)
-            comptime for j in range(Self.simd_width):
-                comptime idx = i * Self.simd_width + j
-                comptime if idx < Self.num_lags:
-                    outs[idx] = lagged_output[j]
-        return outs
+            _ = self.lags[i].next(simd_val)
+
+    def __getitem__(self, idx: Int) -> Float64:
+        simd_index = idx // Self.simd_width
+        lane_index = idx % Self.simd_width
+        return self.lags[simd_index].val[lane_index]
+
+    def __setitem__(mut self, idx: Int, value: Float64):
+        simd_index = idx // Self.simd_width
+        lane_index = idx % Self.simd_width
+        self.lags[simd_index].val[lane_index] = value
+
 
 struct LagUD[num_chans: Int = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.

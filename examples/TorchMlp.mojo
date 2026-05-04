@@ -56,25 +56,25 @@ struct TorchSynth(Movable, Copyable):
 
         self.model.next()  # Run the model inference
 
-        lagged_vals = self.lags.next(self.model.model_output)  # Get the lagged outputs for smoother control
+        self.lags.next(self.model.model_output)  # Get the lagged outputs for smoother control
 
         # uncomment to see the output of the model
-        # self.world[].print(lagged_vals[0], lagged_vals[1], lagged_vals[2], lagged_vals[3], lagged_vals[4], lagged_vals[5], lagged_vals[6], lagged_vals[7], lagged_vals[8], lagged_vals[9], lagged_vals[10], lagged_vals[11], lagged_vals[12], lagged_vals[13], lagged_vals[14], lagged_vals[15])
+        # self.world[].print(self.lags[0], self.lags[1], self.lags[2], self.lags[3], self.lags[4], self.lags[5], self.lags[6], self.lags[7], self.lags[8], self.lags[9], self.lags[10], self.lags[11], self.lags[12], self.lags[13], self.lags[14], self.lags[15])
 
         # oscillator 1 -----------------------
 
-        var freq1 = linexp(lagged_vals[0], 0.0, 1.0, 1.0, 3000) + (linlin(lagged_vals[1], 0.0, 1.0, 2.0, 5000.0) * self.fb)
+        var freq1 = linexp(self.lags[0], 0.0, 1.0, 1.0, 3000) + (linlin(self.lags[1], 0.0, 1.0, 2.0, 5000.0) * self.fb)
 
         # next_interp implements a variable wavetable oscillator between the N provided wave types
         # in this case, we are using 0, 4, 5, 6 - Sine, BandLimited Tri, BL Saw, BL Square
-        osc_frac1 = linlin(lagged_vals[3], 0.0, 1.0, 0.0, 1.0)
+        osc_frac1 = linlin(self.lags[3], 0.0, 1.0, 0.0, 1.0)
         osc1 = self.osc1.next_basic_waveforms(freq1, 0.0, False, [0,1,2,3], osc_frac1)
 
         # samplerate reduction
-        osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(lagged_vals[4], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
-        osc1 = self.filt1.lpf(osc1, linexp(lagged_vals[5], 0.0, 1.0, 100.0, 20000.0), linlin(lagged_vals[6], 0.0, 1.0, 0.707, 4.0))
+        osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lags[4], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
+        osc1 = self.filt1.lpf(osc1, linexp(self.lags[5], 0.0, 1.0, 100.0, 20000.0), linlin(self.lags[6], 0.0, 1.0, 0.707, 4.0))
 
-        tanh_gain = linlin(lagged_vals[7], 0.0, 1.0, 0.5, 10.0)
+        tanh_gain = linlin(self.lags[7], 0.0, 1.0, 0.5, 10.0)
 
         # get rid of dc offset
         osc1 = tanh(osc1*tanh_gain)
@@ -82,16 +82,16 @@ struct TorchSynth(Movable, Copyable):
 
         # oscillator 2 -----------------------
 
-        var freq2 = linlin(lagged_vals[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(lagged_vals[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
+        var freq2 = linlin(self.lags[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(self.lags[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
 
-        osc_frac2 = linlin(lagged_vals[11], 0.0, 1.0, 0.0, 1.0)
+        osc_frac2 = linlin(self.lags[11], 0.0, 1.0, 0.0, 1.0)
         var osc2 = self.osc2.next_basic_waveforms(freq2, 0.0, False, [0,1,2,3], osc_frac2)
 
-        osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(lagged_vals[12], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
+        osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lags[12], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
 
-        osc2 = self.filt2.lpf(osc2, linexp(lagged_vals[13], 0.0, 1.0, 100.0, 20000.0), linlin(lagged_vals[14], 0.0, 1.0, 0.707, 4.0))
+        osc2 = self.filt2.lpf(osc2, linexp(self.lags[13], 0.0, 1.0, 100.0, 20000.0), linlin(self.lags[14], 0.0, 1.0, 0.707, 4.0))
 
-        tanh_gain = linlin(lagged_vals[15], 0.0, 1.0, 0.5, 10.0)
+        tanh_gain = linlin(self.lags[15], 0.0, 1.0, 0.5, 10.0)
         osc2 = tanh(osc2*tanh_gain)
         osc2 = self.dc2.next(osc2)
         self.fb = osc2
