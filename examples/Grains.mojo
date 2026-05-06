@@ -15,6 +15,7 @@ struct Grains(Movable, Copyable):
     var start_frame: Float64
     var m: Messenger
     var max_trig_rate: Float64
+    var env_params: EnvParams
      
     def __init__(out self, world: World):
         self.world = world  
@@ -27,12 +28,19 @@ struct Grains(Movable, Copyable):
         self.impulse = Phasor[1](self.world)
         self.m = Messenger(world)
         self.max_trig_rate = 20.0
+        self.env_params = EnvParams()
 
         self.start_frame = 0.0 
 
     @always_inline
     def next(mut self) -> MFloat[num_simd_chans]:
         self.m.update(self.max_trig_rate, "max_trig_rate")
+        c1 = self.m.notify_update(self.env_params.times, "times")
+        c2 = self.m.notify_update(self.env_params.values, "values")
+        c3 = self.m.notify_update(self.env_params.curves, "curves")
+        if c1 or c2 or c3:
+            self.tgrains.set_env_params(self.env_params)
+
         imp_freq = linlin(self.world[].mouse_y, 0.0, 1.0, 1.0, self.max_trig_rate)  # Map mouse Y to a trigger frequency between 1 Hz and max_trig_rate
         var impulse = self.impulse.next_bool(imp_freq, 0, True)
 
@@ -40,7 +48,7 @@ struct Grains(Movable, Copyable):
         # if there are 2 (or fewer) output channels, pan the stereo buffer out to 2 channels by panning the stereo playback with pan2
         # if there are more than 2 output channels, pan each of the 2 channels separately and randomly pan each grain channel to a different speaker
         comptime if num_output_chans == 2:
-            out = self.tgrains.next[2](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
+            out = self.tgrains.next[2, WindowType.user_defined](self.buffer, 1, impulse, start_frame, 0.4, random_float64(-1.0, 1.0), 1.0)
 
             return MFloat[num_simd_chans](out[0], out[1])
         else:

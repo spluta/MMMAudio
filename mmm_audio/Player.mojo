@@ -195,6 +195,7 @@ struct Grain(PolyObject):
     var play_buf: Play
     var trigger: Bool
     var user_defined_env: Env
+    var env_trigger: Bool
 
     # These are the functions that need to be implemented for the PolyObject trait:
     def check_active(mut self) -> Bool:
@@ -220,6 +221,7 @@ struct Grain(PolyObject):
         self.play_buf = Play(world)
         self.trigger = False
         self.user_defined_env = Env(world)
+        self.env_trigger = False
 
     @always_inline
     def next_pan2[num_playback_chans: Int = 1, win_type: Int = 0, bWrap: Bool = False](mut self, 
@@ -355,6 +357,7 @@ struct TGrains(Movable, Copyable):
     var trig: Bool
     var world: World
     var poly: PolyTriggerSig
+    var env_params: EnvParams
 
     def __init__(out self, num_grains: Int, max_grains: Int, world: World):
         """
@@ -364,21 +367,34 @@ struct TGrains(Movable, Copyable):
             max_grains: Maximum number of grains that can be allocated.
             world: Pointer to the MMMWorld instance.
         """
-        self.world = world  # Use the world instance directly
-        self.grains = List[Grain]()  # Initialize the list of grains
+        self.world = world  
+        self.grains = List[Grain]() 
         for _ in range(num_grains):
             self.grains.append(Grain(world)) 
         self.trig = False  
-        self.poly = PolyTriggerSig(num_grains, max_grains)  # Initialize the Poly struct
+        self.poly = PolyTriggerSig(num_grains, max_grains)  
+        self.env_params = EnvParams()  # Initialize with default parameters
 
-    def set_user_defined_env(mut self, env: Env):
-        """Set a user-defined envelope for all grains. This allows you to use a custom envelope shape instead of the built-in window types.
+    def set_env_params(mut self, env_params: EnvParams):
+        """Set a the EnvParams of a user-defined envelope for all grains. This allows you to use a custom envelope shape instead of the built-in window types. Will update each grain on its next trigger. (Setting the EnvParams directly will not work).
         
         Args:
-            env: An Env object that defines the envelope shape. The envelope will be triggered with each grain and will use the grain's internal phase to determine the current position in the envelope.
+            env_params: An EnvParams object that defines the envelope shape.
         """
+        self.env_params = env_params.copy()
+        # set all the grains to update their user_defined_env with the new env on the next trigger
         for ref grain in self.grains:
-            grain.user_defined_env = env.copy()
+            grain.env_trigger = True
+
+    @doc_hidden
+    def _trig_grain[win_type: Int](mut self, trig: Bool):
+        comptime if win_type == WindowType.user_defined:            
+            grain_num = self.poly.next(self.grains, trig)
+            if self.grains[grain_num].env_trigger and trig:
+                self.grains[grain_num].user_defined_env.params = self.env_params.copy()
+                self.grains[grain_num].env_trigger = False
+        else:
+            _ = self.poly.next(self.grains, trig)
 
     @always_inline
     def next[num_playback_chans: Int = 1, win_type: Int = WindowType.hann, bWrap: Bool = False](mut self, 
@@ -389,12 +405,12 @@ struct TGrains(Movable, Copyable):
     duration: Float64 = 0.1,
     pan: Float64 = 0.0, 
     gain: Float64 = 1.0,
-    buf_chan: Int = 0,) -> MFloat[2]:
+    buf_chan: Int = 0) -> MFloat[2]:
         """Generate the next set of grains. Uses pan2 to pan to 2 channels. Depending on num_playback_chans, will either pan a mono signal out 2 channels or a stereo signal out 2 channels.
         
         Parameters:
             num_playback_chans: Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_user_defined_env function to assign an Env to all grains.
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_env_params function to assign an Env to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
         Args:.
@@ -410,7 +426,7 @@ struct TGrains(Movable, Copyable):
         Returns:
             List of output samples for all channels.
         """
-        _ = self.poly.next(self.grains, trig)
+        self._trig_grain[win_type](trig)
 
         out = MFloat[2](0.0, 0.0)
         for i in range(len(self.grains)):
@@ -451,7 +467,8 @@ struct TGrains(Movable, Copyable):
         Returns:
             Output samples for all channels as a SIMD vector.
         """
-        _ = self.poly.next(self.grains, trig)
+            
+        self._trig_grain[win_type](trig)
 
         out = MFloat[num_simd_chans](0.0)
         for i in range(len(self.grains)):
@@ -486,11 +503,11 @@ struct TGrains(Movable, Copyable):
         Returns:
             List of output samples for all channels.
         """
-        _ = self.poly.next(self.grains, trig)
+        self._trig_grain[win_type](trig)
 
         out = MFloat[num_chans](0.0)
         for i in range(len(self.grains)):
-            if self.poly.active_list[i]:  # Only process grains that are active
+            if self.poly.active_list[i]: 
                 out += self.grains[i].next[num_chans, win_type, bWrap=bWrap](buffer, rate, False, start_frame, duration, gain)
 
         return out

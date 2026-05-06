@@ -46,11 +46,6 @@ struct Lag[num_chans: Int = 1](Movable, Copyable):
 
         return self.val
 
-    def _next2(mut self, in_samp: MFloat[2]) -> MFloat[2]:
-        temp = MFloat[Self.num_chans](0.0)
-        temp2 = self.next(temp)
-        return MFloat[2](temp2[0], temp2[1])
-
     @always_inline
     def set_lag_time(mut self, lag: MFloat[Self.num_chans]):
         """Set a new lag time in seconds for each channel.
@@ -93,6 +88,7 @@ struct Lags[num_lags: Int](Movable, Copyable):
         simd_index = idx // Self.simd_width
         lane_index = idx % Self.simd_width
         self.lags[simd_index].val[lane_index] = value
+
 
 struct LagUD[num_chans: Int = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.

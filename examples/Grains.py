@@ -6,10 +6,15 @@ Left and right moves around in the buffer. Up and down controls rate of triggers
 
 from mmm_python import *
 mmm_audio = MMMAudio(128, num_output_channels = 12, graph_name="Grains", package_name="examples")
-mmm_audio.start_audio() # start the audio thread - or restart it where it left off
+mmm_audio.start_audio() 
 
-mmm_audio.send_float("max_trig_rate", 80.0) # when trigger creates more than the specified number of overlaps, TGrains will add voices to keep up with the trigger rate. 
+# with a user defined env, the shape of the grain envelope can be customized
+mmm_audio.send_floats("times", [0.01, 0.2])
+mmm_audio.send_floats("values", [0.0, 1.0, 0.0])
+mmm_audio.send_floats("curves", [8])
 
-mmm_audio.stop_audio() # stop/pause the audio thread
+mmm_audio.send_float("max_trig_rate", 80.0) 
+
+mmm_audio.stop_audio()
 
 mmm_audio.plot(20000)

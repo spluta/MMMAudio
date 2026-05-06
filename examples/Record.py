@@ -13,17 +13,17 @@ from mmm_python import *
 
 def main():
     # set your audio input and output devices here:
-    in_device = "Fireface UCX II (24219339)"
-    out_device = "Fireface UCX II (24219339)"
+    # in_device = "Fireface UCX II (24219339)"
+    # out_device = "Fireface UCX II (24219339)"
 
-    # in_device = "MacBook Pro Microphone"
-    # out_device = "External Headphones"
+    in_device = "MacBook Pro Microphone"
+    out_device = "External Headphones"
 
     # instantiate and load the graph
     mmm_audio = MMMAudio(128, num_input_channels=18, num_output_channels=2, in_device=in_device, out_device=out_device, graph_name="Record", package_name="examples")
 
     # the default input channel (in the Record_Synth) is 0, but you can change it
-    mmm_audio.send_int("set_input_chan", 16) 
+    mmm_audio.send_int("set_input_chan", 0) 
     mmm_audio.start_audio() 
 
     import mido

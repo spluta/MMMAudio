@@ -39,7 +39,7 @@ struct OscVoice(PolyObject):
 
     def next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
         osc_frac = self.tri.next(self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
-        return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.7,self.gate,2) * self.vol
+        return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next[WindowType.hann, Interp.linear](0.01,0.2,0.7,self.gate,2) * self.vol
 
 struct WavetableOscSIMD(Movable, Copyable):
     comptime wavetables_per_channel = 8

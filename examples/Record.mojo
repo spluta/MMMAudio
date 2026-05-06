@@ -6,6 +6,7 @@ struct Record(Movable, Copyable):
     var buffer: Recorder[]
     var is_recording: Bool
     var is_playing: Float64
+    var lag: LagUD[]
     var trig: Bool
     var play_buf: Play
     var input_chan: Int
@@ -18,6 +19,7 @@ struct Record(Movable, Copyable):
         self.buffer = Recorder(self.world, Int(self.world[].sample_rate*self.buf_dur), self.world[].sample_rate)
         self.is_recording = False
         self.is_playing = 0.0
+        self.lag = LagUD(self.world, 0.001, 0.05)
         self.trig = False
         self.play_buf = Play(self.world)
         self.input_chan = 0
@@ -63,8 +65,8 @@ struct Record(Movable, Copyable):
 
         out = self.play_buf.next(self.buffer.buf, 1.0, True, self.trig, start_frame = 0, num_frames = self.buffer.write_head-1)
 
-        env = min_env(self.play_buf.get_relative_phase(), self.note_time, 0.01)
+        env = min_env[WindowType.hann](self.world, self.play_buf.get_relative_phase(), 0.01)
 
-        out = out * self.is_playing * env
+        out = out * self.lag.next(self.is_playing) * env
 
         return out

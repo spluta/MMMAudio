@@ -51,6 +51,7 @@ struct Env(Movable, Copyable):
     var trig_point: Float64  # Point at which the asr envelope was triggered
     var params: EnvParams
     var eoc: Bool
+    var world: World
 
     def __init__(out self, world: World):
         """Initialize the Env2 struct - with internal params.
@@ -59,6 +60,7 @@ struct Env(Movable, Copyable):
             world: Pointer to the MMMWorld.
         """
 
+        self.world = world
         self.sweep = Sweep(world)
         self.rising_bool_detector = RisingBoolDetector()  # Initialize rising bool detector
         self.is_active = False
@@ -72,7 +74,7 @@ struct Env(Movable, Copyable):
         self.eoc = False
 
     @doc_hidden
-    def reset_vals(mut self):
+    def _reset_vals(mut self):
         """Reset internal values."""
 
         if self._times.__len__() != (self.params.times.__len__() + 1):
@@ -88,14 +90,18 @@ struct Env(Movable, Copyable):
         else:
             self.freq = 0.0
 
-    def next(mut self, trig: Bool = True) -> Float64:
-         """Generate the next envelope value. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
-            
-            Args:
-                trig: Trigger to start the envelope.
-            
-            Returns:
-                The next envelope value.
+    def next[win_type: Int = WindowType.none, interp: Int = Interp.none](mut self, trig: Bool = True) -> Float64:
+         """Generate the next envelope value. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters. Also uses an internal phasor to track the progression of the envelope, which is reset on each trigger.
+
+        Parameters:
+            win_type: Used to apply a window type to the envelope curves. Default is WindowType.none, which means linear ramps. See `WindowType` struct for available window types.
+            interp: Interpolation type to apply to the window. Default is Interp.none, which means no interpolation. See `Interp` struct for available interpolation types.
+        
+        Args:
+            trig: Trigger to start the envelope.
+        
+        Returns:
+            The next envelope value.
         """
         phase = 0.0
         self.eoc = False
@@ -103,13 +109,13 @@ struct Env(Movable, Copyable):
             if self.rising_bool_detector.next(trig):
                 self.sweep.phase = 0.0  # Reset phase on trigger
                 self.is_active = True  # Start the envelope
-                self.reset_vals()
+                self._reset_vals()
             else:
                 return self.params.values[0]
         else:
             if self.rising_bool_detector.next(trig):
                 self.sweep.phase = 0.0  # Reset phase on trigger
-                self.reset_vals()
+                self._reset_vals()
             else:    
                 phase = self.sweep.next(self.freq / self.params.time_warp)
 
@@ -125,26 +131,40 @@ struct Env(Movable, Copyable):
             else:
                 return self.params.values[-1]  # Return the last value if not looping
 
-        return self.apply_phase(phase)
+        env = self._apply_phase(phase)
+        comptime if win_type != WindowType.none:
+            env *= win_env[win_type, Interp.linear](self.world, env*0.5)
+        
+        return env
 
-    def next(mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
-        """Generate the next envelope value with a provided phase rather than using the internal phasor. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
+    def next[win_type: Int = WindowType.none, interp: Int = Interp.none](mut self, trig: Bool, phase: MFloat[1]) -> MFloat[1]:
+        """Generate the next envelope value with a provided phase rather than using the internal phasor. Works well with a Line UGen. Uses the internal `params` struct for envelope parameters. See `EnvParams` for more details on the parameters.
             
-            Args:
-                trig: Trigger to start the envelope.
-                phase: The current phase of the envelope, between 0 and 1. This allows the user to control the progression of the envelope externally rather than using the internal phasor.
-            
-            Returns:
-                The envelope value at the specified phase.
+        Parameters:
+            win_type: Used to apply a window type to the envelope curves. Default is WindowType.none, which means linear ramps. See `WindowType` struct for available window types.
+            interp: Interpolation type to apply to the window. Default is Interp.none, which means no interpolation. See `Interp` struct for available interpolation types.
+
+        Args:
+            trig: Trigger to start the envelope.
+            phase: The current phase of the envelope, between 0 and 1. This allows the user to control the progression of the envelope externally rather than using the internal phasor.
+        
+        Returns:
+            The envelope value at the specified phase.
         """
         if self.rising_bool_detector.next(trig):
-            self.reset_vals()
+            self._reset_vals()
         if phase >= 1.0:
             return self.params.values[-1]
-        return self.apply_phase(phase)
+            
+        env = self._apply_phase(phase)
+
+        comptime if win_type != WindowType.none:
+            env *= win_env[win_type, Interp.linear](self.world, env*0.5)
+        
+        return env
 
     @doc_hidden
-    def apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
+    def _apply_phase(mut self, phase: MFloat[1]) -> MFloat[1]:
         var segment = 0
         phase2 = phase * self.dur
         while segment < len(self._times) - 1 and phase2 >= self._times[segment + 1]:
@@ -158,43 +178,39 @@ struct Env(Movable, Copyable):
         """Get the current phase of the envelope (between 0 and 1)."""
         return clip(self.sweep.phase, 0.0, 1.0)
     
-def win_env[window_type: Int,interp: Int = Interp.none](world: World, win_phase: MFloat[1]) -> MFloat[1]:
+def win_env[window_type: Int = WindowType.sine, interp: Int = Interp.none](world: World, win_phase: MFloat[1]) -> MFloat[1]:
     return world[].windows[].at_phase[window_type, Interp.linear](world, win_phase)
 
 # min_env is just a function, not a struct
-def min_env[N: Int = 1](phase: MFloat[N] = 0.01, totaldur: MFloat[N] = 0.1, rampdur: MFloat[N] = 0.001) -> MFloat[N]:
+def min_env[win_type: Int = WindowType.none, interp: Int = Interp.none](world: World, phase: MFloat[1] = 0.0, ramp_amount: MFloat[1] = 0.01) -> MFloat[1]:
     """Simple envelope.
 
-    Envelope that rises linearly from 0 to 1 over `rampdur` seconds, stays at 1 until `totaldur - rampdur`, 
-    then falls linearly back to 0 over the final `rampdur` seconds. This envelope isn't "triggered," instead
-    the user provides the current phase between 0 (beginning) and 1 (end) of the envelope.
+    Envelope that creates a simple trapezoidal envelope with linear ramps. The attack and release ramps are determined by the `ramp_amount` parameter, which specifies the duration of the ramps as a proportion of the total envelope duration. Values between 0 and 0.5.
+
+    Parameters:
+        win_type: Used to apply a window type to the envelope curves. Default is WindowType.none, which means linear ramps. See `WindowType` struct for available window types.
+        interp: Interpolation type to apply to the window. Default is Interp.none, which means no interpolation. See `Interp` struct for available interpolation types.
 
     Args:
+        world: Pointer to the MMMWorld.
         phase: Current env position between 0 (beginning) and 1 (end).
-        totaldur: Total duration of the envelope.
-        rampdur: Duration of the rise and fall segments that occur at the beginning and end of the envelope.
+        ramp_amount: Duration of the attack and release ramps as a proportion of the total envelope duration. Values between 0 and 0.5.
 
     Returns:
         Envelope value at the current ramp position.
     """
-    
-    # Pre-compute common values
-    rise_ratio = rampdur / totaldur
-    fall_threshold = 1.0 - rise_ratio
-    dur_over_rise = totaldur / rampdur
-    
-    # Create condition masks
-    in_attack: MBool[N] = phase < rise_ratio
-    in_release: MBool[N] = phase > fall_threshold
-    
-    # Compute envelope values for each segment
-    attack_value = phase * dur_over_rise
-    release_value = (1.0 - phase) * dur_over_rise
-    sustain_value = MFloat[N](1.0)
-    
-    # Use select to choose the appropriate value
-    return in_attack.select(attack_value,
-           in_release.select(release_value, sustain_value))
+    r_a2 = clip(ramp_amount, 0.0, 0.5)
+    if phase < r_a2:
+        env = phase / r_a2
+    elif phase > (1.0 - r_a2):
+        env = (1.0 - phase) / r_a2
+    else:
+        env = 1.0
+
+    comptime if win_type != WindowType.none:
+        env *= win_env[win_type, interp](world, env/2.)
+
+    return env
 
 struct ASREnv(Movable, Copyable):
     """Simple ASR envelope generator."""
@@ -204,6 +220,7 @@ struct ASREnv(Movable, Copyable):
     var is_active: Bool
     var eoc: Bool
     var eoc_rbd: RisingBoolDetector[1]
+    var world: World
 
     def __init__(out self, world: World):
         """Initialize the ASREnv struct.
@@ -217,10 +234,15 @@ struct ASREnv(Movable, Copyable):
         self.is_active = False
         self.eoc = False  # End of Cycle flag
         self.eoc_rbd = RisingBoolDetector() 
+        self.world = world
 
-    def next(mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
+    def next[win_type: Int = WindowType.none, interp: Int = Interp.none](mut self, attack: Float64, sustain: Float64, release: Float64, gate: Bool, curve: MFloat[2] = 1) -> Float64:
         """Simple ASR envelope generator.
         
+        Parameters:
+            win_type: Used to apply a window type to the envelope curves. Default is WindowType.none, which means linear ramps. See `WindowType` struct for available window types.
+            interp: Interpolation type to apply to the window. Default is Interp.none, which means no interpolation. See `Interp` struct for available interpolation types.
+
         Args:
             attack: (Float64): Attack time in seconds.
             sustain: (Float64): Sustain level (0 to 1).
@@ -243,9 +265,14 @@ struct ASREnv(Movable, Copyable):
         self.eoc = self.eoc_rbd.next(not self.is_active)
 
         if gate:
-            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[0])
+            ramp = lincurve(self.sweep.phase, 0.0, 1.0, 0.0, 1.0, curve[0])
         else:
-            return lincurve(self.sweep.phase, 0.0, 1.0, 0.0, sustain, curve[1])
+            ramp = lincurve(self.sweep.phase, 0.0, 1.0, 0.0, 1.0, curve[1])
+
+        comptime if win_type != WindowType.none:
+            ramp *= win_env[win_type, interp](self.world, ramp*0.5)
+
+        return ramp * sustain
 
 
 struct Compressor[num_chans: Int](Movable, Copyable):

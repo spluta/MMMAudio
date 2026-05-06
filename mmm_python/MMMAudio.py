@@ -311,7 +311,10 @@ class MMMAudio:
         
         num_channels = returned_samples.shape[1] if len(returned_samples.shape) > 1 else 1
         
-        fig, axes = plt.subplots(num_channels, 1, figsize=(10, 3 * num_channels))
+        # Calculate height: 3 inches per channel, but cap at 800 pixels (~8 inches at 100 dpi)
+        plot_height = min(3 * num_channels, 8)
+        
+        fig, axes = plt.subplots(num_channels, 1, figsize=(10, plot_height))
         if num_channels == 1:
             axes = [axes]
         

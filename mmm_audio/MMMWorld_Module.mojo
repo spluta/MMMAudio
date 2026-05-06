@@ -156,6 +156,7 @@ struct WindowType:
 
     | Window Type         | Value |
     | ------------------- | ----- |
+    | WindowType.none     | -1    |
     | WindowType.rect     | 0     |
     | WindowType.hann     | 1     |
     | WindowType.hamming  | 2     |
@@ -167,6 +168,7 @@ struct WindowType:
     | WindowType.user_defined | 8 | 
     """
 
+    comptime none: Int = -1
     comptime rect: Int = 0
     comptime hann: Int = 1
     comptime hamming: Int = 2
