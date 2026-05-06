@@ -410,7 +410,7 @@ struct TGrains(Movable, Copyable):
         
         Parameters:
             num_playback_chans: Either 1 or 2, depending on whether you want to pan 1 channel of a buffer out 2 channels or 2 channels of the buffer with equal power panning.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_env_params function to assign an Env to all grains.
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_env_params function to assign EnvParams to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
         Args:.
@@ -450,7 +450,7 @@ struct TGrains(Movable, Copyable):
 
         Parameters:
             num_simd_chans: The size of the output SIMD vector. Must be a power of two that is at least as large as num_speakers.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_env_params function to assign EnvParams to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
         
         Args:
@@ -489,10 +489,10 @@ struct TGrains(Movable, Copyable):
         
         Parameters:
             num_chans: An inferred parameter based on the size of the input buffer.
-            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)).
+            win_type: Type of window to apply to each grain (default is Hann window (WinType.hann)). For a user-defined envelope, set win_type to WindowType.user_defined and use the set_env_params function to assign EnvParams to all grains.
             bWrap: Whether to interpolate between the end and start of the buffer when reading (default: False). When False, reading beyond the end of the buffer will return 0. When True, the index into the buffer will wrap around to the beginning using a modulus.
 
-        Args:.
+        Args:
             buffer: Audio buffer containing the source sound.
             rate: Playback rate of the grains (1.0 = normal speed).
             trig: Trigger signal (>0 to start a new grain).
@@ -539,11 +539,13 @@ struct PitchShift[num_chans: Int = 1, win_type: Int = WindowType.hann](Movable, 
 
     def __init__(out self, world: World, buf_dur: Float64 = 2.0, num_grains: Int = 6, max_grains: Int = 12):
         """ 
+        Initialize the PitchShift struct.
 
         Args:
-            world: pointer to the MMMWorld instance.
-            overlaps: Number of overlapping grains (default is 4).
-            buf_dur: duration of the internal buffer in seconds.
+            world: Pointer to the MMMWorld instance.
+            buf_dur: Duration of the internal buffer in seconds.
+            num_grains: Number of grains to initialize for simultaneous playback.
+            max_grains: Maximum number of grains that can be allocated for simultaneous playback. This should be greater than or equal to num_grains.
         """
         self.world = world  # Use the world instance directly
         self.grains = List[Grain]()  # Initialize the list of grains
