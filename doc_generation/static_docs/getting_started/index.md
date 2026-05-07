@@ -79,7 +79,13 @@ if you have trouble installing/running `pyaudio`, try this:
 1. [do this](https://stackoverflow.com/questions/68251169/unable-to-install-pyaudio-on-m1-mac-portaudio-already-installed/68296168#68296168)
 2. Then this uninstall and reinstall `pyaudio` (`hidapi` may be the same).
 
-### 2w. Setup the Environment on Windows/WSL2 with Ubuntu
+### 3 VSCode issues - Microsoft giveth, Microsoft taketh away
+
+VSCode is amazing, but most of the issues users encounter are caused by VSCode's Python inconsistancies. 
+#### a) See 2.3 above on proper vscode settings for Python. 
+#### b) We have found that setting Settings -> Auto Activation Type to `shellStartup` works better than the default `command` setting.
+
+## 2w. Setup the Environment on Windows/WSL2 with Ubuntu
 
 Here are some hints to get the audio samples running under Windows/WSL2. 
 I used the Unbuntu distro, but if you adapt the package manager, it will also work on other distributions.
@@ -144,6 +150,7 @@ Now run your MMMAudio script WITHOUT running pulseaudio --start and enjoy the so
 ```shell
 python3 examples/DefaultGraph.py
 ```
+
 
 ## 3. Run an Example
 
