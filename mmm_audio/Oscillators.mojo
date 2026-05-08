@@ -970,6 +970,8 @@ struct OscBuffers(Movable, Copyable):
         self.init_triangle()  # Initialize triangle wave buffer using harmonics
         self.init_sawtooth()  # Initialize sawtooth wave buffer using harmonics
         self.init_square()  # Initialize square wave buffer using harmonics
+        self.init_cos()     # Initialize cosine wave buffer
+        self.init_bell()    # Initialize Gaussian bell curve buffer
 
         self.init_basic_waveforms()  # Initialize basic waveforms for quick access
 
@@ -1031,6 +1033,17 @@ struct OscBuffers(Movable, Copyable):
             # Scale by 4/π for correct amplitude
             self.buffers[3].append(4.0 / 3.141592653589793 * sample)
 
+    fn init_cos(mut self):
+        for i in range(OscBuffersSize):
+            v = cos(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize))
+            self.buffers[4].append(v)
+
+    fn init_bell(mut self):
+        for i in range(OscBuffersSize):
+            a = Float64((i - (OscBuffersSize/2)) / (OscBuffersSize/8)) 
+            b = exp(-1*a*a)
+            self.buffers[5].append(b)
+
     @doc_private
     fn init_basic_waveforms(mut self):
         for i in range(OscBuffersSize):
@@ -1038,7 +1051,9 @@ struct OscBuffers(Movable, Copyable):
                 self.buffers[0][i],  # sine
                 self.buffers[1][i],  # triangle
                 self.buffers[2][i],  # sawtooth
-                self.buffers[3][i]   # square
+                self.buffers[3][i],  # square
+                self.buffers[4][i],  # cosine
+                self.buffers[5][i]   # bell
             ))
 
     fn __repr__(self) -> String:
