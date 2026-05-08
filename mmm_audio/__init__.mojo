@@ -21,6 +21,7 @@ from .Recorder_Module import *
 from .ReverbsDelayFX import *
 from .SincInterpolator_Module import *
 from .sound_file import *
+from .Synthesizers import *
 
 from .Messenger_Module import *
 from .Print_Module import *
