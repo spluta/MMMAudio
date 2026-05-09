@@ -766,13 +766,13 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
 
     @doc_hidden
     @always_inline
-    def lp4(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
+    def lp4(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], res: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
         """Process one sample through the 4-pole Moog Ladder lowpass filter.
 
         Args:
             sig: The input signal to process.
             freq: The cutoff frequency of the lowpass filter.
-            q: The resonance of the filter.
+            res: The resonance of the filter. Values between 0 and 1 are typical, though slightly higher values may work, especially with oversampling. 
         
         Returns:
             The next sample of the filtered output.
@@ -780,7 +780,7 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         var cf = clip(freq, 0.0, self.nyquist * 0.6)
             
         # k is the feedback coefficient of the entire circuit
-        var k = 4.0 * q
+        var k = 4.0 * res 
 
         comptime os_factor = Float64(2 ** Self.os_index)
         var compensation = 1.0 + k * os_factor * 0.25
@@ -829,20 +829,20 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
         self.last_4 = MFloat[Self.num_chans](0.0)
 
     @always_inline
-    def next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, q: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
+    def next(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans] = 100, res: MFloat[Self.num_chans] = 0.5) -> MFloat[Self.num_chans]:
         """Process one sample through the Moog Ladder lowpass filter.
 
         Args:
             sig: The input signal to process.
             freq: The cutoff frequency of the lowpass filter.
-            q: The resonance of the filter.
+            res: The resonance of the filter. Values between 0 and 1 are typical, though slightly higher values may work, especially with oversampling.
 
         Returns:
             The next sample of the filtered output.
         """
         
         comptime if Self.os_index == 0:
-            return self.lp4(sig, freq, q)
+            return self.lp4(sig, freq, res)
         else:
             comptime times_oversampling = 2 ** Self.os_index
 
@@ -850,23 +850,12 @@ struct VAMoogLadder[num_chans: Int = 1, os_index: Int = 0](Movable, Copyable):
                 # upsample the input
                 sig2 = self.upsampler.next(sig, i)
 
-                var lp4 = self.lp4(sig2, freq, q)
+                var lp4 = self.lp4(sig2, freq, res)
                 comptime if Self.os_index == 0:
                     return lp4
                 else:
                     self.oversampling.add_sample(lp4)
             return self.oversampling.get_sample()
-
-    # doesn't really work. not sure why but the freq doesn't go up to nyquist.
-    # @always_inline
-    # def hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> MFloat[Self.num_chans]:
-    #     """4-pole highpass via LP subtraction (does not work with oversampling)."""
-    #     return sig - self.lp4(sig, freq, q)
-
-    # @always_inline
-    # def lpf_hpf(mut self, sig: MFloat[Self.num_chans], freq: MFloat[Self.num_chans], q: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans]]:
-    #     """4-pole highpass via LP subtraction (does not work with oversampling)."""
-    #     return self.lp4(sig, freq, q), self.hpf(sig, freq, q)
 
 struct Reson[num_chans: Int = 1](Movable, Copyable):
     """Resonant filter with lowpass, highpass, and bandpass modes.
