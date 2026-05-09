@@ -95,8 +95,8 @@ class MMMAudio:
             blocksize: Audio block size.
             num_input_channels: Number of input audio channels.
             num_output_channels: Number of output audio channels.
-            in_device: Name of the input audio device.
-            out_device: Name of the output audio device.
+            in_device: Name of the input audio device. Use "default" for default device or None to disable input.
+            out_device: Name of the output audio device. Use "default" for default device or None to disable output.
             graph_name: Name of the Mojo graph to use.
             package_name: Name of the package containing the Mojo graph.
             audio_init_timeout: Timeout for audio initialization in seconds.
