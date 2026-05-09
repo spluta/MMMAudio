@@ -2,7 +2,7 @@
 
 MMMAudio uses [Mojo's Python interop](https://docs.modular.com/mojo/manual/python/) to compile audio graphs directly in your Python programming environment.
 
-Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86) only. Windows users can use WSL2 as described below. 
+Currently Mojo's compiler is MacOS(Apple Silicon) & Linux(x86 and arm - builds downstream of Ubuntu 22 LTS) only. It works great on Raspberry Pi when the Pi uses Ubuntu. Windows users can use WSL2 as described below though it is currently a bit rough. 
 
 Please see the [MMMAudio YouTube Playlist](https://www.youtube.com/playlist?list=PLeOjmNO6F-TQ6p9pEYT3zt1dEfFaUWezr) to view the available video tutorials about MMMAudio!
 
@@ -23,6 +23,8 @@ brew install portaudio
 brew install hidapi
 ```
 
+MMMAudio uses `pyAudio` (`portaudio`) for audio input/output and `hid` for HID control.
+
 On linux:
 ```shell
 sudo apt update
@@ -31,9 +33,17 @@ sudo apt install libhidapi-hidraw0 libhidapi-dev
 sudo apt install pulseaudio
 ```
 
-MMMAudio uses `pyAudio` (`portaudio`) for audio input/output and `hid` for HID control.
+Linux users may encounter issues installing some packages, like pyaudio. This is probably because you need to build the package on your machine. You may need some or more of the following:
+```
+sudo apt-get install python3-all-dev python3-venv
+```
+Linux users may also have an issue with pyautogui. If this is the case, the best solution is to look for how to switch Ubunto to Xorg instead of Wayland. We will look for future solutions that do not use pyautogui.
+
+Finally, the authors successfuly gotten python venv to work with pip, but have not gotten 
 
 ## 2b.1. Option 1 - Setup with pixi (On Windows, follow the instructions under 2w. first, then come back here to get Python correctly configured)
+
+This is confirmed to work on Mac, but we have not yet gotten this working on Linux (use Option 2 below).
 
 ### 1 Install pixi with homebrew or curl.
 
