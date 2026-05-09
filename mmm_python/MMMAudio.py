@@ -83,8 +83,8 @@ class MMMAudio:
         blocksize: int = 64,
         num_input_channels: int = 2,
         num_output_channels: int = 2,
-        in_device: str = "default",
-        out_device: str = "default",
+        in_device: str | None = "default",
+        out_device: str | None = "default",
         graph_name: str = "FeedbackDelays",
         package_name: str = "examples",
         audio_init_timeout: float = 10.0
@@ -373,9 +373,6 @@ class MMMAudio:
         print(f"[PID {pid}] Audio process starting...")
         sys.stdout.flush()
         
-        # =========================================================================
-        # Helper function to get device info
-        # =========================================================================
         def get_device_info(p_temp, device_name, is_input=True):
             if device_name != "default":
                 for i in range(p_temp.get_device_count()):
@@ -398,12 +395,22 @@ class MMMAudio:
         # =========================================================================
         # Initialize PyAudio and get device info
         # =========================================================================
+        if in_device is None:
+            in_device = "default"
+            in_device_exists = False
+        else:
+            in_device_exists = True
+        if out_device is None:
+            out_device = "default"
+            out_device_exists = False
+        else:
+            out_device_exists = True
         p_temp = pyaudio.PyAudio()
         in_device_info = get_device_info(p_temp, in_device, True)
         out_device_info = get_device_info(p_temp, out_device, False)
         p_temp.terminate()
         
-        if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
+        if in_device_exists and out_device_exists and in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
             print(f"[PID {pid}] Sample rate mismatch!")
             sys.stdout.flush()
             return
@@ -523,29 +530,29 @@ class MMMAudio:
         p = pyaudio.PyAudio()
         format_code = pyaudio.paFloat32
         
-        input_stream = p.open(
-            format=format_code,
-            channels=actual_input_channels,
-            rate=sample_rate,
-            input=True,
-            input_device_index=in_device_index,
-            frames_per_buffer=blocksize,
-            stream_callback=input_callback
-        )
-        
-        output_stream = p.open(
-            format=format_code,
-            channels=actual_output_channels,
-            rate=sample_rate,
-            output=True,
-            output_device_index=out_device_index,
-            frames_per_buffer=blocksize,
-            stream_callback=output_callback
-        )
-        
-        # Start streams immediately (they'll output silence until activated)
-        input_stream.start_stream()
-        output_stream.start_stream()
+        if in_device_exists:
+            input_stream = p.open(
+                format=format_code,
+                channels=actual_input_channels,
+                rate=sample_rate,
+                input=True,
+                input_device_index=in_device_index,
+                frames_per_buffer=blocksize,
+                stream_callback=input_callback
+            )
+            input_stream.start_stream()
+
+        if out_device_exists:
+            output_stream = p.open(
+                format=format_code,
+                channels=actual_output_channels,
+                rate=sample_rate,
+                output=True,
+                output_device_index=out_device_index,
+                frames_per_buffer=blocksize,
+                stream_callback=output_callback
+            )
+            output_stream.start_stream()
         
         print(f"[PID {pid}] Streams started")
         sys.stdout.flush()
