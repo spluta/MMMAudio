@@ -395,6 +395,7 @@ class MMMAudio:
         # =========================================================================
         # Initialize PyAudio and get device info
         # =========================================================================
+        
         if in_device is None:
             in_device = "default"
             in_device_exists = False
@@ -406,15 +407,18 @@ class MMMAudio:
         else:
             out_device_exists = True
         p_temp = pyaudio.PyAudio()
-        in_device_info = get_device_info(p_temp, in_device, True)
-        out_device_info = get_device_info(p_temp, out_device, False)
+        if in_device_exists:
+            in_device_info = get_device_info(p_temp, in_device, True)
+        if out_device_exists:
+            out_device_info = get_device_info(p_temp, out_device, False)
         p_temp.terminate()
         
-        if in_device_exists and out_device_exists and in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
-            print(f"[PID {pid}] Sample rate mismatch!")
-            sys.stdout.flush()
-            return
-        
+        if in_device_exists and out_device_exists:
+            if in_device_info['defaultSampleRate'] != out_device_info['defaultSampleRate']:
+                print(f"[PID {pid}] Sample rate mismatch!")
+                sys.stdout.flush()
+                return
+
         if in_device_exists:
             sample_rate = int(in_device_info['defaultSampleRate'])
         elif out_device_exists:
