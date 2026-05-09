@@ -527,7 +527,7 @@ struct LFSaw[num_chans: Int = 1] (Movable, Copyable):
     
     This oscillator generates a non-bandlimited sawtooth waveform. It is useful for modulation, but should be avoided for audio-rate synthesis due to comptimeing.
 
-    Outputs values between 0.0 and 1.0.
+    Outputs values between -1.0 and 1.0.
 
     Parameters:
         num_chans: Number of channels (default is 1).
@@ -555,7 +555,7 @@ struct LFSaw[num_chans: Int = 1] (Movable, Copyable):
         """
 
         var trig_mask = MBool[self.num_chans](fill=trig)
-        return (self.phasor.next(freq, phase_offset, trig_mask) * 2.0) - 1.0
+        return 1.0 - 2.0 * self.phasor.next(freq, phase_offset, trig_mask)
 
 struct LFSquare[num_chans: Int = 1] (Movable, Copyable):
     """A low-frequency square wave oscillator.
@@ -950,8 +950,8 @@ struct OscBuffers(Movable, Copyable):
             
             for n in range(1, 513):  # Using 512 harmonics
                 var harmonic = sin(Float64(n) * x) / Float64(n)
-                if n % 2 == 0:  # (-1)^(n+1) is -1 when n is even
-                    harmonic = -harmonic
+                # if n % 2 == 0:  # (-1)^(n+1) is -1 when n is even
+                #     harmonic = -harmonic
                 sample += harmonic
             
             # Scale by 2/π for correct amplitude
