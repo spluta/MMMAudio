@@ -415,14 +415,24 @@ class MMMAudio:
             sys.stdout.flush()
             return
         
-        sample_rate = int(in_device_info['defaultSampleRate'])
+        if in_device_exists:
+            sample_rate = int(in_device_info['defaultSampleRate'])
+        elif out_device_exists:
+            sample_rate = int(out_device_info['defaultSampleRate'])
+        else:
+            sample_rate = 48000
         sample_rate_value.value = sample_rate
         
-        in_device_index = in_device_info['index']
-        out_device_index = out_device_info['index']
-        
-        actual_input_channels = min(num_input_channels, int(in_device_info['maxInputChannels']))
-        actual_output_channels = min(num_output_channels, int(out_device_info['maxOutputChannels']))
+        if in_device_exists:
+            in_device_index = in_device_info['index']
+            actual_input_channels = min(num_input_channels, int(in_device_info['maxInputChannels']))
+        else:
+            actual_input_channels = 0
+        if out_device_exists:
+            out_device_index = out_device_info['index']
+            actual_output_channels = min(num_output_channels, int(out_device_info['maxOutputChannels']))
+        else:
+            actual_output_channels = 0
         
         print(f"[PID {pid}] Sample rate: {sample_rate}, Block size: {blocksize}")
         print(f"[PID {pid}] Input channels: {actual_input_channels}, Output channels: {actual_output_channels}")

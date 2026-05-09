@@ -1,6 +1,6 @@
 ### MMMAudio(MMMAudioMeans Mojo) Audio 
 
-MMMAudio is a Mojo/Python environment for sound synthesis which uses Mojo for real-time audio processing and Python as a scripting control language.
+MMMAudio is a Mojo/Python environment for sound synthesis which uses Mojo for real-time audio processing and Python as a scripting control language. It runs on Mac and Linux, including Raspberry Pi (on Ubuntu). It kind of works on Windows through wsl.
 
 MMMAudio is a highly efficient synthesis system that uses parallelized SIMD operations for maximum efficiency on CPUs. 
 
