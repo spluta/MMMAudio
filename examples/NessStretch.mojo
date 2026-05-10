@@ -47,7 +47,7 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
 struct NessStretch(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]
-    var saw: LFSaw[1]
+    var phasor: Phasor[]
     var window_sizes: List[Int] 
     var hop_sizes: List[Int]
 
@@ -61,7 +61,7 @@ struct NessStretch(Movable, Copyable):
         self.world = world
         self.file_name = "resources/Shiverer.wav"
         self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
-        self.saw = LFSaw(self.world)
+        self.phasor = Phasor(self.world)
         self.window_sizes = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256]
         self.hop_sizes = [32768, 16384, 8192, 4096, 2048, 1024, 512, 256, 128]
 
@@ -85,7 +85,7 @@ struct NessStretch(Movable, Copyable):
         if new_file:
             self.buffer = SIMDBuffer.load(self.file_name)
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
-        phase = self.saw.next(speed, trig = new_file)*0.5 + 0.5 #resets the phase when the file changes
+        phase = self.phasor.next(speed, trig = new_file)
         o = MFloat[2](0.0, 0.0)
         for ref n in self.ness_stretches:
             o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
