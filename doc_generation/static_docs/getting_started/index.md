@@ -47,6 +47,8 @@ This is confirmed to work on Mac, but we have not yet gotten this working on Lin
 
 ### 1 Install pixi with homebrew or curl.
 
+See [pixi's installation instructions](https://pixi.prefix.dev/latest/installation/).
+
 ### 2 In the MMMAudio directory, type:
 
 ```shell
