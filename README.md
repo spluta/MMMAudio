@@ -92,6 +92,10 @@ When you pull a new version, it will not overwrite the files in your user-create
 
 See the [Roadmap](https://spluta.github.io/MMMAudio/contributing/Roadmap) to see where MMMAudio is headed next.
 
+## ICMC Paper
+
+Check out our ICMC Paper on MMMAudio [here](https://github.com/spluta/MMMAudio/blob/main/doc_generation/static_docs/MMMAudioPaperICMC2026.pdf).
+
 ## Documentation Generation
 
 For information on the documentation generation see [Documentation Generation](https://spluta.github.io/MMMAudio/contributing/documentation/).
