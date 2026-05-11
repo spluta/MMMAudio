@@ -22,7 +22,7 @@ struct PaulStretchWindow[window_size: Int](FFTProcessable):
 struct PaulStretch(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]
-    var saw: LFSaw[1]
+    var phasor: Phasor[]
     var paul_stretch: FFTProcess[PaulStretchWindow[window_size],ifft=True,input_window_shape=WindowType.sine,output_window_shape=WindowType.sine]
     var m: Messenger
     var dur_mult: Float64
@@ -30,8 +30,7 @@ struct PaulStretch(Movable, Copyable):
     def __init__(out self, world: World):
         self.world = world
         self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
-        self.saw = LFSaw(self.world)
-
+        self.phasor = Phasor(self.world)
         self.paul_stretch = FFTProcess[
                 PaulStretchWindow[window_size],
                 ifft=True,
@@ -45,7 +44,7 @@ struct PaulStretch(Movable, Copyable):
     def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update(self.dur_mult,"dur_mult")
         speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
-        phase = self.saw.next(speed)*0.5 + 0.5
+        phase = self.phasor.next(speed)
         o = self.paul_stretch.next_from_stereo_buffer(self.buffer, phase)
         return o
 

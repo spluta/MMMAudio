@@ -415,7 +415,7 @@ struct Allpass[num_chans: Int = 1, interp: Int = Interp.linear](Tapable):
 struct FB_Delay[num_chans: Int = 1, interp: Int = Interp.lagrange4, ADAA_dist: Bool = False, os_index: Int = 0](Tapable):
     """A feedback delay structured like a Comb filter, but with possible feedback coefficient above 1 due to an integrated tanh function.
     
-    By default, Anti-comptimeing is disabled and no [oversampling](Oversampling.md) is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
+    By default, Anti-aliasing is disabled and no [oversampling](Oversampling.md) is applied, but this can be changed by setting the ADAA_dist and os_index template parameters.
     
     Parameters:
       num_chans: Size of the SIMD vector.
