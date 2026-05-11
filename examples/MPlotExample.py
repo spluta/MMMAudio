@@ -14,8 +14,8 @@ def main():
 
     # parameters for analysis
     d = {
-        "path": "resources/Shiverer.wav",
-        # "path": "/Users/ted/Desktop/all_flucoma.wav",
+        # "path": "resources/Shiverer.wav",
+        "path": "/Users/ted/Desktop/all_flucoma.wav",
         # threshold for spectral flux onset detection, lower is more sensitive, higher is less sensitive
         "thresh":2.0,
         # minimum length of slices in seconds
