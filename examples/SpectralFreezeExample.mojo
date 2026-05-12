@@ -60,7 +60,6 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         freeze = self.freeze.next_stereo(sample)
         return select(env, sample, freeze) * 0.3
 
-# this really should have a window size of 8192 or more, but the numpy FFT seems to barf on this
 comptime window_size = 2048
 
 struct SpectralFreezeExample(Movable, Copyable):
