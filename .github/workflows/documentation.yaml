@@ -18,36 +18,29 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13.12'
 
-      - name: Install mkdocs and theme
+      - name: brew installs
         run: |
-          pip install mkdocs==1.6.1 mkdocs-material==9.7.1 "mkdocstrings[python]" mkdocs-simple-hooks pymdown-extensions "mkdocs-with-pdf>=0.9.3"
+          brew install portaudio
+          brew install pixi
 
-      - name: Install Mojo for mojo docs
+      - name: run 'pixi install'
         run: |
-          pip install mojo==0.26.1
+          pixi install  
 
       - name: Create docs_md dir
         run: |
           mkdir -p doc_generation/docs_md
 
-      - name: Debug workspace
-        run: |
-            pwd
-            ls -la
-            ls -la doc_generation || true
-            ls -la doc_generation/docs_md || true
-            cat mkdocs.yml || true  
-
       - name: Build site
-        run: mkdocs build
+        run: pixi run mkdocs build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -57,7 +50,7 @@ jobs:
   deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
