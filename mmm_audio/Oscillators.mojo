@@ -684,6 +684,48 @@ struct Dust[num_chans: Int = 1] (Movable, Copyable):
     def set_phase(mut self, phase: MFloat[self.num_chans]):
         self.impulse.phase = phase
 
+
+struct TTrig(Movable, Copyable):
+    """A trigger that outputs True for a specified number of samples or amount of time after receiving a trigger signal."""
+
+    var counter: Int
+    var world: World
+
+    def __init__(out self, world: World):
+        self.counter = 0
+        self.world = world
+
+    def next(mut self, trig: Bool, samples: Int) -> Bool:
+        """Generate the next trigger sample.
+        
+        Args:
+            trig: Trigger signal.
+            samples: Number of samples for which to output True.
+
+        Returns:
+            True if the trigger is active, False otherwise.
+        """
+        if trig:
+            self.counter = samples
+        if self.counter <=0:
+            return False
+        else:
+            self.counter -= 1
+            return True
+    
+    def next(mut self, trig: Bool, time: MFloat[1]) -> Bool:
+        """Generate the next trigger sample based on time.
+
+        Args:
+            trig: Trigger signal.
+            time: Amount of time in seconds for which to output True.
+        Returns:
+            True if the trigger is active, False otherwise.
+        """
+        if trig:
+            self.counter = Int(time * self.world[].sample_rate)
+        return self.next(False, 0)
+
 struct LFNoise[num_chans: Int = 1, interp: Int = Interp.cubic](Movable, Copyable):
     """Low-frequency interpolating noise generator generating numbers between -1.0 and 1.0. With stepped (none), linear, or cubic interpolation.
 
