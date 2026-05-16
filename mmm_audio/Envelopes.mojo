@@ -84,7 +84,7 @@ struct Env(Movable, Copyable):
         for i in range(self.params.times.__len__()):
             self._times[i+1] = self._times[i] + self.params.times[i]  # Copy values from input times
 
-        self.dur = self._times[-1]  # Set total duration to the last value in times
+        self.dur = self._times[len(self._times) - 1]  # Set total duration to the last value in times
         if self.dur > 0.0:
             self.freq = 1.0 / self.dur
         else:
@@ -125,11 +125,11 @@ struct Env(Movable, Copyable):
             self.eoc = True
         elif not self.params.loop and phase >= 1.0:
             self.eoc = True
-            if self.params.values[-1]==self.params.values[0]:
+            if self.params.values[len(self.params.values) - 1] == self.params.values[0]:
                 self.is_active = False  # Stop the envelope if not looping and last value is the same as first
                 return self.params.values[0]  # Return the first value if not looping
             else:
-                return self.params.values[-1]  # Return the last value if not looping
+                return self.params.values[len(self.params.values) - 1]  # Return the last value if not looping
 
         env = self._apply_phase(phase)
         comptime if win_type != WindowType.none:
@@ -154,7 +154,7 @@ struct Env(Movable, Copyable):
         if self.rising_bool_detector.next(trig):
             self._reset_vals()
         if phase >= 1.0:
-            return self.params.values[-1]
+            return self.params.values[self.params.values.__len__() - 1]
             
         env = self._apply_phase(phase)
 

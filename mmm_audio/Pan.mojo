@@ -168,26 +168,15 @@ def pan_az[simd_out_size: Int = 2](sample: Float64, pan: Float64, num_speakers: 
 
     out = MFloat[simd_out_size](0.0)
 
-    comptime simd_width: Int = simd_width_of[DType.float64]() * 2
-
-    @parameter
-    def process_speakers[simd_width: Int](i: Int) unified {mut}:
-        # Create index vector
-        var indices = MFloat[simd_width]()
-        for j in range(simd_width):
-            indices[j] = MFloat[1](i + j)
-        
-        # Compute chan_pos
-        var pos = (constant - indices) * rwidth
+    # this needs to be checked
+    for i in range(num_speakers):
+        var pos = (constant - Float64(i)) * rwidth
         pos = (pos - frange * floor(rrange * pos)) * pi
-        
-        # Compute chan_amp with conditional
-        var mask: MBool[simd_width] = pos.lt(pi)
-        sig = mask.select(sin(pos), MFloat[simd_width](0.0)) * sample
-        for j in range(simd_width):
-            out[Int(i + j)] = sig[j]
 
-    vectorize[simd_width](Int(num_speakers), process_speakers)
+        if pos < pi:
+            out[i] = sin(pos) * sample
+        else:
+            out[i] = 0.0
 
     return out
 
