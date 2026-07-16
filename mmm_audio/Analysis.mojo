@@ -1658,18 +1658,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.update_history(current_mags, current_phases)
         return self.descriptor
 
-    # def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
-    #     """Process a precomputed FFT frame.
-
-    #     `frame_delta` requires raw time-domain samples, so it is applied only
-    #     by `next_window`; this method uses consecutive frame history.
-    #     """
-    #     _ = self.process_spectra(mags, phases, mags, phases, False)
-
-    # def from_mags(mut self, mags: List[Float64], phases: List[Float64]) -> Float64:
-    #     """Process a precomputed FFT frame and return its filtered value."""
-    #     return self.process_spectra(mags, phases, mags, phases, False)
-
     def next_window(mut self, samples: List[Float64]):
         """Process an unwindowed audio region and return its filtered value.
 
@@ -1699,7 +1687,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 self.delayed_fft.phases,
                 self.fft.mags,
                 self.fft.phases,
-                self.fft.phases,
+                self.fft.phases, # these are being passed as "dummy" phases, they're not used...
             )
         else:
             self.raw_value = OnsetDetectionFeature.metric_value(
@@ -1802,6 +1790,7 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
         world: World,
         metric: OnsetMetric = OnsetMetric.energy,
         threshold: Float64 = 0.5,
+        # TODO: i'd prefer to have debounce be expressed in seconds, even if it's rounded to the nearest sample.
         debounce: Int = 2,
         window_size: Int = 1024,
         hop_size: Int = 512,
