@@ -1422,12 +1422,11 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable):
     def __ne__(self, other: Self) -> Bool:
         return not (self == other)
 
-@always_inline
-@doc_hidden
-def onset_uses_frame_delta(metric: OnsetMetric) -> Bool:
-    return metric == OnsetMetric.spectral_flux or \
-        metric == OnsetMetric.modified_kullback_leibler or \
-        metric == OnsetMetric.itakura_saito
+    @always_inline
+    @doc_hidden
+    @staticmethod
+    def uses_frame_delta(metric: OnsetMetric) -> Bool:
+        return metric == OnsetMetric.spectral_flux or metric == OnsetMetric.modified_kullback_leibler or metric == OnsetMetric.itakura_saito
 
 @always_inline
 @doc_hidden
@@ -1636,7 +1635,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         delayed_phases: List[Float64],
         use_frame_delta: Bool,
     ) -> Float64:
-        if use_frame_delta and onset_uses_frame_delta(self.metric):
+        if use_frame_delta and OnsetMetric.uses_frame_delta(self.metric):
             self.raw_value = OnsetDetectionFeature.metric_value(
                 self.metric,
                 delayed_mags,
@@ -1677,7 +1676,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 self.delayed_fft_input[i] = samples[delayed_index] * self.window[i]
 
         self.fft.fft(self.fft_input)
-        var use_frame_delta = self.frame_delta > 0 and onset_uses_frame_delta(self.metric)
+        var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
         if use_frame_delta:
             self.delayed_fft.fft(self.delayed_fft_input)
         if use_frame_delta:
@@ -1734,30 +1733,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         """
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
-        var end_frame = min(start_frame + num_frames, buf.num_frames)
-        var total_window = window_size
-        if frame_delta > 0 and onset_uses_frame_delta(metric):
-            total_window += frame_delta
-
-        var samples = List[Float64](length=total_window, fill=0.0)
-        var detector = OnsetDetectionFeature(
-            metric=metric,
-            window_size=window_size,
-            filter_size=filter_size,
-            frame_delta=frame_delta,
-        )
-        var result = List[List[Float64]]()
-        var frame = start_frame
-        while frame < end_frame:
-            for i in range(total_window):
-                if frame + i < end_frame:
-                    samples[i] = buf.data[chan][frame + i]
-                else:
-                    samples[i] = 0.0
-            detector.next_window(samples)
-            result.append(detector.get_features())
-            frame += hop_size
-        return result^
+        odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
+        return MBufAnalysis.buffered_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
 
 struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
     """FluCoMa-style onset slicing UGen.
@@ -1875,7 +1852,7 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
             num_frames = buf.num_frames - start_frame
         var end_frame = min(start_frame + num_frames, buf.num_frames)
         var total_window = window_size
-        if frame_delta > 0 and onset_uses_frame_delta(metric):
+        if frame_delta > 0 and OnsetMetric.uses_frame_delta(metric):
             total_window += frame_delta
 
         var samples = List[Float64](length=total_window, fill=0.0)
@@ -1889,6 +1866,7 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
         var previous_descriptor: Float64 = 0.0
         var debounce_count: Int = 0
         var frame = start_frame
+
         while frame < end_frame:
             for i in range(total_window):
                 if frame + i < end_frame:

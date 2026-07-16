@@ -68,3 +68,27 @@ def main() raises:
             if(i != 0):
                 f.write("\n")
             f.write(slice_str)
+
+    odf_buf_time_series = List[List[Float64]](length=10, fill=List[Float64]())
+
+    # test onset detection feature
+    for i in range(10):
+        time_series = OnsetDetectionFeature.buf_analysis(
+            buf=buf, 
+            chan=0, 
+            start_frame=0, 
+            num_frames=-1, 
+            metric=OnsetMetric(i), 
+            window_size=window_size, 
+            hop_size=hop_size)
+        
+        for sample in time_series:
+            odf_buf_time_series[i].append(sample[0])
+
+    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_odf_time_series.csv", "w") as f:
+        for i in range(10):
+            time_series_str = ",".join([String(x) for x in odf_buf_time_series[i]])
+            if(i != 0):
+                f.write("\n")
+            f.write(time_series_str)
+
