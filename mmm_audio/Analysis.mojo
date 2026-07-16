@@ -1438,7 +1438,13 @@ def onset_complex_atan_real(magnitude: Float64, phase: Float64) -> Float64:
 @always_inline
 @doc_hidden
 def onset_wrap_phase(phase: Float64) -> Float64:
-    if phase > -pi and phase < pi:
+    # FluCoMa's reference `wrapPhase()` lambda tests `p > -pi && p > pi`, which
+    # (since p > pi implies p > -pi) is equivalent to just `p > pi`: values
+    # above pi are returned unwrapped instead of being reduced back into
+    # range. This looks like a typo for `p < pi`, but it is replicated here
+    # (rather than using the mathematically correct -pi < p < pi check) so
+    # metrics 6/7/8/9 numerically match the reference implementation.
+    if phase > pi:
         return phase
     return phase + 2.0 * pi * (1.0 + floor((-pi - phase) / (2.0 * pi)))
 
@@ -1464,6 +1470,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     var delayed_fft_input: List[Float64]
     var prev_mags: List[Float64]
     var prev_phases: List[Float64]
+    var prev_prev_mags: List[Float64]
     var prev_prev_phases: List[Float64]
     var raw_value: Float64
     var descriptor: Float64
@@ -1498,6 +1505,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         var num_bins = (self.window_size // 2) + 1
         self.prev_mags = List[Float64](length=num_bins, fill=0.0)
         self.prev_phases = List[Float64](length=num_bins, fill=0.0)
+        self.prev_prev_mags = List[Float64](length=num_bins, fill=0.0)
         self.prev_prev_phases = List[Float64](length=num_bins, fill=0.0)
         self.raw_value = 0.0
         self.descriptor = 0.0
@@ -1515,6 +1523,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         current_phases: List[Float64],
         previous_mags: List[Float64],
         previous_phases: List[Float64],
+        previous_previous_mags: List[Float64],
         previous_previous_phases: List[Float64],
     ) -> Float64:
         var num_bins = len(current_mags)
@@ -1577,7 +1586,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
                 var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
                 var previous_previous_phase = onset_complex_atan_real(
-                    previous_mags[i], previous_previous_phases[i]
+                    previous_previous_mags[i], previous_previous_phases[i]
                 )
                 var acceleration = (current_phase - previous_phase) - \
                     (previous_phase - previous_previous_phase)
@@ -1590,7 +1599,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         for i in range(num_bins):
             var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
             var previous_previous_phase = onset_complex_atan_real(
-                previous_mags[i], previous_previous_phases[i]
+                previous_previous_mags[i], previous_previous_phases[i]
             )
             var estimated_phase = onset_wrap_phase(
                 previous_phase + (previous_phase - previous_previous_phase)
@@ -1615,6 +1624,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     ):
         for i in range(len(mags)):
             self.prev_prev_phases[i] = self.prev_phases[i]
+            self.prev_prev_mags[i] = self.prev_mags[i]
             self.prev_phases[i] = phases[i]
             self.prev_mags[i] = mags[i]
 
@@ -1642,7 +1652,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 delayed_phases,
                 current_mags,
                 current_phases,
-                current_phases,
+                current_mags, # dummy, unused by flux/MKL/IS
+                current_phases, # dummy, unused by flux/MKL/IS
             )
         else:
             self.raw_value = OnsetDetectionFeature.metric_value(
@@ -1651,6 +1662,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 current_phases,
                 self.prev_mags,
                 self.prev_phases,
+                self.prev_prev_mags,
                 self.prev_prev_phases,
             )
         self.filter_value()
@@ -1686,6 +1698,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 self.delayed_fft.phases,
                 self.fft.mags,
                 self.fft.phases,
+                self.fft.mags, # these are being passed as "dummy" mags, they're not used...
                 self.fft.phases, # these are being passed as "dummy" phases, they're not used...
             )
         else:
@@ -1695,11 +1708,13 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 self.fft.phases,
                 self.prev_mags,
                 self.prev_phases,
+                self.prev_prev_mags,
                 self.prev_prev_phases,
             )
         self.filter_value()
         for i in range(len(self.fft.mags)):
             self.prev_prev_phases[i] = self.prev_phases[i]
+            self.prev_prev_mags[i] = self.prev_mags[i]
             self.prev_phases[i] = self.fft.phases[i]
             self.prev_mags[i] = self.fft.mags[i]
 
