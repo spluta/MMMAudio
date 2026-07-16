@@ -13,10 +13,10 @@ def PyInit_MBufAnalysisBridge() abi("C") -> PythonObject:
         m.def_function[MBufAnalysisBridge.yin]("yin")
         m.def_function[MBufAnalysisBridge.mfcc]("mfcc")
         m.def_function[MBufAnalysisBridge.mel_bands]("mel_bands")
-        m.def_function[MBufAnalysisBridge.spectral_flux_onsets]("spectral_flux_onsets")
+        m.def_function[MBufAnalysisBridge.onset_detection]("onset_detection")
+        m.def_function[MBufAnalysisBridge.onset_detection_feature]("onset_detection_feature")
         m.def_function[MBufAnalysisBridge.spectral_centroid]("spectral_centroid")
         m.def_function[MBufAnalysisBridge.top_n_freqs]("top_n_freqs")
-        # m.def_function[MBufAnalysisBridge.custom]("custom")
         return m.finalize()
     except e:
         abort(String("error creating Python Mojo module:", e))
@@ -168,37 +168,64 @@ struct MBufAnalysisBridge:
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
     @staticmethod
-    def spectral_flux_onsets(py_dict: PythonObject) raises -> PythonObject:
-        # make the analysis params instance
-        analysis_params = AnalysisParams(py_dict)
-        thresh = getFloat64("spectral_flux_onsets",py_dict, "thresh", 0.01)
-        window_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "hop_size", window_size // 2)
-        filter_size = get_at_key[Int]("spectral_flux_onsets",py_dict, "filter_size", 5)
-        min_slice_len = getFloat64("spectral_flux_onsets",py_dict, "min_slice_len", 0.1)
-        
+    def onset_detection_feature(py_dict: PythonObject) raises -> PythonObject:
+        """Run a FluCoMa-compatible onset detection function over a buffer."""
+        ap = AnalysisParams(py_dict)
+        # TODO: change this so that instead of a user passing an int to represent
+        # the metric, they pass a string
+        metric_index = get_at_key[Int]("onset_detection_feature", py_dict, "metric", 0)
+        window_size = get_at_key[Int]("onset_detection_feature", py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("onset_detection_feature", py_dict, "hop_size", window_size // 2)
+        filter_size = get_at_key[Int]("onset_detection_feature", py_dict, "filter_size", 5)
+        frame_delta = get_at_key[Int]("onset_detection_feature", py_dict, "frame_delta", 0)
 
-        w = alloc[MMMWorld](1) 
-        # TODO: need to find a new way to pass the missing pointers
+        result = OnsetDetectionFeature.buf_analysis(
+            ap.buf,
+            ap.chan,
+            ap.start_frame,
+            ap.num_frames,
+            OnsetMetric(metric_index),
+            window_size,
+            hop_size,
+            filter_size,
+            frame_delta,
+        )
+        return MBufAnalysisBridge.matrix_to_numpy(result)
+
+    @staticmethod
+    def onset_detection(py_dict: PythonObject) raises -> PythonObject:
+        """Run FluCoMa-style onset slicing over a buffer."""
+        ap = AnalysisParams(py_dict)
+        # TODO: change this so that instead of a user passing an int to represent
+        # the metric, they pass a string
+        metric_index = get_at_key[Int]("onset_detection", py_dict, "metric", 0)
+        threshold = getFloat64("onset_detection", py_dict, "threshold", 0.5)
+        debounce = get_at_key[Int]("onset_detection", py_dict, "debounce", 2)
+        window_size = get_at_key[Int]("onset_detection", py_dict, "window_size", 1024)
+        hop_size = get_at_key[Int]("onset_detection", py_dict, "hop_size", window_size // 2)
+        filter_size = get_at_key[Int]("onset_detection", py_dict, "filter_size", 5)
+        frame_delta = get_at_key[Int]("onset_detection", py_dict, "frame_delta", 0)
+
+        w = alloc[MMMWorld](1)
         environment = alloc[Environment](1)
         environment.init_pointee_move(Environment(64, 2, 2))
+        w.init_pointee_move(MMMWorld(ap.buf.sample_rate, environment))
 
-        w.init_pointee_move(MMMWorld(analysis_params.buf.sample_rate, environment))
-
-        # run the analysis
-        sf_onsets = SpectralFluxOnsets(w,window_size,hop_size,filter_size)
-        sf_onsets.thresh = thresh
-        sf_onsets.min_slice_len = min_slice_len
-
-        onsets = List[Int]()
-
-        for i in range(analysis_params.buf.num_frames):
-            samp = analysis_params.buf.data[analysis_params.chan][i]
-            if sf_onsets.next(samp):
-                onsets.append(i)
-
-        # return it as a numpy array
-        return MBufAnalysisBridge.list_to_numpy(onsets)
+        result = OnsetDetection.buf_analysis(
+            w,
+            ap.buf,
+            ap.chan,
+            ap.start_frame,
+            ap.num_frames,
+            OnsetMetric(metric_index),
+            threshold,
+            debounce,
+            window_size,
+            hop_size,
+            filter_size,
+            frame_delta,
+        )
+        return MBufAnalysisBridge.list_to_numpy(result)
     
     @staticmethod
     def list_to_numpy(list: List[Int]) raises -> PythonObject:

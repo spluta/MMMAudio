@@ -1,5 +1,5 @@
 from mmm_audio import *
-from std.math import ceil, floor, log2, log, exp, sqrt, cos, pi, inf
+from std.math import atan2, ceil, floor, log2, log, exp, sin, sqrt, cos, pi, inf
 
 @always_inline
 @doc_hidden
@@ -1345,7 +1345,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         """Compute the spectral flux onset value for a given FFT analysis.
 
-        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFluxOnsets is passed as the "process".
+        This function is to be used by [FFTProcess](FFTProcess.md/#struct-fftprocess) if SpectralFlux is passed as the "process".
 
         Nothing is returned from this function, but the computed spectral flux value is stored in self.flux.
 
@@ -1395,76 +1395,528 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
 trait GetBoolFeaturable:
     def get_features(self) -> List[Bool]:...
 
-struct SpectralFluxOnsets(Movable,Copyable,GetBoolFeaturable):
-    """Spectral Flux Onset analysis.
+@fieldwise_init
+struct OnsetMetric(Equatable, ImplicitlyCopyable):
+    """Distance metrics for onset detection.
+
+    The values match FluidOnsetDetection's `metric` parameter.
     """
-    var world: World
-    var thresh: Float64
-    var state: Bool
-    var current_slice_length_samps: Float64
-    var min_slice_len: Float64
-    var filter_size: Int
-    var filter: MedianFilter
-    var prev_flux: Float64
-    var fftp: FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann]
+    var _value: Int
 
-    def get_features(self) -> List[Bool]:
-        return [self.state]
+    comptime energy: OnsetMetric = OnsetMetric(0)
+    comptime high_frequency_content: OnsetMetric = OnsetMetric(1)
+    comptime spectral_flux: OnsetMetric = OnsetMetric(2)
+    comptime modified_kullback_leibler: OnsetMetric = OnsetMetric(3)
+    comptime itakura_saito: OnsetMetric = OnsetMetric(4)
+    comptime cosine: OnsetMetric = OnsetMetric(5)
+    comptime phase_deviation: OnsetMetric = OnsetMetric(6)
+    comptime weighted_phase_deviation: OnsetMetric = OnsetMetric(7)
+    comptime complex_domain: OnsetMetric = OnsetMetric(8)
+    comptime rectified_complex_domain: OnsetMetric = OnsetMetric(9)
 
-    def __init__(out self, world: World, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5):
-        self.world = world
-        self.thresh = 0.5
-        self.state = False
-        self.current_slice_length_samps = 0
-        self.min_slice_len = 1
-        self.filter_size = filter_size
-        self.filter = MedianFilter(filter_size)
-        self.prev_flux = 0.0
-        sfp = SpectralFlux(num_mags=(window_size // 2) + 1, positive_only=True)
-        self.fftp = FFTProcess[SpectralFlux,ifft=False,input_window_shape=WindowType.hann,output_window_shape=WindowType.hann](self.world,process=sfp^, window_size=window_size, hop_size=hop_size)
+    @doc_hidden
+    def __eq__(self, other: Self) -> Bool:
+        return self._value == other._value
 
-    def next(mut self, input: SIMD[DType.float64,1]) -> Bool:
+    @doc_hidden
+    def __ne__(self, other: Self) -> Bool:
+        return not (self == other)
 
-        _ = self.fftp.next(input)
-        
-        self.current_slice_length_samps += 1
+@always_inline
+@doc_hidden
+def onset_uses_frame_delta(metric: OnsetMetric) -> Bool:
+    return metric == OnsetMetric.spectral_flux or \
+        metric == OnsetMetric.modified_kullback_leibler or \
+        metric == OnsetMetric.itakura_saito
 
-        if self.state: # state is high
-            # set low
-            self.state = False
-        else: # state *will* be low if we're in here:
-            flux = self.fftp.buffered_process.process.process.flux
-            var filtered_flux: Float64
-            if self.filter_size >= 3:
-                filtered_flux = flux - self.filter.process_sample(flux)
-            else:
-                filtered_flux = flux - self.prev_flux
-            self.prev_flux = flux
-            curr_slice_len_sec = self.current_slice_length_samps / self.world[].sample_rate
-            if filtered_flux > self.thresh and curr_slice_len_sec > self.min_slice_len:
-                self.state = True
+@always_inline
+@doc_hidden
+def onset_complex_atan_real(magnitude: Float64, phase: Float64) -> Float64:
+    var real = magnitude * cos(phase)
+    var imag = magnitude * sin(phase)
+    return 0.5 * atan2(2.0 * real, 1.0 - real * real - imag * imag)
 
-                # should this actually be 1?
-                self.current_slice_length_samps = 0
+@always_inline
+@doc_hidden
+def onset_wrap_phase(phase: Float64) -> Float64:
+    if phase > -pi and phase < pi:
+        return phase
+    return phase + 2.0 * pi * (1.0 + floor((-pi - phase) / (2.0 * pi)))
 
-        return self.state
+struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
+    """Onset detection feature analysis.
     
+    This struct implements the FFT part of Onset Detection, 
+    creating a time series of spectral differences based on a provided metric.
+
+    This struct implements the ten FluidOnsetDetection metrics. It can receive an
+    FFT frame through `next_frame`, or calculate its own FFTs with
+    `next_window` when `frame_delta` is required.
+    """
+    var metric: OnsetMetric
+    var window_size: Int
+    var filter_size: Int
+    var frame_delta: Int
+    var filter: MedianFilter
+    var fft: RealFFT[]
+    var delayed_fft: RealFFT[]
+    var window: List[Float64]
+    var fft_input: List[Float64]
+    var delayed_fft_input: List[Float64]
+    var prev_mags: List[Float64]
+    var prev_phases: List[Float64]
+    var prev_prev_phases: List[Float64]
+    var raw_value: Float64
+    var descriptor: Float64
+    var previous_raw_value: Float64
+
+    def __init__(
+        out self,
+        metric: OnsetMetric = OnsetMetric.energy,
+        window_size: Int = 1024,
+        filter_size: Int = 5,
+        frame_delta: Int = 0,
+    ):
+        """Initialize an onset detection function.
+        
+        
+        Args:
+            metric: The onset metric to calculate.
+            window_size: Analysis window size in samples.
+            filter_size: Median-filter size. Values below 3 use a first difference.
+            frame_delta: Offset in samples for Flux, MKL, and Itakura-Saito.
+        """
+        self.metric = metric
+        self.window_size = window_size
+        self.filter_size = filter_size
+        self.frame_delta = max(frame_delta, 0)
+        self.filter = MedianFilter(max(filter_size, 3))
+        self.fft = RealFFT(self.window_size)
+        self.delayed_fft = RealFFT(self.window_size)
+        self.window = Windows.make_window[WindowType.hann](self.window_size)
+        self.fft_input = List[Float64](length=self.window_size, fill=0.0)
+        self.delayed_fft_input = List[Float64](length=self.window_size, fill=0.0)
+        var num_bins = (self.window_size // 2) + 1
+        self.prev_mags = List[Float64](length=num_bins, fill=0.0)
+        self.prev_phases = List[Float64](length=num_bins, fill=0.0)
+        self.prev_prev_phases = List[Float64](length=num_bins, fill=0.0)
+        self.raw_value = 0.0
+        self.descriptor = 0.0
+        self.previous_raw_value = 0.0
+
+    def get_features(self) -> List[Float64]:
+        """Return the filtered onset detection-function value."""
+        return [self.descriptor]
+
+    @doc_hidden
     @staticmethod
-    def buf_analysis(world: World, buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, thresh: Float64 = 0.5, min_slice_len: Float64 = 1.0, window_size: Int = 1024, hop_size: Int = 512, filter_size: Int = 5) raises -> List[Int]:
+    def metric_value(
+        metric: OnsetMetric,
+        current_mags: List[Float64],
+        current_phases: List[Float64],
+        previous_mags: List[Float64],
+        previous_phases: List[Float64],
+        previous_previous_phases: List[Float64],
+    ) -> Float64:
+        var num_bins = len(current_mags)
+        if num_bins == 0:
+            return 0.0
+
+        var epsilon: Float64 = 2.220446049250313e-16
+        var value: Float64 = 0.0
+
+        if metric == OnsetMetric.energy:
+            for i in range(num_bins):
+                value += current_mags[i] * current_mags[i]
+            return value / Float64(num_bins)
+
+        elif metric == OnsetMetric.high_frequency_content:
+            var bin_scale = 1.0
+            if num_bins > 1:
+                bin_scale = Float64(num_bins) / Float64(num_bins - 1)
+            for i in range(num_bins):
+                value += Float64(i) * bin_scale * current_mags[i] * current_mags[i]
+            return value / Float64(num_bins)
+
+        elif metric == OnsetMetric.spectral_flux:
+            for i in range(num_bins):
+                value += max(current_mags[i] - previous_mags[i], 0.0)
+            return value / Float64(num_bins)
+
+        elif metric == OnsetMetric.modified_kullback_leibler:
+            for i in range(num_bins):
+                var current = max(current_mags[i], epsilon)
+                var previous = max(previous_mags[i], epsilon)
+                value += log(max(current / previous, epsilon))
+            return value / Float64(num_bins)
+
+        elif metric == OnsetMetric.itakura_saito:
+            for i in range(num_bins):
+                var current = max(current_mags[i], epsilon)
+                var previous = max(previous_mags[i], epsilon)
+                var ratio = max((current / previous) * (current / previous), epsilon)
+                value += ratio - log(ratio) - 1.0
+            return value / Float64(num_bins)
+
+        elif metric == OnsetMetric.cosine:
+            var current_norm: Float64 = 0.0
+            var previous_norm: Float64 = 0.0
+            var dot: Float64 = 0.0
+            for i in range(num_bins):
+                var current = max(current_mags[i], epsilon)
+                var previous = max(previous_mags[i], epsilon)
+                current_norm += current * current
+                previous_norm += previous * previous
+                dot += current * previous
+            var denominator = sqrt(current_norm) * sqrt(previous_norm)
+            if denominator <= epsilon:
+                return 0.0
+            return 1.0 - dot / denominator
+
+        elif metric == OnsetMetric.phase_deviation or metric == OnsetMetric.weighted_phase_deviation:
+            for i in range(num_bins):
+                var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
+                var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
+                var previous_previous_phase = onset_complex_atan_real(
+                    previous_mags[i], previous_previous_phases[i]
+                )
+                var acceleration = (current_phase - previous_phase) - \
+                    (previous_phase - previous_previous_phase)
+                if metric == OnsetMetric.weighted_phase_deviation:
+                    acceleration *= max(current_mags[i], epsilon)
+                value += onset_wrap_phase(acceleration)
+            return value / Float64(num_bins)
+
+        var complex_value: Float64 = 0.0
+        for i in range(num_bins):
+            var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
+            var previous_previous_phase = onset_complex_atan_real(
+                previous_mags[i], previous_previous_phases[i]
+            )
+            var estimated_phase = onset_wrap_phase(
+                previous_phase + (previous_phase - previous_previous_phase)
+            )
+            var previous_magnitude = max(previous_mags[i], epsilon)
+            var target_real = previous_magnitude * cos(estimated_phase)
+            var target_imag = previous_magnitude * sin(estimated_phase)
+            var current_real = current_mags[i] * cos(current_phases[i])
+            var current_imag = current_mags[i] * sin(current_phases[i])
+            var real_difference = target_real - current_real
+            var imag_difference = target_imag - current_imag
+            complex_value += sqrt(
+                real_difference * real_difference + imag_difference * imag_difference
+            )
+        return complex_value / Float64(num_bins)
+
+    @doc_hidden
+    def update_history(
+        mut self,
+        mags: List[Float64],
+        phases: List[Float64],
+    ):
+        for i in range(len(mags)):
+            self.prev_prev_phases[i] = self.prev_phases[i]
+            self.prev_phases[i] = phases[i]
+            self.prev_mags[i] = mags[i]
+
+    @doc_hidden
+    def filter_value(mut self):
+        if self.filter_size >= 3:
+            self.descriptor = self.raw_value - self.filter.process_sample(self.raw_value)
+        else:
+            self.descriptor = self.raw_value - self.previous_raw_value
+        self.previous_raw_value = self.raw_value
+
+    @doc_hidden
+    def process_spectra(
+        mut self,
+        current_mags: List[Float64],
+        current_phases: List[Float64],
+        delayed_mags: List[Float64],
+        delayed_phases: List[Float64],
+        use_frame_delta: Bool,
+    ) -> Float64:
+        if use_frame_delta and onset_uses_frame_delta(self.metric):
+            self.raw_value = OnsetDetectionFeature.metric_value(
+                self.metric,
+                delayed_mags,
+                delayed_phases,
+                current_mags,
+                current_phases,
+                current_phases,
+            )
+        else:
+            self.raw_value = OnsetDetectionFeature.metric_value(
+                self.metric,
+                current_mags,
+                current_phases,
+                self.prev_mags,
+                self.prev_phases,
+                self.prev_prev_phases,
+            )
+        self.filter_value()
+        self.update_history(current_mags, current_phases)
+        return self.descriptor
+
+    # def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]) -> None:
+    #     """Process a precomputed FFT frame.
+
+    #     `frame_delta` requires raw time-domain samples, so it is applied only
+    #     by `next_window`; this method uses consecutive frame history.
+    #     """
+    #     _ = self.process_spectra(mags, phases, mags, phases, False)
+
+    # def from_mags(mut self, mags: List[Float64], phases: List[Float64]) -> Float64:
+    #     """Process a precomputed FFT frame and return its filtered value."""
+    #     return self.process_spectra(mags, phases, mags, phases, False)
+
+    def next_window(mut self, samples: List[Float64]):
+        """Process an unwindowed audio region and return its filtered value.
+
+        For Flux, MKL, and Itakura-Saito, the region may contain a second
+        `window_size` frame at `frame_delta` samples after the first frame.
+        Missing samples are zero padded.
+        """
+        for i in range(self.window_size):
+            self.fft_input[i] = 0.0
+            self.delayed_fft_input[i] = 0.0
+
+        for i in range(self.window_size):
+            if i < len(samples):
+                self.fft_input[i] = samples[i] * self.window[i]
+            var delayed_index = i + self.frame_delta
+            if delayed_index < len(samples):
+                self.delayed_fft_input[i] = samples[delayed_index] * self.window[i]
+
+        self.fft.fft(self.fft_input)
+        var use_frame_delta = self.frame_delta > 0 and onset_uses_frame_delta(self.metric)
+        if use_frame_delta:
+            self.delayed_fft.fft(self.delayed_fft_input)
+        if use_frame_delta:
+            self.raw_value = OnsetDetectionFeature.metric_value(
+                self.metric,
+                self.delayed_fft.mags,
+                self.delayed_fft.phases,
+                self.fft.mags,
+                self.fft.phases,
+                self.fft.phases,
+            )
+        else:
+            self.raw_value = OnsetDetectionFeature.metric_value(
+                self.metric,
+                self.fft.mags,
+                self.fft.phases,
+                self.prev_mags,
+                self.prev_phases,
+                self.prev_prev_phases,
+            )
+        self.filter_value()
+        for i in range(len(self.fft.mags)):
+            self.prev_prev_phases[i] = self.prev_phases[i]
+            self.prev_phases[i] = self.fft.phases[i]
+            self.prev_mags[i] = self.fft.mags[i]
+
+    @staticmethod
+    def buf_analysis(
+        buf: Buffer,
+        chan: Int = 0,
+        start_frame: Int = 0,
+        var num_frames: Int = -1,
+        metric: OnsetMetric = OnsetMetric.energy,
+        window_size: Int = 1024,
+        hop_size: Int = 512,
+        filter_size: Int = 5,
+        frame_delta: Int = 0,
+    ) raises -> List[List[Float64]]:
+        """Calculate a FluidOnsetFeature-compatible descriptor for each hop.
+
+        Args:
+            buf: Source audio buffer.
+            chan: Source channel to analyze.
+            start_frame: First frame in the source buffer.
+            num_frames: Number of source frames to analyze. A negative value analyzes to the end of the buffer.
+            metric: Onset metric to calculate.
+            window_size: Analysis window size in samples.
+            hop_size: Number of samples between analysis frames.
+            filter_size: Median-filter size.
+            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+
+        Returns:
+            One filtered onset detection-function value for each analysis hop.
+        """
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
+        var end_frame = min(start_frame + num_frames, buf.num_frames)
+        var total_window = window_size
+        if frame_delta > 0 and onset_uses_frame_delta(metric):
+            total_window += frame_delta
 
-        # run the analysis
-        sf_onsets = SpectralFluxOnsets(world,window_size,hop_size,filter_size)
-        sf_onsets.thresh = thresh
-        sf_onsets.min_slice_len = min_slice_len
+        var samples = List[Float64](length=total_window, fill=0.0)
+        var detector = OnsetDetectionFeature(
+            metric=metric,
+            window_size=window_size,
+            filter_size=filter_size,
+            frame_delta=frame_delta,
+        )
+        var result = List[List[Float64]]()
+        var frame = start_frame
+        while frame < end_frame:
+            for i in range(total_window):
+                if frame + i < end_frame:
+                    samples[i] = buf.data[chan][frame + i]
+                else:
+                    samples[i] = 0.0
+            detector.next_window(samples)
+            result.append(detector.get_features())
+            frame += hop_size
+        return result^
 
-        onsets = List[Int]()
+struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
+    """FluCoMa-style onset slicing UGen.
 
-        for i in range(num_frames):
-            if sf_onsets.next(buf.data[chan][start_frame + i]):
-                onsets.append(start_frame + i)
+    `next` returns `True` for one sample when a filtered onset detection
+    function crosses `threshold`. Detection runs once per FFT hop, as in
+    FluidOnsetDetection.
+    """
+    var world: World
+    var metric: OnsetMetric
+    var threshold: Float64
+    var debounce: Int
+    var window_size: Int
+    var hop_size: Int
+    var filter_size: Int
+    var frame_delta: Int
+    var state: Bool
+    var descriptor: Float64
+    var previous_descriptor: Float64
+    var debounce_count: Int
+    var fftp: BufferedProcess[
+        OnsetDetectionFeature,
+        output=False,
+        input_window_shape=WindowType.rect,
+        output_window_shape=WindowType.rect,
+    ]
+
+    def __init__(
+        out self,
+        world: World,
+        metric: OnsetMetric = OnsetMetric.energy,
+        threshold: Float64 = 0.5,
+        debounce: Int = 2,
+        window_size: Int = 1024,
+        hop_size: Int = 512,
+        filter_size: Int = 5,
+        frame_delta: Int = 0,
+    ):
+        """Initialize an onset slicer.
         
+        Args:
+            world: The MMMWorld used for buffered processing.
+            metric: The onset metric to calculate.
+            threshold: Threshold crossing required to emit an onset.
+            debounce: Minimum number of analysis samples between onsets.
+            window_size: Analysis window size in samples.
+            hop_size: Number of samples between analysis frames.
+            filter_size: Median-filter size.
+            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+        """
+        self.world = world
+        self.metric = metric
+        self.threshold = threshold
+        self.debounce = max(debounce, 0)
+        self.window_size = window_size
+        self.hop_size = hop_size
+        self.filter_size = filter_size
+        self.frame_delta = max(frame_delta, 0)
+        self.state = False
+        self.descriptor = 0.0
+        self.previous_descriptor = 0.0
+        self.debounce_count = 0
+
+        var processor = OnsetDetectionFeature(
+            metric=self.metric,
+            window_size=self.window_size,
+            filter_size=self.filter_size,
+            frame_delta=self.frame_delta,
+        )
+        self.fftp = BufferedProcess[
+            OnsetDetectionFeature,
+            output=False,
+            input_window_shape=WindowType.rect,
+            output_window_shape=WindowType.rect,
+        ](self.world, processor^, window_size=self.window_size, hop_size=self.hop_size)
+
+    def get_features(self) -> List[Bool]:
+        """Return the one-sample onset trigger state."""
+        return [self.state]
+
+    def next(mut self, input: SIMD[DType.float64,1]) -> Bool:
+        """Process one sample and return whether this sample is an onset."""
+        self.state = False
+
+        _ = self.fftp.next(input)
+
+        self.descriptor = self.fftp.get_process().descriptor
+        if self.descriptor > self.threshold and self.previous_descriptor < self.threshold and self.debounce_count == 0:
+            self.state = True
+            self.debounce_count = self.debounce
+        elif self.debounce_count > 0:
+            self.debounce_count -= 1
+        self.previous_descriptor = self.descriptor
+
+        return self.state
+
+    @staticmethod
+    def buf_analysis(
+        world: World,
+        buf: Buffer,
+        chan: Int = 0,
+        start_frame: Int = 0,
+        var num_frames: Int = -1,
+        metric: OnsetMetric = OnsetMetric.energy,
+        threshold: Float64 = 0.5,
+        debounce: Int = 2,
+        window_size: Int = 1024,
+        hop_size: Int = 512,
+        filter_size: Int = 5,
+        frame_delta: Int = 0,
+    ) raises -> List[Int]:
+        """Return onset sample indices for a buffer without streaming latency."""
+        if num_frames < 0:
+            num_frames = buf.num_frames - start_frame
+        var end_frame = min(start_frame + num_frames, buf.num_frames)
+        var total_window = window_size
+        if frame_delta > 0 and onset_uses_frame_delta(metric):
+            total_window += frame_delta
+
+        var samples = List[Float64](length=total_window, fill=0.0)
+        var detector = OnsetDetectionFeature(
+            metric=metric,
+            window_size=window_size,
+            filter_size=filter_size,
+            frame_delta=frame_delta,
+        )
+        var onsets = List[Int]()
+        var previous_descriptor: Float64 = 0.0
+        var debounce_count: Int = 0
+        var frame = start_frame
+        while frame < end_frame:
+            for i in range(total_window):
+                if frame + i < end_frame:
+                    samples[i] = buf.data[chan][frame + i]
+                else:
+                    samples[i] = 0.0
+
+            detector.next_window(samples)
+            var descriptor = detector.descriptor
+            if descriptor > threshold and previous_descriptor < threshold and \
+                debounce_count == 0:
+                onsets.append(frame)
+                debounce_count = max(debounce, 0)
+            elif debounce_count > 0:
+                debounce_count -= 1
+            previous_descriptor = descriptor
+            frame += hop_size
         return onsets^
 
 struct TopNFreqs(FFTProcessable, GetFloat64Featurable):

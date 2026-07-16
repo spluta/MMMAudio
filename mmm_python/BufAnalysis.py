@@ -21,6 +21,14 @@ class MBufAnalysis:
     @staticmethod
     def spectral_flux_onsets(dict:dict):
         return MBufAnalysisBridge.spectral_flux_onsets(dict)
+
+    @staticmethod
+    def onset_detection_function(dict:dict):
+        return MBufAnalysisBridge.onset_detection_function(dict)
+
+    @staticmethod
+    def onset_detection(dict:dict):
+        return MBufAnalysisBridge.onset_detection(dict)
     
     @staticmethod
     def mfcc(dict:dict):
