@@ -1315,11 +1315,6 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
     """Spectral Flux analysis.
 
     This implementation computes the squared difference between the magnitudes of the current frame and the previous frame, summed across all frequency bins.
-
-    Args:
-    
-            num_mags: The number of magnitude bins in the input to expect. This is typically the FFT size divided by 2, but could also be the number of mel bands or another spectral summary that produces a list of values.
-            positive_only: Whether to only consider positive differences (increases in energy) when computing the spectral flux. If `False`, spectral flux is the average of squared differences between the magnitudes. If `True`, spectral flux is the average of (non-squared to match FluCoMa) differences between the magnitudes, but negative differences are set to 0. Using `positive_only=True` is a common approach when using spectral flux for onset detection, as onsets are typically characterized by increases in energy.
     """
     var num_mags: Int
     var num_mags_f64: Float64
@@ -1333,7 +1328,7 @@ struct SpectralFlux(FFTProcessable, GetFloat64Featurable):
 
         Args:
             num_mags: The number of magnitude bins in the input to expect. This is typically the FFT size divided by 2, but could also be the number of mel bands or another spectral summary that produces a list of values.
-            positive_only: Whether to only consider positive differences (increases in energy) when computing the spectral flux. If `False`, spectral flux is the average of squared differences between the magnitudes. If `True`, spectral flux is the average of (non-squared to match FluCoMa) differences between the magnitudes, but negative differences are set to 0. Using `positive_only=True` is a common approach when using spectral flux for onset detection, as onsets are typically characterized by increases in energy.
+            positive_only: Whether to only consider positive differences (increases in energy) when computing the spectral flux. If `False`, spectral flux is the average of squared differences between the magnitudes. If `True`, spectral flux is the average of (non-squared) differences between the magnitudes, but negative differences are set to 0. Using `positive_only=True` is a common approach when using spectral flux for onset detection, as onsets are typically characterized by increases in energy.
         """
         self.num_mags = num_mags
         self.num_mags_f64 = Float64(self.num_mags)
@@ -1438,12 +1433,6 @@ def onset_complex_atan_real(magnitude: Float64, phase: Float64) -> Float64:
 @always_inline
 @doc_hidden
 def onset_wrap_phase(phase: Float64) -> Float64:
-    # FluCoMa's reference `wrapPhase()` lambda tests `p > -pi && p > pi`, which
-    # (since p > pi implies p > -pi) is equivalent to just `p > pi`: values
-    # above pi are returned unwrapped instead of being reduced back into
-    # range. This looks like a typo for `p < pi`, but it is replicated here
-    # (rather than using the mathematically correct -pi < p < pi check) so
-    # metrics 6/7/8/9 numerically match the reference implementation.
     if phase > pi:
         return phase
     return phase + 2.0 * pi * (1.0 + floor((-pi - phase) / (2.0 * pi)))
@@ -1451,12 +1440,11 @@ def onset_wrap_phase(phase: Float64) -> Float64:
 struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     """Onset detection feature analysis.
     
-    This struct implements the FFT part of Onset Detection, 
-    creating a time series of spectral differences based on a provided metric.
+    This struct is to be used as the process of a `BufferedProcess`.
 
-    This struct implements the ten FluidOnsetDetection metrics. It can receive an
-    FFT frame through `next_frame`, or calculate its own FFTs with
-    `next_window` when `frame_delta` is required.
+    This struct creates a time series of spectral differences based on a provided metric.
+
+    This struct implements the ten FluidOnsetSlice metrics.
     """
     var metric: OnsetMetric
     var window_size: Int
@@ -1484,7 +1472,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         frame_delta: Int = 0,
     ):
         """Initialize an onset detection function.
-        
         
         Args:
             metric: The onset metric to calculate.
@@ -1672,9 +1659,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     def next_window(mut self, samples: List[Float64]):
         """Process an unwindowed audio region and return its filtered value.
 
-        For Flux, MKL, and Itakura-Saito, the region may contain a second
-        `window_size` frame at `frame_delta` samples after the first frame.
-        Missing samples are zero padded.
+        Args:
+            samples: The input audio samples to analyze. This should be a List of Float64 with length equal to `window_size`.
         """
         for i in range(self.window_size):
             self.fft_input[i] = 0.0
@@ -1730,7 +1716,11 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         filter_size: Int = 5,
         frame_delta: Int = 0,
     ) raises -> List[List[Float64]]:
-        """Calculate a FluidOnsetFeature-compatible descriptor for each hop.
+        """Analyze a buffer for OnsetDetectionFeature values.
+
+        The output is a List of Lists, where each inner List contains one Float64 value (the onset detection function value) for each analysis hop.
+
+        Note the output is not onset times or a time series of onset triggers. To get onset times or triggers, use [OnsetDetection](#struct-onsetdetection).
 
         Args:
             buf: Source audio buffer.
@@ -1751,12 +1741,10 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
         return MBufAnalysis.buffered_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
 
-struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
-    """FluCoMa-style onset slicing UGen.
+struct OnsetDetection(Movable, Copyable):
+    """Detect spectral onsets in a time series of audio samples.
 
-    `next` returns `True` for one sample when a filtered onset detection
-    function crosses `threshold`. Detection runs once per FFT hop, as in
-    FluidOnsetDetection.
+    This struct implements the ten FluidOnsetSlice metrics.
     """
     var world: World
     var metric: OnsetMetric
@@ -1795,12 +1783,13 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
             world: The MMMWorld used for buffered processing.
             metric: The onset metric to calculate.
             threshold: Threshold crossing required to emit an onset.
-            debounce: Minimum number of analysis samples between onsets.
+            debounce: Minimum number of audio samples between onsets.
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
             frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
         """
+        # TODO: I would prefer to have debouce be measure in time, even if that means rounding to the nearest sample.
         self.world = world
         self.metric = metric
         self.threshold = threshold
@@ -1827,12 +1816,15 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
             output_window_shape=WindowType.rect,
         ](self.world, processor^, window_size=self.window_size, hop_size=self.hop_size)
 
-    def get_features(self) -> List[Bool]:
-        """Return the one-sample onset trigger state."""
-        return [self.state]
-
     def next(mut self, input: SIMD[DType.float64,1]) -> Bool:
-        """Process one sample and return whether this sample is an onset."""
+        """Process one sample and return whether this sample is an onset.
+        
+        Args:
+            input: The input audio sample to analyze.
+        
+        Returns:
+            True if this sample is an onset, False otherwise.
+        """
         self.state = False
 
         _ = self.fftp.next(input)
@@ -1862,7 +1854,26 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
         filter_size: Int = 5,
         frame_delta: Int = 0,
     ) raises -> List[Int]:
-        """Return onset sample indices for a buffer without streaming latency."""
+        """Return onset sample indices for a buffer.
+        
+        Args:
+            world: The MMMWorld used for buffered processing.
+            buf: Source audio buffer.
+            chan: Source channel to analyze.
+            start_frame: First frame in the source buffer.
+            num_frames: Number of source frames to analyze. A negative value analyzes to the end of the buffer.
+            metric: The onset metric to calculate.
+            threshold: Threshold crossing required to emit an onset.
+            debounce: Minimum number of audio samples between onsets.
+            window_size: Analysis window size in samples.
+            hop_size: Number of samples between analysis frames.
+            filter_size: Median-filter size.
+            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+
+        Returns:
+            A List of Int sample indices where onsets were detected.
+        """
+        # TODO: I would prefer to have debouce be measure in time, even if that means rounding to the nearest sample.
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         var end_frame = min(start_frame + num_frames, buf.num_frames)
@@ -1891,8 +1902,7 @@ struct OnsetDetection(Movable, Copyable, GetBoolFeaturable):
 
             detector.next_window(samples)
             var descriptor = detector.descriptor
-            if descriptor > threshold and previous_descriptor < threshold and \
-                debounce_count == 0:
+            if descriptor > threshold and previous_descriptor < threshold and debounce_count == 0:
                 onsets.append(frame)
                 debounce_count = max(debounce, 0)
             elif debounce_count > 0:
