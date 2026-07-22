@@ -1,5 +1,5 @@
 @fieldwise_init
-struct OnsetMetric(Equatable, ImplicitlyCopyable):
+struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
     """Distance metrics for onset detection.
 
     The values match FluidOnsetDetection's `metric` parameter.
@@ -16,6 +16,30 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable):
     comptime weighted_phase_deviation: OnsetMetric = OnsetMetric(7)
     comptime complex_domain: OnsetMetric = OnsetMetric(8)
     comptime rectified_complex_domain: OnsetMetric = OnsetMetric(9)
+
+    def write_to(self, mut writer: Some[Writer]):
+        if self._value == OnsetMetric.energy._value:
+            writer.write("OnsetMetric: energy")
+        elif self._value == OnsetMetric.high_frequency_content._value:
+            writer.write("OnsetMetric: high_frequency_content")
+        elif self._value == OnsetMetric.spectral_flux._value:
+            writer.write("OnsetMetric: spectral_flux")
+        elif self._value == OnsetMetric.modified_kullback_leibler._value:
+            writer.write("OnsetMetric: modified_kullback_leibler")
+        elif self._value == OnsetMetric.itakura_saito._value:
+            writer.write("OnsetMetric: itakura_saito")
+        elif self._value == OnsetMetric.cosine._value:
+            writer.write("OnsetMetric: cosine")
+        elif self._value == OnsetMetric.phase_deviation._value:
+            writer.write("OnsetMetric: phase_deviation")
+        elif self._value == OnsetMetric.weighted_phase_deviation._value:
+            writer.write("OnsetMetric: weighted_phase_deviation")
+        elif self._value == OnsetMetric.complex_domain._value:
+            writer.write("OnsetMetric: complex_domain")
+        elif self._value == OnsetMetric.rectified_complex_domain._value:
+            writer.write("OnsetMetric: rectified_complex_domain")
+        else:
+            writer.write("OnsetMetric: ", self._value)
 
     @doc_hidden
     def __eq__(self, other: Self) -> Bool:
@@ -42,74 +66,196 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable):
         previous_previous_mags: List[Float64],
         previous_previous_phases: List[Float64],
     ) -> Float64:
-        comptime epsilon: Float64 = 2.220446049250313e-16
+        if metric == OnsetMetric.energy:
+            return OnsetMetric.measure_energy(current_mags)
+        elif metric == OnsetMetric.high_frequency_content:
+            return OnsetMetric.measure_high_frequency_content(current_mags)
+        elif metric == OnsetMetric.spectral_flux:
+            return OnsetMetric.measure_spectral_flux(metric, current_mags, previous_mags)
+        elif metric == OnsetMetric.modified_kullback_leibler:
+            return OnsetMetric.measure_modified_kullback_leibler(current_mags, previous_mags)
+        elif metric == OnsetMetric.itakura_saito:
+            return OnsetMetric.measure_itakura_saito(current_mags, previous_mags)
+        elif metric == OnsetMetric.cosine:
+            return OnsetMetric.measure_cosine(current_mags, previous_mags)
+        elif metric == OnsetMetric.phase_deviation:
+            return OnsetMetric.measure_phase_deviation(
+                current_mags,
+                current_phases,
+                previous_mags,
+                previous_phases,
+                previous_previous_mags,
+                previous_previous_phases,
+            )
+        elif metric == OnsetMetric.weighted_phase_deviation:
+            return OnsetMetric.measure_weighted_phase_deviation(
+                current_mags,
+                current_phases,
+                previous_mags,
+                previous_phases,
+                previous_previous_mags,
+                previous_previous_phases,
+            )
+        elif metric == OnsetMetric.complex_domain or metric == OnsetMetric.rectified_complex_domain:
+            return OnsetMetric.measure_complex_domain(
+                current_mags,
+                current_phases,
+                previous_mags,
+                previous_phases,
+                previous_previous_mags,
+                previous_previous_phases,
+            )
+        else:
+            print("Unknown onset metric: ", metric, ", returning 0.0")
+            return 0.0
 
+    @doc_hidden
+    @staticmethod
+    def measure_energy(current_mags: List[Float64]) -> Float64:
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        for i in range(num_bins):
+            value += current_mags[i] * current_mags[i]
+        return value / Float64(num_bins)
+    
+    @doc_hidden
+    @staticmethod
+    def measure_high_frequency_content(current_mags: List[Float64]) -> Float64:
+        var bin_scale = 1.0
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        if num_bins > 1:
+            bin_scale = Float64(num_bins) / Float64(num_bins - 1)
+        for i in range(num_bins):
+            value += Float64(i) * bin_scale * current_mags[i] * current_mags[i]
+        return value / Float64(num_bins)
+
+    @doc_hidden
+    @staticmethod
+    def measure_spectral_flux(
+        metric: OnsetMetric,
+        current_mags: List[Float64],
+        previous_mags: List[Float64],
+    ) -> Float64:
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        for i in range(num_bins):
+            value += max(current_mags[i] - previous_mags[i], 0.0)
+        return value / Float64(num_bins)
+
+    @doc_hidden
+    @staticmethod
+    def measure_modified_kullback_leibler(
+        current_mags: List[Float64],
+        previous_mags: List[Float64],
+    ) -> Float64:
+        comptime epsilon: Float64 = 2.220446049250313e-16
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        for i in range(num_bins):
+            var current = max(current_mags[i], epsilon)
+            var previous = max(previous_mags[i], epsilon)
+            value += log(max(current / previous, epsilon))
+        return value / Float64(num_bins)
+
+    @doc_hidden
+    @staticmethod
+    def measure_itakura_saito(
+        current_mags: List[Float64],
+        previous_mags: List[Float64],
+    ) -> Float64:
+        comptime epsilon: Float64 = 2.220446049250313e-16
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        for i in range(num_bins):
+            var current = max(current_mags[i], epsilon)
+            var previous = max(previous_mags[i], epsilon)
+            var ratio = max((current / previous) * (current / previous), epsilon)
+            value += ratio - log(ratio) - 1.0
+        return value / Float64(num_bins)
+
+    @doc_hidden
+    @staticmethod
+    def measure_cosine(
+        current_mags: List[Float64],
+        previous_mags: List[Float64],
+    ) -> Float64:
+        var current_norm: Float64 = 0.0
+        var previous_norm: Float64 = 0.0
+        var dot: Float64 = 0.0
+        comptime epsilon: Float64 = 2.220446049250313e-16
+        var num_bins: Int = len(current_mags)
+        for i in range(num_bins):
+            var current = max(current_mags[i], epsilon)
+            var previous = max(previous_mags[i], epsilon)
+            current_norm += current * current
+            previous_norm += previous * previous
+            dot += current * previous
+        var denominator = sqrt(current_norm) * sqrt(previous_norm)
+        if denominator <= epsilon:
+            return 0.0
+        return 1.0 - dot / denominator
+
+    @doc_hidden
+    @staticmethod
+    def measure_phase_deviation(
+        current_mags: List[Float64],
+        current_phases: List[Float64],
+        previous_mags: List[Float64],
+        previous_phases: List[Float64],
+        previous_previous_mags: List[Float64],
+        previous_previous_phases: List[Float64],
+    ) -> Float64:
         num_bins: Int = len(current_mags)
         value: Float64 = 0.0
+        for i in range(num_bins):
+            var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
+            var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
+            var previous_previous_phase = onset_complex_atan_real(
+                previous_previous_mags[i], previous_previous_phases[i]
+            )
+            var acceleration = (current_phase - previous_phase) - \
+                (previous_phase - previous_previous_phase)
+            value += onset_wrap_phase(acceleration)
+        return value / Float64(num_bins)
 
-        if metric == OnsetMetric.energy:
-            for i in range(num_bins):
-                value += current_mags[i] * current_mags[i]
-            return value / Float64(num_bins)
+    @doc_hidden
+    @staticmethod
+    def measure_weighted_phase_deviation(
+        current_mags: List[Float64],
+        current_phases: List[Float64],
+        previous_mags: List[Float64],
+        previous_phases: List[Float64],
+        previous_previous_mags: List[Float64],
+        previous_previous_phases: List[Float64],
+    ) -> Float64:
+        value: Float64 = 0.0
+        num_bins: Int = len(current_mags)
+        comptime epsilon: Float64 = 2.220446049250313e-16
+        for i in range(num_bins):
+            var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
+            var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
+            var previous_previous_phase = onset_complex_atan_real(
+                previous_previous_mags[i], previous_previous_phases[i]
+            )
+            var acceleration = (current_phase - previous_phase) - (previous_phase - previous_previous_phase)
+            acceleration *= max(current_mags[i], epsilon)
+            value += onset_wrap_phase(acceleration)
+        return value / Float64(num_bins)
 
-        elif metric == OnsetMetric.high_frequency_content:
-            var bin_scale = 1.0
-            if num_bins > 1:
-                bin_scale = Float64(num_bins) / Float64(num_bins - 1)
-            for i in range(num_bins):
-                value += Float64(i) * bin_scale * current_mags[i] * current_mags[i]
-            return value / Float64(num_bins)
-
-        elif metric == OnsetMetric.spectral_flux:
-            for i in range(num_bins):
-                value += max(current_mags[i] - previous_mags[i], 0.0)
-            return value / Float64(num_bins)
-
-        elif metric == OnsetMetric.modified_kullback_leibler:
-            for i in range(num_bins):
-                var current = max(current_mags[i], epsilon)
-                var previous = max(previous_mags[i], epsilon)
-                value += log(max(current / previous, epsilon))
-            return value / Float64(num_bins)
-
-        elif metric == OnsetMetric.itakura_saito:
-            for i in range(num_bins):
-                var current = max(current_mags[i], epsilon)
-                var previous = max(previous_mags[i], epsilon)
-                var ratio = max((current / previous) * (current / previous), epsilon)
-                value += ratio - log(ratio) - 1.0
-            return value / Float64(num_bins)
-
-        elif metric == OnsetMetric.cosine:
-            var current_norm: Float64 = 0.0
-            var previous_norm: Float64 = 0.0
-            var dot: Float64 = 0.0
-            for i in range(num_bins):
-                var current = max(current_mags[i], epsilon)
-                var previous = max(previous_mags[i], epsilon)
-                current_norm += current * current
-                previous_norm += previous * previous
-                dot += current * previous
-            var denominator = sqrt(current_norm) * sqrt(previous_norm)
-            if denominator <= epsilon:
-                return 0.0
-            return 1.0 - dot / denominator
-
-        elif metric == OnsetMetric.phase_deviation or metric == OnsetMetric.weighted_phase_deviation:
-            for i in range(num_bins):
-                var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
-                var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
-                var previous_previous_phase = onset_complex_atan_real(
-                    previous_previous_mags[i], previous_previous_phases[i]
-                )
-                var acceleration = (current_phase - previous_phase) - \
-                    (previous_phase - previous_previous_phase)
-                if metric == OnsetMetric.weighted_phase_deviation:
-                    acceleration *= max(current_mags[i], epsilon)
-                value += onset_wrap_phase(acceleration)
-            return value / Float64(num_bins)
-
+    @doc_hidden
+    @staticmethod
+    def measure_complex_domain(
+        current_mags: List[Float64],
+        current_phases: List[Float64],
+        previous_mags: List[Float64],
+        previous_phases: List[Float64],
+        previous_previous_mags: List[Float64],
+        previous_previous_phases: List[Float64],
+    ) -> Float64:
+        comptime epsilon: Float64 = 2.220446049250313e-16
         var complex_value: Float64 = 0.0
+        num_bins: Int = len(current_mags)
         for i in range(num_bins):
             var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
             var previous_previous_phase = onset_complex_atan_real(
