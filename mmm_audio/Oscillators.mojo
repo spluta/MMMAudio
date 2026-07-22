@@ -173,6 +173,8 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
 
     var phasor: Phasor[Self.num_chans]
     var world: World 
+    var freq_upsampler: Optional[Upsampler[Self.num_chans, Self.ov_samp]]
+    var phase_upsampler: Optional[Upsampler[Self.num_chans, Self.ov_samp]]
     var downsampler: Optional[Downsampler[Self.num_chans, Self.ov_samp]]
     var last_phase: MFloat[Self.num_chans]
 
@@ -185,10 +187,14 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         self.world = world
         if Self.ov_samp == TimesOversampling.none:
             self.phasor = Phasor[self.num_chans](world)
+            self.freq_upsampler = None
+            self.phase_upsampler = None
             self.downsampler = None
         else:
             oversampled_world = world[].create_subworld(Self.ov_samp)
             self.phasor = Phasor[self.num_chans](oversampled_world)
+            self.freq_upsampler = Upsampler[self.num_chans, Self.ov_samp](world)
+            self.phase_upsampler = Upsampler[self.num_chans, Self.ov_samp](world)
             self.downsampler = Downsampler[self.num_chans, Self.ov_samp](world)
 
         self.last_phase = MFloat[self.num_chans](0.0)
@@ -227,22 +233,70 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             self.last_phase = phase
             return out
         else:
-            comptime for _ in range(Self.ov_samp.times):
-                phase = self.phasor.next(freq, phase_offset, trig_mask)
-
+            comptime for i in range(Self.ov_samp.times):
+                freq2 = self.freq_upsampler.value().next(freq, i)
+                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 sample = MFloat[self.num_chans](0.0)
                 ref temp = self.world[].osc_buffers()
                 comptime for chan in range(self.num_chans):
                     sample[chan] = temp.at_phase[osc_type, self.interp](self.world, phase[chan], self.last_phase[chan])
-                self.downsampler.value().add_sample(sample)  # Get the next sample from the Oscillator buffer using sinc interpolation
+                self.downsampler.value().add_sample(sample)
                 self.last_phase = phase
 
             return self.downsampler.value().get_sample()
 
+    def sine(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a sine wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.sine](freq, phase_offset, trig)
+
+    def triangle(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a triangle wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.triangle](freq, phase_offset, trig)
+
+    def saw(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a saw wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.saw](freq, phase_offset, trig)
+
+    def square(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a square wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.square](freq, phase_offset, trig)
+
     @always_inline
     def next_all_basic_waveforms(
-            mut self, 
-            freq: Float64 = 100.0, 
+            mut self,  
             phase: Float64 = 0.0,
             last_phase: Float64 = 0.0, 
             trig: Bool = False
@@ -250,7 +304,6 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         """Get the next sample of all basic waveforms (sine, triangle, saw, square) in a SIMD vector, where each waveform is in a different lane.
 
         Args:
-            freq: Frequency of the oscillator in Hz.
             phase: Current oscillator phase.
             last_phase: Previous oscillator phase.
             trig: Trigger signal to reset the waveform phase.
@@ -311,15 +364,17 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         comptime if Self.ov_samp == TimesOversampling.none:
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
             comptime for chan in range(self.num_chans):
-                sample = self.next_all_basic_waveforms(freq[chan], phase[chan], self.last_phase[chan], trig)
+                sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
                 out_sample[chan] = (MFloat[2](sample[Int(osc_type0[chan])], sample[Int(osc_type1[chan])]) * MFloat[2](1.0 - osc_frac_interp[chan], osc_frac_interp[chan])).reduce_add()
             self.last_phase = phase
             return out_sample
         else:
-            comptime for _ in range(Self.ov_samp.times):
-                var phase = self.phasor.next(freq, phase_offset, trig_mask)
+            comptime for i in range(Self.ov_samp.times):
+                freq2 = self.freq_upsampler.value().next(freq, i)
+                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 comptime for chan in range(self.num_chans):
-                    sample = self.next_all_basic_waveforms(freq[chan], phase[chan], self.last_phase[chan], trig)
+                    sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
                     out_sample[chan] = (MFloat[2](sample[Int(osc_type0[chan])], sample[Int(osc_type1[chan])]) * MFloat[2](1.0 - osc_frac_interp[chan], osc_frac_interp[chan])).reduce_add()
                 self.downsampler.value().add_sample(out_sample)
                 self.last_phase = phase
@@ -373,8 +428,9 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         else:
             comptime times_os_int = Self.ov_samp.times
             comptime for i in range(times_os_int):
-                # var last_phase = self.phasor.phase
-                var phase = self.phasor.next(freq, phase_offset, trig_mask)
+                freq2 = self.freq_upsampler.value().next(freq, i)
+                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 comptime for out_chan in range(self.num_chans):
                     sample0[out_chan] = buffer.at_phase[self.interp, True, 0](self.world, Int(buf_chan0[out_chan]), phase[out_chan], self.last_phase[out_chan])
                     sample1[out_chan] = buffer.at_phase[self.interp, True, 0](self.world, Int(buf_chan1[out_chan]), phase[out_chan], self.last_phase[out_chan])
@@ -430,9 +486,10 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             return out_sample
         else:
             comptime times_os_int = Self.ov_samp.times
-            comptime for _ in range(times_os_int):
-                # var last_phase = self.phasor.phase
-                var phase = self.phasor.next(freq, phase_offset, trig_mask)
+            comptime for i in range(times_os_int):
+                freq2 = self.freq_upsampler.value().next(freq, i)
+                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 out_sample = MFloat[self.num_chans](0.0)
                 comptime for out_chan in range(self.num_chans):
                     sample = buffer.at_phase[self.interp, True, 0](self.world, phase[out_chan], self.last_phase[out_chan])
@@ -482,7 +539,7 @@ struct OscBank[num: Int](Movable, Copyable):
             out += self.oscs[i].next[osc_type=osc_type](self.freqs[i])
         return out.reduce_add() / Float64(Self.num) 
 
-struct LFOsc[num_chans: Int = 1] (Movable, Copyable):
+struct LFOsc[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.none] (Movable, Copyable):
     """A low-frequency oscillator with multiple waveform options.
     
     This oscillator generates a non-bandlimited oscillator capable of saw, triangle, and square waves. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
@@ -491,10 +548,12 @@ struct LFOsc[num_chans: Int = 1] (Movable, Copyable):
 
     Parameters:
         num_chans: Number of channels (default is 1).
+        ov_samp: How many times oversampling (default is TimesOversampling.none).
     """
 
     var phasor: Phasor[Self.num_chans]
     var world: World 
+    var downsampler: Optional[Downsampler[Self.num_chans, Self.ov_samp]]
 
     def __init__(out self, world: World):
         """Initialize the low-frequency oscillator.
@@ -504,6 +563,14 @@ struct LFOsc[num_chans: Int = 1] (Movable, Copyable):
         """
         self.phasor = Phasor[self.num_chans](world)
         self.world = world
+
+        if Self.ov_samp == TimesOversampling.none:
+            self.phasor = Phasor[self.num_chans](world)
+            self.downsampler = None
+        else:
+            oversampled_world = world[].create_subworld(Self.ov_samp)
+            self.phasor = Phasor[self.num_chans](oversampled_world)
+            self.downsampler = Downsampler[self.num_chans, Self.ov_samp](world)
 
     @always_inline
     def next[osc_type: OscType = OscType.saw](mut self, freq: MFloat[self.num_chans] = 100.0, phase_offset: MFloat[self.num_chans] = 0.0, trig: Bool = False) -> MFloat[self.num_chans]:
@@ -522,16 +589,74 @@ struct LFOsc[num_chans: Int = 1] (Movable, Copyable):
         """
 
         var trig_mask = MBool[self.num_chans](fill=trig)
-        comptime if osc_type == OscType.saw:
-            return 1.0 - 2.0 * self.phasor.next(freq, phase_offset, trig_mask)
-        elif osc_type == OscType.triangle:
-            return (abs((self.phasor.next(freq, phase_offset, trig_mask) * 4.0) - 2.0) - 1.0)
-        elif osc_type == OscType.square:
-            mask = self.phasor.next(freq, phase_offset, trig_mask).lt(0.5)
-            return mask.select(1.0, -1.0)
+        out = MFloat[self.num_chans](0.0)
+        comptime for _ in range(Self.ov_samp.times):
+            comptime if osc_type == OscType.saw:
+                out = 1.0 - 2.0 * self.phasor.next(freq, phase_offset, trig_mask)
+            elif osc_type == OscType.triangle:
+                out = (abs((self.phasor.next(freq, phase_offset, trig_mask) * 4.0) - 2.0) - 1.0)
+            elif osc_type == OscType.square:
+                mask = self.phasor.next(freq, phase_offset, trig_mask).lt(0.5)
+                out = mask.select(1.0, -1.0)
+            else:
+                phase = self.phasor.next(freq, phase_offset, trig_mask)
+                out = sin(phase * two_pi)
+            comptime if Self.ov_samp != TimesOversampling.none:
+                self.downsampler.value().add_sample(out)
+
+        comptime if Self.ov_samp == TimesOversampling.none:
+            return out
         else:
-            phase = self.phasor.next(freq, phase_offset, trig_mask)
-            return sin(phase * two_pi)
+            return self.downsampler.value().get_sample()
+
+    def sine(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a sine wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+            
+        return self.next[OscType.sine](freq, phase_offset, trig)
+
+    def triangle(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a triangle wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.triangle](freq, phase_offset, trig)
+
+    def saw(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a saw wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.saw](freq, phase_offset, trig)
+
+    def square(mut self, freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), trig: Bool = False) -> MFloat[self.num_chans]:
+        """Generate the next sample of a square wave oscillator.
+        
+        Args:
+            freq: Frequency of the oscillator in Hz.
+            phase_offset: Offsets the phase of the oscillator (0 to 1).
+            trig: Trigger signal to reset the phase when switching from False to True (default is 0.0).
+
+        Returns:
+            The next sample of the oscillator output."""
+        return self.next[OscType.square](freq, phase_offset, trig)
 
 struct Dust[num_chans: Int = 1] (Movable, Copyable):
     """A dust noise oscillator that generates random impulses at random intervals.
@@ -764,9 +889,9 @@ struct Sweep[num_chans: Int = 1](Movable, Copyable):
 
         return self.phase
 
-struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
+struct Line[num_chans: Int = 1](Movable, Copyable):
     """
-        A Line between start and end that takes dur seconds to complete.
+        A Line between start and end that takes dur seconds to complete. Line has 3 modes: linear, exponential, and curve. The standard .next function is linear, .exp is exponential, and .curve uses lincurve to warp the output.
     """
 
     var phase: MFloat[Self.num_chans]
@@ -774,7 +899,6 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
     var rising_bool_detector: RisingBoolDetector[Self.num_chans]  # Track the last reset state
     var world: World  # Pointer to the MMMWorld instance
     var freq: MFloat[Self.num_chans]
-    var curve: MFloat[1]
     var val: MFloat[Self.num_chans]
 
     def __init__(out self, world: World):
@@ -788,7 +912,6 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
         self.freq_mul = 1.0 / self.world[].sample_rate
         self.rising_bool_detector = RisingBoolDetector[Self.num_chans]()
         self.freq = MFloat[Self.num_chans](0.0)
-        self.curve = 2.0
         self.val = MFloat[Self.num_chans](0.0)
 
     @always_inline
@@ -810,19 +933,40 @@ struct Line[num_chans: Int = 1, linexpcurve: Int = 0](Movable, Copyable):
         self.phase = resets.select(0.0, self.phase)
         self.phase = clip(self.phase, 0.0, 1.0)
 
-        comptime if Self.linexpcurve == 0:
-            self.val = linlin(self.phase, 0.0, 1.0, start, end)
-        elif Self.linexpcurve == 1:
-            start_mask = start.gt(0.000001)
-            end_mask = end.gt(0.000001)
-            start2 = start_mask.select(start, 0.000001)
-            end2 = end_mask.select(end, 0.000001)
-            self.val = linexp(self.phase, 0.0, 1.0, start2, end2)
-        elif Self.linexpcurve == 2:
-            self.val = lincurve(self.phase, 0.0, 1.0, start, end, self.curve)
-        else:
-            self.val = linlin(self.phase, 0.0, 1.0, start, end)
+        self.val = linlin(self.phase, 0.0, 1.0, start, end)
         return self.val
+    
+    def exp(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = True) -> MFloat[self.num_chans]:
+        """Generate the next exponential line sample.
+
+        Args:
+            start: Starting value of the line.
+            end: Ending value of the line.
+            dur: Duration of the line in seconds.
+            trig: Trigger signal to reset the phase when switching from False to True (default is all False).
+
+        Returns:
+            The next line value shaped to an exponential curve.
+        """
+        self.val = linexp(self.next(0., 1., dur, trig), 0.0, 1.0, start, end)
+        return self.val
+
+    def curve(mut self, start: MFloat[self.num_chans], end: MFloat[self.num_chans], dur: MFloat[self.num_chans], trig: MBool[self.num_chans] = True, curve: MFloat[self.num_chans] = 2.0) -> MFloat[self.num_chans]:
+        """Generate the next curved line sample shaped by lincurve.
+
+        Args:
+            start: Starting value of the line.
+            end: Ending value of the line.
+            dur: Duration of the line in seconds.
+            trig: Trigger signal to reset the phase when switching from False to True (default is all False).
+            curve: The curve factor for the interpolation. A value of 1.0 results in a linear interpolation, values greater than 1.0 result in an exponential curve, and values less than 1.0 result in a logarithmic curve.
+
+        Returns:
+            The next line value shaped by a lincurve.
+        """
+        self.val = lincurve(self.next(0., 1., dur, trig), 0.0, 1.0, start, end, curve)
+        return self.val
+
 
 comptime OscBuffersSize: Int = 16384  # 2^14
 comptime OscBuffersMask: Int = 16383  # 2^14 - 1
