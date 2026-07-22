@@ -1513,12 +1513,10 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         previous_previous_mags: List[Float64],
         previous_previous_phases: List[Float64],
     ) -> Float64:
-        var num_bins = len(current_mags)
-        if num_bins == 0:
-            return 0.0
+        comptime epsilon: Float64 = 2.220446049250313e-16
 
-        var epsilon: Float64 = 2.220446049250313e-16
-        var value: Float64 = 0.0
+        num_bins: Int = len(current_mags)
+        value: Float64 = 0.0
 
         if metric == OnsetMetric.energy:
             for i in range(num_bins):
@@ -1598,9 +1596,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             var current_imag = current_mags[i] * sin(current_phases[i])
             var real_difference = target_real - current_real
             var imag_difference = target_imag - current_imag
-            complex_value += sqrt(
-                real_difference * real_difference + imag_difference * imag_difference
-            )
+            complex_value += sqrt((real_difference * real_difference) + (imag_difference * imag_difference))
         return complex_value / Float64(num_bins)
 
     @doc_hidden
