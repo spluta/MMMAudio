@@ -13,6 +13,7 @@ from .Filters import *
 from .MBufAnalysisBridge import *
 from .MLP_Module import *
 from .Noise import *
+from .OnsetDetection_Module import *
 from .Oscillators import *
 from .Oversampling import *
 from .Pan import *
