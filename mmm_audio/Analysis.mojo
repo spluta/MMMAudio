@@ -1877,38 +1877,24 @@ struct OnsetDetection(Movable, Copyable):
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         var end_frame = min(start_frame + num_frames, buf.num_frames)
-        var total_window = window_size
-        if frame_delta > 0 and OnsetMetric.uses_frame_delta(metric):
-            total_window += frame_delta
 
-        var samples = List[Float64](length=total_window, fill=0.0)
-        var detector = OnsetDetectionFeature(
+        var detector = OnsetDetection(
+            world=world,
             metric=metric,
+            threshold=threshold,
+            debounce=debounce,
             window_size=window_size,
+            hop_size=hop_size,
             filter_size=filter_size,
             frame_delta=frame_delta,
         )
         var onsets = List[Int]()
-        var previous_descriptor: Float64 = 0.0
-        var debounce_count: Int = 0
-        var frame = start_frame
-
-        while frame < end_frame:
-            for i in range(total_window):
-                if frame + i < end_frame:
-                    samples[i] = buf.data[chan][frame + i]
-                else:
-                    samples[i] = 0.0
-
-            detector.next_window(samples)
-            var descriptor = detector.descriptor
-            if descriptor > threshold and previous_descriptor < threshold and debounce_count == 0:
+        
+        for frame in range(start_frame, end_frame):
+            sample = buf.data[chan][frame]
+            if detector.next(sample):
                 onsets.append(frame)
-                debounce_count = max(debounce, 0)
-            elif debounce_count > 0:
-                debounce_count -= 1
-            previous_descriptor = descriptor
-            frame += hop_size
+
         return onsets^
 
 struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
