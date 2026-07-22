@@ -1437,6 +1437,8 @@ def onset_wrap_phase(phase: Float64) -> Float64:
         return phase
     return phase + 2.0 * pi * (1.0 + floor((-pi - phase) / (2.0 * pi)))
 
+comptime onset_detection_metric_functions: Dict[OnsetMetric, def(List[Float64], List[Float64], List[Float64], List[Float64], List[Float64], List[Float64]) -> Float64]
+
 struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     """Onset detection feature analysis.
     
