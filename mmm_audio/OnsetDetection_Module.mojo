@@ -304,7 +304,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     var filter: MedianFilter
     var fft: RealFFT[]
     var delayed_fft: RealFFT[]
-    var window: List[Float64]
     var fft_input: List[Float64]
     var delayed_fft_input: List[Float64]
     var prev_mags: List[Float64]
@@ -337,7 +336,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.filter = MedianFilter(max(filter_size, 3))
         self.fft = RealFFT(self.window_size)
         self.delayed_fft = RealFFT(self.window_size)
-        self.window = Windows.make_window[WindowType.hann](self.window_size)
         self.fft_input = List[Float64](length=self.window_size, fill=0.0)
         self.delayed_fft_input = List[Float64](length=self.window_size, fill=0.0)
         var num_bins = (self.window_size // 2) + 1
@@ -348,6 +346,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.raw_value = 0.0
         self.descriptor = 0.0
         self.previous_raw_value = 0.0
+
+    # TODO: double check that the default implementation of this is using the correct window shape (if any?)
 
     def get_features(self) -> List[Float64]:
         """Return the filtered onset detection-function value."""
@@ -383,12 +383,16 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             self.fft_input[i] = 0.0
             self.delayed_fft_input[i] = 0.0
 
+        # TODO: frame delta is currently in audio samples, therefore it is doing the extra fft 
+        # because it has no idea what is going to be there, but it shouldn't be like this,
+        # the delayed should just be previous mags and phases and the number of delayed frames is
+        # a measure of fft frames (so an integer number of hop sizes) 
         for i in range(self.window_size):
             if i < len(samples):
-                self.fft_input[i] = samples[i] * self.window[i]
+                self.fft_input[i] = samples[i]
             var delayed_index = i + self.frame_delta
             if delayed_index < len(samples):
-                self.delayed_fft_input[i] = samples[delayed_index] * self.window[i]
+                self.delayed_fft_input[i] = samples[delayed_index]
 
         self.fft.fft(self.fft_input)
         var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
@@ -397,10 +401,10 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         if use_frame_delta:
             self.raw_value = OnsetMetric.measure(
                 self.metric,
-                self.delayed_fft.mags,
-                self.delayed_fft.phases,
                 self.fft.mags,
                 self.fft.phases,
+                self.delayed_fft.mags,
+                self.delayed_fft.phases,
                 self.fft.mags, # these are being passed as "dummy" mags, they're not used...
                 self.fft.phases, # these are being passed as "dummy" phases, they're not used...
             )
