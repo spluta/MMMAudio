@@ -2,13 +2,6 @@
 
 from mmm_audio import *
 
-comptime window_size: Int = 1024
-comptime fft_size: Int = 1024
-comptime hop_size: Int = 512
-comptime filter_size: Int = 5
-comptime frame_delta: Int = 0
-comptime onset_debounce: Int = 2
-
 def main() raises:
 
     window_size = 1024
@@ -22,11 +15,16 @@ def main() raises:
             thresholds[i] = Float64(ts)
 
     buf = Buffer.load("/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav")
+    sample_rate = buf.sample_rate
+
+    comptime filter_size: Int = 5
+    comptime frame_delta: Int = 0
+    onset_debounce: Float64 = (Float64(hop_size) / sample_rate) * 2.0
 
     environment = alloc[Environment](1)
     environment.init_pointee_move(Environment(64, 2, 2))
     world = alloc[MMMWorld](1)
-    world.init_pointee_move(MMMWorld(buf.sample_rate, environment))
+    world.init_pointee_move(MMMWorld(sample_rate, environment))
 
     buf_slice_points = List[List[Int]](length=10, fill=List[Int]())
 

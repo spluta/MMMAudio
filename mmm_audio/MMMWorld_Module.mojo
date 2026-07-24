@@ -49,6 +49,7 @@ struct MMMWorld(Movable, Copyable):
     In pretty much all usage, don't edit this struct.
     """
     var sample_rate: Float64
+    var sample_dur_seconds: Float64
     var environment_ptr: Optional[UnsafePointer[mut=True, Environment, MutUntrackedOrigin]]
 
     def windows(self) -> ref[self.environment_ptr.value()[].windows] Windows:
@@ -94,6 +95,7 @@ struct MMMWorld(Movable, Copyable):
         """
         
         self.sample_rate = sample_rate
+        self.sample_dur_seconds = 1.0 / sample_rate
         self.environment_ptr = environment_ptr
 
         print("MMMWorld initialized with sample rate:", self.sample_rate)

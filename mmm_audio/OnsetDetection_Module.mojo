@@ -39,7 +39,7 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
         elif self._value == OnsetMetric.rectified_complex_domain._value:
             writer.write("OnsetMetric: rectified_complex_domain")
         else:
-            writer.write("OnsetMetric: ", self._value)
+            writer.write("OnsetMetric unknown _value: ", self._value)
 
     @doc_hidden
     def __eq__(self, other: Self) -> Bool:
@@ -302,11 +302,10 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
     var filter_size: Int
     var frame_delta: Int
     var filter: MedianFilter
-    var zero_mags: List[Float64]
-    var zero_phases: List[Float64]
     var frame_history_mags: List[List[Float64]]
     var frame_history_phases: List[List[Float64]]
     var history_size: Int
+    var history_write_head: Int
     var raw_value: Float64
     var descriptor: Float64
     var previous_raw_value: Float64
@@ -332,11 +331,13 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         self.frame_delta = max(frame_delta, 0)
         self.filter = MedianFilter(max(filter_size, 3))
         var num_bins = (self.window_size // 2) + 1
-        self.zero_mags = List[Float64](length=num_bins, fill=0.0)
-        self.zero_phases = List[Float64](length=num_bins, fill=0.0)
         self.frame_history_mags = List[List[Float64]]()
         self.frame_history_phases = List[List[Float64]]()
         self.history_size = max(self.frame_delta, 2)
+        self.history_write_head = 0
+        for _ in range(self.history_size):
+            self.frame_history_mags.append(List[Float64](length=num_bins, fill=0.0))
+            self.frame_history_phases.append(List[Float64](length=num_bins, fill=0.0))
         self.raw_value = 0.0
         self.descriptor = 0.0
         self.previous_raw_value = 0.0
@@ -360,59 +361,25 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
             mags: The magnitude spectrum of the input audio frame. This should be a List of Float64 with length equal to `window_size // 2 + 1`.
             phases: The phase spectrum of the input audio frame. This should be a List of Float64 with length equal to `window_size // 2 + 1`.
         """
-        var history_len = len(self.frame_history_mags)
-        var has_prev = history_len >= 1
-        var has_prev_prev = history_len >= 2
-        var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
-        var prev_index = -1
-        var prev_prev_index = -1
-        
-        if has_prev:
-            prev_index = history_len - 1
-        if has_prev_prev:
-            prev_prev_index = history_len - 2
-        if use_frame_delta and history_len >= self.frame_delta:
-            prev_index = history_len - self.frame_delta
+        var prev_offset = 1
+        if self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric):
+            prev_offset = self.frame_delta
+        var prev_index = (self.history_write_head - prev_offset + self.history_size) % self.history_size
+        var prev_prev_index = (self.history_write_head - 2 + self.history_size) % self.history_size
 
-        var use_prev = prev_index >= 0
-        var use_prev_prev = prev_prev_index >= 0
-
-        if use_prev and use_prev_prev:
-            self.raw_value = OnsetMetric.measure(
-                self.metric,
-                mags,
-                phases,
-                self.frame_history_mags[prev_index],
-                self.frame_history_phases[prev_index],
-                self.frame_history_mags[prev_prev_index],
-                self.frame_history_phases[prev_prev_index],
-            )
-        elif use_prev:
-            self.raw_value = OnsetMetric.measure(
-                self.metric,
-                mags,
-                phases,
-                self.frame_history_mags[prev_index],
-                self.frame_history_phases[prev_index],
-                self.zero_mags,
-                self.zero_phases,
-            )
-        else:
-            self.raw_value = OnsetMetric.measure(
-                self.metric,
-                mags,
-                phases,
-                self.zero_mags,
-                self.zero_phases,
-                self.zero_mags,
-                self.zero_phases,
-            )
+        self.raw_value = OnsetMetric.measure(
+            self.metric,
+            mags,
+            phases,
+            self.frame_history_mags[prev_index],
+            self.frame_history_phases[prev_index],
+            self.frame_history_mags[prev_prev_index],
+            self.frame_history_phases[prev_prev_index],
+        )
         self.filter_value()
-        self.frame_history_mags.append(mags.copy())
-        self.frame_history_phases.append(phases.copy())
-        if len(self.frame_history_mags) > self.history_size:
-            _ = self.frame_history_mags.pop(0)
-            _ = self.frame_history_phases.pop(0)
+        self.frame_history_mags[self.history_write_head] = mags.copy()
+        self.frame_history_phases[self.history_write_head] = phases.copy()
+        self.history_write_head = (self.history_write_head + 1) % self.history_size
 
     @staticmethod
     def buf_analysis(
@@ -459,7 +426,7 @@ struct OnsetDetection(Movable, Copyable):
     var world: World
     var metric: OnsetMetric
     var threshold: Float64
-    var debounce: Int
+    var debounce: Float64
     var window_size: Int
     var hop_size: Int
     var filter_size: Int
@@ -467,7 +434,7 @@ struct OnsetDetection(Movable, Copyable):
     var state: Bool
     var descriptor: Float64
     var previous_descriptor: Float64
-    var debounce_count: Int
+    var debounce_count: Float64
     var fftp: FFTProcess[
         OnsetDetectionFeature,
         ifft=False,
@@ -479,8 +446,7 @@ struct OnsetDetection(Movable, Copyable):
         world: World,
         metric: OnsetMetric = OnsetMetric.energy,
         threshold: Float64 = 0.5,
-        # TODO: i'd prefer to have debounce be expressed in seconds, even if it's rounded to the nearest sample.
-        debounce: Int = 2,
+        debounce: Float64 = 0.1,
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
@@ -492,17 +458,16 @@ struct OnsetDetection(Movable, Copyable):
             world: The MMMWorld used for buffered processing.
             metric: The onset metric to calculate.
             threshold: Threshold crossing required to emit an onset.
-            debounce: Minimum number of audio samples between onsets.
+            debounce: Minimum time duration (in seconds) between onsets.
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
             frame_delta: Offset in analysis frames (hops) used by Flux, MKL, and Itakura-Saito.
         """
-        # TODO: I would prefer to have debouce be measure in time, even if that means rounding to the nearest sample.
         self.world = world
         self.metric = metric
         self.threshold = threshold
-        self.debounce = max(debounce, 0)
+        self.debounce = max(debounce, 0.0)
         self.window_size = window_size
         self.hop_size = hop_size
         self.filter_size = filter_size
@@ -538,11 +503,11 @@ struct OnsetDetection(Movable, Copyable):
         _ = self.fftp.next(input)
 
         self.descriptor = self.fftp.get_process().descriptor
-        if self.descriptor > self.threshold and self.previous_descriptor < self.threshold and self.debounce_count == 0:
+        if self.descriptor >= self.threshold and self.previous_descriptor < self.threshold and self.debounce_count <= 0.0:
             self.state = True
             self.debounce_count = self.debounce
         elif self.debounce_count > 0:
-            self.debounce_count -= 1
+            self.debounce_count -= self.world[].sample_dur_seconds
         self.previous_descriptor = self.descriptor
 
         return self.state
@@ -556,7 +521,7 @@ struct OnsetDetection(Movable, Copyable):
         var num_frames: Int = -1,
         metric: OnsetMetric = OnsetMetric.energy,
         threshold: Float64 = 0.5,
-        debounce: Int = 2,
+        debounce: Float64 = 0.1,
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
@@ -572,7 +537,7 @@ struct OnsetDetection(Movable, Copyable):
             num_frames: Number of source frames to analyze. A negative value analyzes to the end of the buffer.
             metric: The onset metric to calculate.
             threshold: Threshold crossing required to emit an onset.
-            debounce: Minimum number of audio samples between onsets.
+            debounce: Minimum time duration (in seconds) between onsets.
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
@@ -581,7 +546,6 @@ struct OnsetDetection(Movable, Copyable):
         Returns:
             A List of Int sample indices where onsets were detected.
         """
-        # TODO: I would prefer to have debouce be measure in time, even if that means rounding to the nearest sample.
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         var end_frame = min(start_frame + num_frames, buf.num_frames)
@@ -601,7 +565,7 @@ struct OnsetDetection(Movable, Copyable):
         for frame in range(start_frame, end_frame):
             sample = buf.data[chan][frame]
             if detector.next(sample):
-                onsets.append(frame)
+                onsets.append(frame - (window_size // 2)) # subtract half the window size because I want it to be in the "middle" of the fft window
 
         return onsets^
 
