@@ -288,7 +288,7 @@ def onset_wrap_phase(phase: Float64) -> Float64:
         return phase
     return phase + 2.0 * pi * (1.0 + floor((-pi - phase) / (2.0 * pi)))
 
-struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
+struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
     """Onset detection feature analysis.
     
     This struct is to be used as the process of a `BufferedProcess`. It should use `WindowType.hann` for the input window shape.
@@ -302,8 +302,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     var filter_size: Int
     var frame_delta: Int
     var filter: MedianFilter
-    var fft: RealFFT[]
-    var fft_input: List[Float64]
     var zero_mags: List[Float64]
     var zero_phases: List[Float64]
     var frame_history_mags: List[List[Float64]]
@@ -337,8 +335,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.filter_size = filter_size
         self.frame_delta = max(frame_delta, 0)
         self.filter = MedianFilter(max(filter_size, 3))
-        self.fft = RealFFT(self.window_size)
-        self.fft_input = List[Float64](length=self.window_size, fill=0.0)
         var num_bins = (self.window_size // 2) + 1
         self.zero_mags = List[Float64](length=num_bins, fill=0.0)
         self.zero_phases = List[Float64](length=num_bins, fill=0.0)
@@ -353,8 +349,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.descriptor = 0.0
         self.previous_raw_value = 0.0
 
-    # TODO: double check that the default implementation of this is using the correct window shape (if any?)
-
     def get_features(self) -> List[Float64]:
         """Return the filtered onset detection-function value."""
         return [self.descriptor]
@@ -367,28 +361,21 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             self.descriptor = self.raw_value - self.previous_raw_value
         self.previous_raw_value = self.raw_value
 
-    def next_window(mut self, samples: List[Float64]):
+    def next_frame(mut self, mags: List[Float64], phases: List[Float64]):
         """Process an unwindowed audio region and return its filtered value.
 
         Args:
-            samples: The input audio samples to analyze. This should be a List of Float64 with length equal to `window_size`.
+            mags: The magnitude spectrum of the input audio frame. This should be a List of Float64 with length equal to `window_size // 2 + 1`.
+            phases: The phase spectrum of the input audio frame. This should be a List of Float64 with length equal to `window_size // 2 + 1`.
         """
-        for i in range(self.window_size):
-            self.fft_input[i] = 0.0
-
-        for i in range(self.window_size):
-            if i < len(samples):
-                self.fft_input[i] = samples[i]
-
-        self.fft.fft(self.fft_input)
 
         if self.use_frame_delta:
             if self.history_len >= self.frame_delta:
                 if self.has_prev_prev:
                     self.raw_value = OnsetMetric.measure(
                         self.metric,
-                        self.fft.mags,
-                        self.fft.phases,
+                        mags,
+                        phases,
                         self.frame_history_mags[self.history_len - self.frame_delta],
                         self.frame_history_phases[self.history_len - self.frame_delta],
                         self.frame_history_mags[self.history_len - 2],
@@ -397,8 +384,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 else:
                     self.raw_value = OnsetMetric.measure(
                         self.metric,
-                        self.fft.mags,
-                        self.fft.phases,
+                        mags,
+                        phases,
                         self.frame_history_mags[self.history_len - self.frame_delta],
                         self.frame_history_phases[self.history_len - self.frame_delta],
                         self.zero_mags,
@@ -407,8 +394,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             else:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
-                    self.fft.mags,
-                    self.fft.phases,
+                    mags,
+                    phases,
                     self.zero_mags,
                     self.zero_phases,
                     self.zero_mags,
@@ -418,8 +405,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             if self.has_prev_prev:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
-                    self.fft.mags,
-                    self.fft.phases,
+                    mags,
+                    phases,
                     self.frame_history_mags[self.history_len - 1],
                     self.frame_history_phases[self.history_len - 1],
                     self.frame_history_mags[self.history_len - 2],
@@ -428,8 +415,8 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             else:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
-                    self.fft.mags,
-                    self.fft.phases,
+                    mags,
+                    phases,
                     self.frame_history_mags[self.history_len - 1],
                     self.frame_history_phases[self.history_len - 1],
                     self.zero_mags,
@@ -438,16 +425,16 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         else:
             self.raw_value = OnsetMetric.measure(
                 self.metric,
-                self.fft.mags,
-                self.fft.phases,
+                mags,
+                phases,
                 self.zero_mags,
                 self.zero_phases,
                 self.zero_mags,
                 self.zero_phases,
             )
         self.filter_value()
-        self.frame_history_mags.append(self.fft.mags.copy())
-        self.frame_history_phases.append(self.fft.phases.copy())
+        self.frame_history_mags.append(mags.copy())
+        self.frame_history_phases.append(phases.copy())
         if len(self.frame_history_mags) > self.history_size:
             _ = self.frame_history_mags.pop(0)
             _ = self.frame_history_phases.pop(0)
@@ -490,7 +477,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
-        return MBufAnalysis.buffered_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
+        return MBufAnalysis.fft_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
 
 struct OnsetDetection(Movable, Copyable):
     """Detect spectral onsets in a time series of audio samples.
@@ -509,11 +496,10 @@ struct OnsetDetection(Movable, Copyable):
     var descriptor: Float64
     var previous_descriptor: Float64
     var debounce_count: Int
-    var fftp: BufferedProcess[
+    var fftp: FFTProcess[
         OnsetDetectionFeature,
-        output=False,
-        input_window_shape=WindowType.hann,
-        output_window_shape=WindowType.rect,
+        ifft=False,
+        input_window_shape=WindowType.hann
     ]
 
     def __init__(
@@ -560,11 +546,10 @@ struct OnsetDetection(Movable, Copyable):
             filter_size=self.filter_size,
             frame_delta=self.frame_delta,
         )
-        self.fftp = BufferedProcess[
+        self.fftp = FFTProcess[
             OnsetDetectionFeature,
-            output=False,
+            ifft=False,
             input_window_shape=WindowType.hann,
-            output_window_shape=WindowType.rect,
         ](self.world, processor^, window_size=self.window_size, hop_size=self.hop_size)
 
     def next(mut self, input: SIMD[DType.float64,1]) -> Bool:
