@@ -291,7 +291,7 @@ def onset_wrap_phase(phase: Float64) -> Float64:
 struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     """Onset detection feature analysis.
     
-    This struct is to be used as the process of a `BufferedProcess`.
+    This struct is to be used as the process of a `BufferedProcess`. It should use `WindowType.hann` for the input window shape.
 
     This struct creates a time series of spectral differences based on a provided metric.
 
@@ -303,13 +303,14 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     var frame_delta: Int
     var filter: MedianFilter
     var fft: RealFFT[]
-    var delayed_fft: RealFFT[]
     var fft_input: List[Float64]
-    var delayed_fft_input: List[Float64]
     var prev_mags: List[Float64]
     var prev_phases: List[Float64]
     var prev_prev_mags: List[Float64]
     var prev_prev_phases: List[Float64]
+    var frame_history_mags: List[List[Float64]]
+    var frame_history_phases: List[List[Float64]]
+    var history_size: Int
     var raw_value: Float64
     var descriptor: Float64
     var previous_raw_value: Float64
@@ -319,7 +320,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         metric: OnsetMetric = OnsetMetric.energy,
         window_size: Int = 1024,
         filter_size: Int = 5,
-        frame_delta: Int = 0,
+        frame_delta: Int = 1,
     ):
         """Initialize an onset detection function.
         
@@ -327,7 +328,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             metric: The onset metric to calculate.
             window_size: Analysis window size in samples.
             filter_size: Median-filter size. Values below 3 use a first difference.
-            frame_delta: Offset in samples for Flux, MKL, and Itakura-Saito.
+            frame_delta: Offset in analysis frames (hops) for Flux, MKL, and Itakura-Saito.
         """
         self.metric = metric
         self.window_size = window_size
@@ -335,14 +336,15 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.frame_delta = max(frame_delta, 0)
         self.filter = MedianFilter(max(filter_size, 3))
         self.fft = RealFFT(self.window_size)
-        self.delayed_fft = RealFFT(self.window_size)
         self.fft_input = List[Float64](length=self.window_size, fill=0.0)
-        self.delayed_fft_input = List[Float64](length=self.window_size, fill=0.0)
         var num_bins = (self.window_size // 2) + 1
         self.prev_mags = List[Float64](length=num_bins, fill=0.0)
         self.prev_phases = List[Float64](length=num_bins, fill=0.0)
         self.prev_prev_mags = List[Float64](length=num_bins, fill=0.0)
         self.prev_prev_phases = List[Float64](length=num_bins, fill=0.0)
+        self.frame_history_mags = List[List[Float64]]()
+        self.frame_history_phases = List[List[Float64]]()
+        self.history_size = max(self.frame_delta, 2)
         self.raw_value = 0.0
         self.descriptor = 0.0
         self.previous_raw_value = 0.0
@@ -381,33 +383,70 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         """
         for i in range(self.window_size):
             self.fft_input[i] = 0.0
-            self.delayed_fft_input[i] = 0.0
 
-        # TODO: frame delta is currently in audio samples, therefore it is doing the extra fft 
-        # because it has no idea what is going to be there, but it shouldn't be like this,
-        # the delayed should just be previous mags and phases and the number of delayed frames is
-        # a measure of fft frames (so an integer number of hop sizes) 
         for i in range(self.window_size):
             if i < len(samples):
                 self.fft_input[i] = samples[i]
-            var delayed_index = i + self.frame_delta
-            if delayed_index < len(samples):
-                self.delayed_fft_input[i] = samples[delayed_index]
 
         self.fft.fft(self.fft_input)
+
+        var history_len = len(self.frame_history_mags)
+        var has_prev = history_len >= 1
+        var has_prev_prev = history_len >= 2
         var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
         if use_frame_delta:
-            self.delayed_fft.fft(self.delayed_fft_input)
-        if use_frame_delta:
-            self.raw_value = OnsetMetric.measure(
-                self.metric,
-                self.fft.mags,
-                self.fft.phases,
-                self.delayed_fft.mags,
-                self.delayed_fft.phases,
-                self.fft.mags, # these are being passed as "dummy" mags, they're not used...
-                self.fft.phases, # these are being passed as "dummy" phases, they're not used...
-            )
+            if history_len >= self.frame_delta:
+                if has_prev_prev:
+                    self.raw_value = OnsetMetric.measure(
+                        self.metric,
+                        self.fft.mags,
+                        self.fft.phases,
+                        self.frame_history_mags[history_len - self.frame_delta],
+                        self.frame_history_phases[history_len - self.frame_delta],
+                        self.frame_history_mags[history_len - 2],
+                        self.frame_history_phases[history_len - 2],
+                    )
+                else:
+                    self.raw_value = OnsetMetric.measure(
+                        self.metric,
+                        self.fft.mags,
+                        self.fft.phases,
+                        self.frame_history_mags[history_len - self.frame_delta],
+                        self.frame_history_phases[history_len - self.frame_delta],
+                        self.prev_prev_mags,
+                        self.prev_prev_phases,
+                    )
+            else:
+                self.raw_value = OnsetMetric.measure(
+                    self.metric,
+                    self.fft.mags,
+                    self.fft.phases,
+                    self.prev_mags,
+                    self.prev_phases,
+                    self.prev_prev_mags,
+                    self.prev_prev_phases,
+                )
+        elif has_prev:
+            if has_prev_prev:
+                self.raw_value = OnsetMetric.measure(
+                    self.metric,
+                    self.fft.mags,
+                    self.fft.phases,
+                    self.frame_history_mags[history_len - 1],
+                    self.frame_history_phases[history_len - 1],
+                    self.frame_history_mags[history_len - 2],
+                    self.frame_history_phases[history_len - 2],
+                )
+            else:
+                self.raw_value = OnsetMetric.measure(
+                    self.metric,
+                    self.fft.mags,
+                    self.fft.phases,
+                    self.frame_history_mags[history_len - 1],
+                    self.frame_history_phases[history_len - 1],
+                    self.prev_prev_mags,
+                    self.prev_prev_phases,
+                )
         else:
             self.raw_value = OnsetMetric.measure(
                 self.metric,
@@ -419,11 +458,11 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
                 self.prev_prev_phases,
             )
         self.filter_value()
-        for i in range(len(self.fft.mags)):
-            self.prev_prev_phases[i] = self.prev_phases[i]
-            self.prev_prev_mags[i] = self.prev_mags[i]
-            self.prev_phases[i] = self.fft.phases[i]
-            self.prev_mags[i] = self.fft.mags[i]
+        self.frame_history_mags.append(self.fft.mags.copy())
+        self.frame_history_phases.append(self.fft.phases.copy())
+        if len(self.frame_history_mags) > self.history_size:
+            _ = self.frame_history_mags.pop(0)
+            _ = self.frame_history_phases.pop(0)
 
     @staticmethod
     def buf_analysis(
@@ -435,7 +474,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 0,
+        frame_delta: Int = 1,
     ) raises -> List[List[Float64]]:
         """Analyze a buffer for OnsetDetectionFeature values.
 
@@ -452,7 +491,7 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
-            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+            frame_delta: Offset in analysis frames (hops) used by Flux, MKL, and Itakura-Saito.
 
         Returns:
             One filtered onset detection-function value for each analysis hop.
@@ -482,7 +521,7 @@ struct OnsetDetection(Movable, Copyable):
     var fftp: BufferedProcess[
         OnsetDetectionFeature,
         output=False,
-        input_window_shape=WindowType.rect,
+        input_window_shape=WindowType.hann,
         output_window_shape=WindowType.rect,
     ]
 
@@ -496,7 +535,7 @@ struct OnsetDetection(Movable, Copyable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 0,
+        frame_delta: Int = 1,
     ):
         """Initialize an onset slicer.
         
@@ -508,7 +547,7 @@ struct OnsetDetection(Movable, Copyable):
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
-            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+            frame_delta: Offset in analysis frames (hops) used by Flux, MKL, and Itakura-Saito.
         """
         # TODO: I would prefer to have debouce be measure in time, even if that means rounding to the nearest sample.
         self.world = world
@@ -533,7 +572,7 @@ struct OnsetDetection(Movable, Copyable):
         self.fftp = BufferedProcess[
             OnsetDetectionFeature,
             output=False,
-            input_window_shape=WindowType.rect,
+            input_window_shape=WindowType.hann,
             output_window_shape=WindowType.rect,
         ](self.world, processor^, window_size=self.window_size, hop_size=self.hop_size)
 
@@ -573,7 +612,7 @@ struct OnsetDetection(Movable, Copyable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 0,
+        frame_delta: Int = 1,
     ) raises -> List[Int]:
         """Return onset sample indices for a buffer.
         
@@ -589,7 +628,7 @@ struct OnsetDetection(Movable, Copyable):
             window_size: Analysis window size in samples.
             hop_size: Number of samples between analysis frames.
             filter_size: Median-filter size.
-            frame_delta: Offset used by Flux, MKL, and Itakura-Saito.
+            frame_delta: Offset in analysis frames (hops) used by Flux, MKL, and Itakura-Saito.
 
         Returns:
             A List of Int sample indices where onsets were detected.
