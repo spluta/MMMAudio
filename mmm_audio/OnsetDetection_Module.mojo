@@ -304,13 +304,15 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     var filter: MedianFilter
     var fft: RealFFT[]
     var fft_input: List[Float64]
-    var prev_mags: List[Float64]
-    var prev_phases: List[Float64]
-    var prev_prev_mags: List[Float64]
-    var prev_prev_phases: List[Float64]
+    var zero_mags: List[Float64]
+    var zero_phases: List[Float64]
     var frame_history_mags: List[List[Float64]]
     var frame_history_phases: List[List[Float64]]
     var history_size: Int
+    var history_len: Int
+    var has_prev: Bool
+    var has_prev_prev: Bool
+    var use_frame_delta: Bool
     var raw_value: Float64
     var descriptor: Float64
     var previous_raw_value: Float64
@@ -338,13 +340,15 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         self.fft = RealFFT(self.window_size)
         self.fft_input = List[Float64](length=self.window_size, fill=0.0)
         var num_bins = (self.window_size // 2) + 1
-        self.prev_mags = List[Float64](length=num_bins, fill=0.0)
-        self.prev_phases = List[Float64](length=num_bins, fill=0.0)
-        self.prev_prev_mags = List[Float64](length=num_bins, fill=0.0)
-        self.prev_prev_phases = List[Float64](length=num_bins, fill=0.0)
+        self.zero_mags = List[Float64](length=num_bins, fill=0.0)
+        self.zero_phases = List[Float64](length=num_bins, fill=0.0)
         self.frame_history_mags = List[List[Float64]]()
         self.frame_history_phases = List[List[Float64]]()
         self.history_size = max(self.frame_delta, 2)
+        self.history_len = 0
+        self.has_prev = False
+        self.has_prev_prev = False
+        self.use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
         self.raw_value = 0.0
         self.descriptor = 0.0
         self.previous_raw_value = 0.0
@@ -354,18 +358,6 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
     def get_features(self) -> List[Float64]:
         """Return the filtered onset detection-function value."""
         return [self.descriptor]
-
-    @doc_hidden
-    def update_history(
-        mut self,
-        mags: List[Float64],
-        phases: List[Float64],
-    ):
-        for i in range(len(mags)):
-            self.prev_prev_phases[i] = self.prev_phases[i]
-            self.prev_prev_mags[i] = self.prev_mags[i]
-            self.prev_phases[i] = phases[i]
-            self.prev_mags[i] = mags[i]
 
     @doc_hidden
     def filter_value(mut self):
@@ -390,72 +382,68 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
 
         self.fft.fft(self.fft_input)
 
-        var history_len = len(self.frame_history_mags)
-        var has_prev = history_len >= 1
-        var has_prev_prev = history_len >= 2
-        var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
-        if use_frame_delta:
-            if history_len >= self.frame_delta:
-                if has_prev_prev:
+        if self.use_frame_delta:
+            if self.history_len >= self.frame_delta:
+                if self.has_prev_prev:
                     self.raw_value = OnsetMetric.measure(
                         self.metric,
                         self.fft.mags,
                         self.fft.phases,
-                        self.frame_history_mags[history_len - self.frame_delta],
-                        self.frame_history_phases[history_len - self.frame_delta],
-                        self.frame_history_mags[history_len - 2],
-                        self.frame_history_phases[history_len - 2],
+                        self.frame_history_mags[self.history_len - self.frame_delta],
+                        self.frame_history_phases[self.history_len - self.frame_delta],
+                        self.frame_history_mags[self.history_len - 2],
+                        self.frame_history_phases[self.history_len - 2],
                     )
                 else:
                     self.raw_value = OnsetMetric.measure(
                         self.metric,
                         self.fft.mags,
                         self.fft.phases,
-                        self.frame_history_mags[history_len - self.frame_delta],
-                        self.frame_history_phases[history_len - self.frame_delta],
-                        self.prev_prev_mags,
-                        self.prev_prev_phases,
+                        self.frame_history_mags[self.history_len - self.frame_delta],
+                        self.frame_history_phases[self.history_len - self.frame_delta],
+                        self.zero_mags,
+                        self.zero_phases,
                     )
             else:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
                     self.fft.mags,
                     self.fft.phases,
-                    self.prev_mags,
-                    self.prev_phases,
-                    self.prev_prev_mags,
-                    self.prev_prev_phases,
+                    self.zero_mags,
+                    self.zero_phases,
+                    self.zero_mags,
+                    self.zero_phases,
                 )
-        elif has_prev:
-            if has_prev_prev:
+        elif self.has_prev:
+            if self.has_prev_prev:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
                     self.fft.mags,
                     self.fft.phases,
-                    self.frame_history_mags[history_len - 1],
-                    self.frame_history_phases[history_len - 1],
-                    self.frame_history_mags[history_len - 2],
-                    self.frame_history_phases[history_len - 2],
+                    self.frame_history_mags[self.history_len - 1],
+                    self.frame_history_phases[self.history_len - 1],
+                    self.frame_history_mags[self.history_len - 2],
+                    self.frame_history_phases[self.history_len - 2],
                 )
             else:
                 self.raw_value = OnsetMetric.measure(
                     self.metric,
                     self.fft.mags,
                     self.fft.phases,
-                    self.frame_history_mags[history_len - 1],
-                    self.frame_history_phases[history_len - 1],
-                    self.prev_prev_mags,
-                    self.prev_prev_phases,
+                    self.frame_history_mags[self.history_len - 1],
+                    self.frame_history_phases[self.history_len - 1],
+                    self.zero_mags,
+                    self.zero_phases,
                 )
         else:
             self.raw_value = OnsetMetric.measure(
                 self.metric,
                 self.fft.mags,
                 self.fft.phases,
-                self.prev_mags,
-                self.prev_phases,
-                self.prev_prev_mags,
-                self.prev_prev_phases,
+                self.zero_mags,
+                self.zero_phases,
+                self.zero_mags,
+                self.zero_phases,
             )
         self.filter_value()
         self.frame_history_mags.append(self.fft.mags.copy())
@@ -463,6 +451,9 @@ struct OnsetDetectionFeature(BufferedProcessable, GetFloat64Featurable):
         if len(self.frame_history_mags) > self.history_size:
             _ = self.frame_history_mags.pop(0)
             _ = self.frame_history_phases.pop(0)
+        self.history_len = len(self.frame_history_mags)
+        self.has_prev = self.history_len >= 1
+        self.has_prev_prev = self.history_len >= 2
 
     @staticmethod
     def buf_analysis(
