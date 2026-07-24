@@ -45,8 +45,8 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
         elif metric_string == "rectified_complex_domain":
             return OnsetMetric.rectified_complex_domain
         else:
-            print("Unknown onset metric string: ", metric_string, ", returning energy")
-            return OnsetMetric.energy
+            print("Unknown onset metric string: ", metric_string, ", returning complex_domain")
+            return OnsetMetric.complex_domain
 
     def write_to(self, mut writer: Some[Writer]):
         if self._value == OnsetMetric.energy._value:
@@ -343,7 +343,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
 
     def __init__(
         out self,
-        metric: OnsetMetric = OnsetMetric.energy,
+        metric: OnsetMetric = OnsetMetric.complex_domain,
         window_size: Int = 1024,
         filter_size: Int = 5,
         frame_delta: Int = 0,
@@ -422,7 +422,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         chan: Int = 0,
         start_frame: Int = 0,
         var num_frames: Int = -1,
-        metric: OnsetMetric = OnsetMetric.energy,
+        metric: OnsetMetric = OnsetMetric.complex_domain,
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
@@ -482,7 +482,7 @@ struct OnsetDetection(Movable, Copyable):
     def __init__(
         out self,
         world: World,
-        metric: OnsetMetric = OnsetMetric.energy,
+        metric: OnsetMetric = OnsetMetric.complex_domain,
         threshold: Float64 = 0.5,
         debounce: Float64 = 0.1,
         window_size: Int = 1024,
@@ -557,7 +557,7 @@ struct OnsetDetection(Movable, Copyable):
         chan: Int = 0,
         start_frame: Int = 0,
         var num_frames: Int = -1,
-        metric: OnsetMetric = OnsetMetric.energy,
+        metric: OnsetMetric = OnsetMetric.complex_domain,
         threshold: Float64 = 0.5,
         debounce: Float64 = 0.1,
         window_size: Int = 1024,

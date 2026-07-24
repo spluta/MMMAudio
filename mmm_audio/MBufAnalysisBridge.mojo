@@ -21,6 +21,7 @@ def PyInit_MBufAnalysisBridge() abi("C") -> PythonObject:
     except e:
         abort(String("error creating Python Mojo module:", e))
 
+@doc_hidden
 def get_at_key[T: ConvertibleFromPython & ImplicitlyCopyable & Writable](analysis: String, py_dict: PythonObject, key: String, default: Optional[T] = None) raises -> T:
     if key in py_dict:
         return T(py=py_dict[key])
@@ -34,6 +35,7 @@ def get_at_key[T: ConvertibleFromPython & ImplicitlyCopyable & Writable](analysi
 # the above get_at_key doesn't work with Float64 🤷🏼
 # it can stay as a separate function until Modular
 # fixes what looks like a bug
+@doc_hidden
 def getFloat64(analysis: String, py_dict: PythonObject, key: String, default: Optional[Float64] = None) raises -> Float64:
     if key in py_dict:
         return Float64(py=py_dict[key])
@@ -44,6 +46,7 @@ def getFloat64(analysis: String, py_dict: PythonObject, key: String, default: Op
             print("MBufAnalysis", analysis, ": No '", key, "' key in input dictionary, defaulting to ", default)
             return default.value()
 
+@doc_hidden
 struct AnalysisParams:
     var buf: Buffer
     var chan: Int
@@ -62,6 +65,30 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def mel_bands(py_dict: PythonObject) raises -> PythonObject:
+        """Mel-band energy analysis of a buffer.
+
+        Runs short-time FFT analysis and computes mel-band energies per hop.
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+            * **num_bands:** (Int, optional, default 40): Number of mel bands.
+            * **min_freq:** (Float64, optional, default 20.0): Minimum analysis frequency in Hz.
+            * **max_freq:** (Float64, optional, default 20000.0): Maximum analysis frequency in Hz.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, num_bands].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
 
         ap = AnalysisParams(py_dict)
         window_size = get_at_key[Int]("mel_bands", py_dict, "window_size", 1024)
@@ -77,6 +104,32 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def mfcc(py_dict: PythonObject) raises -> PythonObject:
+        """MFCC analysis of a buffer.
+
+        Runs short-time FFT analysis, maps each frame to mel bands, then computes
+        cepstral coefficients per hop.
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **num_bands:** (Int, optional, default 40): Number of mel bands used internally.
+            * **num_coeffs:** (Int, optional, default 13): Number of MFCC coefficients returned per hop.
+            * **min_freq:** (Float64, optional, default 20.0): Minimum analysis frequency in Hz.
+            * **max_freq:** (Float64, optional, default 20000.0): Maximum analysis frequency in Hz.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, num_coeffs].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         num_bands = get_at_key[Int]("mfcc", py_dict, "num_bands", 40)
@@ -95,6 +148,32 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def top_n_freqs(py_dict: PythonObject) raises -> PythonObject:
+        """Top-N spectral peak analysis of a buffer.
+
+        Runs short-time FFT analysis and extracts up to `num_peaks` dominant peaks
+        per hop. Each hop output is flattened as alternating frequency and amplitude
+        values: [f0, a0, f1, a1, ...].
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **num_peaks:** (Int, optional, default 5): Number of peaks to return per hop.
+            * **thresh:** (Float64, optional, default -30.0): Peak threshold in dB for candidate selection.
+            * **sort_by_freq:** (Bool, optional, default False): Sort output peak pairs by frequency when true.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, num_peaks * 2].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         num_peaks = get_at_key[Int]("top_n_freqs",py_dict, "num_peaks", 5)
@@ -113,6 +192,27 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def rms(py_dict: PythonObject) raises -> PythonObject:
+        """RMS amplitude analysis of a buffer.
+
+        Computes one root-mean-square amplitude value per analysis hop.
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **window_size:** (Int, optional, default 1024): Analysis window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, 1].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
 
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
@@ -128,6 +228,31 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def yin(py_dict: PythonObject) raises -> PythonObject:
+        """YIN pitch analysis of a buffer.
+
+        Computes monophonic pitch and confidence per analysis hop using an FFT-based
+        YIN implementation.
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **min_freq:** (Float64, optional, default 20.0): Minimum detectable pitch in Hz.
+            * **max_freq:** (Float64, optional, default 20000.0): Maximum detectable pitch in Hz.
+            * **window_size:** (Int, optional, default 1024): Analysis window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, 2], with columns
+            [pitch_hz, confidence].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
         
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
@@ -152,6 +277,31 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def spectral_centroid(py_dict: PythonObject) raises -> PythonObject:
+        """Spectral centroid analysis of a buffer.
+
+        Runs short-time FFT analysis and computes one centroid value (in Hz) per hop,
+        optionally weighting by power magnitudes.
+
+        Args:
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **min_freq:** (Float64, optional, default 20.0): Minimum frequency in Hz included in the centroid.
+            * **max_freq:** (Float64, optional, default 20000.0): Maximum frequency in Hz included in the centroid.
+            * **power_mag:** (Bool, optional, default False): Use power magnitudes instead of linear magnitudes.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+
+        Returns:
+            A NumPy float64 matrix with shape [num_hops, 1].
+
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
         # make the analysis params instance
         ap = AnalysisParams(py_dict)
         min_freq = getFloat64("spectral_centroid",py_dict, "min_freq", 20.0)
@@ -176,16 +326,18 @@ struct MBufAnalysisBridge:
         detection function value) for each analysis hop.
 
         Args:
-            py_dict: Input options dictionary. Required and optional keys include:
-                path (String): Path to the source audio file.
-                chan (Int, optional): Channel index to analyze. Defaults to 0.
-                start_frame (Int, optional): First frame to analyze. Defaults to 0.
-                num_frames (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
-                metric (String, optional): Onset metric name. Defaults to "complex_domain".
-                window_size (Int, optional): FFT window size in samples. Defaults to 1024.
-                hop_size (Int, optional): Hop size in samples. Defaults to window_size // 2.
-                filter_size (Int, optional): Median-filter size. Defaults to 5.
-                frame_delta (Int, optional): Frame offset for metrics that use delayed comparison. Defaults to 0.
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **metric:** (String, optional, default "complex_domain"): Onset metric name.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+            * **filter_size:** (Int, optional, default 5): Median-filter size.
+            * **frame_delta:** (Int, optional, default 0): Frame offset for delayed comparison metrics.
 
         Returns:
             A NumPy float64 matrix where each row contains one onset detection-function value
@@ -221,18 +373,20 @@ struct MBufAnalysisBridge:
         Uses `OnsetDetection` to analyze a buffer for onsets and return the sample indices of detected onsets.
 
         Args:
-            py_dict: Input options dictionary. Required and optional keys include:
-                path (String): Path to the source audio file.
-                chan (Int, optional): Channel index to analyze. Defaults to 0.
-                start_frame (Int, optional): First frame to analyze. Defaults to 0.
-                num_frames (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
-                metric (String, optional): Onset metric name. Defaults to "complex_domain".
-                threshold (Float64, optional): Descriptor threshold for trigger detection. Defaults to 0.5.
-                debounce (Float64, optional): Minimum seconds between triggers. Defaults to 0.1.
-                window_size (Int, optional): FFT window size in samples. Defaults to 1024.
-                hop_size (Int, optional): Hop size in samples. Defaults to window_size // 2.
-                filter_size (Int, optional): Median-filter size. Defaults to 5.
-                frame_delta (Int, optional): Frame offset for metrics that use delayed comparison. Defaults to 0.
+            py_dict: Analysis options dictionary.
+
+        Options in py_dict:
+            * **path:** (String, required): Path to the source audio file.
+            * **chan:** (Int, optional, default 0): Channel index to analyze.
+            * **start_frame:** (Int, optional, default 0): First frame to analyze.
+            * **num_frames:** (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+            * **metric:** (String, optional, default "complex_domain"): Onset metric name.
+            * **threshold:** (Float64, optional, default 0.5): Descriptor threshold for trigger detection.
+            * **debounce:** (Float64, optional, default 0.1): Minimum seconds between triggers.
+            * **window_size:** (Int, optional, default 1024): FFT window size in samples.
+            * **hop_size:** (Int, optional, default window_size // 2): Hop size in samples.
+            * **filter_size:** (Int, optional, default 5): Median-filter size.
+            * **frame_delta:** (Int, optional, default 0): Frame offset for delayed comparison metrics.
 
         Returns:
             A NumPy int64 vector of onset sample indices.
@@ -272,6 +426,17 @@ struct MBufAnalysisBridge:
     
     @staticmethod
     def list_to_numpy(list: List[Int]) raises -> PythonObject:
+        """Convert a List[Int] to a 1-D NumPy int64 array.
+
+        Args:
+            list: Integer values to copy into a NumPy vector.
+
+        Returns:
+            A NumPy int64 vector with length equal to `len(list)`.
+
+        Raises:
+            Error: If NumPy import/allocation or element assignment fails.
+        """
         np = Python.import_module("numpy")
         shape = Python.tuple(Int(len(list)))
         nparray = np.zeros(shape=shape,dtype=np.int64)
@@ -281,6 +446,17 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def matrix_to_numpy(list: List[List[Float64]]) raises -> PythonObject:
+        """Convert a 2-D Float64 list to a NumPy float64 matrix.
+
+        Args:
+            list: Rectangular List[List[Float64]] containing row-major matrix data.
+
+        Returns:
+            A NumPy float64 matrix with shape [len(list), len(list[0])].
+
+        Raises:
+            Error: If NumPy import/allocation or element assignment fails.
+        """
         np = Python.import_module("numpy")
         shape = Python.tuple(Int(len(list)), Int(len(list[0])))
         nparray = np.zeros(shape=shape,dtype=np.float64)
@@ -289,7 +465,11 @@ struct MBufAnalysisBridge:
                 nparray[i][j] = list[i][j]
         return nparray
 
+@doc_hidden
 struct MBufAnalysis:
+
+    # This struct is not really meant to be user facing. It creates these convenience functions for buffer analysis
+    # both by MBufAnalysisBridge and the Analysis tools `.buf_analysis` methods. 
 
     # [TODO]: add windowing
     @staticmethod
@@ -330,9 +510,3 @@ struct MBufAnalysis:
             result.append(analyzer.get_features())
             frame += hop_size
         return result^
-
-    # @staticmethod
-    # def custom(py_path: PythonObject) raises -> PythonObject:
-    #     path = String(py=py_path)
-    #     print("custom analysis called, not yet implemented", path)
-    #     return 42

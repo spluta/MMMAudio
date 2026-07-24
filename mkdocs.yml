@@ -1,12 +1,12 @@
 site_name: MMMAudio Documentation
 site_description: Creative Coding Environment leveraging Python/Mojo interop where Python acts as a scripting language for Mojo acting as an audio engine
 site_author: Sam Pluta & Ted Moore
-site_url: https://spluta.github.io/MMMAudio/
+site_url: https://mmmaudio.github.io/mmmaudio/
 docs_dir: doc_generation/docs_md
 site_dir: site
 
-repo_name: spluta/MMMAudio
-repo_url: https://github.com/spluta/MMMAudio
+repo_name: mmmaudio/mmmaudio
+repo_url: https://github.com/mmmaudio/mmmaudio
 
 theme:
   name: material
@@ -65,6 +65,7 @@ nav:
       - MLP Mojo: api/MLP.md
       - MLP PyTorch: api/MLP_Python.md
       - Noise: api/Noise.md
+      - Onset Detection: api/OnsetDetection.md
       - Osc: api/Oscillators.md
       - Oversampling: api/Oversampling.md
       - Pan: api/Pan.md
