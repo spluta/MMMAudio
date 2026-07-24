@@ -58,6 +58,28 @@ def plot_nearest_distance_matrices(
         plt.close(fig)
 
 
+def compare_nearest_distances(left_results, right_results):
+    nearest_distances = []
+
+    for left_line, right_line in zip(left_results, right_results):
+        left_values = [float(value) for value in left_line]
+        right_values = [float(value) for value in right_line]
+
+        if len(left_values) == 0 or len(right_values) == 0:
+            continue
+
+        right_arr = np.array(right_values)
+        for left_value in left_values:
+            distances = np.abs(right_arr - left_value)
+            nearest_distances.append(float(np.min(distances)))
+
+    if not nearest_distances:
+        return 0.0, 0.0
+
+    distance_arr = np.array(nearest_distances)
+    return float(np.mean(distance_arr)), float(np.std(distance_arr))
+
+
 def main():
 
     # run mojo analyses
@@ -81,6 +103,16 @@ def main():
         sc_line = sc_results[i]
         mojo_rt_line = mojo_rt_results[i]
         print(f"metric: {i} | SC n: {len(sc_line)} | Mojo buf n: {len(mojo_buf_line)} | Mojo RT n: {len(mojo_rt_line)}")
+
+    mojo_buf_vs_flucoma_mean, mojo_buf_vs_flucoma_std = compare_nearest_distances(mojo_buf_results, sc_results)
+    print(
+        f"MMMAudio vs FluCoMa Onset Detection Buffered: Mean Dev = {mojo_buf_vs_flucoma_mean:.2f} samples, Std Dev = {mojo_buf_vs_flucoma_std:.2f} samples"
+    )
+
+    mojo_rt_vs_flucoma_mean, mojo_rt_vs_flucoma_std = compare_nearest_distances(mojo_rt_results, sc_results)
+    print(
+        f"MMMAudio vs FluCoMa Onset Detection Real-Time: Mean Dev = {mojo_rt_vs_flucoma_mean:.2f} samples, Std Dev = {mojo_rt_vs_flucoma_std:.2f} samples"
+    )
         
     y, sr = librosa.load("/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav", sr=None)
         

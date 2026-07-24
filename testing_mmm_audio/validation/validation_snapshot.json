@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-09T13:43:03.280150+00:00",
+  "created_at": "2026-07-24T16:12:16.679204+00:00",
   "scripts": {
     "Chroma_Validation.py": {
       "stats": [
@@ -57,6 +57,26 @@
           "values": [
             0.174934,
             0.785834
+          ]
+        }
+      ]
+    },
+    "OnsetDetection_Validation.py": {
+      "stats": [
+        {
+          "label": "MMMAudio vs FluCoMa Onset Detection Buffered",
+          "line": "MMMAudio vs FluCoMa Onset Detection Buffered: Mean Dev = 145.36 samples, Std Dev = 1314.67 samples",
+          "values": [
+            145.36,
+            1314.67
+          ]
+        },
+        {
+          "label": "MMMAudio vs FluCoMa Onset Detection Real-Time",
+          "line": "MMMAudio vs FluCoMa Onset Detection Real-Time: Mean Dev = 648.68 samples, Std Dev = 1312.22 samples",
+          "values": [
+            648.68,
+            1312.22
           ]
         }
       ]

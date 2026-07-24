@@ -1,3 +1,5 @@
+from mmm_audio import *
+
 @fieldwise_init
 struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
     """Distance metrics for onset detection.
@@ -16,6 +18,35 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
     comptime weighted_phase_deviation: OnsetMetric = OnsetMetric(7)
     comptime complex_domain: OnsetMetric = OnsetMetric(8)
     comptime rectified_complex_domain: OnsetMetric = OnsetMetric(9)
+
+    @doc_hidden
+    @always_inline
+    @staticmethod
+    def from_string(metric_string: String) -> OnsetMetric:
+        # I tried implementing this as a static Dict, but I was getting some typing errors...
+        if metric_string == "energy":
+            return OnsetMetric.energy
+        elif metric_string == "high_frequency_content":
+            return OnsetMetric.high_frequency_content
+        elif metric_string == "spectral_flux":
+            return OnsetMetric.spectral_flux
+        elif metric_string == "modified_kullback_leibler":
+            return OnsetMetric.modified_kullback_leibler
+        elif metric_string == "itakura_saito":
+            return OnsetMetric.itakura_saito
+        elif metric_string == "cosine":
+            return OnsetMetric.cosine
+        elif metric_string == "phase_deviation":
+            return OnsetMetric.phase_deviation
+        elif metric_string == "weighted_phase_deviation":
+            return OnsetMetric.weighted_phase_deviation
+        elif metric_string == "complex_domain":
+            return OnsetMetric.complex_domain
+        elif metric_string == "rectified_complex_domain":
+            return OnsetMetric.rectified_complex_domain
+        else:
+            print("Unknown onset metric string: ", metric_string, ", returning energy")
+            return OnsetMetric.energy
 
     def write_to(self, mut writer: Some[Writer]):
         if self._value == OnsetMetric.energy._value:
@@ -315,7 +346,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         metric: OnsetMetric = OnsetMetric.energy,
         window_size: Int = 1024,
         filter_size: Int = 5,
-        frame_delta: Int = 1,
+        frame_delta: Int = 0,
     ):
         """Initialize an onset detection function.
         
@@ -391,7 +422,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 1,
+        frame_delta: Int = 0,
     ) raises -> List[List[Float64]]:
         """Analyze a buffer for OnsetDetectionFeature values.
 
@@ -450,7 +481,7 @@ struct OnsetDetection(Movable, Copyable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 1,
+        frame_delta: Int = 0,
     ):
         """Initialize an onset slicer.
         
@@ -525,7 +556,7 @@ struct OnsetDetection(Movable, Copyable):
         window_size: Int = 1024,
         hop_size: Int = 512,
         filter_size: Int = 5,
-        frame_delta: Int = 1,
+        frame_delta: Int = 0,
     ) raises -> List[Int]:
         """Return onset sample indices for a buffer.
         

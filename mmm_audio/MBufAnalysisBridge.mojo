@@ -171,9 +171,7 @@ struct MBufAnalysisBridge:
     def onset_detection_feature(py_dict: PythonObject) raises -> PythonObject:
         """Run a FluCoMa-compatible onset detection function over a buffer."""
         ap = AnalysisParams(py_dict)
-        # TODO: change this so that instead of a user passing an int to represent
-        # the metric, they pass a string
-        metric_index = get_at_key[Int]("onset_detection_feature", py_dict, "metric", 0)
+        metric_string = get_at_key[String]("onset_detection_feature", py_dict, "metric", "complex_domain")
         window_size = get_at_key[Int]("onset_detection_feature", py_dict, "window_size", 1024)
         hop_size = get_at_key[Int]("onset_detection_feature", py_dict, "hop_size", window_size // 2)
         filter_size = get_at_key[Int]("onset_detection_feature", py_dict, "filter_size", 5)
@@ -184,7 +182,7 @@ struct MBufAnalysisBridge:
             ap.chan,
             ap.start_frame,
             ap.num_frames,
-            OnsetMetric(metric_index),
+            OnsetMetric.from_string(metric_string),
             window_size,
             hop_size,
             filter_size,
@@ -196,11 +194,9 @@ struct MBufAnalysisBridge:
     def onset_detection(py_dict: PythonObject) raises -> PythonObject:
         """Run FluCoMa-style onset slicing over a buffer."""
         ap = AnalysisParams(py_dict)
-        # TODO: change this so that instead of a user passing an int to represent
-        # the metric, they pass a string
-        metric_index = get_at_key[Int]("onset_detection", py_dict, "metric", 0)
+        metric_string = get_at_key[String]("onset_detection", py_dict, "metric", "complex_domain")
         threshold = getFloat64("onset_detection", py_dict, "threshold", 0.5)
-        debounce = get_at_key[Int]("onset_detection", py_dict, "debounce", 2)
+        debounce = getFloat64("onset_detection", py_dict, "debounce", 0.1)
         window_size = get_at_key[Int]("onset_detection", py_dict, "window_size", 1024)
         hop_size = get_at_key[Int]("onset_detection", py_dict, "hop_size", window_size // 2)
         filter_size = get_at_key[Int]("onset_detection", py_dict, "filter_size", 5)
@@ -217,7 +213,7 @@ struct MBufAnalysisBridge:
             ap.chan,
             ap.start_frame,
             ap.num_frames,
-            OnsetMetric(metric_index),
+            OnsetMetric.from_string(metric_string),
             threshold,
             debounce,
             window_size,
