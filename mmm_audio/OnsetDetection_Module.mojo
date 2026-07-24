@@ -364,60 +364,39 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         var has_prev = history_len >= 1
         var has_prev_prev = history_len >= 2
         var use_frame_delta = self.frame_delta > 0 and OnsetMetric.uses_frame_delta(self.metric)
+        var prev_index = -1
+        var prev_prev_index = -1
+        
+        if has_prev:
+            prev_index = history_len - 1
+        if has_prev_prev:
+            prev_prev_index = history_len - 2
+        if use_frame_delta and history_len >= self.frame_delta:
+            prev_index = history_len - self.frame_delta
 
-        if use_frame_delta:
-            if history_len >= self.frame_delta:
-                if has_prev_prev:
-                    self.raw_value = OnsetMetric.measure(
-                        self.metric,
-                        mags,
-                        phases,
-                        self.frame_history_mags[history_len - self.frame_delta],
-                        self.frame_history_phases[history_len - self.frame_delta],
-                        self.frame_history_mags[history_len - 2],
-                        self.frame_history_phases[history_len - 2],
-                    )
-                else:
-                    self.raw_value = OnsetMetric.measure(
-                        self.metric,
-                        mags,
-                        phases,
-                        self.frame_history_mags[history_len - self.frame_delta],
-                        self.frame_history_phases[history_len - self.frame_delta],
-                        self.zero_mags,
-                        self.zero_phases,
-                    )
-            else:
-                self.raw_value = OnsetMetric.measure(
-                    self.metric,
-                    mags,
-                    phases,
-                    self.zero_mags,
-                    self.zero_phases,
-                    self.zero_mags,
-                    self.zero_phases,
-                )
-        elif has_prev:
-            if has_prev_prev:
-                self.raw_value = OnsetMetric.measure(
-                    self.metric,
-                    mags,
-                    phases,
-                    self.frame_history_mags[history_len - 1],
-                    self.frame_history_phases[history_len - 1],
-                    self.frame_history_mags[history_len - 2],
-                    self.frame_history_phases[history_len - 2],
-                )
-            else:
-                self.raw_value = OnsetMetric.measure(
-                    self.metric,
-                    mags,
-                    phases,
-                    self.frame_history_mags[history_len - 1],
-                    self.frame_history_phases[history_len - 1],
-                    self.zero_mags,
-                    self.zero_phases,
-                )
+        var use_prev = prev_index >= 0
+        var use_prev_prev = prev_prev_index >= 0
+
+        if use_prev and use_prev_prev:
+            self.raw_value = OnsetMetric.measure(
+                self.metric,
+                mags,
+                phases,
+                self.frame_history_mags[prev_index],
+                self.frame_history_phases[prev_index],
+                self.frame_history_mags[prev_prev_index],
+                self.frame_history_phases[prev_prev_index],
+            )
+        elif use_prev:
+            self.raw_value = OnsetMetric.measure(
+                self.metric,
+                mags,
+                phases,
+                self.frame_history_mags[prev_index],
+                self.frame_history_phases[prev_index],
+                self.zero_mags,
+                self.zero_phases,
+            )
         else:
             self.raw_value = OnsetMetric.measure(
                 self.metric,
