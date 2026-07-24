@@ -61,13 +61,13 @@ def plot_nearest_distance_matrices(
 def main():
 
     # run mojo analyses
-    os.system("mojo run -I . ./testing_mmm_audio/validation/OnsetSlice_Validation.mojo")
+    os.system("mojo run -I . ./testing_mmm_audio/validation/OnsetDetection_Validation.mojo")
     
-    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_onset_slice_points.csv", "r") as mojo_buf_file:
+    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_onset_detection_points.csv", "r") as mojo_buf_file:
         csv_reader = csv.reader(mojo_buf_file)
         mojo_buf_results = [line for line in csv_reader]
     
-    with open("testing_mmm_audio/validation/mojo_results/mojo_rt_onset_slice_points.csv", "r") as mojo_rt_file:
+    with open("testing_mmm_audio/validation/mojo_results/mojo_rt_onset_detection_points.csv", "r") as mojo_rt_file:
         csv_reader = csv.reader(mojo_rt_file)
         mojo_rt_results = [line for line in csv_reader]
     

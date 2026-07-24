@@ -26,7 +26,7 @@ def main() raises:
     world = alloc[MMMWorld](1)
     world.init_pointee_move(MMMWorld(sample_rate, environment))
 
-    buf_slice_points = List[List[Int]](length=10, fill=List[Int]())
+    buf_detection_points = List[List[Int]](length=10, fill=List[Int]())
 
     for i in range(10):
         onset_threshold = thresholds[i]
@@ -44,25 +44,25 @@ def main() raises:
         )
 
         print("metric: ", i, ", threshold: ", onset_threshold, ", onsets: ", len(onset_slice))
-        buf_slice_points[i] = onset_slice^
+        buf_detection_points[i] = onset_slice^
 
-    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_onset_slice_points.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_onset_detection_points.csv", "w") as f:
         for i in range(10):
-            slice_str = ",".join([String(x) for x in buf_slice_points[i]])
+            slice_str = ",".join([String(x) for x in buf_detection_points[i]])
             if(i != 0):
                 f.write("\n")
             f.write(slice_str)
 
-    rt_slice_points = List[List[Int]](length=10, fill=List[Int]())
+    rt_detection_points = List[List[Int]](length=10, fill=List[Int]())
     for i in range(10):
         rt_slicer = OnsetDetection(world, metric=OnsetMetric(i), threshold=thresholds[i], debounce=onset_debounce, window_size=window_size, hop_size=hop_size, filter_size=filter_size, frame_delta=frame_delta)
         for sample_i in range(buf.num_frames):
             if rt_slicer.next(buf.data[0][sample_i]):
-                rt_slice_points[i].append(sample_i)
+                rt_detection_points[i].append(sample_i)
     
-    with open("testing_mmm_audio/validation/mojo_results/mojo_rt_onset_slice_points.csv", "w") as f:
+    with open("testing_mmm_audio/validation/mojo_results/mojo_rt_onset_detection_points.csv", "w") as f:
         for i in range(10):
-            slice_str = ",".join([String(x) for x in rt_slice_points[i]])
+            slice_str = ",".join([String(x) for x in rt_detection_points[i]])
             if(i != 0):
                 f.write("\n")
             f.write(slice_str)
