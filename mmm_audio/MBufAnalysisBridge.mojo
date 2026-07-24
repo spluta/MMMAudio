@@ -169,7 +169,11 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def onset_detection_feature(py_dict: PythonObject) raises -> PythonObject:
-        """Run a FluCoMa-compatible onset detection function over a buffer.
+        """Onset feature analysis of a buffer.
+
+        Uses the OnsetDetectionFeature class to analyze a buffer for onset detection function values. 
+        The output is a List of Lists, where each inner List contains one Float64 value (the onset 
+        detection function value) for each analysis hop.
 
         Args:
             py_dict: Input options dictionary. Required and optional keys include:
@@ -212,7 +216,9 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def onset_detection(py_dict: PythonObject) raises -> PythonObject:
-        """Run FluCoMa-style onset slicing over a buffer.
+        """Onset Detection on a buffer.
+
+        Uses `OnsetDetection` to analyze a buffer for onsets and return the sample indices of detected onsets.
 
         Args:
             py_dict: Input options dictionary. Required and optional keys include:
