@@ -1,6 +1,23 @@
 """Generate MMMAudio onset detection-function and onset-slice validation data."""
 
+from std.sys import argv
+
 from mmm_audio import *
+
+def default_audio_path() -> String:
+    return "/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav"
+
+def resolve_audio_path() raises -> String:
+    var args = argv()
+    var i = 0
+    while i < len(args):
+        if args[i] == "--audio-path":
+            if i + 1 >= len(args):
+                raise Error("--audio-path requires a value")
+            return args[i + 1]
+        i += 1
+
+    return default_audio_path()
 
 def main() raises:
 
@@ -14,7 +31,8 @@ def main() raises:
         for i, ts in enumerate(thresholds_str):
             thresholds[i] = Float64(ts)
 
-    buf = Buffer.load("/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav")
+    var audio_path = resolve_audio_path()
+    buf = Buffer.load(audio_path)
     sample_rate = buf.sample_rate
 
     comptime filter_size: Int = 5

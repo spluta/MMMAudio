@@ -3,14 +3,14 @@ import csv
 import matplotlib.pyplot as plt
 import librosa
 import numpy as np
-import argparse
+import subprocess
 
 
 WAVEFORM_FIGSIZE = (16, 6)
 ODF_FIGSIZE = (16, 6)
 DISTANCE_MATRIX_FIGSIZE = (12, 9)
 PLOT_DPI = 200
-
+DEFAULT_AUDIO_PATH = "/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav"
 
 def plot_nearest_distance_matrices(
     left_results,
@@ -80,22 +80,69 @@ def compare_nearest_distances(left_results, right_results):
     return float(np.mean(distance_arr)), float(np.std(distance_arr))
 
 
+def read_onset_rows(file_path, expected_metrics=10):
+    with open(file_path, "r", encoding="utf-8") as csv_file:
+        csv_reader = csv.reader(csv_file)
+        rows = [line for line in csv_reader]
+
+    while len(rows) < expected_metrics:
+        rows.append([])
+
+    return rows[:expected_metrics]
+
+
+def plot_onset_markers(ax, onset_values, color, linestyle, label):
+    if not onset_values:
+        return
+
+    for onset_index, onset in enumerate(onset_values):
+        ax.axvline(
+            x=float(onset),
+            color=color,
+            linestyle=linestyle,
+            label=label if onset_index == 0 else "",
+        )
+
+
+def resolve_audio_path():
+    env_audio_path = os.environ.get("ONSET_DETECTION_AUDIO_PATH")
+    if env_audio_path and os.path.exists(env_audio_path):
+        return env_audio_path
+
+    return DEFAULT_AUDIO_PATH
+
+
 def main():
+    audio_path = resolve_audio_path()
+
+    if not os.path.exists(audio_path):
+        raise FileNotFoundError(f"Audio file not found: {audio_path}")
 
     # run mojo analyses
-    os.system("mojo run -I . ./testing_mmm_audio/validation/OnsetDetection_Validation.mojo")
+    subprocess.run(
+        [
+            "mojo",
+            "run",
+            "-I",
+            ".",
+            "./testing_mmm_audio/validation/OnsetDetection_Validation.mojo",
+            "--audio-path",
+            audio_path,
+        ],
+        check=True,
+    )
     
-    with open("testing_mmm_audio/validation/mojo_results/mojo_buf_onset_detection_points.csv", "r") as mojo_buf_file:
-        csv_reader = csv.reader(mojo_buf_file)
-        mojo_buf_results = [line for line in csv_reader]
-    
-    with open("testing_mmm_audio/validation/mojo_results/mojo_rt_onset_detection_points.csv", "r") as mojo_rt_file:
-        csv_reader = csv.reader(mojo_rt_file)
-        mojo_rt_results = [line for line in csv_reader]
-    
-    with open("testing_mmm_audio/validation/flucoma_sc_results/onset_detection_flucoma_slice_points.csv", "r") as sc_file:
-        csv_reader = csv.reader(sc_file)
-        sc_results = [line for line in csv_reader]
+    mojo_buf_results = read_onset_rows(
+        "testing_mmm_audio/validation/mojo_results/mojo_buf_onset_detection_points.csv"
+    )
+
+    mojo_rt_results = read_onset_rows(
+        "testing_mmm_audio/validation/mojo_results/mojo_rt_onset_detection_points.csv"
+    )
+
+    sc_results = read_onset_rows(
+        "testing_mmm_audio/validation/flucoma_sc_results/onset_detection_flucoma_slice_points.csv"
+    )
         
     # compare results
     for i in range(10):
@@ -114,7 +161,7 @@ def main():
         f"MMMAudio vs FluCoMa Onset Detection Real-Time: Mean Dev = {mojo_rt_vs_flucoma_mean:.2f} samples, Std Dev = {mojo_rt_vs_flucoma_std:.2f} samples"
     )
         
-    y, sr = librosa.load("/Users/ted/dev/flucoma-core/Resources/AudioFiles/Nicol-LoopE-M.wav", sr=None)
+    y, sr = librosa.load(audio_path, sr=None)
         
     # plot and save each comparison
     for i in range(10):
@@ -127,19 +174,13 @@ def main():
         ax.plot(y)
         
         # plot mojo results
-        for onset in mojo_buf_line:
-            # onset_sample = int(float(onset) * len(y))
-            ax.axvline(x=float(onset), color='r', linestyle='--', label='Mojo Buf Onset' if onset == mojo_buf_line[0] else "")
+        plot_onset_markers(ax, mojo_buf_line, 'r', '--', 'Mojo Buf Onset')
         
         # plot mojo rt results
-        for onset in mojo_rt_line:
-            # onset_sample = int(float(onset) * len(y))
-            ax.axvline(x=float(onset), color='b', linestyle='-.', label='Mojo RT Onset' if onset == mojo_rt_line[0] else "")
+        plot_onset_markers(ax, mojo_rt_line, 'b', '-.', 'Mojo RT Onset')
         
         # plot flucoma-sc results
-        for onset in sc_line:
-            # onset_sample = int(float(onset) * len(y))
-            ax.axvline(x=float(onset), color='g', linestyle=':', label='Flucoma-SC Onset' if onset == sc_line[0] else "")
+        plot_onset_markers(ax, sc_line, 'g', ':', 'Flucoma-SC Onset')
         
         ax.set_title(f"Onset Detection Comparison - Metric {i}")
             
@@ -206,7 +247,4 @@ def main():
         plt.close(fig)
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser(description="Run onset detection validation and generate plots.")
-    # parser.add_argument("--show-plots", action="store_true", help="Show plots after generation.")
-    # args = parser.parse_args()
     raise SystemExit(main())

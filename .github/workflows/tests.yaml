@@ -25,6 +25,17 @@ jobs:
         run: |
           pixi install
 
+      - name: Download onset validation audio
+        run: |
+          mkdir -p "$RUNNER_TEMP/audio"
+          curl -fsSL \
+            -o "$RUNNER_TEMP/audio/Nicol-LoopE-M.wav" \
+            "https://raw.githubusercontent.com/flucoma/flucoma-core/main/Resources/AudioFiles/Nicol-LoopE-M.wav"
+
+      - name: Export onset validation audio path
+        run: |
+          echo "ONSET_DETECTION_AUDIO_PATH=$RUNNER_TEMP/audio/Nicol-LoopE-M.wav" >> "$GITHUB_ENV"
+
       - name: Run Tests
         id: run-tests
         run: |
