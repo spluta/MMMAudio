@@ -169,7 +169,27 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def onset_detection_feature(py_dict: PythonObject) raises -> PythonObject:
-        """Run a FluCoMa-compatible onset detection function over a buffer."""
+        """Run a FluCoMa-compatible onset detection function over a buffer.
+
+        Args:
+            py_dict: Input options dictionary. Required and optional keys include:
+                path (String): Path to the source audio file.
+                chan (Int, optional): Channel index to analyze. Defaults to 0.
+                start_frame (Int, optional): First frame to analyze. Defaults to 0.
+                num_frames (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+                metric (String, optional): Onset metric name. Defaults to "complex_domain".
+                window_size (Int, optional): FFT window size in samples. Defaults to 1024.
+                hop_size (Int, optional): Hop size in samples. Defaults to window_size // 2.
+                filter_size (Int, optional): Median-filter size. Defaults to 5.
+                frame_delta (Int, optional): Frame offset for metrics that use delayed comparison. Defaults to 0.
+
+        Returns:
+            A NumPy float64 matrix where each row contains one onset detection-function value
+            for an analysis hop.
+
+        Raises:
+            Error: If input parsing, buffer loading, metric conversion, analysis, or NumPy conversion fails.
+        """
         ap = AnalysisParams(py_dict)
         metric_string = get_at_key[String]("onset_detection_feature", py_dict, "metric", "complex_domain")
         window_size = get_at_key[Int]("onset_detection_feature", py_dict, "window_size", 1024)
@@ -192,7 +212,28 @@ struct MBufAnalysisBridge:
 
     @staticmethod
     def onset_detection(py_dict: PythonObject) raises -> PythonObject:
-        """Run FluCoMa-style onset slicing over a buffer."""
+        """Run FluCoMa-style onset slicing over a buffer.
+
+        Args:
+            py_dict: Input options dictionary. Required and optional keys include:
+                path (String): Path to the source audio file.
+                chan (Int, optional): Channel index to analyze. Defaults to 0.
+                start_frame (Int, optional): First frame to analyze. Defaults to 0.
+                num_frames (Int, optional): Number of frames to analyze. Defaults to the remaining buffer.
+                metric (String, optional): Onset metric name. Defaults to "complex_domain".
+                threshold (Float64, optional): Descriptor threshold for trigger detection. Defaults to 0.5.
+                debounce (Float64, optional): Minimum seconds between triggers. Defaults to 0.1.
+                window_size (Int, optional): FFT window size in samples. Defaults to 1024.
+                hop_size (Int, optional): Hop size in samples. Defaults to window_size // 2.
+                filter_size (Int, optional): Median-filter size. Defaults to 5.
+                frame_delta (Int, optional): Frame offset for metrics that use delayed comparison. Defaults to 0.
+
+        Returns:
+            A NumPy int64 vector of onset sample indices.
+
+        Raises:
+            Error: If input parsing, world setup, metric conversion, analysis, or NumPy conversion fails.
+        """
         ap = AnalysisParams(py_dict)
         metric_string = get_at_key[String]("onset_detection", py_dict, "metric", "complex_domain")
         threshold = getFloat64("onset_detection", py_dict, "threshold", 0.5)

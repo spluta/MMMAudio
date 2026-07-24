@@ -374,7 +374,11 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         self.previous_raw_value = 0.0
 
     def get_features(self) -> List[Float64]:
-        """Return the filtered onset detection-function value."""
+        """Return the filtered onset detection-function value.
+
+        Returns:
+            A one-element List containing the current filtered descriptor value.
+        """
         return [self.descriptor]
 
     @doc_hidden
@@ -443,6 +447,9 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
 
         Returns:
             One filtered onset detection-function value for each analysis hop.
+
+        Raises:
+            Error: If onset analysis or buffered processing fails.
         """
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
@@ -557,7 +564,7 @@ struct OnsetDetection(Movable, Copyable):
         hop_size: Int = 512,
         filter_size: Int = 5,
         frame_delta: Int = 0,
-    ) raises -> List[Int]:
+    ) -> List[Int]:
         """Return onset sample indices for a buffer.
         
         Args:
@@ -575,8 +582,7 @@ struct OnsetDetection(Movable, Copyable):
             frame_delta: Offset in analysis frames (hops) used by Flux, MKL, and Itakura-Saito.
 
         Returns:
-            A List of Int sample indices where onsets were detected.
-        """
+            A List of Int sample indices where onsets were detected.        """
         if num_frames < 0:
             num_frames = buf.num_frames - start_frame
         var end_frame = min(start_frame + num_frames, buf.num_frames)
