@@ -1503,6 +1503,7 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
     var weights: List[List[Float64]]
     var chroma: List[Float64]
     var octwidth: Float64
+    var powered_mags: List[Float64]
 
     def get_features(self) -> List[Float64]:
         return self.chroma.copy()
@@ -1543,6 +1544,7 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
         self.base_c = base_c
 
         var n_bins = (self.window_size // 2) + 1
+        self.powered_mags = List[Float64](length=n_bins, fill=0.0)
         self.weights = List[List[Float64]](length=self.n_chroma, fill=List[Float64](length=n_bins, fill=0.0))
         self.chroma = List[Float64](length=self.n_chroma, fill=0.0)
         self.make_weights()
@@ -1555,16 +1557,19 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
         Args:
             mags: The magnitude values of the current FFT frame.
         """
-        # TODO: only power the mags once, not for every chroma
+        
+        for i in range(len(mags)):
+            if self.power == 2.0:
+                self.powered_mags[i] = mags[i] * mags[i]
+            elif self.power != 1.0:
+                self.powered_mags[i] = mags[i] ** self.power
+            else:
+                self.powered_mags[i] = mags[i]
+        
         for i in range(self.n_chroma):
             var acc: Float64 = 0.0
             for j in range(len(mags)):
-                var mag = mags[j]
-                if self.power == 2.0:
-                    mag = mag * mag
-                elif self.power != 1.0:
-                    mag = mag ** self.power
-                acc += self.weights[i][j] * mag
+                acc += self.weights[i][j] * self.powered_mags[j]
             self.chroma[i] = acc
 
         if self.norm <= 0.0:
