@@ -421,7 +421,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         buf: Buffer,
         chan: Int = 0,
         start_frame: Int = 0,
-        var num_frames: Int = -1,
+        var num_frames: Optional[Int] = None,
         metric: OnsetMetric = OnsetMetric.complex_domain,
         window_size: Int = 1024,
         hop_size: Int = 512,
@@ -451,7 +451,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         Raises:
             Error: If onset analysis or buffered processing fails.
         """
-        if num_frames < 0:
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
         odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
         return MBufAnalysis.fft_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
@@ -556,7 +556,7 @@ struct OnsetDetection(Movable, Copyable):
         buf: Buffer,
         chan: Int = 0,
         start_frame: Int = 0,
-        var num_frames: Int = -1,
+        var num_frames: Optional[Int] = None,
         metric: OnsetMetric = OnsetMetric.complex_domain,
         threshold: Float64 = 0.5,
         debounce: Float64 = 0.1,
@@ -583,9 +583,9 @@ struct OnsetDetection(Movable, Copyable):
 
         Returns:
             A List of Int sample indices where onsets were detected.        """
-        if num_frames < 0:
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        var end_frame = min(start_frame + num_frames, buf.num_frames)
+        var end_frame = min(start_frame + num_frames.value(), buf.num_frames)
 
         var detector = OnsetDetection(
             world=world,

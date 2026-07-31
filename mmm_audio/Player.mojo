@@ -30,7 +30,7 @@ struct Play(Movable, Copyable):
         self.reset_phase_point = 0.0
         self.phase_offset = 0.0
 
-    def next[num_chans: Int = 1, interp: Interp = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1) -> MFloat[num_chans]: 
+    def next[num_chans: Int = 1, interp: Interp = Interp.linear, bWrap: Bool = False](mut self, buf: SIMDBuffer[num_chans], rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Optional[Int] = None) -> MFloat[num_chans]: 
         """Get the next sample from a SIMD audio buf (SIMDBuffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames. A key difference between SIMDBuffer and Buffer is that calling next on a SIMDBuffer always returns the entire SIMD vector of samples for the current phase, whereas with Buffer, you can specify the number of channels to read.
 
         Parameters:
@@ -44,7 +44,7 @@ struct Play(Movable, Copyable):
             loop: Whether to loop the buf (default: True).
             trig: Trigger starts the synth at start_frame (default: 1.0).
             start_frame: The start frame for playback (default: 0) upon receiving a trigger.
-            num_frames: The end frame for playback (default: -1 means to the end of the buf).
+            num_frames: The end frame for playback (default: None means to the end of the buf).
 
         Returns:
             The next sample(s) from the buf as a SIMD vector.
@@ -56,10 +56,10 @@ struct Play(Movable, Copyable):
             self.active = True
             self.start_frame = start_frame  # Set start frame
             self.phase_offset = Float64(self.start_frame) / buf.num_frames_f64
-            if num_frames < 0:
+            if num_frames is None:
                 self.reset_phase_point = 1.0
             else:
-                self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
+                self.reset_phase_point = Float64(num_frames.value()) / buf.num_frames_f64
         
         if not self.active:
             return 0.0  # Return zeros if not active
@@ -88,7 +88,7 @@ struct Play(Movable, Copyable):
                 return buf.at_phase[interp=interp, bWrap=bWrap](self.world, self.impulse.phase + self.phase_offset, prev_phase)
                 
     @always_inline
-    def next[num_chans: Int = 1, interp: Interp = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Int = -1, start_chan: Int = 0) -> MFloat[num_chans]: 
+    def next[num_chans: Int = 1, interp: Interp = Interp.linear, bWrap: Bool = False](mut self, buf: Buffer, rate: Float64 = 1, loop: Bool = True, trig: Bool = True, start_frame: Int = 0, var num_frames: Optional[Int] = None, start_chan: Int = 0) -> MFloat[num_chans]: 
         """Get the next sample from an audio buf (Buffer). The internal phasor is advanced according to the specified rate. If a trigger is received, playback starts at the specified start_frame. If looping is enabled, playback will loop back to the start when reaching the end of the specified num_frames.
 
         Parameters:
@@ -115,10 +115,10 @@ struct Play(Movable, Copyable):
             self.active = True  # Set active flag on trigger
             self.start_frame = start_frame  # Set start frame
             self.phase_offset = Float64(self.start_frame) / buf.num_frames_f64
-            if num_frames < 0:
+            if num_frames is None:
                 self.reset_phase_point = 1.0
             else:
-                self.reset_phase_point = Float64(num_frames) / buf.num_frames_f64  
+                self.reset_phase_point = Float64(num_frames.value()) / buf.num_frames_f64
         
         if not self.active:
             return 0.0  # Return zeros if not active

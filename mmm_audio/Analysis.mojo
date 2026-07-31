@@ -935,6 +935,14 @@ struct RMS(BufferedProcessable, GetFloat64Featurable):
             sum_sq += v * v
         return sqrt(sum_sq / Float64(len(frame)))
 
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, window_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        if num_frames is None:
+            num_frames = buf.num_frames - start_frame
+        rms = RMS()
+        return MBufAnalysis.buffered_process(rms, buf, chan, start_frame, num_frames, window_size, hop_size)
+
+
 struct MelBands(FFTProcessable, GetFloat64Featurable):
     """Mel Bands analysis.
 
@@ -1261,8 +1269,8 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         self.dct.process(self.db_bands, self.coeffs)
 
     @staticmethod
-    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
-        if num_frames < 0:
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
         mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
         return MBufAnalysis.fft_process(mfcc, buf, chan, start_frame, num_frames, fft_size, hop_size)

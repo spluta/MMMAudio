@@ -123,6 +123,41 @@ struct Windows(Movable, Copyable):
             print("Windows.make_window: Unsupported window type")
             return List[Float64]()
 
+    @staticmethod
+    def make_window(window_type: WindowType,size: Int, beta: Float64 = 5.0) -> List[Float64]:
+        """Generate a window of specified type and size.
+        
+        Args:
+            window_type: Type of window to generate. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+            size: Length of the window.
+            beta: Shape parameter only used for Kaiser window. See kaiser_window() for details.
+
+        Returns:
+            List[Float64] of length `size` containing the window values.
+        """
+        if window_type == WindowType.rect or window_type == WindowType.none:
+            return rect_window(size)
+        elif window_type == WindowType.hann:
+            return hann_window(size)
+        elif window_type == WindowType.hamming:
+            return hamming_window(size)
+        elif window_type == WindowType.blackman:
+            return blackman_window(size)
+        elif window_type == WindowType.sine:
+            return sine_window(size)
+        elif window_type == WindowType.kaiser:
+            return kaiser_window(size, beta)
+        elif window_type == WindowType.tri:
+            return tri_window(size)
+        elif window_type == WindowType.pan2:
+            print("Windows.make_window: pan2 window requires MFloat[2] output, use pan2_window() function instead.")
+            return List[Float64]()
+        elif window_type == WindowType.gaussian:
+            return gaussian_window(size)
+        else:
+            print("Windows.make_window: Unsupported window type")
+            return List[Float64]()
+
 def rect_window(size: Int) -> List[Float64]:
     """
     Generate a rectangular window of length size.

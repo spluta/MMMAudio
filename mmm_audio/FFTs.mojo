@@ -303,11 +303,8 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
         return freqs^
 
     @staticmethod
-    def buf_analysis[input_window_shape: WindowType = WindowType.hann](buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) -> Tuple[List[List[Float64]], List[List[Float64]]]:
+    def buf_analysis(buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int, window_type: WindowType = WindowType.hann) -> Tuple[List[List[Float64]], List[List[Float64]]]:
         """Compute the Short-Time Fourier Transform (STFT) of a buffer.
-
-        Parameters:
-            input_window_shape: The type of window to apply to each frame before computing the FFT.
 
         Args:
             buf: The input audio buffer to analyze.
@@ -316,13 +313,14 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             num_frames: The number of frames to analyze from the starting frame.
             window_size: The size of the FFT window.
             hop_size: The hop size between successive windows.
+            window_type: The type of window to apply to each frame before computing the FFT.
 
         Returns:
             A tuple containing two lists of lists of Float64 representing the magnitudes and phases of the STFT for each frame and frequency bin.
         """
         fftanalysis = FFTAnalysis()
         try:
-            magsphss = MBufAnalysis.fft_process[input_win=input_window_shape](fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size)
+            magsphss = MBufAnalysis.fft_process(fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size,window_type=window_type)
             nframes = len(magsphss)
             nmags = len(magsphss[0]) // 2
             mags = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))

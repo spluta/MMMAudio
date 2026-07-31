@@ -98,7 +98,7 @@ struct MBufAnalysisBridge:
         max_freq: Float64 = getFloat64("mel_bands", py_dict, "max_freq", 20000.0)
 
         mel_bands = MelBands(ap.buf.sample_rate, num_bands, min_freq, max_freq, window_size)
-        result = MBufAnalysis.fft_process[WindowType.hann](mel_bands, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process(mel_bands, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
 
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
@@ -141,7 +141,7 @@ struct MBufAnalysisBridge:
         mfcc = MFCC(ap.buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq)
         window_size = get_at_key[Int]("mfcc", py_dict, "window_size", 1024)
         hop_size = get_at_key[Int]("mfcc", py_dict, "hop_size", window_size // 2)
-        result = MBufAnalysis.fft_process[WindowType.hann](mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process(mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -185,7 +185,7 @@ struct MBufAnalysisBridge:
 
         # # run the analysis
         top_n_freqs = TopNFreqs(ap.buf.sample_rate, window_size, num_peaks, sort_by_freq, thresh)
-        result = MBufAnalysis.fft_process[WindowType.hann](top_n_freqs, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process(top_n_freqs, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -312,7 +312,7 @@ struct MBufAnalysisBridge:
 
         # # run the analysis
         sc = SpectralCentroid(ap.buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
-        result = MBufAnalysis.fft_process[WindowType.hann](sc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        result = MBufAnalysis.fft_process(sc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -471,42 +471,63 @@ struct MBufAnalysis:
     # This struct is not really meant to be user facing. It creates these convenience functions for buffer analysis
     # both by MBufAnalysisBridge and the Analysis tools `.buf_analysis` methods. 
 
-    # [TODO]: add windowing
     @staticmethod
-    def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int = start_frame
-        if num_frames < 0:
+    def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none) raises -> List[List[Float64]]:
+
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
-        while frame < start_frame + num_frames:
+
+        if start_frame + num_frames.value() > buf.num_frames:
+            print("MBufAnalysis: requested frames exceed buffer length. start_frame = ", start_frame, ", num_frames = ", num_frames, ", buf.num_frames = ", buf.num_frames)
+            return List[List[Float64]]()
+
+        window_func = Windows.make_window(window_type, window_size)
+        
+        samps = List[Float64](length=window_size, fill=0.0)
+
+        num_windows: Int = 1
+        if num_frames.value() > window_size:
+            num_windows = (num_frames.value() - window_size + hop_size - 1) // hop_size + 1
+
+        result = List[List[Float64]](capacity=num_windows)
+        for w in range(num_windows):
             for i in range(window_size):
-                if frame + i < buf.num_frames:
-                    window_samps[i] = buf.data[chan][frame + i]
-                else:
-                    window_samps[i] = 0.0
-            analyzer.next_window(window_samps)
+                frame_idx = start_frame + (w * hop_size) + i
+                samps[i] = SpanInterpolator.read_none[bWrap=False](buf.data[chan], Float64(frame_idx)) * window_func[i]
+
+            analyzer.next_window(samps)
             result.append(analyzer.get_features())
-            frame += hop_size
+            
         return result^
     
     @staticmethod
-    def fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: WindowType = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int = start_frame
-        if num_frames < 0:
+    def fft_process[T: GetFloat64Featurable & FFTProcessable](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none) raises -> List[List[Float64]]:
+        
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
+
+        if start_frame + num_frames.value() > buf.num_frames:
+            print("MBufAnalysis: requested frames exceed buffer length. start_frame = ", start_frame, ", num_frames = ", num_frames, ", buf.num_frames = ", buf.num_frames)
+            return List[List[Float64]]()
+
+        window_func = Windows.make_window(window_type, window_size)
+
+        samps = List[Float64](length=window_size,fill=0.0)
+        
+        num_windows: Int = 1
+        if num_frames.value() > window_size:
+            num_windows = (num_frames.value() - window_size + hop_size - 1) // hop_size + 1
+
         fft = RealFFT(window_size)
-        window_func = Windows.make_window[input_win](window_size)
-        while frame < start_frame + num_frames:
+        
+        result = List[List[Float64]](capacity=num_windows)
+        
+        for w in range(num_windows):
             for i in range(window_size):
-                if frame + i < buf.num_frames:
-                    window_samps[i] = buf.data[chan][frame + i] * window_func[i]
-                else:
-                    window_samps[i] = 0.0
-            fft.fft(window_samps)
+                frame_idx = start_frame + (w * hop_size) + i
+                samps[i] = SpanInterpolator.read_none[bWrap=False](buf.data[chan], Float64(frame_idx)) * window_func[i]
+            fft.fft(samps)
             analyzer.next_frame(fft.mags,fft.phases)
             result.append(analyzer.get_features())
-            frame += hop_size
+
         return result^
