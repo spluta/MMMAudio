@@ -38,7 +38,7 @@ See [Install uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### 2 Install the uv virtual environment and MMMAudio dependencies:
 
-In the MMMAudio directory, type:
+In the root MMMAudio directory, type:
 
 ```
 uv venv --python 3.14
@@ -52,7 +52,7 @@ This 1) creates the virtual environment, 2) sync the dependencies, 3) installs t
 
 ### 1 Set up the environment and install the dependencies:
 
-From the MMMAudio directory:
+From the root MMMAudio directory:
 (I recommend explicitly specifying the Python version here, eg: 'python3.14 -m venv venv')
 ```shell
 python -m venv venv 

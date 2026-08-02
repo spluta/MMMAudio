@@ -25,7 +25,7 @@ See [pixi's installation instructions](https://pixi.prefix.dev/latest/installati
 
 ### 2 Install the dependencies
 
-In the MMMAudio directory, type:
+In the root MMMAudio directory, type:
 
 ```shell
 pixi install
@@ -43,7 +43,7 @@ See [Install uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ### 2 Install the uv virtual environment and MMMAudio dependencies:
 
-In the MMMAudio directory, type:
+In the root MMMAudio directory, type:
 
 ```
 uv venv --python 3.14

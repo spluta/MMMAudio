@@ -1,5 +1,20 @@
 from mmm_audio import *
 
+def mprint[*Ts: Writable](world: World, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+    """Prints the provided arguments to the console.
+
+    Parameters:
+        Ts: All printable values must implement the Writable trait. This parameter is inferred by the values passed to the function.
+
+    Args:
+        world: The World instance used for printing.
+        values: A variable number of arguments to print.
+        n_blocks: The number of blocks to print. Default is 10.
+        sep: The separator between printed values. Default is a space.
+        end: The string to print at the end. Default is a newline.
+    """
+    world[].print(*values, n_blocks=n_blocks, sep=sep, end=end)
+
 @always_inline
 def dbamp[width: Int, //](db: MFloat[width]) -> MFloat[width]:
     """Converts decibel values to amplitude.
@@ -1074,3 +1089,16 @@ def array_to_mfloat[simd_out_size: Int, array: InlineArray[Float64, _], fill_wit
     for i in range(len(array)):
         new_vec[i] = array[i]
     return new_vec
+
+def truncate(x: Float64, decimal_places: Int) -> Float64:
+    """Truncates a float to a specified number of decimal places.
+
+    Args:
+        x: The float value to truncate.
+        decimal_places: The number of decimal places to keep.
+
+    Returns:
+        The truncated float value.
+    """
+    factor = 10.0 ** decimal_places
+    return floor(x * factor) / factor

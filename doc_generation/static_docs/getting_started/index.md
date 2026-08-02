@@ -38,7 +38,7 @@ Go to the [Examples](../examples/index.md) page to run an example!
 ### 1 Make a directory in the MMMAudio folder
 This is to house your own projects. Any directory that is not part of the MMMAudio repo can be used to store user files. (and will be ignored by git if you update the repo, so no worries about it being overwritten or you uploading your files to the repo)
 
-### 2 Add an empty file to that direcotry called `__init__.mojo`
+### 2 Add an empty file to that directory called `__init__.mojo`
 
 The folder that has your code in it needs to be considered a "module" by the Mojo compiler. The empty `__init__.mojo` file tells the Mojo compiler that your folder is a module.
 
@@ -60,9 +60,9 @@ The folder that has your code in it needs to be considered a "module" by the Moj
        a `MFloat[num_chans]` vector of any size (typically num_chans=2) or just a Float64.
 
     2) The `package_name` corresponds to the folder containing your files:  
-       - Files in `MMMAudio/mine` use `package_name="mine"`  
-       - Files in `MMMAudio/user_files` use `package_name="user_files"`  
-       - Your folder must be inside the MMMAudio directory and must contain the `__init__.mojo` file as explained above  
+       - Files in directory `mmmaudio/pretty_sounds` use `package_name="pretty_sounds"`  
+       - Files in directory `mmmaudio/ugly_sounds` use `package_name="ugly_sounds"`  
+       - Your folder must be inside the mmmaudio directory and must contain the `__init__.mojo` file as explained above  
 
 
 ```python
