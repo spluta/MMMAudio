@@ -180,8 +180,6 @@ def splay_n[simd_in_width: Int, num_speakers: Int, simd_out_size: Int, pan_point
     num_input_channels = len(input) * simd_in_width
     out = MFloat[simd_out_size](0.0)
 
-    # world[].print(mul_list_materialized)
-
     for i in range(num_input_channels):
         if num_input_channels == 1:
             for chan in range(num_speakers):

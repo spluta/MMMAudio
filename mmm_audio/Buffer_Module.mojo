@@ -335,7 +335,9 @@ struct SpanInterpolator(Movable, Copyable):
         Returns:
             The interpolated sample value.
         """
-        
+        if len(data) == 0:
+            return MFloat[num_chans](0.0)
+
         comptime if interp == Interp.none:
             return SpanInterpolator.read_none[num_chans,bWrap,mask](data, f_idx)
         elif interp == Interp.linear:

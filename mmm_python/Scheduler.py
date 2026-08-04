@@ -106,3 +106,72 @@ class Scheduler:
             if self.thread:
                 self.thread.join(timeout=5)
         self.start_thread()
+
+from mmm_python import MMMAudio
+import json
+
+import functools
+
+def process_nrt_event(event, targets, verbose=False):
+    if verbose:
+        print(f"Callback received event: {event}")
+
+    obj_name, method_name = event["message"].split(".", 1)
+    target = targets[obj_name]
+    func = getattr(target, method_name)
+    if "key" in event and "value" in event:
+        func(event["key"], event["value"])
+    elif "value" in event:
+        func(event["value"])
+
+class NRT():
+    """Class for handling non-realtime (NRT) processing in MMMAudio. This class provides a static method to save audio output to a WAV file while processing events from a json score file."""
+
+    @staticmethod
+    def save_to_wav(mmm_audio: MMMAudio, filename, duration_seconds=200, score_path=None, targets=None, verbose=False):
+        """Save audio output to a WAV file while processing events from a json score file.
+
+        Args:
+            mmm_audio: The MMMAudio instance to get audio samples from. Do not call mmm_audio.start_audio() before calling this function, as sample allocation will be handled internally.
+            filename: The name of the output WAV file.
+            duration_seconds: The duration of the output audio in seconds.
+            score_path: Optional path to a json score file containing events to process during audio generation.
+            targets: Optional dictionary mapping object names to their corresponding instances for event processing. Usually this will be a dictionary of MMMAudio instances and PolyPal instances.
+            verbose: If True, print progress and event processing information.
+
+        """
+
+        import wave
+        import numpy as np
+
+        blocksize = mmm_audio.blocksize
+        sample_rate = mmm_audio.sample_rate.value
+
+        num_loops = int((duration_seconds * sample_rate) / blocksize)
+
+        events = []
+        if score_path:
+            with open(score_path, "r", encoding="utf-8") as f:
+                events = json.load(f)
+        
+        events.sort(key=lambda e: e["time"])
+        
+        current_event_index = 0
+
+        with wave.open(filename, "wb") as wav_file:
+            wav_file.setparams((mmm_audio.num_output_channels, 4, sample_rate, 0, "NONE", "not compressed"))
+            for i in range(num_loops):
+                current_time = i * (blocksize / sample_rate)
+                while current_event_index < len(events) and events[current_event_index]["time"] <= current_time:
+                    event = events[current_event_index]
+                    if targets:
+                        process_nrt_event(event, targets, verbose=verbose)
+                    current_event_index += 1
+                if verbose and i % 10 == 0:
+                    print(f"Generating {filename}: {i}/{num_loops} blocks processed...")
+                chunk = mmm_audio.get_samples(blocksize)
+                scaled_chunk = (chunk * 2147483647).astype(np.int32)
+                binary_bytes = scaled_chunk.tobytes()
+                wav_file.writeframesraw(binary_bytes)
+
+        print(f"Successfully generated {filename} as 32-bit float!")
