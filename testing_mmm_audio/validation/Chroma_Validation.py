@@ -61,8 +61,8 @@ for line in lines[4:]:
 	if row:
 		mojo_rows.append(row)
 
-if len(mojo_rows) > 2:
-	mojo_rows = mojo_rows[2:]
+# if len(mojo_rows) > 2:
+# 	mojo_rows = mojo_rows[2:]
 
 mojo_results = np.array(mojo_rows).T
 
@@ -74,14 +74,16 @@ librosa_results = librosa.feature.chroma_stft(
 	hop_length=hopsize,
 	n_chroma=n_chroma,
 	tuning=0.0,
-	center=False,
+	center=True,
 )
 
+print("shape of librosa results: ", librosa_results.shape)
+print("shape of mojo results: ", mojo_results.shape)
+print("shape of flucoma results: ", flucoma_results.shape if flucoma_results is not None else "N/A")
 
 def compare_chroma(arr1, arr2):
 	diff = arr1 - arr2
 	return np.mean(np.abs(diff)), np.std(diff)
-
 
 if flucoma_results is not None:
 	min_frames = min(librosa_results.shape[1], mojo_results.shape[1], flucoma_results.shape[1])

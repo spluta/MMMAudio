@@ -77,8 +77,7 @@ with open("./testing_mmm_audio/validation/mojo_results/spectral_crest_mojo_resul
 
     mojo_crest = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_crest.append(val)
 

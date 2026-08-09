@@ -531,7 +531,7 @@ struct MBufAnalysis:
 
         self.num_windows: Int = 1
         if num_frames.value() > window_size:
-            self.num_windows = (num_frames.value() - window_size + hop_size - 1) // hop_size + 1
+            self.num_windows = (num_frames.value() - window_size) // hop_size + 1
 
     @staticmethod
     def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, var start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none, var padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
@@ -539,6 +539,7 @@ struct MBufAnalysis:
         mba = MBufAnalysis(buf, start_frame, num_frames, window_size, hop_size, window_type, padding)
 
         if not mba.valid:
+            print("MBufAnalysis: invalid buffer analysis parameters. Returning empty result.")
             return List[List[Float64]]()
 
         result = List[List[Float64]](capacity=mba.num_windows)
@@ -554,10 +555,29 @@ struct MBufAnalysis:
     
     @staticmethod
     def fft_process[T: GetFloat64Featurable & FFTProcessable](mut analyzer: T, buf: Buffer, chan: Int, var start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none, var padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Run an FFT-based analysis on a buffer.
+
+        Args:
+            analyzer: An instance of a type that implements GetFloat64Featurable and FFTProcessable.
+            buf: The audio buffer to analyze.
+            chan: The channel index to analyze.
+            start_frame: The first frame to analyze.
+            num_frames: The number of frames to analyze. If None, defaults to the remaining buffer.
+            window_size: The FFT window size in samples.
+            hop_size: The hop size in samples.
+            window_type: The type of window function to apply (default is none).
+            padding: Padding mode for the analysis (default is half_window).
         
+        Returns:
+            A List of Lists of Float64, where each inner list contains the features for one analysis hop.
+        
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
         mba = MBufAnalysis(buf, start_frame, num_frames, window_size, hop_size, window_type, padding)
 
         if not mba.valid:
+            print("MBufAnalysis: invalid buffer analysis parameters. Returning empty result.")
             return List[List[Float64]]()
         
         fft = RealFFT(window_size)
@@ -567,6 +587,7 @@ struct MBufAnalysis:
             for i in range(window_size):
                 frame_idx = mba.start_frame + (w * hop_size) + i
                 mba.samps[i] = SpanInterpolator.read_none[bWrap=False](buf.data[chan], Float64(frame_idx)) * mba.window_func[i]
+
             fft.fft(mba.samps)
             analyzer.next_frame(fft.mags,fft.phases)
             result.append(analyzer.get_features())

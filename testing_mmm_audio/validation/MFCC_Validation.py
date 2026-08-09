@@ -29,20 +29,24 @@ args = parse_args()
 show_plots = args.show_plots
 
 os.makedirs("./testing_mmm_audio/validation/flucoma_sc_results", exist_ok=True)
+os.makedirs("./testing_mmm_audio/validation/validation_results", exist_ok=True)
+
+############### MOJO ##################
 
 os.system("mojo run -I . ./testing_mmm_audio/validation/MFCC_Validation.mojo")
 print("mojo analysis complete")
 
+################ FLUCOMA ##################
+
 flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/mfcc_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang ./MFCC_Validation.scd")
+		os.system("sclang ./testing_mmm_audio/validation/MFCC_Validation.scd")
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 
-os.makedirs("./testing_mmm_audio/validation/validation_results", exist_ok=True)
 with open("./testing_mmm_audio/validation/mojo_results/mfcc_mojo_results.csv", "r") as f:
 	lines = f.readlines()
 
@@ -65,9 +69,6 @@ with open("./testing_mmm_audio/validation/flucoma_sc_results/mfcc_flucoma_result
 	for row in reader:
 		flucoma_results.append([float(value) for value in row])
 
-if len(mojo_results) > 2:
-	mojo_results = mojo_results[2:]  # remove first two frames to align with others
-
 mojo_results = np.array(mojo_results).T
 flucoma_results = np.array(flucoma_results).T
 
@@ -81,10 +82,14 @@ librosa_results = librosa.feature.mfcc(
 	n_mels=num_bands,
 	fmin=min_freq,
 	fmax=max_freq,
-	center=False,
+	center=True,
 	dct_type=2,
 	norm="ortho",
 )
+
+print("shape of librosa results: ", librosa_results.shape)
+print("shape of flucoma results: ", flucoma_results.shape if flucoma_results is not None else "N/A")
+print("shape of mojo results: ", mojo_results.shape)
 
 # Align arrays to the same size
 min_frames = min(librosa_results.shape[1], flucoma_results.shape[1], mojo_results.shape[1])

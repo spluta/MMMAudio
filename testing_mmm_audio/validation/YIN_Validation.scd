@@ -1,7 +1,7 @@
 var dir = thisProcess.nowExecutingPath.dirname;
 s.waitForBoot{
 
-	var settings = CSVFileReader.read(dir+/+"flucoma_sc_results/yin_mojo_results.csv");
+	var settings = CSVFileReader.read(dir+/+"mojo_results/yin_mojo_results.csv");
 	var windowsize = settings[0][1].asInteger;
 	var hopsize = settings[1][1].asInteger;
 	var minfreq = settings[2][1].asFloat;
@@ -12,7 +12,7 @@ s.waitForBoot{
 	"minfreq:    %".format(minfreq).postln;
 	"maxfreq:    %".format(maxfreq).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
 	s.sync;
 	FluidBufPitch.processBlocking(

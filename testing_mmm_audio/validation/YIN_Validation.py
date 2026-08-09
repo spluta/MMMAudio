@@ -44,14 +44,13 @@ with open("./testing_mmm_audio/validation/mojo_results/yin_mojo_results.csv", "r
     
     mojo_analysis = []
     # skip line 4, its a header
-    # skip line 5, to account for 1 frame lag
-    for line in lines[6:]:
+    for line in lines[5:]:
         freq, conf = line.strip().split(",")
         mojo_analysis.append((float(freq), float(conf)))
 
 y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 
-pitch = librosa.yin(y, fmin=minfreq, fmax=maxfreq, sr=sr, frame_length=windowsize, hop_length=hopsize)
+librosa_freqs = librosa.yin(y, fmin=minfreq, fmax=maxfreq, sr=sr, frame_length=windowsize, hop_length=hopsize, center=True)
 
 def get_semitone_diffs(list1, list2):
     shorter = min(len(list1), len(list2))
@@ -104,11 +103,36 @@ def compare_analyses_confidence(list1, list2):
 flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/yin_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang ./YIN_Validation.scd")
+		os.system("sclang ./testing_mmm_audio/validation/YIN_Validation.scd")
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
+
+try:
+    with open("./testing_mmm_audio/validation/flucoma_sc_results/yin_flucoma_results.csv", "r") as f:
+        lines = f.readlines()
+        sclang_analysis = []
+        for line in lines:
+            parts = line.strip().split(",")
+            if len(parts) >= 2:
+                freq = float(parts[0])
+                conf = float(parts[1])
+                sclang_analysis.append((freq, conf))
+            
+    # FluCoMa Frequency
+    sclang_freqs = [f[0] for f in sclang_analysis]
+    
+except Exception as e:
+    print("Error reading FluCoMa results:", e)
+
+mojo_freqs = np.array([f[0] for f in mojo_analysis])
+sclang_freqs = np.array([f[0] for f in sclang_analysis])
+librosa_freqs = np.array(librosa_freqs)
+
+print("mojo shape:", mojo_freqs.shape)
+print("sclang shape:", sclang_freqs.shape)
+print("librosa shape:", librosa_freqs.shape)
 
 fig, (ax_freq, ax_conf) = plt.subplots(2, 1, figsize=(12, 10), sharex=True)
 
@@ -118,13 +142,12 @@ limit = 600
 ax_freq.set_ylabel("Frequency (Hz)")
 ax_freq.set_title("YIN Pitch Detection Comparison")
 
-mojo_freqs = [f[0] for f in mojo_analysis]
 # MMMAudio
 l1 = ax_freq.plot(mojo_freqs[:limit], label="MMMAudio YIN", alpha=0.7)
 color1 = l1[0].get_color()
 
 # Librosa
-l2 = ax_freq.plot(pitch[:limit], label="librosa YIN", alpha=0.7)
+l2 = ax_freq.plot(librosa_freqs[:limit], label="librosa YIN", alpha=0.7)
 
 # Confidence Plot
 ax_conf.set_ylabel("Confidence")
@@ -133,40 +156,23 @@ ax_conf.set_xlabel("Frame")
 # MMMAudio Confidence
 l3 = ax_conf.plot([f[1] for f in mojo_analysis][:limit], label="MMMAudio YIN Confidence", color=color1, alpha=0.7)
 
-try:
-    with open("./testing_mmm_audio/validation/flucoma_sc_results/yin_flucoma_results.csv", "r") as f:
-        lines = f.readlines()
-        sclang_analysis = []
-        # skip header
-        for line in lines[1:]:
-            parts = line.strip().split(",")
-            if len(parts) >= 2:
-                freq = float(parts[0])
-                conf = float(parts[1])
-                sclang_analysis.append((freq, conf))
-            
-    # FluCoMa Frequency
-    sclang_freqs = [f[0] for f in sclang_analysis]
-    l4 = ax_freq.plot(sclang_freqs[:limit], label="FluCoMa YIN", alpha=0.7)
-    color4 = l4[0].get_color()
-    
-    # FluCoMa Confidence
-    l5 = ax_conf.plot([f[1] for f in sclang_analysis][:limit], label="FluCoMa YIN Confidence", color=color4, alpha=0.7)
-    
-except Exception as e:
-    print("Error reading FluCoMa results:", e)
+l4 = ax_freq.plot(sclang_freqs[:limit], label="FluCoMa YIN", alpha=0.7)
+color4 = l4[0].get_color()
+
+# FluCoMa Confidence
+l5 = ax_conf.plot([f[1] for f in sclang_analysis][:limit], label="FluCoMa YIN Confidence", color=color4, alpha=0.7)
 
 ax_freq.legend()
 ax_conf.legend()
 
-mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(mojo_freqs, pitch)
+mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(mojo_freqs, librosa_freqs)
 print(f"MMMAudio vs Librosa YIN: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
 
 try:
     mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(mojo_freqs, sclang_freqs)
     print(f"MMMAudio vs FluCoMa YIN: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
     
-    mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(pitch, sclang_freqs)
+    mean_hz, std_hz, mean_st, std_st = compare_analyses_pitch(librosa_freqs, sclang_freqs)
     print(f"Librosa vs FluCoMa YIN: Mean Dev = {mean_hz:.2f} Hz ({mean_st:.2f} semitones), Std Dev = {std_hz:.2f} Hz ({std_st:.2f} semitones)")
 
     mojo_confs = [f[1] for f in mojo_analysis]
@@ -185,7 +191,7 @@ else:
 
 # Histogram of deviations
 plt.figure(figsize=(10, 6))
-diffs_librosa = get_semitone_diffs(mojo_freqs, pitch)
+diffs_librosa = get_semitone_diffs(mojo_freqs, librosa_freqs)
 max_val = np.max(diffs_librosa)
 data_list = [diffs_librosa]
 label_list = ['MMMAudio vs Librosa']
@@ -196,7 +202,7 @@ if 'sclang_freqs' in locals():
     data_list.append(diffs_flucoma)
     label_list.append('MMMAudio vs FluCoMa')
 
-    diffs_flucoma_librosa = get_semitone_diffs(pitch, sclang_freqs)
+    diffs_flucoma_librosa = get_semitone_diffs(librosa_freqs, sclang_freqs)
     max_val = max(max_val, np.max(diffs_flucoma_librosa))
     data_list.append(diffs_flucoma_librosa)
     label_list.append('Librosa vs FluCoMa')

@@ -38,7 +38,7 @@ def load_flucoma_spectral_shape(windowsize, hopsize):
             with open(settings_path, "w") as f:
                 f.write(f"windowsize,{windowsize}\n")
                 f.write(f"hopsize,{hopsize}\n")
-            os.system("sclang ./SpectralShape_Validation.scd")
+            os.system("sclang ./testing_mmm_audio/validation/SpectralShape_Validation.scd")
         except Exception as e:
             print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 
@@ -78,16 +78,14 @@ with open("./testing_mmm_audio/validation/mojo_results/spectral_centroid_mojo_re
     
     mojo_centroids = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_centroids.append(val)
 
 y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 
 # Librosa Spectral Centroid
-# center=False to match Mojo
-librosa_centroids = librosa.feature.spectral_centroid(y=y, sr=sr, n_fft=windowsize, hop_length=hopsize, center=False)[0]
+librosa_centroids = librosa.feature.spectral_centroid(y=y, sr=sr, n_fft=windowsize, hop_length=hopsize, center=True)[0]
 
 def compare_analyses_pitch(list1, list2):
     shorter = min(len(list1), len(list2))

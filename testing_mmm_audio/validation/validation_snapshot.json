@@ -1,22 +1,14 @@
 {
-  "created_at": "2026-07-24T16:12:16.679204+00:00",
+  "created_at": "2026-08-09T14:57:43.104530+00:00",
   "scripts": {
     "Chroma_Validation.py": {
       "stats": [
         {
           "label": "MMMAudio vs Librosa Chroma",
-          "line": "MMMAudio vs Librosa Chroma: Mean Difference = 0.040743, Std Dev = 0.073679",
+          "line": "MMMAudio vs Librosa Chroma: Mean Difference = 0.040778, Std Dev = 0.073669",
           "values": [
-            0.040743,
-            0.073679
-          ]
-        },
-        {
-          "label": "MMMAudio vs FluCoMa Chroma",
-          "line": "MMMAudio vs FluCoMa Chroma: Mean Difference = 0.250225, Std Dev = 0.252134",
-          "values": [
-            0.250225,
-            0.252134
+            0.040778,
+            0.073669
           ]
         }
       ]
@@ -25,18 +17,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa",
-          "line": "MMMAudio vs Librosa: Mean Difference = 3.801564, Std Dev = 5.258730",
+          "line": "MMMAudio vs Librosa: Mean Difference = 3.799188, Std Dev = 5.255869",
           "values": [
-            3.801564,
-            5.25873
+            3.799188,
+            5.255869
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa",
-          "line": "MMMAudio vs FluCoMa: Mean Difference = 23.017341, Std Dev = 55.332058",
+          "line": "MMMAudio vs FluCoMa: Mean Difference = 23.015950, Std Dev = 55.335289",
           "values": [
-            23.017341,
-            55.332058
+            23.01595,
+            55.335289
           ]
         }
       ]
@@ -45,18 +37,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa",
-          "line": "MMMAudio vs Librosa: Mean Difference = 0.062942, Std Dev = 0.276505",
+          "line": "MMMAudio vs Librosa: Mean Difference = 0.042317, Std Dev = 0.200923",
           "values": [
-            0.062942,
-            0.276505
+            0.042317,
+            0.200923
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa",
-          "line": "MMMAudio vs FluCoMa: Mean Difference = 0.174934, Std Dev = 0.785834",
+          "line": "MMMAudio vs FluCoMa: Mean Difference = 0.178825, Std Dev = 0.836130",
           "values": [
-            0.174934,
-            0.785834
+            0.178825,
+            0.83613
           ]
         }
       ]
@@ -85,9 +77,9 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa RMS",
-          "line": "MMMAudio vs Librosa RMS: Mean Deviation = 0.01 dB, Std Dev = 0.01 dB",
+          "line": "MMMAudio vs Librosa RMS: Mean Deviation = 0.00 dB, Std Dev = 0.01 dB",
           "values": [
-            0.01,
+            0.0,
             0.01
           ]
         },
@@ -105,21 +97,21 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa Spectral Centroid",
-          "line": "MMMAudio vs Librosa Spectral Centroid: Mean Dev = 184.17 Hz (2.16 semitones), Std Dev = 286.12 Hz (2.74 semitones)",
+          "line": "MMMAudio vs Librosa Spectral Centroid: Mean Dev = 123.40 Hz (1.44 semitones), Std Dev = 164.55 Hz (1.47 semitones)",
           "values": [
-            184.17,
-            2.16,
-            286.12,
-            2.74
+            123.4,
+            1.44,
+            164.55,
+            1.47
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa Spectral Centroid",
-          "line": "MMMAudio vs FluCoMa Spectral Centroid: Mean Dev = 60.46 Hz (0.66 semitones), Std Dev = 66.10 Hz (0.63 semitones)",
+          "line": "MMMAudio vs FluCoMa Spectral Centroid: Mean Dev = 60.60 Hz (0.66 semitones), Std Dev = 66.27 Hz (0.63 semitones)",
           "values": [
-            60.46,
+            60.6,
             0.66,
-            66.1,
+            66.27,
             0.63
           ]
         }
@@ -129,10 +121,10 @@
       "stats": [
         {
           "label": "MMMAudio vs FluCoMa Spectral Crest",
-          "line": "MMMAudio vs FluCoMa Spectral Crest: Mean Dev = 0.8195 dB, Std Dev = 0.0691 dB",
+          "line": "MMMAudio vs FluCoMa Spectral Crest: Mean Dev = 0.8196 dB, Std Dev = 0.0694 dB",
           "values": [
-            0.8195,
-            0.0691
+            0.8196,
+            0.0694
           ]
         }
       ]
@@ -141,18 +133,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa Spectral Flatness",
-          "line": "MMMAudio vs Librosa Spectral Flatness: Mean Dev = 59.2830 dB, Std Dev = 10.3923 dB",
+          "line": "MMMAudio vs Librosa Spectral Flatness: Mean Dev = 59.2351 dB, Std Dev = 9.8187 dB",
           "values": [
-            59.283,
-            10.3923
+            59.2351,
+            9.8187
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa Spectral Flatness",
-          "line": "MMMAudio vs FluCoMa Spectral Flatness: Mean Dev = 0.9818 dB, Std Dev = 0.8982 dB",
+          "line": "MMMAudio vs FluCoMa Spectral Flatness: Mean Dev = 0.9810 dB, Std Dev = 0.8988 dB",
           "values": [
-            0.9818,
-            0.8982
+            0.981,
+            0.8988
           ]
         }
       ]
@@ -161,10 +153,10 @@
       "stats": [
         {
           "label": "MMMAudio vs FluCoMa Spectral Kurtosis",
-          "line": "MMMAudio vs FluCoMa Spectral Kurtosis: Mean Dev = 2.084884, Std Dev = 3.022694",
+          "line": "MMMAudio vs FluCoMa Spectral Kurtosis: Mean Dev = 2.084338, Std Dev = 3.023293",
           "values": [
-            2.084884,
-            3.022694
+            2.084338,
+            3.023293
           ]
         }
       ]
@@ -173,18 +165,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa Spectral Rolloff",
-          "line": "MMMAudio vs Librosa Spectral Rolloff: Mean Dev = 1407.8272, Std Dev = 2013.2615",
+          "line": "MMMAudio vs Librosa Spectral Rolloff: Mean Dev = 968.7972, Std Dev = 1259.2579",
           "values": [
-            1407.8272,
-            2013.2615
+            968.7972,
+            1259.2579
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa Spectral Rolloff",
-          "line": "MMMAudio vs FluCoMa Spectral Rolloff: Mean Dev = 452.2334, Std Dev = 596.6222",
+          "line": "MMMAudio vs FluCoMa Spectral Rolloff: Mean Dev = 453.0038, Std Dev = 596.9923",
           "values": [
-            452.2334,
-            596.6222
+            453.0038,
+            596.9923
           ]
         }
       ]
@@ -193,10 +185,10 @@
       "stats": [
         {
           "label": "MMMAudio vs FluCoMa Spectral Skewness",
-          "line": "MMMAudio vs FluCoMa Spectral Skewness: Mean Dev = 0.128886, Std Dev = 0.154829",
+          "line": "MMMAudio vs FluCoMa Spectral Skewness: Mean Dev = 0.128862, Std Dev = 0.154860",
           "values": [
-            0.128886,
-            0.154829
+            0.128862,
+            0.15486
           ]
         }
       ]
@@ -205,18 +197,18 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa Spectral Spread",
-          "line": "MMMAudio vs Librosa Spectral Spread: Mean Dev = 352.5770, Std Dev = 458.4868",
+          "line": "MMMAudio vs Librosa Spectral Spread: Mean Dev = 270.5480, Std Dev = 331.0791",
           "values": [
-            352.577,
-            458.4868
+            270.548,
+            331.0791
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa Spectral Spread",
-          "line": "MMMAudio vs FluCoMa Spectral Spread: Mean Dev = 190.2303, Std Dev = 161.7656",
+          "line": "MMMAudio vs FluCoMa Spectral Spread: Mean Dev = 190.4802, Std Dev = 161.9458",
           "values": [
-            190.2303,
-            161.7656
+            190.4802,
+            161.9458
           ]
         }
       ]
@@ -225,30 +217,30 @@
       "stats": [
         {
           "label": "MMMAudio vs Librosa YIN",
-          "line": "MMMAudio vs Librosa YIN: Mean Dev = 73.02 Hz (4.72 semitones), Std Dev = 169.49 Hz (8.98 semitones)",
+          "line": "MMMAudio vs Librosa YIN: Mean Dev = 98.73 Hz (6.11 semitones), Std Dev = 188.12 Hz (14.01 semitones)",
           "values": [
-            73.02,
-            4.72,
-            169.49,
-            8.98
+            98.73,
+            6.11,
+            188.12,
+            14.01
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa YIN",
-          "line": "MMMAudio vs FluCoMa YIN: Mean Dev = 169.81 Hz (10.82 semitones), Std Dev = 222.74 Hz (11.39 semitones)",
+          "line": "MMMAudio vs FluCoMa YIN: Mean Dev = 31.58 Hz (2.73 semitones), Std Dev = 99.04 Hz (11.63 semitones)",
           "values": [
-            169.81,
-            10.82,
-            222.74,
-            11.39
+            31.58,
+            2.73,
+            99.04,
+            11.63
           ]
         },
         {
           "label": "MMMAudio vs FluCoMa Confidence",
-          "line": "MMMAudio vs FluCoMa Confidence: Mean Dev = 0.1881, Std Dev = 0.1512",
+          "line": "MMMAudio vs FluCoMa Confidence: Mean Dev = 0.0224, Std Dev = 0.0514",
           "values": [
-            0.1881,
-            0.1512
+            0.0224,
+            0.0514
           ]
         }
       ]

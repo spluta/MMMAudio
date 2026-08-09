@@ -78,8 +78,7 @@ with open("./testing_mmm_audio/validation/mojo_results/spectral_spread_mojo_resu
 
     mojo_spread = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_spread.append(val)
 
@@ -93,7 +92,7 @@ librosa_spread = librosa.feature.spectral_bandwidth(
     hop_length=hopsize,
     win_length=windowsize,
     window="hann",
-    center=False,
+    center=True,
 )[0]
 
 def compare_analyses(list1, list2):

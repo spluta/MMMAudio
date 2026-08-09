@@ -17,7 +17,7 @@ s.waitForBoot{
 		numBands: 10,
 		windowSize:windowsize,
 		hopSize:hopsize,
-		padding:0
+		padding:1
 	);
 	s.sync;
 	f.loadToFloatArray(action:{

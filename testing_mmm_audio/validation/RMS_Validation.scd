@@ -1,14 +1,14 @@
 var dir = thisProcess.nowExecutingPath.dirname;
 s.waitForBoot{
 
-	var settings = CSVFileReader.read(dir+/+"flucoma_sc_results/rms_mojo_results.csv");
+	var settings = CSVFileReader.read(dir+/+"mojo_results/rms_mojo_results.csv");
 	var windowsize = settings[0][1].asInteger;
 	var hopsize = settings[1][1].asInteger;
 
 	"windowsize: %".format(windowsize).postln;
 	"hopsize: %".format(hopsize).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
     s.sync;
 	FluidBufLoudness.processBlocking(

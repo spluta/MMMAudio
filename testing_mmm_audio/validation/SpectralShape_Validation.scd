@@ -1,14 +1,14 @@
 var dir = thisProcess.nowExecutingPath.dirname;
 s.waitForBoot{
 
-	var settingsPath = dir+/+"outputs/spectral_shape_settings.csv";
+	var settingsPath = dir+/+"flucoma_sc_results/spectral_shape_settings.csv";
 	var settings, windowsize, hopsize;
 
 	if(File.exists(settingsPath).not){
 		"SpectralShape settings file missing: %".format(settingsPath).postln;
 		s.quit;
 		0.exit;
-	};
+	};	
 
 	settings = CSVFileReader.read(settingsPath);
 	windowsize = settings[0][1].asInteger;
@@ -17,7 +17,7 @@ s.waitForBoot{
 	"windowsize: %".format(windowsize).postln;
 	"hopsize: %".format(hopsize).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
     s.sync;
 	FluidBufSpectralShape.processBlocking(
@@ -32,7 +32,7 @@ s.waitForBoot{
 	s.sync;
 	f.loadToFloatArray(action:{
 		arg fa;
-		var file = File.open(dir+/+"outputs/spectral_shape_flucoma_results.csv","w");
+		var file = File.open(dir+/+"flucoma_sc_results/spectral_shape_flucoma_results.csv","w");
 		var numFrames = (fa.size / 7).asInteger;
 		numFrames.do{
 			arg i;
@@ -45,7 +45,7 @@ s.waitForBoot{
 				fa[idx + 4],
 				fa[idx + 5],
 				fa[idx + 6]
-			].collect(_.asString).join($,);
+			].collect(_.asCompileString).join($,);
 			if(i > 0){ file.write("\n") };
 			file.write(line);
 		};

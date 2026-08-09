@@ -5,38 +5,9 @@ from mmm_audio import *
 comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
 
-struct Analyzer(BufferedProcessable):
-    var world: World
-    var fft: RealFFT[]
-    var spreads: List[Float64]
-    var sample_rate: Float64
-
-    def __init__(out self, world: World, sample_rate: Float64):
-        self.world = world
-        self.fft = RealFFT[](windowsize)
-        self.spreads = List[Float64]()
-        self.sample_rate = sample_rate
-
-    def next_window(mut self, mut buffer: List[Float64]):
-        self.fft.fft(buffer)
-        val = SpectralSpread.from_mags(self.fft.mags, self.sample_rate)
-        self.spreads.append(val)
-        return
-
-def main():
-    environment = alloc[Environment](1)
-    environment.init_pointee_move(Environment())
-    
-    w = alloc[MMMWorld](1)
-    w.init_pointee_move(MMMWorld(44100, environment))
-
+def main() raises:
     buffer = Buffer.load("resources/Shiverer.wav")
-    playBuf = Play(w)
-    analyzer = BufferedProcess[Analyzer,False,WindowType.hann](w, Analyzer(w, w[].sample_rate), window_size=windowsize, hop_size=hopsize)
-
-    for _ in range(buffer.num_frames):
-        sample = playBuf.next(buffer)
-        _ = analyzer.next(sample)
+    results = SpectralSpread.buf_analysis(buffer, chan=0, start_frame=0, num_frames=None, window_size=windowsize, hop_size=hopsize, padding=Padding.half_window)
 
     pth = "testing_mmm_audio/validation/mojo_results/spectral_spread_mojo_results.csv"
     try:
@@ -44,8 +15,8 @@ def main():
             f.write("windowsize,",windowsize,"\n")
             f.write("hopsize,",hopsize,"\n")
             f.write("Spread\n")
-            for i in range(len(analyzer.process.spreads)):
-                f.write(String(analyzer.process.spreads[i]) + "\n")
+            for i in range(len(results)):
+                f.write(String(results[i][0]) + "\n")
         print("Wrote results to ", pth)
     except err:
         print("Error writing to file: ", err)

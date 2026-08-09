@@ -1,47 +1,21 @@
-"""RMS Unit Test"""
-
 from mmm_audio import *
 
 comptime windowsize: Int = 1024
 comptime hopsize: Int = 512
 
-struct Analyzer(BufferedProcessable):
-    var world: World
-    var rms_values: List[Float64]
-
-    def __init__(out self, world: World):
-        self.world = world
-        self.rms_values = List[Float64]()
-
-    def next_window(mut self, mut buffer: List[Float64]):
-        val = RMS.from_window(buffer)
-        self.rms_values.append(val)
-        return
-
-def main():
-    environment = alloc[Environment](1)
-    environment.init_pointee_move(Environment())
-    
-    w = alloc[MMMWorld](1)
-    w.init_pointee_move(MMMWorld(44100, environment))
+def main() raises:
 
     buffer = Buffer.load("resources/Shiverer.wav")
-    playBuf = Play(w)
-
-    analyzer = BufferedProcess[Analyzer,False,WindowType.rect,WindowType.rect](w, Analyzer(w), window_size=windowsize, hop_size=hopsize)
-
-    for _ in range(buffer.num_frames):
-        sample = playBuf.next(buffer)
-        _ = analyzer.next(sample)
+    results = RMS.buf_analysis(buffer, chan=0, start_frame=0, num_frames=None, window_size=windowsize, hop_size=hopsize, padding=Padding.half_window)
     
     pth = "testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv"
     try:
         with open(pth, "w") as f:
-            f.write("windowsize,",windowsize,"\n")
-            f.write("hopsize,",hopsize,"\n")
+            f.write("windowsize," + String(windowsize) + "\n")
+            f.write("hopsize," + String(hopsize) + "\n")
             f.write("RMS\n")
-            for i in range(len(analyzer.process.rms_values)):
-                f.write(String(analyzer.process.rms_values[i]) + "\n")
+            for i in range(len(results)):
+                f.write(String(results[i][0]) + "\n")
         print("Wrote results to ", pth)
     except err:
         print("Error writing to file: ", err)

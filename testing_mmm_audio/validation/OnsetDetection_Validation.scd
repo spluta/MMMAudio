@@ -9,7 +9,7 @@ var dir = thisProcess.nowExecutingPath.dirname;
 	}{
 		thresh = (high + low) / 2;
 
-		FluidBufOnsetDetection.processBlocking(
+		FluidBufOnsetSlice.processBlocking(
 			server: s,
 			source: b,
 			indices: f,
@@ -49,7 +49,7 @@ s.waitForBoot{
 	f = Buffer(s);
 
 	~thresholds[9] = 0.5;
-	FluidBufOnsetDetection.processBlocking(
+	FluidBufOnsetSlice.processBlocking(
 		server: s,
 		source: b,
 		indices: f,
