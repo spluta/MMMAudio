@@ -282,7 +282,6 @@ def pan_az[num_speakers: Int = 2, simd_out_size: Int = 2, width: Float64 = 2.0, 
     var mask: MBool[2]
     var temp: MFloat[2]
 
-    # this needs to be checked
     for i in range(num_simd_pairs):
         var pos = (constant - MFloat[2](Float64(i*2), Float64(i*2+1))) * rwidth
         pos = (pos - frange * floor(rrange * pos)) * pi
@@ -422,7 +421,7 @@ struct VBAP2D(Movable, Copyable):
     """
     var speaker_positions: List[Float64]
     var speaker_unit_vectors: List[MFloat[2]]
-    var speaker_pairs: List[List[Int]]
+    var speaker_pairs: List[MInt[2]]
     var speaker_inverse_bases: List[Array[MFloat[2], 2]]
     var num_speakers: Int
     
@@ -444,7 +443,6 @@ struct VBAP2D(Movable, Copyable):
         self.speaker_unit_vectors = self.calc_speaker_unit_vectors()
         self.speaker_pairs = self.calc_speaker_pairs()
         self.speaker_inverse_bases = self.calc_inverse_base()
-
 
         pass
 
@@ -492,8 +490,8 @@ struct VBAP2D(Movable, Copyable):
         
         return index
     
-    def calc_speaker_pairs(mut self) -> List[List[Int]]:
-        var speaker_pairs = List[List[Int]](length=self.num_speakers, fill=[0,0])
+    def calc_speaker_pairs(mut self) -> List[MInt[2]]:
+        var speaker_pairs = List[MInt[2]](length=self.num_speakers, fill=MInt[2](0,0))
         var unsorted_array = self.speaker_positions.copy()
         var sorted_array = self.speaker_positions.copy()
         sort(sorted_array)
@@ -504,18 +502,18 @@ struct VBAP2D(Movable, Copyable):
 
         return speaker_pairs^
     
-    def calc_gain_factors(mut self, source_vec: MFloat[2], mut active_pair: List[Int], mut active_gains: MFloat[2], source_az: Float64):
+    def calc_gain_factors(mut self, source_vec: MFloat[2], mut active_pair: MInt[2], mut active_gains: MFloat[2], source_az: Float64):
         
 
         for speaker_pair in self.speaker_pairs:
 
             if source_az == self.speaker_positions[speaker_pair[0]]:
-                active_pair = speaker_pair.copy()
+                active_pair = speaker_pair
                 active_gains = MFloat[2](1.0, 0.0)
                 
                 return
             elif source_az == self.speaker_positions[speaker_pair[1]]:
-                active_pair = speaker_pair.copy()
+                active_pair = speaker_pair
                 active_gains = MFloat[2](0.0, 1.0)
                 return
         
@@ -552,7 +550,7 @@ struct VBAP2D(Movable, Copyable):
                 largest_small_gain = i 
                 active_index = i
 
-        active_pair = self.speaker_pairs[active_index].copy()
+        active_pair = self.speaker_pairs[active_index]
         var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
         active_gains = scaled_gains
     
@@ -567,7 +565,7 @@ struct VBAP2D(Movable, Copyable):
         Parameters:
             simd_out_size: The size of the output float. Must be larger than the number of speakers in the array and a power of two.
         """
-        var active_speaker_pair : List[Int] = [0, 1]
+        var active_speaker_pair = MInt[2](0, 1)
         var active_gain_factors = MFloat[2](0.5)
         var source_vector = MFloat[2](cos(az), sin(az))
         
