@@ -750,7 +750,7 @@ def coin(p: MFloat[_]) -> MBool[p.length]:
     var coins = rands.lt(q)
     return coins
 
-def choose(*vals: MFloat[_]) -> type_of(vals[0]):
+def choose[dtype: DType](*vals: SIMD[dtype, _]) -> type_of(vals[0]):
     """Choose a random index.
     
     Args:
@@ -764,6 +764,45 @@ def choose(*vals: MFloat[_]) -> type_of(vals[0]):
         return 0.0
     var idx = rrand(0, num_vals - 1)
     return vals[idx]
+
+def choose[dtype: DType, N: SIMDLength](vals: Span[SIMD[dtype, N], _]) -> type_of(vals[0]):
+    """Choose a random index.
+    
+    Args:
+        vals: A List or Array of items to choose from.
+    
+    Returns:
+        An item chosen randomly from the provided values.
+    """
+    var num_vals = len(vals)
+    if num_vals == 0:
+        return 0.0
+    var idx = rrand(0, num_vals - 1)
+    return vals[idx]
+
+def wchoose[dtype: DType, N: SIMDLength](vals: Span[SIMD[dtype, N], _], weights: Span[Float64, _]) -> type_of(vals[0]):
+    """Choose a random index from the list of weights.
+    
+    Args:
+        vals: A variable number of items to choose from. Can be any DType of SIMD vector.
+        weights: A list of weights for the items.
+    
+    Returns:
+        An item chosen randomly from the provided values.
+    """
+    debug_assert(len(vals) == len(weights), "vals and weights must be the same length")
+    debug_assert(len(vals) > 0, "vals must not be empty")
+
+    var sum = 0.0
+    for weight in weights:
+        sum += weight
+    var val = rrand(0.0, sum)
+    for i in range(len(weights)):
+        val -= weights[i]
+        if val <= 0:
+            return vals[i]
+    
+    return vals[len(vals) - 1]
 
 @doc_hidden
 def _reverse_range[T: ImplicitlyCopyable & Deinitable](mut data: List[T], start: Int, end: Int):

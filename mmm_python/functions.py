@@ -16,6 +16,33 @@ def choose(a: list) -> object:
     """Return a random element from the list a."""
     return random.choice(a)
 
+def wchoose(vals: list, weights: list) -> object:
+    """
+    Return a value from the list based on the list of weights provided.
+
+    Args:
+        vals: The values to choose from.
+        weights: The weights for the values.
+
+    Returns:
+        A value from the list.
+    """
+    num_vals = len(vals)
+    if num_vals == 0:
+        return 0.0
+
+    sum = 0.0
+    for weight in weights:
+        sum += weight
+    val = rrand(0.0, sum)
+    for i in range(len(weights)):
+        val -= weights[i]
+        print(val)
+        if val <= 0:
+            return vals[i]
+    
+    return vals[0]
+
 def swap(a: object, b: object) -> tuple:
     """Swap the values of a and b, returning them in a tuple."""
     return b, a
