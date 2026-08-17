@@ -14,7 +14,6 @@ struct Grains(Movable, Copyable):
     var start_frame: Float64
     var m: Messenger
     var max_trig_rate: Float64
-    var points_temp: List[Float64]
      
     def __init__(out self, world: World):
         self.world = world  
@@ -26,16 +25,12 @@ struct Grains(Movable, Copyable):
         self.impulse = Phasor[1](self.world)
         self.m = Messenger(world)
         self.max_trig_rate = 20.0
-        self.points_temp = List[Float64]()
 
         self.start_frame = 0.0 
 
     @always_inline
     def next(mut self) -> MFloat[num_simd_chans]:
         self.m.update("max_trig_rate", self.max_trig_rate)
-        var new_points = self.m.notify_update("env_points", self.points_temp)
-        if new_points:
-            self.tgrains.set_env_points(self.points_temp)
 
         var num_grains = 0
         if self.m.notify_update("set_num_grains", num_grains):
