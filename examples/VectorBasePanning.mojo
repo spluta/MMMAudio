@@ -43,15 +43,10 @@ struct VectorBasePanning(Movable, Copyable):
 
     def next(mut self) -> MFloat[8]:
         
-        comptime max_simd = 8
-        comptime two_pi = 2 * pi
-
         self.messenger.update("az", self.az)
         self.messenger.update("pos", self.pos)
         self.messenger.update("mouse", self.mouse)
        
-        
-     
         comptime offset = deg_to_rad(90)
         if self.mouse:
             var x = linlin(self.world[].mouse_x(), 0.0, 1.0, -1.0, 1.0)
@@ -65,24 +60,7 @@ struct VectorBasePanning(Movable, Copyable):
         # var pan = self.vbap_4.next[4](sig, self.az)
         # var out = MFloat[max_simd](pan[0], pan[1], pan[2], pan[3], 0.0, 0.0, 0.0, 0.0)
         
-
         # 7 speaker setup, note that the simd_out_size must be a power of two and larger than the speaker array size.
         var out = self.vbap_7.next[8](sig, self.az)
 
         return out * 0.5
-
-
-
-def deg_to_rad(degrees: Float64) -> Float64:
-    """
-    Converts from degrees to radians.
-    """
-    return degrees * (pi/180)
-
-
-
-def rad_to_deg(radians: Float64) -> Float64:
-    """
-    Converts from radians to degrees.
-    """
-    return radians * (180/pi)

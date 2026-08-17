@@ -8,7 +8,7 @@ from mmm_python import *
 from math import pi
 
 # instantiate and load the graph, change num_output_channels to 7 and uncomment the 7-channel code in the mojo file for a 7-channel surround sound example.
-mmm_audio = MMMAudio(128, num_output_channels=4, graph_name="VectorBasePanning", package_name="examples")
+mmm_audio = MMMAudio(128, num_output_channels=8, graph_name="VectorBasePanning", package_name="examples")
 
 mmm_audio.start_audio()
 
