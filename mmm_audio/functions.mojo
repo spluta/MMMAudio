@@ -1051,3 +1051,30 @@ def truncate(x: Float64, decimal_places: Int) -> Float64:
     """
     var factor = 10.0 ** decimal_places
     return floor(x * factor) / factor
+
+@always_inline
+def deg_to_rad(degrees: Float64) -> Float64:
+    """
+    Converts from degrees to radians.
+
+    Args:
+        degrees: An angle in degrees.
+    
+    Returns:
+        The given angle in radians.
+    """
+    return degrees * (pi/180)
+
+
+@always_inline
+def rad_to_deg(radians: Float64) -> Float64:
+    """
+    Converts from radians to degrees.
+
+    Args:
+        radians: An angle in radians.
+    
+    Returns:
+        The given angle in degrees.
+    """
+    return radians * (180/pi)
