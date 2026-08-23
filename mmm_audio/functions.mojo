@@ -765,44 +765,49 @@ def choose[dtype: DType](*vals: SIMD[dtype, _]) -> type_of(vals[0]):
     var idx = rrand(0, num_vals - 1)
     return vals[idx]
 
-def choose[dtype: DType, N: SIMDLength](vals: Span[SIMD[dtype, N], _]) -> type_of(vals[0]):
+def choose[dtype: DType, N: SIMDLength](items: Span[SIMD[dtype, N], _]) -> type_of(items[0]):
     """Choose a random index.
     
     Args:
-        vals: A List or Array of items to choose from.
+        items: A List or Array of items to choose from.
     
     Returns:
         An item chosen randomly from the provided values.
     """
-    var num_vals = len(vals)
-    if num_vals == 0:
-        return 0.0
+    var num_vals = len(items)
+    debug_assert(num_vals > 0, "items must not be empty")
     var idx = rrand(0, num_vals - 1)
-    return vals[idx]
+    return items[idx]
 
-def wchoose[dtype: DType, N: SIMDLength](vals: Span[SIMD[dtype, N], _], weights: Span[Float64, _]) -> type_of(vals[0]):
+def wchoose[dtype: DType, N: SIMDLength](items: Span[SIMD[dtype, N], _], weights: Span[Float64, _]) -> type_of(items[0]):
     """Choose a random index from the list of weights.
     
     Args:
-        vals: A variable number of items to choose from. Can be any DType of SIMD vector.
+        items: A variable number of items to choose from. Can be any DType of SIMD vector.
         weights: A list of weights for the items.
     
     Returns:
         An item chosen randomly from the provided values.
     """
-    debug_assert(len(vals) == len(weights), "vals and weights must be the same length")
-    debug_assert(len(vals) > 0, "vals must not be empty")
-
-    var sum = 0.0
-    for weight in weights:
-        sum += weight
-    var val = rrand(0.0, sum)
-    for i in range(len(weights)):
-        val -= weights[i]
-        if val <= 0:
-            return vals[i]
+    debug_assert(len(items) == len(weights), "items and weights must be the same length")
+    debug_assert(len(items) > 0, "items must not be empty")
     
-    return vals[len(vals) - 1]
+    var max = 0.0
+    var selected_item: Optional[type_of(items[0])] = None
+
+    for item, weight in zip(items, weights):
+        if weight <= 0:
+            continue
+
+        var u = rrand(0.001, 1.0)
+        
+        # Calculate the Efraimidis-Spirakis sort key: k_i = u_i ** (1 / w_i)
+        var key = u ** (1.0 / weight)
+        if key > max:
+            max = key
+            selected_item = item
+
+    return selected_item.value() if selected_item is not None else choose(items)
 
 @doc_hidden
 def _reverse_range[T: ImplicitlyCopyable & Deinitable](mut data: List[T], start: Int, end: Int):
@@ -1102,7 +1107,7 @@ def deg_to_rad(degrees: Float64) -> Float64:
     Returns:
         The given angle in radians.
     """
-    return degrees * (pi/180)
+    return degrees * (pi/180.)
 
 
 @always_inline
