@@ -421,7 +421,7 @@ struct VBAP2D(Movable, Copyable):
     """
     var speaker_positions: List[Float64]
     var speaker_unit_vectors: List[MFloat[2]]
-    var speaker_pairs: List[MInt[2]]
+    var speaker_pairs: List[List[Int]]
     var speaker_inverse_bases: List[Array[MFloat[2], 2]]
     var num_speakers: Int
     
@@ -430,7 +430,7 @@ struct VBAP2D(Movable, Copyable):
         Initializes an instance of VBAP2D.
 
         Args:
-            speaker_positions: A List of azimuth values in radians.
+            speaker_positions: A List of azimuth values in radians. The order of speakers given corresponds to the output channels ie. The speaker defined as the first element of the list will output on channel 0.
         """
         self.num_speakers = len(speaker_positions)
         self.speaker_positions = []
@@ -444,10 +444,17 @@ struct VBAP2D(Movable, Copyable):
         self.speaker_pairs = self.calc_speaker_pairs()
         self.speaker_inverse_bases = self.calc_inverse_base()
 
+
         pass
 
 
     def calc_speaker_unit_vectors(mut self) -> List[MFloat[2]]:
+        """
+        Used internally to calculate the unit vectors of each speaker from a given azimuth.
+
+        Returns:
+            A list of unit vectors.
+        """
         var speaker_vectors = List[MFloat[2]](length=self.num_speakers, fill=MFloat[2](0.0,0.0))
         
 
@@ -463,6 +470,12 @@ struct VBAP2D(Movable, Copyable):
         return speaker_vectors^
     
     def calc_inverse_base(mut self) -> List[Array[MFloat[2], 2]]:
+        """
+        Used internally to calculate the inverse bases of speaker matrices.
+
+        Returns:
+            A list of inverse base matrices.
+        """
         var inverse_bases = List[Array[MFloat[2], 2]](length= self.num_speakers, fill=Array[MFloat[2], 2](fill=0.0))
 
         
@@ -481,17 +494,33 @@ struct VBAP2D(Movable, Copyable):
 
         return inverse_bases^
 
-    def index_of(mut self, array: List[Float64], element: Float64) -> Int:
+    def index_of(mut self, list: List[Float64], element: Float64) -> Int:
+        """
+        Finds the index of the first appearance of an element in a list.
+
+        Args:
+            list: The list to search through.
+            element: The element to search for.
+
+        Returns:
+            The index of the element.
+        """
         var index : Int = 0
-        for i in range(len(array)):
-                if array[i] == element:
+        for i in range(len(list)):
+                if list[i] == element:
                     index = i
                     break
         
         return index
     
-    def calc_speaker_pairs(mut self) -> List[MInt[2]]:
-        var speaker_pairs = List[MInt[2]](length=self.num_speakers, fill=MInt[2](0,0))
+    def calc_speaker_pairs(mut self) -> List[List[Int]]:
+        """
+        Used internally by VBAP2D to determine speaker pairs.
+
+        Returns:
+            A list of speaker pairs.
+        """
+        var speaker_pairs = [[0 for _ in range(2)] for _ in range(self.num_speakers)]
         var unsorted_array = self.speaker_positions.copy()
         var sorted_array = self.speaker_positions.copy()
         sort(sorted_array)
@@ -502,19 +531,31 @@ struct VBAP2D(Movable, Copyable):
 
         return speaker_pairs^
     
-    def calc_gain_factors(mut self, source_vec: MFloat[2], mut active_pair: MInt[2], mut active_gains: MFloat[2], source_az: Float64):
-        
+    def calc_gain_factors(mut self, source_vec: MFloat[2], mut active_pair: List[Int], mut active_gains: MFloat[2], source_az: Float64):
+        """
+        Internal method used for calculating gain factors of speaker pairs.
+
+        Args:
+            source_vec: The unit vector of the source.
+            active_pair: The current active speaker pair.
+            active_gains: The current active gains.
+            source_az: The azimuth position of the source.
+        """
 
         for speaker_pair in self.speaker_pairs:
 
             if source_az == self.speaker_positions[speaker_pair[0]]:
-                active_pair = speaker_pair
-                active_gains = MFloat[2](1.0, 0.0)
+                for i in range(2):
+                    active_pair[i] = speaker_pair[i]
+                active_gains[0] = 1.0
+                active_gains[1] = 0.0
                 
                 return
             elif source_az == self.speaker_positions[speaker_pair[1]]:
-                active_pair = speaker_pair
-                active_gains = MFloat[2](0.0, 1.0)
+                for i in range(2):
+                    active_pair[i] = speaker_pair[i]
+                active_gains[0] = 0.0
+                active_gains[1] = 1.0
                 return
         
         
@@ -544,15 +585,18 @@ struct VBAP2D(Movable, Copyable):
             if gain_factors[i][0] >= 0.0 and gain_factors[i][1] >= 0.0:
                 active_index = i 
                 var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
-                active_gains = scaled_gains
+                active_gains[0] = scaled_gains[0]
+                active_gains[1] = scaled_gains[1]
                 break
             elif smallest_gain > min(gain_factors[largest_small_gain][0], gain_factors[largest_small_gain][1]):
                 largest_small_gain = i 
                 active_index = i
 
-        active_pair = self.speaker_pairs[active_index]
+        for i in range(2):
+            active_pair[i] = self.speaker_pairs[active_index][i]
         var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
-        active_gains = scaled_gains
+        active_gains[0] = scaled_gains[0]
+        active_gains[1] = scaled_gains[1]
     
     def next[simd_out_size:Int](mut self, sample: Float64, az: Float64) -> MFloat[simd_out_size]:
         """
@@ -565,7 +609,7 @@ struct VBAP2D(Movable, Copyable):
         Parameters:
             simd_out_size: The size of the output float. Must be larger than the number of speakers in the array and a power of two.
         """
-        var active_speaker_pair = MInt[2](0, 1)
+        var active_speaker_pair : List[Int] = [0, 1]
         var active_gain_factors = MFloat[2](0.5)
         var source_vector = MFloat[2](cos(az), sin(az))
         
@@ -577,173 +621,3 @@ struct VBAP2D(Movable, Copyable):
         gain_factors[Int(active_speaker_pair[1])] = active_gain_factors[1]
         
         return gain_factors * sample
-
-
-
-# @always_inline
-# def vbap2D[num_speakers: Int, simd_out_size: Int, speaker_positions: Array[Float64, num_speakers]](sample: Float64, az: Float64, offset: Float64 = 0.0) -> MFloat[simd_out_size]:
-#     """
-#     An implementation of VBAP (Vector Base Amplitude Panning). Pans a mono sample to a 2D array of N speakers of arbitrary positions in radians that are equidistant from the listener.
-#     For more on VBAP see the paper written by Ville Pulkki:
-#     https://www.audiolabs-erlangen.de/media/pages/resources/aps-w23/papers/935eb793db-1663358804/sap_Pulkki1997.pdf .
-
-#     Parameters:
-#         num_speakers: The number of speakers as an integer.
-#         simd_out_size: Must be a power of 2 and greater than num_speakers.
-#         speaker_positions: The speaker positions as an Array of Float64 azimuth angles in radians.
-    
-#     Args:
-#         sample: The mono signal to be panned.
-#         az: The angle of the source in radians.
-#         offset: An offset in radians. This rotates the entire speaker array. Is this needed?
-
-#     Returns:
-#         MFloat[simd_out_size]: The panned output sample for each speaker.
-#     """
-    
-#     #This is pretty brute force right now. Could maybe be more elegant?
-#     def calc_speaker_unit_vectors[speaker_positions: Array[Float64, num_speakers]]() -> Array[MFloat[2], num_speakers]:
-#         var speaker_vectors = Array[MFloat[2], num_speakers](fill=MFloat[2](0.0,0.0))
-        
-#         var speaker_positions_materialized = materialize[speaker_positions]()
-
-#         for i in range(num_speakers):
-#             speaker_vectors[i] = MFloat[2](cos(speaker_positions_materialized[i]), sin(speaker_positions_materialized[i]))
-
-#             if speaker_vectors[i][0] < 0.0000001 and speaker_vectors[i][0] > -0.0000001:
-#                 speaker_vectors[i][0] = 0
-
-#             if speaker_vectors[i][1] < 0.0000001 and speaker_vectors[i][1] > -0.0000001:
-#                 speaker_vectors[i][1] = 0
-            
-#         return speaker_vectors^
-
-#     def calc_inverse_base[speaker_pairs:Array[Array[Int, 2], num_speakers], speaker_vectors: Array[MFloat[2], num_speakers]]() -> Array[Array[MFloat[2], 2], num_speakers]:
-#         var inverse_bases = Array[Array[MFloat[2], 2], num_speakers](fill=Array[MFloat[2], 2](fill=0.0))
-
-#         var speaker_pairs_materialized = materialize[speaker_pairs]()
-#         var speaker_vectors_materialized = materialize[speaker_vectors]()
-
-#         for i in range(num_speakers):
-#             var speaker_a = speaker_vectors_materialized[speaker_pairs_materialized[i][0]] #[-2, 1]  [a, b]
-#             var speaker_b = speaker_vectors_materialized[speaker_pairs_materialized[i][1]] #[1, 2]   [c, d]
-            
-#             var determinate = (speaker_a[0] * speaker_b[1]) - (speaker_a[1] * speaker_b[0]) # ad - bc : -2 * 2 - 1 * 1 = -5
-
-#             var inverted_a = MFloat[2](speaker_b[1], -1 * speaker_a[1]) # [d, -b] = [2, -1]
-#             var inverted_b = MFloat[2](-1 * speaker_b[0], speaker_a[0]) # [-c, a] = [-1, -2]
-#             inverse_bases[i][0] = inverted_a/determinate
-#             inverse_bases[i][1] = inverted_b/determinate
-
-
-#         return inverse_bases^
-
-#     def index_of[](array: Array[Float64, _], element: Float64) -> Int:
-#         var index : Int = 0
-#         for i in range(len(array)):
-#                 if array[i] == element:
-#                     index = i
-#                     break
-        
-#         return index
-
-#     #Find the pairs of speakers as indices, allows for arbitrary assignment of output channels. Meaning speaker positions are given as their channel out
-#     def calc_speaker_pairs[speaker_az: Array[Float64, num_speakers]]() -> Array[Array[Int, 2], num_speakers]:
-#         var speaker_pairs = Array[Array[Int, 2], num_speakers](fill=[0, 0])
-#         var speaker_az_materialized = materialize[speaker_az]()
-#         var sorted_array = materialize[speaker_az]().copy()
-#         sort(sorted_array)
-        
-#         for i in range(num_speakers):
-#             speaker_pairs[i] = [index_of(speaker_az_materialized, sorted_array[i]), index_of(speaker_az_materialized, sorted_array[(i + 1) % num_speakers])] #List[Float64](i, i + 1)
-        
-        
-#         return speaker_pairs^
-    
-#     comptime speaker_unit_vectors = calc_speaker_unit_vectors[speaker_positions]()
-#     comptime speaker_pairs = calc_speaker_pairs[speaker_positions]()
-#     comptime speaker_inverse_bases = calc_inverse_base[speaker_pairs, speaker_unit_vectors]()
-    
-#     var active_speaker_pair : Array[Int, 2] = [0, 0]
-#     var active_gain_factors = MFloat[2](0.5)
-    
-#     def calc_gain_factors[speaker_pairs: Array[Array[Int, 2], num_speakers], speaker_positions: Array[Float64, num_speakers], speaker_inverse_bases: Array[Array[MFloat[2], 2], num_speakers]](source_vec: MFloat[2], mut active_pair: Array[Int, 2], mut active_gains: MFloat[2], source_az: Float64):
-        
-#         var speaker_pairs_materialized = materialize[speaker_pairs]
-#         var speaker_positions_materialized = materialize[speaker_positions]
-#         var speaker_inverse_bases_materialized = materialize[speaker_inverse_bases]
-
-#         for speaker_pair in speaker_pairs_materialized():
-
-#             if source_az == speaker_positions_materialized()[speaker_pair[0]]:
-#                 active_pair = speaker_pair.copy()
-#                 active_gains = MFloat[2](1.0, 0.0)
-                
-#                 return
-#             elif source_az == speaker_positions_materialized()[speaker_pair[1]]:
-#                 active_pair = speaker_pair.copy()
-#                 active_gains = MFloat[2](0.0, 1.0)
-#                 return
-        
-        
-#         var gain_factors = Array[MFloat[2], num_speakers](fill=0.0)
-#         var active_index : Int = 0
-        
-#         for i in range(num_speakers):
-
-#             var speaker_a_vector = speaker_inverse_bases_materialized()[i][0] # [c, d]
-#             var speaker_b_vector = speaker_inverse_bases_materialized()[i][1] # [e, f]
-            
-#             var speaker_a_product = source_vec[0] * speaker_a_vector # [ac, ad]
-#             var speaker_b_product = source_vec[1] * speaker_b_vector # [be, bf]
-
-#             var speaker_gains = MFloat[2](
-#                 speaker_a_product[0] + speaker_b_product[0],
-#                 speaker_a_product[1] + speaker_b_product[1],
-#             )
-            
-#             gain_factors[i] = speaker_gains
-        
-#         var largest_small_gain = 0
-#         for i in range(num_speakers):
-
-#             var smallest_gain = min(gain_factors[i][0], gain_factors[i][1])
-            
-#             if gain_factors[i][0] >= 0.0 and gain_factors[i][1] >= 0.0:
-#                 active_index = i 
-#                 var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
-#                 active_gains = scaled_gains
-#                 break
-#             elif smallest_gain > min(gain_factors[largest_small_gain][0], gain_factors[largest_small_gain][1]):
-#                 largest_small_gain = i 
-#                 active_index = i
-
-#         active_pair = speaker_pairs_materialized()[active_index].copy()
-#         var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
-#         active_gains = scaled_gains
-    
-#     var source_vector = MFloat[2](cos(az), sin(az))
-
-#     calc_gain_factors[speaker_pairs, speaker_positions, speaker_inverse_bases](source_vector, active_speaker_pair, active_gain_factors, az)
-   
-#     var gain_factors = MFloat[simd_out_size](0.0)
-    
-#     gain_factors[Int(active_speaker_pair[0])] = active_gain_factors[0]
-#     gain_factors[Int(active_speaker_pair[1])] = active_gain_factors[1]
-    
-#     return gain_factors * sample
-    
-
-
-# # def vbap2D[num_speakers: Int, simd_out_size: Int, speaker_positions: Array[MFloat[2], num_speakers]](sample: Float64, pos: MFloat[2]) -> MFloat[simd_out_size]:
-# #     """
-# #     An implementation of VBAP (Vector Base Amplitude Panning).
-
-# #     Parameters:
-# #         num_speakers: The number of speakers as an integer.
-# #         simd_out_size: Must be a power of 2 and greater than num_speakers.
-# #         speaker_positions: The speaker positions as an Array of MFloat[2] x/y pairs in meters from a center position.
-# #     """
-
-# #     return MFloat[simd_out_size](sample)
-

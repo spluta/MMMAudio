@@ -63,4 +63,7 @@ struct VectorBasePanning(Movable, Copyable):
         # 7 speaker setup, note that the simd_out_size must be a power of two and larger than the speaker array size.
         var out = self.vbap_7.next[8](sig, self.az)
 
-        return out * 0.5
+        # output for a 7.1 surround sound setup
+        return MFloat[8](out[0], out[1], out[2], 0.0,out[3], out[4], out[5], out[6]) * 0.5
+        # send all the outs directly
+        # return out * 0.5
