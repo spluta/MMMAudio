@@ -751,8 +751,11 @@ def coin(p: MFloat[_]) -> MBool[p.length]:
     return coins
 
 def choose[dtype: DType](*vals: SIMD[dtype, _]) -> type_of(vals[0]):
-    """Choose a random index.
+    """Choose a random index from a variadic list of values.
     
+    Parameters:
+        dtype: The data type of the SIMD vector. This parameter is inferred by the values passed to the function so the values passed can be any DType of SIMD vector.
+
     Args:
         vals: A variable number of items to choose from.
     
@@ -768,6 +771,10 @@ def choose[dtype: DType](*vals: SIMD[dtype, _]) -> type_of(vals[0]):
 def choose[dtype: DType, N: SIMDLength](items: Span[SIMD[dtype, N], _]) -> type_of(items[0]):
     """Choose a random index.
     
+    Parameters:
+        dtype: The data type of the SIMD vector. This parameter is inferred by the values passed to the function so the values passed can be any DType of SIMD vector.
+        N: The length of the SIMD vector. Inferred by the values passed to the function.
+
     Args:
         items: A List or Array of items to choose from.
     
@@ -782,6 +789,10 @@ def choose[dtype: DType, N: SIMDLength](items: Span[SIMD[dtype, N], _]) -> type_
 def wchoose[dtype: DType, N: SIMDLength](items: Span[SIMD[dtype, N], _], weights: Span[Float64, _]) -> type_of(items[0]):
     """Choose a random index from the list of weights.
     
+    Parameters:
+        dtype: The data type of the SIMD vector. This parameter is inferred by the values passed to the function so the values passed can be any DType of SIMD vector.
+        N: The length of the SIMD vector.
+
     Args:
         items: A variable number of items to choose from. Can be any DType of SIMD vector.
         weights: A list of weights for the items.

@@ -602,12 +602,15 @@ struct VBAP2D(Movable, Copyable):
         """
         Pans a mono sample based on a target azimuth.
 
+        Parameters:
+            simd_out_size: Number of channels of the SIMD output vector. Must be a power of two that is at least as large as num_speakers.
+
         Args:
             sample: A mono sample to pan.
             az: The azimuth in radians.
-        
-        Parameters:
-            simd_out_size: The size of the output float. Must be larger than the number of speakers in the array and a power of two.
+
+        Returns:
+            MFloat[simd_out_size]: The panned output sample for each speaker.
         """
         var active_speaker_pair : List[Int] = [0, 1]
         var active_gain_factors = MFloat[2](0.5)
