@@ -78,6 +78,8 @@ pip install numpy scipy librosa pyautogui torch supriya-midi python-osc matplotl
 
 ## 4 Select Your Python Interpreter
 
+*(This requires you to have the [Python Extension](https://github.com/microsoft/vscode-python#quick-start) installed in your VSCode.)*
+
 go to View->Command Palette->Select Python Interpreter. You need to select the version of Python that was installed by pixi or uv or python virtual environments.
 
 This will be at:
