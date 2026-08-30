@@ -659,26 +659,13 @@ def rrand(min: Int, max: Int) -> Int:
         A random Int sample from the specified range.
     """
     var range = (max - min) + 1
-    var random_int = min + Int(random_ui64(0, 0xFFFFFFFFFFFFFFFF) % UInt64(range))
+    
+    return min + Int(random_ui64(0, 0xFFFFFFFFFFFFFFFF) % UInt64(range))
 
 def rrand(min: MFloat[_], max: type_of(min)) -> type_of(min):
     """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
     Args:
-        min: The minimum sample (inclusive).
-        max: The maximum sample (exclusive).
-
-    Returns:
-        A random Float64 sample from the specified range.
-    """
-
-    return min + (max - min) * _simd_uniform[min.length]()
-
-def rrand(world: MMMWorld, min: MFloat[_], max: type_of(min)) -> type_of(min):
-    """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
-
-    Args:
-        world: The MMMWorld instance used for random number generation.
         min: The minimum sample (inclusive).
         max: The maximum sample (exclusive).
 

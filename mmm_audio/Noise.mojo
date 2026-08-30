@@ -1,7 +1,7 @@
 from std.math import log2, floor, pi, iota
 from std.random import random_float64, random_ui64
 from mmm_audio.constants import *
-from mmm_audio.functions import _splitmix64, _GOLDEN64, rrand, exprand
+from mmm_audio.functions import _splitmix64, _GOLDEN64, rrand, exprand, clip
 from mmm_audio.BooleanTests import RisingBoolDetector
 
 struct SIMDRand[N: SIMDLength = 1](Copyable, Movable):
