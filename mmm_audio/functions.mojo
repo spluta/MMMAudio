@@ -1,9 +1,9 @@
 from mmm_audio.constants import *
-from std.math import pow, log10, log, log2, abs, isnan, log1p, floor
+from std.math import pow, log10, log, log2, abs, isnan, log1p, floor, iota
 from std.python import PythonObject
 from std.os import abort
 from std.pathlib import Path
-from std.random import random_float64
+from std.random import random_float64, random_ui64
 
 def mprint[*Ts: Writable](world: World, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[ImmStaticOrigin] = " ", end: StringSlice[ImmStaticOrigin] = "\n") -> None:
     """Prints the provided arguments to the console.
@@ -624,6 +624,30 @@ def sanitize(x: MFloat[_]) -> type_of(x):
 
     return should_zero.select(0.0, x)
 
+comptime _GOLDEN64 = 0x9E3779B97F4A7C15
+"""The 64-bit golden-ratio odd constant, used to space seeds and lanes apart."""
+
+@doc_hidden
+@always_inline
+def _splitmix64[N: SIMDLength](var z: SIMD[DType.uint64, N]) -> SIMD[DType.uint64, N]:
+    """The splitmix64 finalizer, evaluated on a whole vector at once."""
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EB
+    return z ^ (z >> 31)
+
+@doc_hidden
+@always_inline
+def _simd_uniform[N: SIMDLength]() -> MFloat[N]:
+    """Draw one 64-bit value and expand it across N lanes with a vectorized splitmix64.
+
+    See SIMDRand for an even more efficient implementation.
+    """
+    var bits = SIMD[DType.uint64, N](random_ui64(0, 0xFFFFFFFFFFFFFFFF))
+
+    bits += iota[DType.uint64, N]() * _GOLDEN64
+
+    return MFloat[N](from_bits=(_splitmix64(bits) >> 12) | 0x3FF0000000000000) - 1.0
+
 def rrand(min: Int, max: Int) -> Int:
     """Generates a random Int from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
@@ -634,22 +658,35 @@ def rrand(min: Int, max: Int) -> Int:
     Returns:
         A random Int sample from the specified range.
     """
-    return Int(random_float64(Float64(min), Float64(max) + 0.99999999999999))
+    var range = (max - min) + 1
+    var random_int = min + Int(random_ui64(0, 0xFFFFFFFFFFFFFFFF) % UInt64(range))
 
 def rrand(min: MFloat[_], max: type_of(min)) -> type_of(min):
     """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
 
     Args:
         min: The minimum sample (inclusive).
-        max: The maximum sample (inclusive).
+        max: The maximum sample (exclusive).
 
     Returns:
         A random Float64 sample from the specified range.
     """
-    var u = MFloat[min.length](0.0)
-    comptime for i in range(min.length):
-        u[i] = random_float64(min[i], max[i])
-    return u
+
+    return min + (max - min) * _simd_uniform[min.length]()
+
+def rrand(world: MMMWorld, min: MFloat[_], max: type_of(min)) -> type_of(min):
+    """Generates a random value from a uniform distribution. Can receive a SIMD Float or an Int, returning the same type.
+
+    Args:
+        world: The MMMWorld instance used for random number generation.
+        min: The minimum sample (inclusive).
+        max: The maximum sample (exclusive).
+
+    Returns:
+        A random Float64 sample from the specified range.
+    """
+
+    return min + (max - min) * _simd_uniform[min.length]()
 
 @always_inline
 def exprand(min: MFloat[_], max: type_of(min)) -> type_of(min):
@@ -1028,13 +1065,19 @@ comptime _ONE_PI_TAIL = 1.2246467991473532e-16
 
 
 @always_inline
-def fast_atan2(y: MFloat[_], x: type_of(y)) -> type_of(y):
+def fast_atan2[dtype: DType, //](y: SIMD[dtype, _], x: type_of(y)) -> type_of(y):
     """Computes atan2(y, x) with a minimax polynomial, evaluating every SIMD lane at once.
 
     `std.math.atan2` falls back to a scalar libm call per lane, so on a SIMD vector this
     is several times faster, at close to the same accuracy (within a few ulps). Unlike
     libm it does not distinguish the sign of a zero argument, so `fast_atan2(-0.0, -1.0)`
     returns pi rather than -pi. Zero over zero returns zero, as libm does.
+
+    It works for any float dtype, and is built only from arithmetic and selects, so unlike
+    `std.math.atan2` it also compiles for Metal, where `RealFFTGPU` relies on it.
+
+    Parameters:
+        dtype: The float dtype of the arguments, inferred from them.
 
     Args:
         y: The ordinate, or SIMD vector of ordinates.
@@ -1052,7 +1095,7 @@ def fast_atan2(y: MFloat[_], x: type_of(y)) -> type_of(y):
     var den = swapped.select(a, b)
 
     # den is max(|y|, |x|), so it is only zero when both inputs are; keep the divide finite
-    var t = num / den.eq(0.0).select(1.0, den)
+    var t = num / den.eq(0.0).select(type_of(y)(1.0), den)
 
     # atan(t) = pi/4 + atan((t - 1)/(t + 1)) folds (tan(pi/8), 1] down onto the poly's range
     var folded = t.gt(_TAN_PI_8)
