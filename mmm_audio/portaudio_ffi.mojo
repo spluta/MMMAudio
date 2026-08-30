@@ -2,10 +2,6 @@
 FFI bindings for PortAudio, loaded at runtime from the system's
 libportaudio shared library.
 
-PortAudio ships as a prebuilt shared library with a small,
-stable, platform-independent ABI - opaque `PaStream*` handles plus two
-plain C structs - so Mojo can call it directly.
-
 Install PortAudio first:
 
     macOS:          brew install portaudio
@@ -26,8 +22,6 @@ layout, padding included, so the offsets match what the C compiler produces:
                          defaultHighInputLatency@48 defaultHighOutputLatency@56
                          defaultSampleRate@64
                          (72 bytes)
-
-If you add fields, keep them in this exact order.
 """
 
 from std.ffi import OwnedDLHandle, c_char, c_int, c_ulong
@@ -76,7 +70,6 @@ comptime PaStream = Int
 # `const PaDeviceInfo*` as returned by Pa_GetDeviceInfo.
 comptime PaDeviceInfoPtr = Pointer[PaDeviceInfo, MutUntrackedOrigin]
 
-
 @fieldwise_init
 struct PaStreamParameters(RegisterPassable):
     """Mirrors `PaStreamParameters` in portaudio.h - see the module docstring
@@ -86,6 +79,7 @@ struct PaStreamParameters(RegisterPassable):
     var channel_count: c_int
     var sample_format: c_ulong
     var suggested_latency: Float64
+    
     # `void *hostApiSpecificStreamInfo` - must be NULL unless you're using a
     # host-API extension. Typed as Int because a Mojo Pointer can't be null;
     # it's the same 8 bytes in the same place.
@@ -110,40 +104,6 @@ struct PaDeviceInfo(RegisterPassable):
     var default_high_output_latency: Float64
     var default_sample_rate: Float64
 
-
-# ---------------------------------------------------------------------------
-# The callback you pass to `open_stream` must be a *thin* (non-capturing)
-# `abi("C")` function matching PortAudio's PaStreamCallback:
-#
-#     def my_callback(
-#         p_input: Int,
-#         p_output: Pointer[Float32, MutAnyOrigin],
-#         frame_count: c_ulong,
-#         p_time_info: Int,
-#         status_flags: c_ulong,
-#         p_user_data: Int,
-#     ) abi("C") -> c_int:
-#         ...
-#         return PA_CONTINUE
-#
-# `p_input`, `p_time_info` and `p_user_data` are typed Int rather than
-# Pointer because PortAudio passes NULL for them when the stream has no
-# input (or no user data), and a Mojo Pointer can't be null. They're the
-# same machine words either way.
-#
-# On a stream with input, turn the address into a usable pointer once you've
-# checked it isn't null:
-#
-#     if p_input != 0:
-#         var input = Pointer[Float32, MutAnyOrigin](unsafe_from_address=p_input)
-#         var first_sample = input[unsafe_offset=0]
-#
-# Both buffers are interleaved: `frame_count * channels` samples, using that
-# direction's own channel count. PortAudio does no channel conversion, so
-# `expand_mono` below is there if you'd rather generate one mono block.
-# ---------------------------------------------------------------------------
-
-
 def _load_portaudio(library_path: String) raises -> OwnedDLHandle:
     """Finds and loads libportaudio.
 
@@ -158,9 +118,6 @@ def _load_portaudio(library_path: String) raises -> OwnedDLHandle:
     if library_path != "":
         candidates.append(library_path)
 
-    # The active conda/pixi environment, if there is one. `portaudio` is a
-    # conda-forge package, so an environment that lists it has the library
-    # here - and nothing else on the machine needs to.
     var prefix = getenv("CONDA_PREFIX")
     if prefix != "":
         candidates.append(prefix + "/lib/libportaudio.dylib")
@@ -193,6 +150,7 @@ def _load_portaudio(library_path: String) raises -> OwnedDLHandle:
     candidates.append("libportaudio.so")
 
     # Windows - this very much needs to be tested
+    # Windows portaudio is user installed, so it is probably in Program Files
     candidates.append("portaudio.dll")
     candidates.append("libportaudio.dll")
     candidates.append("libportaudio-2.dll")
@@ -220,12 +178,9 @@ struct PortAudio:
     """Loads libportaudio and calls into it.
 
     `__init__` calls Pa_Initialize; call `terminate()` when you're done.
-
-    Symbols are resolved per call via `OwnedDLHandle.call` rather than cached
-    in fields: a resolved callable borrows the handle's origin, which can't be
-    stored in the same struct that owns the handle.
     """
 
+    # The handle to the loaded libportaudio. 
     var lib: OwnedDLHandle
 
     def __init__(out self, library_path: String = "") raises:
@@ -479,18 +434,13 @@ struct PortAudio:
         var input_rate = self.device_info(input)[].default_sample_rate
         var output_rate = self.device_info(output)[].default_sample_rate
         if input_rate != output_rate:
+            for _ in range(5):
+                print("Sample rate mismatch!")
+                print("")
             raise Error(
-                "input and output devices disagree on sample rate: '"
-                + self.device_name(input)
-                + "' runs at "
-                + String(input_rate)
-                + " Hz but '"
-                + self.device_name(output)
-                + "' runs at "
-                + String(output_rate)
-                + " Hz. Set them to the same rate (on macOS, Audio MIDI"
-                " Setup), or use a single device for both directions."
+                "input and output devices disagree on sample rate!"
             )
+
         return input_rate
 
     # -- streams ------------------------------------------------------------
@@ -762,29 +712,6 @@ struct PortAudio:
             raise Error("Pa_IsStreamActive failed: " + self.error_text(result))
         return result == 1
 
-
-# ---------------------------------------------------------------------------
-# Python bindings.
-#
-# This makes portaudio_ffi importable from Python, so the device listing can
-# be had without writing any Mojo:
-#
-#     import mojo.importer     # installs the Mojo import hook
-#     import portaudio_ffi     # compiles this file into __mojocache__/
-#
-#     portaudio_ffi.list_audio_devices()
-#
-# See list_devices.py for a runnable version. Building by hand instead:
-#
-#     mojo build portaudio_ffi.mojo --emit shared-lib -o portaudio_ffi.so
-#
-# The name in PyInit_<name> and in PythonModuleBuilder(...) must both match
-# this file's name, and this file must stay free of a `main()` function -
-# the compiler rejects a shared library that has one. That's why the demo
-# program lives in noise_portaudio.mojo.
-# ---------------------------------------------------------------------------
-
-
 def list_audio_devices() raises -> PythonObject:
     """Prints the available input and output audio devices.
 
@@ -841,8 +768,7 @@ def get_audio_devices() raises -> PythonObject:
 
 @export
 def PyInit_portaudio_ffi() abi("C") -> PythonObject:
-    """CPython entry point. Can't raise - CPython calls it across the C
-    boundary - so failures abort with a message instead.
+    """These are the functions that Mojo exposes to Python.
 
     Returns:
         The built module.
@@ -865,14 +791,3 @@ def PyInit_portaudio_ffi() abi("C") -> PythonObject:
         abort(
             String("error creating Python module 'portaudio_ffi': ", error)
         )
-
-    # If `def_function` turns out not to accept a zero-argument function in
-    # your Mojo build, give list_audio_devices the raw (args, kwargs)
-    # signature and register it with def_py_function instead:
-    #
-    #     def list_audio_devices(
-    #         mut args: PythonObject, mut kwargs: PythonObject
-    #     ) raises -> PythonObject:
-    #         ...
-    #
-    #     module.def_py_function[list_audio_devices]("list_audio_devices")

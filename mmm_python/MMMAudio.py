@@ -31,10 +31,10 @@ class MouseGetter:
 
         if system in ["darwin", "windows"]:
             import pyautogui
-            print(f"Using pyautogui for mouse tracking on {system}")
+            # print(f"Using pyautogui for mouse tracking on {system}")
             self.pyautogui = pyautogui
             self.width, self.height = pyautogui.size()
-            print(self.width, self.height)
+            # print(self.width, self.height)
             self.use_pyauto = True
             
         elif system == "linux":
@@ -210,7 +210,7 @@ class MMMAudio:
     def start_mouse(cls):
         """Start mouse tracking in the main process and send updates to all instances."""
         if cls._mouse_thread is not None and cls._mouse_thread.is_alive():
-            print("[Main] Mouse tracking already running")
+            # print("[Main] Mouse tracking already running")
             return cls._mouse_getter.width, cls._mouse_getter.height
         
         cls._mouse_getter = MouseGetter.get_instance()
@@ -239,7 +239,7 @@ class MMMAudio:
                 daemon=True
             )
             cls._mouse_thread.start()
-            print("[Main] Mouse tracking started")
+            # print("[Main] Mouse tracking started")
         
         return cls._mouse_getter.width, cls._mouse_getter.height
 
@@ -251,7 +251,7 @@ class MMMAudio:
         if cls._mouse_thread is not None:
             cls._mouse_thread.join(timeout=1.0)
             cls._mouse_thread = None
-        print("[Main] Mouse tracking stopped")
+        # print("[Main] Mouse tracking stopped")
 
     def _signal_handler(self, signum, frame):
         """Handle Ctrl+C signal"""
@@ -335,7 +335,7 @@ class MMMAudio:
         return self.process is not None and self.process.is_alive()
     
     # =========================================================================
-    # Message sending methods (same interface as original)
+    # Message sending methods
     # =========================================================================
     
     def send_bool(self, key: str, value: bool):

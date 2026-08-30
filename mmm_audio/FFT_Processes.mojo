@@ -21,7 +21,7 @@ struct HilbertWindow(ComplexFFTProcessable):
 
     def next_frame(mut self, mut complex: List[ComplexSIMD[DType.float64, 1]]) -> None:
         complex[0] *= ComplexSIMD[DType.float64, 1](0.0, 0.0)
-        complex[self.window_size] *= ComplexSIMD[DType.float64, 1](0.0, 0.0)
+        complex[self.window_size-1] *= ComplexSIMD[DType.float64, 1](0.0, 0.0)
 
         for i in range(1, self.window_size):
             complex[i] *= ComplexSIMD[DType.float64, 1](cos(self.radians), sin(self.radians))

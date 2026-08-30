@@ -14,7 +14,7 @@ Compile time is a bit slow right now. Part of this is that the Mojo compiler doe
 
 ## 4. Mojo-side I/O Bindings
 
-The audio loop now runs entirely on the Mojo side, on PortAudio's own callback thread, through the FFI bindings in `mmm_audio/portaudio_ffi.mojo`. Bindings for other backends - RTAudio, libsoundio - would still be worth having.
+The audio loop now runs entirely on the Mojo side, on PortAudio's own callback thread, through the FFI bindings in `mmm_audio/portaudio_ffi.mojo`.
 
 ## 5. Mojo -> Python Messaging
 
