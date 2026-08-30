@@ -7,7 +7,7 @@ from mmm_audio.Analysis import GetFloat64Featurable
 from mmm_audio.MBufAnalysisBridge import MBufAnalysis
 from std.complex import *
 import std.math as Math
-from std.sys import size_of
+from std.sys import size_of, simd_width_of
 from std.random import random_float64
 
 @doc_hidden
@@ -103,7 +103,7 @@ struct RealFFT[num_chans: SIMDLength = 1](Copyable, Movable):
     trait used in conjunction with [FFTProcess](FFTProcess.md/#struct-fftprocess) instead. This struct is a 
     lower-level implementation that provides
     FFT and inverse FFT on fixed windows of real values. [FFTProcessable](FFTProcess.md/#trait-fftprocessable) structs will enable you to 
-    send audio samples (such as in a custom struct's `.next()` `fn`) *into* and *out of* 
+    send audio samples (such as in a custom struct's `.next()` `def`) *into* and *out of* 
     an FFT, doing some manipulation of the magnitudes and phases in between. ([FFTProcess](FFTProcess.md/#struct-fftprocess)
     has this RealFFT struct inside of it.)
 
@@ -151,25 +151,24 @@ struct RealFFT[num_chans: SIMDLength = 1](Copyable, Movable):
         self.mags = List[MFloat[Self.num_chans]](length=self.half_size + 1, fill=MFloat[Self.num_chans](0.0))
         self.phases = List[MFloat[Self.num_chans]](length=self.half_size + 1, fill=MFloat[Self.num_chans](0.0))
 
-        # Butterfly twiddles, one contiguous run per stage. Stage `s` (m = 1 << s) occupies
-        # `m // 2` entries starting at offset `m // 2 - 1`, holding exp(-2*pi*i*j/m).
-        # They are the same for every channel, so they are stored as scalars and splatted on use.
+        # Butterfly twiddles
         self.tw_re = List[Float64](capacity=self.half_size)
         self.tw_im = List[Float64](capacity=self.half_size)
         for stage in range(1, self.log_n + 1):
             var m = 1 << stage
             for j in range(m >> 1):
                 var angle = -2.0 * Math.pi * Float64(j) / Float64(m)
-                self.tw_re.append(Math.cos(angle))
-                self.tw_im.append(Math.sin(angle))
+                var sin_a, cos_a = sincos(angle)  # sincos returns (sin, cos), in that order
+                self.tw_re.append(cos_a)
+                self.tw_im.append(sin_a)
 
         # exp(-2*pi*i*k/window_size), used to split the packed transform back into even/odd halves
         self.unpack_re = List[Float64](capacity=self.half_size)
         self.unpack_im = List[Float64](capacity=self.half_size)
         for k in range(self.half_size):
-            var angle = -2.0 * Math.pi * Float64(k) / Float64(window_size)
-            self.unpack_re.append(Math.cos(angle))
-            self.unpack_im.append(Math.sin(angle))
+            var sin_a, cos_a = sincos(-2.0 * Math.pi * Float64(k) / Float64(window_size))
+            self.unpack_re.append(cos_a)
+            self.unpack_im.append(sin_a)
 
         self.bit_reverse_lut = List[Int](capacity=self.half_size)
         for i in range(self.half_size):
@@ -365,8 +364,20 @@ struct RealFFT[num_chans: SIMDLength = 1](Copyable, Movable):
             return List[Float64]()
         var binHz = sr / Float64(n_fft)
         var freqs = List[Float64](length=count, fill=0.0)
-        for i in range(count):
-            freqs[i] = Float64(min_b + i) * binHz
+        var dst = freqs.unsafe_ptr()
+
+        # The bin index is just a ramp, so build it with iota and write a whole vector at a
+        # time. Four native vectors per store keeps the loop from being latency bound.
+        comptime BINS = 4 * simd_width_of[DType.float64]()
+        var i = 0
+        while i + BINS <= count:
+            dst.unsafe_store(
+                i, (Math.iota[DType.float64, BINS]() + Float64(min_b + i)) * binHz
+            )
+            i += BINS
+
+        for k in range(i, count):
+            dst[unsafe_offset=k] = Float64(min_b + k) * binHz
         return freqs^
 
     @staticmethod

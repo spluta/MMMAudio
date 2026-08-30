@@ -177,6 +177,124 @@ def test_fft_frequencies() raises:
     var expected = MFloat[8](0.0, 86.1328125, 172.265625, 258.3984375, 344.53125, 430.6640625, 516.796875, 602.9296875)
     assert_almost_equal(result_simd, expected, "Test: fft_frequencies function failed")
 
+    # The bins are generated a vector at a time with a scalar tail, so check the whole
+    # ramp and not just its head -- the tail is where a partial final vector lands.
+    var binHz = sample_rate / Float64(n_fft)
+    assert_equal(len(result), n_fft // 2 + 1, "Test: fft_frequencies returned the wrong count")
+    for i in range(len(result)):
+        assert_almost_equal(result[i], Float64(i) * binHz,
+            "Test: fft_frequencies wrong at bin " + String(i), atol=1e-9)
+    assert_almost_equal(result[len(result) - 1], sample_rate / 2.0,
+        "Test: fft_frequencies last bin is not Nyquist", atol=1e-9)
+
+    # Counts that are not a whole number of vectors, and a nonzero starting bin
+    for min_bin in [0, 1, 7]:
+        for num_bins in [1, 3, 5, 17, 33]:
+            var partial = RealFFT.fft_frequencies(sample_rate, n_fft, min_bin, num_bins)
+            assert_equal(len(partial), num_bins,
+                "Test: fft_frequencies returned the wrong count for a partial range")
+            for i in range(num_bins):
+                assert_almost_equal(partial[i], Float64(min_bin + i) * binHz,
+                    "Test: fft_frequencies wrong at bin " + String(i)
+                    + " of a partial range starting at " + String(min_bin), atol=1e-9)
+
+def test_fft_against_numpy() raises:
+    """Check the forward and inverse transforms against numpy.fft.rfft / irfft.
+
+    A round trip alone is a weak check here, because the forward and inverse passes share
+    the twiddle tables and some corruptions cancel out between them. Comparing the spectrum
+    itself against numpy pins the forward transform independently.
+    """
+    comptime tol = 1e-9
+
+    try:
+        var np = Python.import_module("numpy")
+        var builtins = Python.import_module("builtins")
+
+        for size in [16, 64, 256, 1024]:
+            var num_bins = size // 2 + 1
+            var fft = RealFFT[1](size)
+            var signal = List[Float64](length=size, fill=0.0)
+            var output = List[Float64](length=size, fill=0.0)
+
+            # A couple of partials plus noise, so every bin carries something
+            for i in range(size):
+                var t = Float64(i) / Float64(size)
+                signal[i] = (
+                    sin(2.0 * pi * 3.0 * t)
+                    + 0.5 * cos(2.0 * pi * 5.0 * t)
+                    + 0.25 * random_float64(-1.0, 1.0)
+                )
+
+            var py_signal = builtins.list()
+            for i in range(size):
+                py_signal.append(signal[i])
+            var spectrum = np.fft.rfft(np.array(py_signal))
+            var expected_mags = np.abs(spectrum).tolist()
+            var expected_phases = np.angle(spectrum).tolist()
+
+            fft.fft(signal)
+
+            for k in range(num_bins):
+                var want_mag = Float64(py=expected_mags[k])
+                assert_almost_equal(fft.mags[k], want_mag,
+                    "Test: fft magnitude disagrees with numpy at size " + String(size)
+                    + " bin " + String(k), atol=tol)
+
+                # Phase is meaningless where there is no magnitude to carry it
+                if want_mag > 1e-6:
+                    var want_phase = Float64(py=expected_phases[k])
+                    var diff = abs(fft.phases[k] - want_phase)
+                    if diff > pi:
+                        diff = 2.0 * pi - diff   # the wrap at +-pi is not a disagreement
+                    assert_true(diff < tol,
+                        "Test: fft phase disagrees with numpy at size " + String(size)
+                        + " bin " + String(k) + " by " + String(diff))
+
+            # And the inverse against numpy.fft.irfft, driven from the same spectrum
+            var recovered = np.fft.irfft(spectrum, n=size).tolist()
+            fft.ifft(output)
+            for i in range(size):
+                assert_almost_equal(output[i], Float64(py=recovered[i]),
+                    "Test: ifft disagrees with numpy at size " + String(size)
+                    + " sample " + String(i), atol=tol)
+
+        # Stereo: the lanes must stay independent, each matching its own numpy transform
+        comptime N = 256
+        var fft2 = RealFFT[2](N)
+        var stereo = List[MFloat[2]](length=N, fill=MFloat[2](0.0))
+        var left = builtins.list()
+        var right = builtins.list()
+        for i in range(N):
+            var t = Float64(i) / Float64(N)
+            var l = sin(2.0 * pi * 3.0 * t) + 0.25 * random_float64(-1.0, 1.0)
+            var r = cos(2.0 * pi * 11.0 * t) + 0.25 * random_float64(-1.0, 1.0)
+            stereo[i] = MFloat[2](l, r)
+            left.append(l)
+            right.append(r)
+
+        var left_mags = np.abs(np.fft.rfft(np.array(left))).tolist()
+        var right_mags = np.abs(np.fft.rfft(np.array(right))).tolist()
+
+        fft2.fft(stereo)
+        for k in range(N // 2 + 1):
+            assert_almost_equal(fft2.mags[k][0], Float64(py=left_mags[k]),
+                "Test: stereo fft left channel disagrees with numpy at bin " + String(k),
+                atol=tol)
+            assert_almost_equal(fft2.mags[k][1], Float64(py=right_mags[k]),
+                "Test: stereo fft right channel disagrees with numpy at bin " + String(k),
+                atol=tol)
+
+        var stereo_out = List[MFloat[2]](length=N, fill=MFloat[2](0.0))
+        fft2.ifft(stereo_out)
+        for i in range(N):
+            assert_almost_equal(stereo_out[i], stereo[i],
+                "Test: stereo fft round trip did not reconstruct sample " + String(i),
+                atol=tol)
+
+    except err:
+        assert_true(False, "Error comparing FFT results with numpy: " + String(err))
+
 def test_dct()  raises:
     var dct = DCT(4,3)
     var input_vals = List[Float64]([1.0, 2.0, 3.0, 4.0])
