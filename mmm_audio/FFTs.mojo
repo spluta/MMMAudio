@@ -7,6 +7,7 @@ from mmm_audio.Analysis import GetFloat64Featurable
 from mmm_audio.MBufAnalysisBridge import MBufAnalysis
 from std.complex import *
 import std.math as Math
+from std.sys import size_of
 from std.random import random_float64
 
 @doc_hidden
@@ -32,10 +33,30 @@ def _to_polar[nc: SIMDLength](
     var src = result.unsafe_ptr()
     var dst_mag = mags.unsafe_ptr()
     var dst_phase = phases.unsafe_ptr()
-    for i in range(n):
-        var bin = src[unsafe_offset=i]
-        dst_mag[unsafe_offset=i] = bin.norm()
-        dst_phase[unsafe_offset=i] = Math.atan2(bin.im, bin.re)
+
+    var i = 0
+    comptime if nc == 1:
+        # A mono bin is a single Float64, so a run of bins can share one wide atan2.
+        # Multi-channel bins are already SIMD vectors and get the same win per bin below.
+        comptime assert size_of[ComplexSIMD[DType.float64, 1]]() == 2 * size_of[Float64](),
+            "the deinterleaved load below assumes ComplexSIMD is a bare (re, im) pair"
+        comptime BINS = 4
+        var src_f = src.unsafe_bitcast[Float64]()
+        var mag_f = dst_mag.unsafe_bitcast[Float64]()
+        var phase_f = dst_phase.unsafe_bitcast[Float64]()
+        while i + BINS <= n:
+            # result stores each bin as (re, im), so split the run back into two vectors
+            var parts = src_f.unsafe_load[width = 2 * BINS](2 * i).deinterleave()
+            var re = parts[0]
+            var im = parts[1]
+            mag_f.unsafe_store(i, Math.sqrt(re * re + im * im))
+            phase_f.unsafe_store(i, fast_atan2(im, re))
+            i += BINS
+
+    for k in range(i, n):
+        var bin = src[unsafe_offset=k]
+        dst_mag[unsafe_offset=k] = bin.norm()
+        dst_phase[unsafe_offset=k] = fast_atan2(bin.im, bin.re)
 
 
 @doc_hidden
@@ -51,12 +72,28 @@ def _from_polar[nc: SIMDLength](
     var src_mag = mags.unsafe_ptr()
     var src_phase = phases.unsafe_ptr()
     var dst = result.unsafe_ptr()
-    for k in range(n):
-        var mag = src_mag[unsafe_offset=k]
-        var phase = src_phase[unsafe_offset=k]
-        dst[unsafe_offset=k] = ComplexSIMD[DType.float64, nc](
-            mag * Math.cos(phase), mag * Math.sin(phase)
-        )
+
+    var k = 0
+    comptime if nc == 1:
+        # A mono bin is a single Float64, so a run of bins can share one wide sincos.
+        # Multi-channel bins are already SIMD vectors and get the same win per bin below.
+        comptime assert size_of[ComplexSIMD[DType.float64, 1]]() == 2 * size_of[Float64](),
+            "the interleaved store below assumes ComplexSIMD is a bare (re, im) pair"
+        comptime BINS = 4
+        var mag_f = src_mag.unsafe_bitcast[Float64]()
+        var phase_f = src_phase.unsafe_bitcast[Float64]()
+        var dst_f = dst.unsafe_bitcast[Float64]()
+        while k + BINS <= n:
+            var mag = mag_f.unsafe_load[width=BINS](k)
+            var trig = sincos(phase_f.unsafe_load[width=BINS](k))
+            # result stores each bin as (re, im), so lane-interleave the two halves
+            dst_f.unsafe_store(2 * k, (mag * trig[1]).interleave(mag * trig[0]))
+            k += BINS
+
+    for i in range(k, n):
+        var mag = src_mag[unsafe_offset=i]
+        var trig = sincos(src_phase[unsafe_offset=i])
+        dst[unsafe_offset=i] = ComplexSIMD[DType.float64, nc](mag * trig[1], mag * trig[0])
 
 
 struct RealFFT[num_chans: SIMDLength = 1](Copyable, Movable):
@@ -384,10 +421,6 @@ struct FFTAnalysis(FFTProcessable, GetFloat64Featurable):
         for i in range(nmags):
             features[nmags + i] = self.phss[i]
         return features^
-
-from mmm_audio.constants import *
-from std.complex import *
-from std.random import random_float64
 
 
 @doc_hidden

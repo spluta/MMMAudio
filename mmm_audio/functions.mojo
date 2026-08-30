@@ -939,6 +939,137 @@ def find_quadratic_peak(p1: Float64, p2: Float64, p3: Float64) -> Tuple[Float64,
     
     return (vertex_x, vertex_y)
 
+# Minimax polynomial coefficients for sin and cos on [-pi/4, pi/4], from the
+# FDLIBM kernels. Both polynomials are accurate to within an ulp over that range.
+comptime _S1 = -1.66666666666666324348e-01
+comptime _S2 = 8.33333333332248946124e-03
+comptime _S3 = -1.98412698298579493134e-04
+comptime _S4 = 2.75573137070700676789e-06
+comptime _S5 = -2.50507602534068634195e-08
+comptime _S6 = 1.58969099521155010221e-10
+
+comptime _C1 = 4.16666666666666019037e-02
+comptime _C2 = -1.38888888888741095749e-03
+comptime _C3 = 2.48015872894767294178e-05
+comptime _C4 = -2.75573143513906633035e-07
+comptime _C5 = 2.08757232129817482790e-09
+comptime _C6 = -1.13596475577881948265e-11
+
+# 2/pi, then pi/2 split into three parts so that `n * _PI_2_HI` stays exact for
+# |n| < 2**20 and the low parts carry the bits that would otherwise be lost.
+comptime _TWO_OVER_PI = 6.36619772367581382433e-01
+comptime _PI_2_HI = 1.57079632673412561417e+00
+comptime _PI_2_MID = 6.07710050630396597660e-11
+comptime _PI_2_LO = 2.02226624879595063154e-21
+
+@always_inline
+def sincos(x: MFloat[_]) -> Tuple[type_of(x), type_of(x)]:
+    """Computes the sine and cosine of x together, using minimax polynomials.
+
+    Unlike `std.math.sin` and `std.math.cos`, which fall back to a scalar libm call
+    per lane, this evaluates every lane of the vector at once and shares the argument
+    reduction between the two results. That makes it several times faster than calling
+    `sin` and `cos` separately on a SIMD vector, at close to the same accuracy (within
+    a few ulps for arguments up to roughly 1e6 radians, degrading gradually past that).
+
+    Args:
+        x: The angle, or SIMD vector of angles, in radians.
+
+    Returns:
+        A Tuple of (sine of x, cosine of x).
+    """
+    # Cody-Waite reduction: x = n*(pi/2) + r, with r in [-pi/4, pi/4]
+    var n = round(x * _TWO_OVER_PI)
+    var r = ((x - n * _PI_2_HI) - n * _PI_2_MID) - n * _PI_2_LO
+
+    var z = r * r
+
+    var sin_poly = _S1 + z * (_S2 + z * (_S3 + z * (_S4 + z * (_S5 + z * _S6))))
+    var cos_poly = _C1 + z * (_C2 + z * (_C3 + z * (_C4 + z * (_C5 + z * _C6))))
+
+    var sin_r = r + (r * z) * sin_poly
+    var cos_r = (1.0 - 0.5 * z) + (z * z) * cos_poly
+
+    # Fold the quadrant back in. n varies per lane, so this has to be a blend, not a branch.
+    var quadrant = n.cast[DType.int]()
+    var swapped = (quadrant & 1).ne(0)
+    var sin_x = swapped.select(cos_r, sin_r)
+    var cos_x = swapped.select(sin_r, cos_r)
+
+    sin_x = (quadrant & 2).ne(0).select(-sin_x, sin_x)
+    cos_x = ((quadrant + 1) & 2).ne(0).select(-cos_x, cos_x)
+
+    return (sin_x, cos_x)
+
+
+# Minimax polynomial for atan on [-tan(pi/8), tan(pi/8)], from the FDLIBM kernel.
+comptime _AT0 = 3.33333333333329318027e-01
+comptime _AT1 = -1.99999999998764832476e-01
+comptime _AT2 = 1.42857142725034663711e-01
+comptime _AT3 = -1.11111104054623557880e-01
+comptime _AT4 = 9.09088713343650656196e-02
+comptime _AT5 = -7.69187620504482999495e-02
+comptime _AT6 = 6.66107313738753120669e-02
+comptime _AT7 = -5.83357013379057348645e-02
+comptime _AT8 = 4.97687799461593236017e-02
+comptime _AT9 = -3.65315727442169155270e-02
+comptime _AT10 = 1.62858201153657823623e-02
+
+comptime _TAN_PI_8 = 0.4142135623730951
+
+# Each angle is split into the nearest double and the bit of it that does not fit,
+# so that the quadrant corrections below stay accurate to the last place.
+comptime _QUARTER_PI = 0.7853981633974483
+comptime _QUARTER_PI_TAIL = 3.061616997868383e-17
+comptime _HALF_PI = 1.5707963267948966
+comptime _HALF_PI_TAIL = 6.123233995736766e-17
+comptime _ONE_PI = 3.141592653589793
+comptime _ONE_PI_TAIL = 1.2246467991473532e-16
+
+
+@always_inline
+def fast_atan2(y: MFloat[_], x: type_of(y)) -> type_of(y):
+    """Computes atan2(y, x) with a minimax polynomial, evaluating every SIMD lane at once.
+
+    `std.math.atan2` falls back to a scalar libm call per lane, so on a SIMD vector this
+    is several times faster, at close to the same accuracy (within a few ulps). Unlike
+    libm it does not distinguish the sign of a zero argument, so `fast_atan2(-0.0, -1.0)`
+    returns pi rather than -pi. Zero over zero returns zero, as libm does.
+
+    Args:
+        y: The ordinate, or SIMD vector of ordinates.
+        x: The abscissa, or SIMD vector of abscissas.
+
+    Returns:
+        The angle in radians between the positive x axis and the point (x, y), in [-pi, pi].
+    """
+    var a = abs(y)
+    var b = abs(x)
+
+    # Work with whichever ratio lands in [0, 1], then undo the swap afterwards
+    var swapped = a.gt(b)
+    var num = swapped.select(b, a)
+    var den = swapped.select(a, b)
+
+    # den is max(|y|, |x|), so it is only zero when both inputs are; keep the divide finite
+    var t = num / den.eq(0.0).select(1.0, den)
+
+    # atan(t) = pi/4 + atan((t - 1)/(t + 1)) folds (tan(pi/8), 1] down onto the poly's range
+    var folded = t.gt(_TAN_PI_8)
+    var z = folded.select((t - 1.0) / (t + 1.0), t)
+
+    # Odd polynomial in z, split into two chains so the two halves evaluate in parallel
+    var zz = z * z
+    var w = zz * zz
+    var lo = zz * (_AT0 + w * (_AT2 + w * (_AT4 + w * (_AT6 + w * (_AT8 + w * _AT10)))))
+    var hi = w * (_AT1 + w * (_AT3 + w * (_AT5 + w * (_AT7 + w * _AT9))))
+    var core = z - z * (lo + hi)
+
+    var r = folded.select(_QUARTER_PI + (core + _QUARTER_PI_TAIL), core)
+    r = swapped.select((_HALF_PI - r) + _HALF_PI_TAIL, r)
+    r = x.lt(0.0).select((_ONE_PI - r) + _ONE_PI_TAIL, r)
+    return y.lt(0.0).select(-r, r)
+
 def all_lanes_equal[dtype: DType, width: SIMDLength](v: SIMD[dtype, width]) -> Bool:
     return (v.eq(v[0])).reduce_and()
 
