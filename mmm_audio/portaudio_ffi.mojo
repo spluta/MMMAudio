@@ -446,7 +446,12 @@ struct PortAudio:
     # -- streams ------------------------------------------------------------
 
     def _stream_parameters(
-        self, device: Int, channels: Int, is_input: Bool
+        self,
+        device: Int,
+        channels: Int,
+        is_input: Bool,
+        block_size: Int,
+        sample_rate: Float64,
     ) raises -> PaStreamParameters:
         var info = self.device_info(device)
 
@@ -472,11 +477,8 @@ struct PortAudio:
                 + " were requested"
             )
 
-        var latency: Float64
-        if is_input:
-            latency = info[].default_low_input_latency
-        else:
-            latency = info[].default_low_output_latency
+        # This suggests a desired latency to the device. The device may or may not be able to achieve that latency, but it will try.
+        var latency = Float64(block_size) / sample_rate
 
         return PaStreamParameters(
             device=c_int(device),
@@ -511,6 +513,9 @@ struct PortAudio:
             input_channels: Ignored when there's no input device.
             output_channels: Ignored when there's no output device.
             block_size: Frames per callback (PortAudio's framesPerBuffer).
+                It's also what the stream asks the device for as its
+                hardware buffer size, by way of suggestedLatency - see
+                `_stream_parameters`.
             callback: A thin abi("C") function with the shape documented
                 above.
             user_data: An address handed back to the callback as its
@@ -536,10 +541,10 @@ struct PortAudio:
 
         if input != PA_DEVICE_NONE and output != PA_DEVICE_NONE:
             var input_parameters = self._stream_parameters(
-                input, input_channels, True
+                input, input_channels, True, block_size, sample_rate
             )
             var output_parameters = self._stream_parameters(
-                output, output_channels, False
+                output, output_channels, False, block_size, sample_rate
             )
             error = Int(
                 self.lib.call["Pa_OpenStream", c_int](
@@ -555,7 +560,7 @@ struct PortAudio:
             )
         elif output != PA_DEVICE_NONE:
             var output_parameters = self._stream_parameters(
-                output, output_channels, False
+                output, output_channels, False, block_size, sample_rate
             )
             error = Int(
                 self.lib.call["Pa_OpenStream", c_int](
@@ -571,7 +576,7 @@ struct PortAudio:
             )
         else:
             var input_parameters = self._stream_parameters(
-                input, input_channels, True
+                input, input_channels, True, block_size, sample_rate
             )
             error = Int(
                 self.lib.call["Pa_OpenStream", c_int](
