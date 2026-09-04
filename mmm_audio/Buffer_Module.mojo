@@ -38,6 +38,7 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
         self.num_frames_f64 = Float64(self.num_frames)
         self.duration = self.num_frames_f64 / self.sample_rate
 
+    @always_inline
     def at_phase[interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](self, world: World, phase: Float64, prev_phase: Float64 = 0) -> MFloat[Self.num_chans]:
         """Read a value from the SIMDBuffer at a given phase using sinc interpolation.
 
@@ -54,6 +55,14 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
         Returns:
             The interpolated sample value at the given phase.
         """
+        # Only sinc interpolation reads prev_f_idx; every other mode discards
+        # it. Scaling prev_phase unconditionally is a multiply per lane per
+        # sample that nothing consumes, so it's gated on the same comptime
+        # condition `read` dispatches on.
+        var prev_f_idx: Float64 = 0.0
+        comptime if interp == Interp.sinc:
+            prev_f_idx = prev_phase * self.num_frames_f64
+
         return SpanInterpolator.read[
             interp=interp,
             bWrap=bWrap,
@@ -62,7 +71,7 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
             world = world,
             data=self.data,
             f_idx=phase * self.num_frames_f64,
-            prev_f_idx=prev_phase * self.num_frames_f64
+            prev_f_idx=prev_f_idx
         )
 
     @staticmethod
@@ -204,6 +213,7 @@ struct Buffer(Movable, Copyable):
         self.num_frames_f64 = Float64(self.num_frames)
         self.duration = self.num_frames_f64 / self.sample_rate
 
+    @always_inline
     def at_phase[interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](self, world: World, chan: Int, phase: Float64, prev_phase: Float64 = 0) -> MFloat[1]:
         """Read a value from the Buffer at a given phase using interpolation.
 
@@ -221,6 +231,12 @@ struct Buffer(Movable, Copyable):
         Returns:
             The interpolated sample value at the given phase.
         """
+        # See the note in SIMDBuffer.at_phase - prev_f_idx only matters to
+        # sinc interpolation.
+        var prev_f_idx: Float64 = 0.0
+        comptime if interp == Interp.sinc:
+            prev_f_idx = prev_phase * self.num_frames_f64
+
         return SpanInterpolator.read[
             num_chans=1,
             interp=interp,
@@ -230,7 +246,7 @@ struct Buffer(Movable, Copyable):
             world = world,
             data=self.data[chan],
             f_idx=phase * self.num_frames_f64,
-            prev_f_idx=prev_phase * self.num_frames_f64
+            prev_f_idx=prev_f_idx
         )
 
     @staticmethod
