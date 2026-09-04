@@ -10,7 +10,7 @@ mmm_audio.send_int("num_pairs", 2)  # set to 2 pairs of oscillators
 
 mmm_audio.send_int("num_pairs", 14)  # change to 14 pairs of oscillators
 
-mmm_audio.send_int("num_pairs", 500)  # change to 1000 pairs of oscillators
+mmm_audio.send_int("num_pairs", 500)  # change to 500 pairs of oscillators
 
 mmm_audio.stop_audio() # stop/pause the audio thread
 
