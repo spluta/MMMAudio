@@ -1,5 +1,5 @@
 from mmm_audio import *
-from std.testing import assert_equal, assert_almost_equal, assert_true
+from std.testing import assert_equal, assert_almost_equal, assert_true, assert_false
 from std.testing import TestSuite
 from std.math import inf, nan
 from std.pathlib import Path
@@ -294,6 +294,84 @@ def test_fft_against_numpy() raises:
 
     except err:
         assert_true(False, "Error comparing FFT results with numpy: " + String(err))
+
+def test_adsr_env() raises:
+    """ADSREnv has to hit each breakpoint at the right time and level.
+
+    ASREnv has no decay stage, so this checks the thing that distinguishes them: the fall
+    from full down to the sustain level while the gate is still open.
+    """
+    var e = unsafe_alloc[Environment](1)
+    e.unsafe_write(Environment())
+    var world = unsafe_alloc[MMMWorld](1)
+    world.unsafe_write(MMMWorld(48000.0, e))
+
+    comptime tol = 1e-6
+    var env = ADSREnv(world)
+
+    def advance(mut env: ADSREnv, samples: Int, gate: Bool) capturing -> Float64:
+        var v = 0.0
+        for _ in range(samples):
+            v = env.next(0.1, 0.2, 0.5, 0.4, gate)
+        return v
+
+    # attack: 0.1s from 0 to 1, so halfway up at 0.05s
+    assert_almost_equal(advance(env, 2400, True), 0.5,
+        "Test: ADSREnv attack is not halfway at half the attack time", atol=tol)
+    assert_almost_equal(advance(env, 2400, True), 1.0,
+        "Test: ADSREnv did not reach full at the end of the attack", atol=tol)
+
+    # decay: 0.2s from 1 down to the sustain level of 0.5
+    assert_almost_equal(advance(env, 4800, True), 0.75,
+        "Test: ADSREnv decay is not halfway at half the decay time", atol=tol)
+    assert_almost_equal(advance(env, 4800, True), 0.5,
+        "Test: ADSREnv did not settle at the sustain level", atol=tol)
+
+    # sustain holds for as long as the gate is open
+    assert_almost_equal(advance(env, 48000, True), 0.5,
+        "Test: ADSREnv did not hold at the sustain level", atol=tol)
+    assert_true(env.is_active, "Test: ADSREnv should be active while gated")
+
+    # release: 0.4s from the sustain level to zero
+    assert_almost_equal(advance(env, 9600, False), 0.25,
+        "Test: ADSREnv release is not halfway at half the release time", atol=tol)
+    _ = advance(env, 9605, False)
+    assert_almost_equal(env.value, 0.0,
+        "Test: ADSREnv did not reach zero at the end of the release", atol=tol)
+    assert_false(env.is_active, "Test: ADSREnv should go inactive once released")
+
+    # curve shapes the segment as phase to the power of the curve, endpoints unmoved
+    var shaped = ADSREnv(world)
+    def advance_curved(mut env: ADSREnv, samples: Int, curve: Float64) capturing -> Float64:
+        var v = 0.0
+        for _ in range(samples):
+            v = env.next(0.1, 0.2, 0.5, 0.4, True, MFloat[2](curve, curve))
+        return v
+    assert_almost_equal(advance_curved(shaped, 1200, 2.0), 0.0625,
+        "Test: ADSREnv curve did not shape the attack", atol=tol)
+    assert_almost_equal(advance_curved(shaped, 3600, 2.0), 1.0,
+        "Test: ADSREnv curve moved the end of the attack", atol=tol)
+
+    # retriggering part way through a release resumes from the current value
+    var again = ADSREnv(world)
+    _ = advance(again, 48000, True)
+    var released = advance(again, 4800, False)
+    var retriggered = again.next(0.1, 0.2, 0.5, 0.4, True)
+    assert_true(abs(retriggered - released) < 0.01,
+        "Test: ADSREnv jumped on retrigger instead of resuming from its current value")
+
+    # zero length segments must arrive immediately rather than divide by zero
+    var instant = ADSREnv(world)
+    var v = 0.0
+    for _ in range(4):
+        v = instant.next(0.0, 0.0, 0.3, 0.0, True)
+    assert_almost_equal(v, 0.3,
+        "Test: ADSREnv with zero attack and decay did not land on the sustain level", atol=tol)
+
+    # reset clears a recycled voice
+    instant.reset()
+    assert_almost_equal(instant.value, 0.0, "Test: ADSREnv reset did not clear the value", atol=tol)
+    assert_false(instant.is_active, "Test: ADSREnv reset did not clear is_active")
 
 def test_dct()  raises:
     var dct = DCT(4,3)
