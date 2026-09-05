@@ -71,9 +71,6 @@ struct Phasor[num_chans: SIMDLength = 1](Movable, Copyable):
         var resets = self.rising_bool_detector.next(trig)
         self.phase = resets.select(0.0, self.phase)
 
-        # `% 1.0` is a floored modulo; `x - floor(x)` is the same value for a
-        # divisor of 1.0 (negatives included) and a single instruction. Same
-        # idiom as _increment_phase above.
         var out = self.phase + phase_offset
         return out - floor(out)
             
@@ -238,9 +235,6 @@ struct Osc[num_chans: SIMDLength = 1, interp: Interp = Interp.linear, ov_samp: T
             ref temp = self.world[].osc_buffers()
             comptime for chan in range(self.num_chans):
                 out[chan] = temp.at_phase[osc_type, self.interp](self.world, phase[chan], self.last_phase[chan])
-            # last_phase exists only to feed sinc interpolation's prev_phase.
-            # For every other interp mode nothing reads it, and being a struct
-            # field the store can't be eliminated for us.
             comptime if Self.interp == Interp.sinc:
                 self.last_phase = phase
             return out
