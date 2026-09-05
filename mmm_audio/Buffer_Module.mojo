@@ -394,6 +394,7 @@ struct SpanInterpolator(Movable, Copyable):
     def read_none[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], idx: Int) -> type_of(data[0]):
         if len(data) == 0:
             return 0.0
+        # check_wrap_mask[mask](len(data))
 
         var idx2 = idx
         comptime if bWrap:
@@ -424,6 +425,7 @@ struct SpanInterpolator(Movable, Copyable):
         """
         if len(data) == 0:
             return 0.0
+        # check_wrap_mask[mask](len(data))
 
         var idx0: Int = Int(f_idx)
         var idx1: Int = idx0 + 1
@@ -469,6 +471,7 @@ struct SpanInterpolator(Movable, Copyable):
         """
         if len(data) == 0:
             return 0.0
+        # check_wrap_mask[mask](len(data))
 
         var idx0 = Int(f_idx)
         var idx1 = idx0 + 1
@@ -519,6 +522,7 @@ struct SpanInterpolator(Movable, Copyable):
         """
         if len(data) == 0:
             return 0.0
+        # check_wrap_mask[mask](len(data))
 
         var idx1 = Int(f_idx)
         var idx0 = idx1 - 1
@@ -575,6 +579,7 @@ struct SpanInterpolator(Movable, Copyable):
        
         if len(data) == 0:
             return 0.0
+        # check_wrap_mask[mask](len(data))
 
         var idx0 = Int(f_idx)
         var idx1 = idx0 + 1

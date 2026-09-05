@@ -37,6 +37,11 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         for i in range(self.table_size * 2):
             self.sinc_points.append(Int(i * self.table_size/(self.ripples * 2)))  # Initialize sinc points based on the sinc table size
 
+        debug_assert[assert_mode="safe"](
+            len(self.table) == self.mask + 1,
+            "sinc table length ", len(self.table), " does not match mask ", self.mask,
+        )
+
         self.sinc_power_f64 = Float64(self.power)  # Assuming sinc_power is 14
         self.max_layer = self.power - 3
 
@@ -45,19 +50,16 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
     def interp_points(self, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
         """Helper function to perform quadratic interpolation on sinc table points."""
 
-        var pts = self.sinc_points.unsafe_ptr()
-        var tbl = self.table.unsafe_ptr()
-
-        var sinc_indexA = pts[unsafe_offset=sp] - (sinc_offset * sinc_mult)
+        var sinc_indexA = self.sinc_points.unsafe_get(sp) - (sinc_offset * sinc_mult)
         
         var idxA = sinc_indexA & self.mask
         var idxB = (sinc_indexA + 1) & self.mask
         var idxC = (sinc_indexA + 2) & self.mask
         
         return quadratic_interp(
-            tbl[unsafe_offset=idxA],
-            tbl[unsafe_offset=idxB], 
-            tbl[unsafe_offset=idxC],
+            self.table.unsafe_get(idxA),
+            self.table.unsafe_get(idxB), 
+            self.table.unsafe_get(idxC),
             frac
         )
 
@@ -72,7 +74,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         comptime simd_width = simd_width_of[DType.float64]()
         var out: MFloat[num_chans] = MFloat[num_chans](0.0)
         var data_len: Int = len(data)
-        var dp = data.unsafe_ptr()
+        # check_wrap_mask[mask](data_len)
         
         # Process SIMD chunks
         var offset: Int
@@ -94,7 +96,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
                 var sinc_offset = loc_point - spaced_point
                 
                 var sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
-                out += sinc_value * dp[unsafe_offset=spaced_point]
+                out += sinc_value * data.unsafe_get(spaced_point)
             else:
                 var loc_point = index + offset * spacing
                 
@@ -103,7 +105,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
                     var sinc_offset = loc_point - spaced_point
                     
                     var sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
-                    out += sinc_value * dp[unsafe_offset=spaced_point]
+                    out += sinc_value * data.unsafe_get(spaced_point)
 
         return out
 

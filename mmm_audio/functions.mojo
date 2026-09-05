@@ -417,6 +417,23 @@ def fold[dtype: DType](x: SIMD[dtype, _], lo: type_of(x), hi: type_of(x)) -> typ
     return folded + lo2
 
 @always_inline
+def check_wrap_mask[mask: Int](length: Int):
+    """Verify that a compile-time wrap mask matches the runtime length of the table it wraps. Does nothing when `mask` is 0, which selects modulo wrapping instead.
+
+    Parameters:
+        mask: The bitmask that will be applied to indices.
+
+    Args:
+        length: The number of elements actually available to index.
+    """
+    comptime if mask != 0:
+        debug_assert[assert_mode="safe"](
+            length == mask + 1,
+            "wrap mask ", mask, " requires a table length of ", mask + 1,
+            " but the table has ", length, " elements",
+        )
+
+@always_inline
 def quadratic_interp[
     dtype: DType, //
 ](y0: SIMD[dtype, _], y1: type_of(y0), y2: type_of(y0), x: type_of(y0)) -> type_of(x):
