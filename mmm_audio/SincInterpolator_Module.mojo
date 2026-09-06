@@ -74,7 +74,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         comptime simd_width = simd_width_of[DType.float64]()
         var out: MFloat[num_chans] = MFloat[num_chans](0.0)
         var data_len: Int = len(data)
-        # check_wrap_mask[mask](data_len)
+        check_wrap_mask[mask](data_len)
         
         # Process SIMD chunks
         var offset: Int

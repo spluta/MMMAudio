@@ -426,8 +426,14 @@ def check_wrap_mask[mask: Int](length: Int):
     Args:
         length: The number of elements actually available to index.
     """
+    # Plain debug_assert, so this is compiled out unless the build passes
+    # -D ASSERT=all. The readers run inside the audio thread's per-sample loop and
+    # the mask/length relationship is fixed for the life of a table, so checking it
+    # at sample rate only pays off when the optimizer hoists it. ASSERT=all is also
+    # the build in which unsafe_get regains its own bounds checks, so running the
+    # tests that way validates every mask in the codebase at once.
     comptime if mask != 0:
-        debug_assert[assert_mode="safe"](
+        debug_assert(
             length == mask + 1,
             "wrap mask ", mask, " requires a table length of ", mask + 1,
             " but the table has ", length, " elements",
