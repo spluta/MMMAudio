@@ -2,7 +2,6 @@ from mmm_audio import *
 
 # THE SYNTH
 
-
 struct DistanceBasedPanning(Movable, Copyable):
     var world: World  
     var dust: Dust[1] 
