@@ -13,7 +13,7 @@ mmm_audio = MMMAudio(128, num_output_channels=11, graph_name="VectorBasePanning3
 mmm_audio.start_audio()
 degrees_to_radians = pi/180
 
-mmm_audio.send_float("az", 0.0 * pi)
+mmm_audio.send_float("az", 0.1 * pi)
 mmm_audio.send_float("az", -0.25  * pi)
 # mmm_audio.send_float("az", 0.375 * 2 * pi)
 # mmm_audio.send_float("az", 0.5 * 2 * pi)
@@ -21,7 +21,7 @@ mmm_audio.send_float("az", -0.25  * pi)
 # mmm_audio.send_float("az", 0.75 * 2 * pi)
 # mmm_audio.send_float("az", 0.875 * 2 * pi)
 mmm_audio.send_float("az", 185 * degrees_to_radians + (1.0 * pi))
-mmm_audio.send_float("ht", -0.2* 2 * pi)
+mmm_audio.send_float("ht", -0.0* 2 * pi)
 
 #Enable/disable mouse
 mmm_audio.send_bool("mouse", True)
