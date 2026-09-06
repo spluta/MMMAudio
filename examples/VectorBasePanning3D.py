@@ -36,38 +36,38 @@ mmm_audio.plot(48000)
 
 # This implementation of VBAP uses the Quickhull algorithm to determine speaker triplets. For further explanantion see this paper by Hongchan Choi: https://repository.gatech.edu/atmire-ds/25e3c444-6cde-4c2b-a4e0-f015cb46211c/page/2
 # Executing the code below shows a 3d representation of all speaker triplets.
-from math import cos, sin
+from math import cos, sin, pi
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
 
 
 # Test 5 speaker array
-speaker_positions = [
-    [-0.5 * pi, 0.0],
-    [0.0, 0.0],
-    [0.5 * pi, 0.0],
-    [0.0, -0.5 * pi],
-    [0.0, 0.5 * pi]
-]
+# speaker_positions = [
+#     [-0.5 * pi, 0.0],
+#     [0.0, 0.0],
+#     [0.5 * pi, 0.0],
+#     [0.0, -0.5 * pi],
+#     [0.0, 0.5 * pi]
+# ]
 
 
 # A 7.1.4 Atmos Array 
-# speaker_positions = [
+speaker_positions = [
     
-#     [0.0, 0],#Center
-#     [25 * degrees_to_radians, 0],# L
-#     [-25 * degrees_to_radians, 0],# R
-#     [90 * degrees_to_radians, 0], # LS
-#     [-90 * degrees_to_radians, 0], # RS
-#     [135  * degrees_to_radians, 0], # LB
-#     [-135 * degrees_to_radians, 0], # RB
-#     [40 * degrees_to_radians, 35 * degrees_to_radians], #LTF
-#     [-40 * degrees_to_radians, 35 * degrees_to_radians], #RTF
-#     [120 * degrees_to_radians, 35 * degrees_to_radians], #LTR
-#     [-120 * degrees_to_radians, 35 * degrees_to_radians] #RTF
+    [0.0, 0],#Center
+    [25 * degrees_to_radians, 0],# L
+    [-25 * degrees_to_radians, 0],# R
+    [90 * degrees_to_radians, 0], # LS
+    [-90 * degrees_to_radians, 0], # RS
+    [135  * degrees_to_radians, 0], # LB
+    [-135 * degrees_to_radians, 0], # RB
+    [40 * degrees_to_radians, 35 * degrees_to_radians], #LTF
+    [-40 * degrees_to_radians, 35 * degrees_to_radians], #RTF
+    [120 * degrees_to_radians, 35 * degrees_to_radians], #LTR
+    [-120 * degrees_to_radians, 35 * degrees_to_radians] #RTF
 
-# ]
+]
 
 
 # LSU Immersive Lab

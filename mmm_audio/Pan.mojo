@@ -332,13 +332,12 @@ def dbap2D[
     comptime assert num_speakers <= simd_out_size, "num_speakers must be less than or equal to simd_out_size for dbap2D"
     comptime assert simd_out_size & (simd_out_size - 1) == 0, "simd_out_size must be a power of two for dbap2D"
 
+    
     # Calculates the covariance of speaker distances 
-    var speaker_positions = materialize[speaker_positions]()
-
     def variance_of_dists[
         comp_num_speakers: Int, 
         comp_speaker_positions: Array[MFloat[2], 
-        comp_num_speakers]]() -> Float64:
+        num_speakers]]() -> Float64:
        
         var positions = materialize[
             comp_speaker_positions
@@ -362,6 +361,8 @@ def dbap2D[
     comptime vec_weights = array_to_mfloat[simd_out_size, weights]()
     comptime speaker_position_variance : Float64 = variance_of_dists[num_speakers, speaker_positions]()
     
+    
+    var materialized_speaker_positions = materialize[speaker_positions]()
     # Calculates the blur factor using the speaker variance to normalize
     var blur_sq : Float64
 
@@ -378,7 +379,7 @@ def dbap2D[
  
     # Calculates the k coefficient and gets distances for every speaker from the source
     for i in range(num_speakers):
-        var speaker = speaker_positions[i] - pos
+        var speaker = materialized_speaker_positions[i] - pos
         var xy = speaker * speaker
         dists[i] = sqrt(xy.reduce_add() + blur_sq)  
 
@@ -815,9 +816,6 @@ struct VBAP3D[num_speakers: Int, simd_out_size: Int](Movable, Copyable):
                 var second = Int(py=triplet[1])
                 var third = Int(py=triplet[2])
                 
-                var inv_base_a = [0.0, 0.0, 0.0]
-                var inv_base_b = [0.0, 0.0, 0.0]
-                var inv_base_c = [0.0, 0.0, 0.0]
                 
                 for j in range(len(targ_inv)):
                     var vec = targ_inv[j]
