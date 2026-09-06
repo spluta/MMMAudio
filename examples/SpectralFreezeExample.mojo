@@ -20,7 +20,7 @@ struct SpectralFreezeWindow[window_size: Int](FFTProcessable):
         self.toggle = (self.toggle + 1) % 2
 
     def next_stereo_frame(mut self, mut mags: List[MFloat[2]], mut phases: List[MFloat[2]]) -> None:
-        tp1 = (self.toggle + 1) % 2
+        var tp1 = (self.toggle + 1) % 2
         for i in range(Self.window_size//2 + 1):
             self.diff_phases[self.toggle][i] = phases[i]-self.prev_phases[self.toggle][i]
             self.prev_phases[tp1][i] = self.prev_phases[tp1][i] + self.diff_phases[tp1][i]
@@ -60,8 +60,8 @@ struct SpectralFreeze[window_size: Int](Movable, Copyable):
         if self.m.notify_update("freeze_gate", self.freeze_gate):
             if self.freeze_gate:
                 self.freeze.get_process().inc_toggle()
-        freeze = self.freeze.next_stereo(sample)
-        env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
+        var freeze = self.freeze.next_stereo(sample)
+        var env = self.asr.next(0.01, 1.0, 0.01, self.freeze_gate, 1.0)
         env = self.env_delay.next(env, MInt[1](Self.window_size))
         return select(env, sample, freeze) * 0.3
 
@@ -83,7 +83,7 @@ struct SpectralFreezeExample(Movable, Copyable):
 
     def next(mut self) -> SIMD[DType.float64,2]:
 
-        out = self.play_buf.next[2](self.buffer,1)
+        var out = self.play_buf.next[2](self.buffer,1)
 
         out = self.spectral_freeze.next(out)
 

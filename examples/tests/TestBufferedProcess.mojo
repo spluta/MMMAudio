@@ -47,7 +47,7 @@ struct TestBufferedProcess(Movable, Copyable):
     def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update("input", self.input) 
         self.ps[0].next(self.input,"input  ")
-        o = self.my_buffered_mul.next(self.input)
+        var o = self.my_buffered_mul.next(self.input)
         self.ps[1].next(o,"output ")
 
         return SIMD[DType.float64,2](0.0, 0.0)

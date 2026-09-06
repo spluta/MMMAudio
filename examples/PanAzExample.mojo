@@ -26,7 +26,7 @@ struct PanAz_Synth(Movable, Copyable):
         self.messenger.update("width", self.width) 
 
         # PanAz needs to be given a SIMD size that is a power of 2, in this case [8], but the speaker size can be anything smaller than that
-        panned = pan_az[8](self.osc.next[OscType.triangle](self.freq), self.pan_osc.next(0.1), self.num_speakers, self.width) * 0.1
+        var panned = pan_az[8](self.osc.next[OscType.triangle](self.freq), self.pan_osc.next(0.1), self.num_speakers, self.width) * 0.1
 
         if self.num_speakers == 2:
             return MFloat[8](panned[0], panned[1], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
@@ -46,7 +46,7 @@ struct PanAzExample(Movable, Copyable):
 
     def next(mut self) -> MFloat[8]:
 
-        sample = self.synth.next()  # Get the next sample from the synth
+        var sample = self.synth.next()  # Get the next sample from the synth
 
         # the output will pan to the number of channels available 
         # if there are fewer than 5 channels, only those channels will be output

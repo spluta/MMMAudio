@@ -27,7 +27,7 @@ struct SpectralOnsetExample(Movable, Copyable):
         self.m.update("debounce", self.onsets.debounce) 
         
         # play the audio file
-        audio = self.playBuf.next(self.buffer)
+        var audio = self.playBuf.next(self.buffer)
         
         # analyze for onsets
         _ = self.onsets.next(audio)
@@ -39,7 +39,7 @@ struct SpectralOnsetExample(Movable, Copyable):
             self.onsetcounter += 1
         
         # generate impulse when onset detected
-        impulse = self.impulse_vol if self.onsets.state else 0.0
+        var impulse = self.impulse_vol if self.onsets.state else 0.0
         
         # left channel: audio, right channel: impulses
         return MFloat[2](audio, impulse)

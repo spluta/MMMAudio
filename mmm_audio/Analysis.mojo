@@ -1,10 +1,20 @@
-from mmm_audio import *
+
 from std.math import atan2, ceil, floor, log2, log, exp, sin, sqrt, cos, pi, inf
+from .Buffer_Module import Buffer
+from .BufferedProcess_Module import BufferedProcessable
+from .FFTs import RealFFT
+from .FFTProcess_Module import FFTProcessable
+from .MBufAnalysisBridge import MBufAnalysis, Padding
+from .functions import *
+from .constants import *
+from .MMMWorld_Module import WindowType
 
 @always_inline
 @doc_hidden
 def parabolic_refine(prev: Float64, cur: Float64, next: Float64) -> Tuple[Float64, Float64]:
-    denom = prev - 2.0 * cur + next
+    var p: Float64
+    var refined_val: Float64
+    var denom = prev - 2.0 * cur + next
     if abs(denom) < 1e-12:
         return (0.0, cur)
     p = 0.5 * (prev - next) / denom
@@ -190,6 +200,7 @@ struct YIN(BufferedProcessable,GetFloat64Featurable):
 
         # cumulative mean normalized difference function
         var tmp_sum: Float64 = 0.0
+        var raw_val: Float64 = 0.0
         for i in range(1, len(frame)):
             raw_val = self.yin_values[i]
             tmp_sum += raw_val
@@ -252,6 +263,32 @@ struct YIN(BufferedProcessable,GetFloat64Featurable):
 
         self.pitch = local_pitch
         self.confidence = local_conf
+    
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, window_size: Int = 1024, hop_size: Int = 512, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the YIN pitch and confidence values for a given audio buffer.
+
+        This static method is useful when there is an audio buffer already loaded and you want to compute the YIN pitch over it.
+
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            min_freq: The minimum frequency to consider for pitch detection.
+            max_freq: The maximum frequency to consider for pitch detection.
+            padding: The padding strategy to use for the analysis.
+
+        Returns:
+            A List of Lists of Float64 containing the pitch and confidence values for each analyzed frame.
+        
+        Raises:
+            An error if the analysis fails for any reason.
+        """
+        var yin_proc = YIN(buf.sample_rate, window_size=window_size, min_freq=min_freq, max_freq=max_freq)
+        return MBufAnalysis.buffered_process(yin_proc, buf, chan, start_frame, num_frames, window_size, hop_size, padding=padding, window_type=WindowType.hann)
 
 struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
     """Spectral Centroid analysis.
@@ -348,6 +385,33 @@ struct SpectralCentroid(FFTProcessable, GetFloat64Featurable):
             centroid += amp[i] * freqs[i]
         return centroid / amp_sum
 
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral centroid for a given audio buffer.
+
+        This static method is useful when there is an audio buffer already loaded and you want to compute the spectral centroid over it.
+
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral centroid.
+            max_freq: The maximum frequency to consider when computing the spectral centroid.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the centroid.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+
+        Returns:
+            A List of Lists of Float64 containing the spectral centroid values for each analyzed frame.
+
+        Raises:
+            An error if the analysis fails for any reason.
+        """
+        var sc_proc = SpectralCentroid(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sc_proc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
+
 struct SpectralSpread(FFTProcessable, GetFloat64Featurable):
     """Spectral Spread analysis."""
 
@@ -434,6 +498,32 @@ struct SpectralSpread(FFTProcessable, GetFloat64Featurable):
         variance /= amp_sum
 
         return sqrt(max(variance, 0.0))
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral spread for a given audio buffer.
+        
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral spread.
+            max_freq: The maximum frequency to consider when computing the spectral spread.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the spread.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+        
+        Returns:
+            A List of Lists of Float64 containing the spectral spread values for each analyzed frame.
+
+        Raises:
+            An error if the analysis fails for any reason.
+        """
+        var ss_proc = SpectralSpread(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(ss_proc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct SpectralSkewness(FFTProcessable, GetFloat64Featurable):
     """Spectral Skewness analysis."""
@@ -528,6 +618,32 @@ struct SpectralSkewness(FFTProcessable, GetFloat64Featurable):
             var diff2 = diff * diff
             acc3 += amp[i] * diff2 * diff
         return acc3 / denom3
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral skewness for a given audio buffer.
+        
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral skewness.
+            max_freq: The maximum frequency to consider when computing the spectral skewness.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the skewness.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+        
+        Returns:
+            A List of Lists of Float64 containing the spectral skewness values for each analyzed frame.
+        
+        Raises:
+            Raises an error if the analysis fails for any reason.
+        """
+        var sk = SpectralSkewness(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sk, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct SpectralKurtosis(FFTProcessable, GetFloat64Featurable):
     """Spectral Kurtosis analysis."""
@@ -624,6 +740,33 @@ struct SpectralKurtosis(FFTProcessable, GetFloat64Featurable):
             var diff2 = diff * diff
             acc4 += amp[i] * diff2 * diff2
         return acc4 / denom4
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral kurtosis for a given audio buffer.
+        
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral kurtosis.
+            max_freq: The maximum frequency to consider when computing the spectral kurtosis.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the kurtosis.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+
+        Returns:
+            A List of Lists of Float64 containing the spectral kurtosis values for each analyzed frame.
+
+        Raises:
+            Error: If analysis fails.
+        """
+        var sk = SpectralKurtosis(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sk, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
+
 
 struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
     """Spectral Rolloff analysis."""
@@ -730,6 +873,33 @@ struct SpectralRolloff(FFTProcessable, GetFloat64Featurable):
                     rolloff = freqs[i] - (freqs[i] - freqs[i - 1]) * (cum_sum - target) / amp[i]
                 break
         return rolloff
+    
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, rolloff_target: Float64 = 95.0, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral rolloff for a given audio buffer.
+        
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral rolloff.
+            max_freq: The maximum frequency to consider when computing the spectral rolloff.
+            rolloff_target: Percentage of spectral energy for rolloff.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the rolloff.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+        
+        Returns:
+            A List of Lists of Float64 containing the spectral rolloff values for each analyzed frame.
+        
+        Raises:
+            Error: If analysis fails.
+        """
+        var sr_proc = SpectralRolloff(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, rolloff_target=rolloff_target, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sr_proc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct SpectralFlatness(FFTProcessable, GetFloat64Featurable):
     """Spectral Flatness analysis."""
@@ -811,6 +981,32 @@ struct SpectralFlatness(FFTProcessable, GetFloat64Featurable):
         var flatness = exp(sum_log / Float64(len(amp))) / max(amp_mean, eps)
         return 20.0 * log(max(flatness, eps)) / log(10.0)
 
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral flatness for a given audio buffer.
+
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral flatness.
+            max_freq: The maximum frequency to consider when computing the spectral flatness.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the flatness.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+
+        Returns:
+            A List of Lists of Float64 containing the spectral flatness values for each analyzed frame.
+
+        Raises:
+            Error: If analysis fails.
+        """
+        var sf_proc = SpectralFlatness(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sf_proc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
+
 struct SpectralCrest(FFTProcessable, GetFloat64Featurable):
     """Spectral Crest analysis."""
 
@@ -887,6 +1083,34 @@ struct SpectralCrest(FFTProcessable, GetFloat64Featurable):
         var amp_mean = amp_sum / Float64(len(amp))
         var crest = max_amp / max(amp_mean, eps)
         return 20.0 * log(max(crest, eps)) / log(10.0)
+    
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, min_freq: Float64 = 20, max_freq: Float64 = 20000, log_freq: Bool = False, power_mag: Bool = False, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Compute the spectral crest for a given audio buffer.
+
+        This static method is useful when there is an audio buffer already loaded and you want to compute the spectral crest over it.
+
+        Args:
+            buf: The input audio buffer.
+            chan: The channel index to analyze (default is 0).
+            start_frame: The starting frame index in the buffer (default is 0).
+            num_frames: The number of frames to analyze (default is None, which means analyze until the end of the buffer).
+            min_freq: The minimum frequency to consider when computing the spectral crest.
+            max_freq: The maximum frequency to consider when computing the spectral crest.
+            log_freq: Whether to use log-frequency (MIDI) bins.
+            power_mag: Whether to use power magnitudes (mags^2) instead of linear magnitudes when computing the crest.
+            window_size: The size of the analysis window in samples.
+            hop_size: The hop size between windows in samples.
+            padding: The padding strategy to use for the analysis.
+
+        Returns:
+            A List of Lists of Float64 containing the spectral crest values for each analyzed frame.
+
+        Raises:
+            An error if the analysis fails for any reason.
+        """
+        var sc_proc = SpectralCrest(buf.sample_rate, min_freq=min_freq, max_freq=max_freq, log_freq=log_freq, power_mag=power_mag)
+        return MBufAnalysis.fft_process(sc_proc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct RMS(BufferedProcessable, GetFloat64Featurable):
     """Root Mean Square (RMS) amplitude analysis.
@@ -930,10 +1154,16 @@ struct RMS(BufferedProcessable, GetFloat64Featurable):
         Returns:
             Float64. The computed RMS value.
         """
-        sum_sq: Float64 = 0.0
+        var sum_sq: Float64 = 0.0
         for v in frame:
             sum_sq += v * v
         return sqrt(sum_sq / Float64(len(frame)))
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        var rms = RMS()
+        return MBufAnalysis.buffered_process(rms, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.none, padding=padding)
+
 
 struct MelBands(FFTProcessable, GetFloat64Featurable):
     """Mel Bands analysis.
@@ -1007,7 +1237,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
             mags: The input magnitudes as a List of Float64.
         """
         for i in range(self.num_bands):
-            band_energy: Float64 = 0.0
+            var band_energy: Float64 = 0.0
             for j in range(len(mags)):
                 var mag_val: Float64
                 if self.power == 1.0:
@@ -1023,19 +1253,19 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
     def make_weights(mut self):
         """Compute the mel filter bank weights."""
 
-        fftfreqs = RealFFT.fft_frequencies(sr=self.sr, n_fft=self.fft_size)
+        var fftfreqs = RealFFT.fft_frequencies(sr=self.sr, n_fft=self.fft_size)
 
         # 'Center freqs' of mel bands - uniformly spaced between limits
-        mel_f = MelBands.mel_frequencies(self.num_bands + 2, fmin=self.min_freq, fmax=self.max_freq)
+        var mel_f = MelBands.mel_frequencies(self.num_bands + 2, fmin=self.min_freq, fmax=self.max_freq)
 
-        fdiff = diff(mel_f)
-        ramps = subtract_outer(mel_f, fftfreqs)
+        var fdiff = diff(mel_f)
+        var ramps = subtract_outer(mel_f, fftfreqs)
 
         for i in range(self.num_bands):
-            lower: List[Float64] = List[Float64](length=len(ramps[i]), fill=0.0)
+            var lower: List[Float64] = List[Float64](length=len(ramps[i]), fill=0.0)
             for j in range(len(ramps[i])):
                 lower[j] = -ramps[i][j] / fdiff[i]
-            upper: List[Float64] = List[Float64](length=len(ramps[i]), fill=0.0)
+            var upper: List[Float64] = List[Float64](length=len(ramps[i]), fill=0.0)
             for j in range(len(ramps[i])):
                 upper[j] = ramps[i + 2][j] / fdiff[i + 1]
 
@@ -1066,10 +1296,10 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
             A List of Float64 representing the center frequencies of each mel band.
         """
 
-        min_mel = MelBands.hz_to_mel(fmin)
-        max_mel = MelBands.hz_to_mel(fmax)
+        var min_mel = MelBands.hz_to_mel(fmin)
+        var max_mel = MelBands.hz_to_mel(fmax)
 
-        mels = linspace(min_mel, max_mel, n_mels)
+        var mels = linspace(min_mel, max_mel, n_mels)
 
         var hz = List[Float64](length=n_mels, fill=0.0)
         for i in range(n_mels):
@@ -1077,7 +1307,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         return hz^
 
     @staticmethod
-    def hz_to_mel[num_chans: Int = 1](freq: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
+    def hz_to_mel[num_chans: SIMDLength = 1](freq: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
         """Convert Hz to Mels.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.hz_to_mel.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.
@@ -1097,14 +1327,14 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         # if htk:
         #     return 2595.0 * log10(1.0 + freq / 700.0)
 
-        f_min = 0.0
-        f_sp = 200.0 / 3
+        var f_min = 0.0
+        var f_sp = 200.0 / 3
 
-        mels = (freq - f_min) / f_sp
+        var mels = (freq - f_min) / f_sp
 
-        min_log_hz = 1000.0  # beginning of log region (Hz)
-        min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
-        logstep = log(6.4) / 27.0  # step size for log region
+        var min_log_hz = 1000.0  # beginning of log region (Hz)
+        var min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
+        var logstep = log(6.4) / 27.0  # step size for log region
 
         if freq >= min_log_hz:
             mels = min_log_mel + log(freq / min_log_hz) / logstep
@@ -1112,7 +1342,7 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         return mels
 
     @staticmethod
-    def mel_to_hz[num_chans: Int = 1](mel: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
+    def mel_to_hz[num_chans: SIMDLength = 1](mel: SIMD[DType.float64,num_chans]) -> SIMD[DType.float64,num_chans]:
         """Convert mel bin numbers to frequencies.
 
         This implementation is based on Librosa's eponymous [function](https://librosa.org/doc/main/generated/librosa.mel_to_hz.html). For more information on mel frequencies space see the [MelBands](Analysis.md/#struct-melbands) documentation.
@@ -1133,19 +1363,24 @@ struct MelBands(FFTProcessable, GetFloat64Featurable):
         #     return 700.0 * (10.0 ** (mel / 2595.0) - 1.0)
 
         # Fill in the linear scale
-        f_min = 0.0
-        f_sp = 200.0 / 3
-        freq = f_min + f_sp * mel
+        var f_min = 0.0
+        var f_sp = 200.0 / 3
+        var freq = f_min + f_sp * mel
 
         # And now the nonlinear scale
-        min_log_hz = 1000.0  # beginning of log region (Hz)
-        min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
-        logstep = log(6.4) / 27.0  # step size for log region
+        var min_log_hz = 1000.0  # beginning of log region (Hz)
+        var min_log_mel = (min_log_hz - f_min) / f_sp  # same (Mels)
+        var logstep = log(6.4) / 27.0  # step size for log region
 
         if mel >= min_log_mel:
             freq = min_log_hz * exp(logstep * (mel - min_log_mel))
 
         return freq
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, power: Float64 = 2.0, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        var mb = MelBands(buf.sample_rate, num_bands, min_freq, max_freq, fft_size=window_size, power=power)
+        return MBufAnalysis.fft_process(mb, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct MFCC(FFTProcessable, GetFloat64Featurable):
     """Mel-Frequency Cepstral Coefficients (MFCC) analysis.
@@ -1261,11 +1496,9 @@ struct MFCC(FFTProcessable, GetFloat64Featurable):
         self.dct.process(self.db_bands, self.coeffs)
 
     @staticmethod
-    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Int = -1, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, fft_size: Int = 1024, hop_size: Int = 512) raises -> List[List[Float64]]:
-        if num_frames < 0:
-            num_frames = buf.num_frames - start_frame
-        mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, fft_size)
-        return MBufAnalysis.fft_process(mfcc, buf, chan, start_frame, num_frames, fft_size, hop_size)
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, num_coeffs: Int = 13, num_bands: Int = 40, min_freq: Float64 = 20.0, max_freq: Float64 = 20000.0, window_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        var mfcc = MFCC(buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq, window_size)
+        return MBufAnalysis.fft_process(mfcc, buf, chan, start_frame, num_frames, window_size, hop_size, window_type=WindowType.hann, padding=padding)
 
 struct DCT(Movable,Copyable):
     """Compute the Discrete Cosine Transform (DCT)."""
@@ -1411,7 +1644,7 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
     var output_peak_indices: List[Int]
     
     def get_features(self) -> List[Float64]:
-        state = List[Float64]()
+        var state = List[Float64]()
         for pair in self.freq_amp_pairs:
             state.append(pair[0]) # freq
             state.append(pair[1]) # amp
@@ -1448,10 +1681,16 @@ struct TopNFreqs(FFTProcessable, GetFloat64Featurable):
         pass
 
     def next_frame(mut self, mut mags: List[MFloat[]], mut phases: List[MFloat[]]) -> None:
-        n_valid_peaks = self.top_n_peaks.process(mags, self.num_peaks, self.output_peak_indices, self.thresh)
+        var n_valid_peaks = self.top_n_peaks.process(mags, self.num_peaks, self.output_peak_indices, self.thresh)
 
+        var a_db: MFloat[4]
+        var val: Float64
+        var mag_db: Float64
+        var offset: Float64
+        var freq: Float64
+        var mag_linear: Float64
         for i in range(self.num_peaks):
-            index = self.output_peak_indices[i]
+            var index = self.output_peak_indices[i]
             if i < n_valid_peaks:
                 a_db = ampdb(MFloat[4](mags[index-1], mags[index], mags[index+1], 0.0))
                 val, mag_db = find_quadratic_peak(a_db[0], a_db[1], a_db[2])
@@ -1495,6 +1734,7 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
     var weights: List[List[Float64]]
     var chroma: List[Float64]
     var octwidth: Float64
+    var powered_mags: List[Float64]
 
     def get_features(self) -> List[Float64]:
         return self.chroma.copy()
@@ -1535,6 +1775,7 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
         self.base_c = base_c
 
         var n_bins = (self.window_size // 2) + 1
+        self.powered_mags = List[Float64](length=n_bins, fill=0.0)
         self.weights = List[List[Float64]](length=self.n_chroma, fill=List[Float64](length=n_bins, fill=0.0))
         self.chroma = List[Float64](length=self.n_chroma, fill=0.0)
         self.make_weights()
@@ -1547,16 +1788,19 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
         Args:
             mags: The magnitude values of the current FFT frame.
         """
-        # TODO: only power the mags once, not for every chroma
+        
+        for i in range(len(mags)):
+            if self.power == 2.0:
+                self.powered_mags[i] = mags[i] * mags[i]
+            elif self.power != 1.0:
+                self.powered_mags[i] = mags[i] ** self.power
+            else:
+                self.powered_mags[i] = mags[i]
+        
         for i in range(self.n_chroma):
             var acc: Float64 = 0.0
             for j in range(len(mags)):
-                var mag = mags[j]
-                if self.power == 2.0:
-                    mag = mag * mag
-                elif self.power != 1.0:
-                    mag = mag ** self.power
-                acc += self.weights[i][j] * mag
+                acc += self.weights[i][j] * self.powered_mags[j]
             self.chroma[i] = acc
 
         if self.norm <= 0.0:
@@ -1641,3 +1885,8 @@ struct Chroma(FFTProcessable, GetFloat64Featurable):
                     for i in range(self.n_chroma - 1):
                         self.weights[i][j] = self.weights[i + 1][j]
                     self.weights[self.n_chroma - 1][j] = first_val
+
+    @staticmethod
+    def buf_analysis(buf: Buffer, chan: Int = 0, start_frame: Int = 0, var num_frames: Optional[Int] = None, n_chroma: Int = 12, tuning: Float64 = 0.0, norm: Float64 = inf[DType.float64](), power: Float64 = 2.0, ctroct: Float64 = 5.0, octwidth: Float64 = 2.0, base_c: Bool = True, fft_size: Int = 1024, hop_size: Int = 512, padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        var chroma_proc = Chroma(buf.sample_rate, fft_size, n_chroma=n_chroma, tuning=tuning, norm=norm, power=power, ctroct=ctroct, octwidth=octwidth, base_c=base_c)
+        return MBufAnalysis.fft_process(chroma_proc, buf, chan, start_frame, num_frames, fft_size, hop_size, window_type=WindowType.hann, padding=padding)

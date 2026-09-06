@@ -45,13 +45,13 @@ struct StereoBeatingSines(Movable, Copyable):
     @always_inline
     def next(mut self) -> MFloat[2]:
         # calling .next on both oscillators gets both of their next samples
-        temp = self.osc1.next(self.osc_freqs[0]) + self.osc2.next(self.osc_freqs[1])
+        var temp = self.osc1.next(self.osc_freqs[0]) + self.osc2.next(self.osc_freqs[1])
 
         # modulate the volume with a slow LFO
         
         temp = temp * (self.vol_osc.next(self.vol_osc_freq) * 0.5 + 0.5)
 
-        pan2_loc = self.pan2_osc.next(self.pan2_freq)  # Get pan position
+        var pan2_loc = self.pan2_osc.next(self.pan2_freq)  # Get pan position
 
         return pan2(temp, pan2_loc)  # Pan the temp signal
 
@@ -93,7 +93,7 @@ struct ManyOscillators(Copyable, Movable):
                         _ = self.synths.pop()
 
         # sum all the stereo outs from the N synths
-        sum = MFloat[2](0.0, 0.0)
+        var sum = MFloat[2](0.0, 0.0)
         for i in range(len(self.synths)):
             sum += self.synths[i].next()
 

@@ -39,8 +39,8 @@ struct TestAmpComp(Movable, Copyable):
         self.m.update("release", self.release) 
         self.m.update("knee_width", self.knee_width)
 
-        sig = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
-        amp = self.amp.next(sig)
-        out = self.compress.next(sig, self.thresh, self.ratio, self.attack, self.release, self.knee_width)
+        var sig = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
+        var amp = self.amp.next(sig)
+        var out = self.compress.next(sig, self.thresh, self.ratio, self.attack, self.release, self.knee_width)
 
         return MFloat[num_chans+2](out[0], out[1], self.compress.sidechain, amp[0])

@@ -1,7 +1,12 @@
 from std.python import PythonObject
 import std.time
 from std.collections import Set
-from mmm_audio import *
+from mmm_audio.Oscillators import OscBuffers
+from mmm_audio.Windows_Module import Windows
+from mmm_audio.Messenger_Module import MessengerManager
+from mmm_audio.SincInterpolator_Module import SincInterpolator
+from mmm_audio.constants import World
+from std.memory.alloc import unsafe_alloc
 
 struct Environment(Movable, Copyable):
     var block_size: Int
@@ -50,7 +55,7 @@ struct MMMWorld(Movable, Copyable):
     """
     var sample_rate: Float64
     var sample_dur_seconds: Float64
-    var environment_ptr: Optional[UnsafePointer[mut=True, Environment, MutUntrackedOrigin]]
+    var environment_ptr: Optional[Pointer[mut=True, Environment, MutUntrackedOrigin]]
 
     def windows(self) -> ref[self.environment_ptr.value()[].windows] Windows:
         """Returns a reference to the Windows struct for accessing predefined windows.
@@ -85,7 +90,7 @@ struct MMMWorld(Movable, Copyable):
         return self.environment_ptr.value()[].messenger_manager
 
     def __init__(out self, sample_rate: Float64,
-        environment_ptr: Optional[UnsafePointer[mut=True, Environment, MutUntrackedOrigin]] = None,
+        environment_ptr: Optional[Pointer[mut=True, Environment, MutUntrackedOrigin]] = None,
     ):
         """Initializes the MMMWorld struct.
 
@@ -195,7 +200,7 @@ struct MMMWorld(Movable, Copyable):
         return 0.0
 
     @always_inline
-    def print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[StaticConstantOrigin] = " ", end: StringSlice[StaticConstantOrigin] = "\n") -> None:
+    def print[*Ts: Writable](self, *values: *Ts, n_blocks: UInt16 = 10, sep: StringSlice[ImmStaticOrigin] = " ", end: StringSlice[ImmStaticOrigin] = "\n") -> None:
         """Print values to the console at the top of the audio block every n_blocks.
 
         Parameters:
@@ -215,7 +220,7 @@ struct MMMWorld(Movable, Copyable):
         else:
             print("Warning: Environment pointer is None. Cannot print values.")
 
-    def create_subworld(self, times_ov_samp: TimesOversampling = TimesOversampling.none) -> UnsafePointer[MMMWorld, MutUntrackedOrigin]:
+    def create_subworld(self, times_ov_samp: TimesOversampling = TimesOversampling.none) -> Pointer[MMMWorld, MutUntrackedOrigin]:
         """Create another MMMWorld instance using a different TimesOversampling.
 
         This is mostly used to create an oversampled subworld with a higher sample rate based on the main world.
@@ -226,8 +231,8 @@ struct MMMWorld(Movable, Copyable):
         Returns:
             A pointer to the newly created MMMWorld struct.
         """
-        new_world = alloc[MMMWorld](1) 
-        new_world.init_pointee_move(MMMWorld(
+        var new_world = unsafe_alloc[MMMWorld](1) 
+        new_world.unsafe_write(MMMWorld(
             sample_rate=self.sample_rate * Float64(times_ov_samp.times), 
             environment_ptr = self.environment_ptr
         ))

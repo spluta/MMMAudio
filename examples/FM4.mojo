@@ -61,17 +61,17 @@ struct FM4(Movable, Copyable):
 
     def next_ov_loop(mut self):
         for _ in range(Self.times_oversampling.times):
-            fm_0 = self.fb[1] * self.osc0_mul[0] + self.fb[2] * self.osc0_mul[1]
-            osc0 = self.osc0.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc0_freq + fm_0, osc_frac=self.osc_frac[0])
+            var fm_0 = self.fb[1] * self.osc0_mul[0] + self.fb[2] * self.osc0_mul[1]
+            var osc0 = self.osc0.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc0_freq + fm_0, osc_frac=self.osc_frac[0])
 
-            fm_1 = osc0 * self.osc1_mul[0] + self.fb[3] * self.osc1_mul[1]
-            osc1 = self.osc1.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc1_freq + fm_1, osc_frac=self.osc_frac[1])
+            var fm_1 = osc0 * self.osc1_mul[0] + self.fb[3] * self.osc1_mul[1]
+            var osc1 = self.osc1.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc1_freq + fm_1, osc_frac=self.osc_frac[1])
 
-            fm_2 = osc1 * self.osc2_mul[0] + self.fb[3] * self.osc2_mul[1]
-            osc2 = self.osc2.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc2_freq + fm_2, osc_frac=self.osc_frac[2])
+            var fm_2 = osc1 * self.osc2_mul[0] + self.fb[3] * self.osc2_mul[1]
+            var osc2 = self.osc2.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc2_freq + fm_2, osc_frac=self.osc_frac[2])
 
-            fm_3 = osc0 * self.osc3_mul[0] + osc1 * self.osc3_mul[1]
-            osc3 = self.osc3.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc3_freq + fm_3, osc_frac=self.osc_frac[3])
+            var fm_3 = osc0 * self.osc3_mul[0] + osc1 * self.osc3_mul[1]
+            var osc3 = self.osc3.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](self.osc3_freq + fm_3, osc_frac=self.osc_frac[3])
 
             # feedback all the oscillators for the next cycle
             self.fb = [osc0, osc1, osc2, osc3]

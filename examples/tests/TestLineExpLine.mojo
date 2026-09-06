@@ -28,14 +28,14 @@ struct TestLineExpLine[](Movable, Copyable):
         self.curveline = Line[num](self.world)
 
     def next(mut self) -> MFloat[2]:
-        trig = self.m.notify_update("line_vals", self.line_vals)
+        var trig = self.m.notify_update("line_vals", self.line_vals)
         if trig:
             print("line_vals updated to: ", self.line_vals)
         self.m.update("which", self.which) 
         
-        line = self.line.next(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig)
-        expline = self.expline.exp(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig)
-        curveline = self.curveline.curve(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig, curve=2.0)
+        var line = self.line.next(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig)
+        var expline = self.expline.exp(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig)
+        var curveline = self.curveline.curve(self.line_vals[0], self.line_vals[1], self.line_vals[2], trig, curve=2.0)
 
 
         self.world[].print("line: ", line, " expline: ", expline, " curveline: ", curveline, n_blocks = 50)

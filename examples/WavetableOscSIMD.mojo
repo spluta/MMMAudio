@@ -34,7 +34,7 @@ struct OscVoice(PolyObject):
         self.just_offset = [0.0, 0.1173, 0.0391, 0.1564, -0.1369, -0.0196, -0.0978, 0.0196, 0.1369, -0.1564, 0.1760, -0.1173]
 
     def next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
-        osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
+        var osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next[WindowType.hann, Interp.linear](0.01,0.2,0.7,self.gate,2) * self.vol
         
 struct WavetableOscSIMD(Movable, Copyable):
@@ -80,7 +80,7 @@ struct WavetableOscSIMD(Movable, Copyable):
         # the kinds of messages the Messenger can receive are defined by the type of the `note` argument in the callback function
         def callback(mut poly_object: OscVoice, mut vals: List[Int]) capturing -> None:
             if vals[1] > 0: # the call_back will be called for both note on and note off messages
-                midi = Float64(vals[0]) + poly_object.just_offset[vals[0] % 12]
+                var midi = Float64(vals[0]) + poly_object.just_offset[vals[0] % 12]
                 print(vals[0], midi)
                 poly_object.freq = midicps(midi)
                 poly_object.vol = Float64(vals[1]) / 127.0
@@ -95,8 +95,8 @@ struct WavetableOscSIMD(Movable, Copyable):
 
         self.messenger.update("filter_cutoff", self.filter_cutoff)
         self.messenger.update("filter_resonance", self.filter_resonance)
-        wubb_rate = 0.0
-        got_wubbed = self.messenger.notify_update("wubb_rate", wubb_rate)
+        var wubb_rate = 0.0
+        var got_wubbed = self.messenger.notify_update("wubb_rate", wubb_rate)
         if got_wubbed:
             for ref voice in self.voices:
                 voice.wubb_rate = wubb_rate

@@ -32,7 +32,7 @@ struct OscVoice(PolyObject):
         self.triggered = False
 
     def next(mut self, ref buffer: SIMDBuffer) -> MFloat[1]:
-        osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
+        var osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.7,self.gate,2) * self.vol
 
 struct WavetableOscSIMDStrings(Movable, Copyable):
@@ -88,11 +88,11 @@ struct WavetableOscSIMDStrings(Movable, Copyable):
 
         self.messenger.update("filter_cutoff", self.filter_cutoff)
         self.messenger.update("filter_resonance", self.filter_resonance)
-        wubb_rate = 0.0
-        got_wubbed = self.messenger.notify_update("wubb_rate", wubb_rate)
+        var wubb_rate = 0.0
+        var got_wubbed = self.messenger.notify_update("wubb_rate", wubb_rate)
         if got_wubbed:
             for ref voice in self.voices:
                 voice.wubb_rate = wubb_rate
-        sample = self.moog_filter.next(out, self.filter_cutoff, self.filter_resonance)
+        var sample = self.moog_filter.next(out, self.filter_cutoff, self.filter_resonance)
 
         return sample * 0.5

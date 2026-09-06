@@ -1,6 +1,6 @@
 from mmm_audio import *
 
-struct MPlotExampleGrain[num_chans: Int = 1](Movable, Copyable):
+struct MPlotExampleGrain[num_chans: SIMDLength = 1](Movable, Copyable):
     var world: World
     var start_frame: Int
     var num_frames: Int
@@ -23,18 +23,18 @@ struct MPlotExampleGrain[num_chans: Int = 1](Movable, Copyable):
     def start(mut self, buf: SIMDBuffer[Self.num_chans], start_frame: Int, num_frames: Int):
         self.start_frame = start_frame
         self.num_frames = num_frames
-        duration = Float64(num_frames) / buf.sample_rate
+        var duration = Float64(num_frames) / buf.sample_rate
         self.env.params.times[1] = duration - 0.06
         self.envTrigger = True
 
     def next(mut self, buf: SIMDBuffer[Self.num_chans]) -> MFloat[Self.num_chans]:
 
-        env = self.env.next(self.envTrigger)
+        var env = self.env.next(self.envTrigger)
 
         if not self.env.is_active:
             return 0.0
 
-        out = self.player.next[num_chans=Self.num_chans,interp=Interp.none](
+        var out = self.player.next[num_chans=Self.num_chans,interp=Interp.none](
             buf=buf, 
             rate=1.0, 
             loop=False, 
@@ -73,7 +73,7 @@ struct MPlotExample(Movable, Copyable):
         if self.m.notify_update("load_sound", self.path):
             self.buf = self.buf.load(self.path)
 
-        trig = self.m.notify_update("play_data", self.play_data)
+        var trig = self.m.notify_update("play_data", self.play_data)
 
         if trig:
             print("Playing slice: start=",self.play_data[0], ", num=", self.play_data[1])
@@ -83,7 +83,7 @@ struct MPlotExample(Movable, Copyable):
                     self.grains[i].start(self.buf, self.play_data[0], self.play_data[1])
                     break
             
-        out = MFloat[2](0.0)
+        var out = MFloat[2](0.0)
         for ref g in self.grains:
             out += g.next(self.buf)
 

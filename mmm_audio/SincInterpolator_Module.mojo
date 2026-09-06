@@ -1,6 +1,10 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.MMMWorld_Module import Interp
+from mmm_audio.Windows_Module import kaiser_window
+from mmm_audio.functions import *
 from std.sys import simd_width_of
 from std.math import floor, log2, sin
+
 
 struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
     """Sinc Interpolation of `List[Float64]`s.
@@ -38,13 +42,13 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
 
     @doc_hidden
     @always_inline
-    def interp_points(self: SincInterpolator, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
+    def interp_points(self, sp: Int, sinc_offset: Int, sinc_mult: Int, frac: Float64) -> Float64:
         """Helper function to perform quadratic interpolation on sinc table points."""
-        sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
+        var sinc_indexA = self.sinc_points[sp] - (sinc_offset * sinc_mult)
         
-        idxA = sinc_indexA & self.mask
-        idxB = (sinc_indexA + 1) & self.mask
-        idxC = (sinc_indexA + 2) & self.mask
+        var idxA = sinc_indexA & self.mask
+        var idxB = (sinc_indexA + 1) & self.mask
+        var idxC = (sinc_indexA + 2) & self.mask
         
         return quadratic_interp(
             self.table[idxA],
@@ -55,23 +59,25 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
 
     @doc_hidden
     @always_inline  
-    def spaced_sinc[num_chans: Int, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans], ...], index: Int, frac: Float64, spacing: Int) -> MFloat[num_chans]:
+    def spaced_sinc[num_chans: SIMDLength, bWrap: Bool = False, mask: Int = 0](self, data: Span[MFloat[num_chans], _], index: Int, frac: Float64, spacing: Int) -> MFloat[num_chans]:
         """Read using spaced sinc interpolation. This is a helper function for read_sinc."""
-        sinc_mult = self.max_sinc_offset // spacing
-        loop_count = Self.ripples * 2
+        var sinc_mult = self.max_sinc_offset // spacing
+        var loop_count = Self.ripples * 2
         
         # Try to process in SIMD chunks if the loop is large enough
         comptime simd_width = simd_width_of[DType.float64]()
         var out: MFloat[num_chans] = MFloat[num_chans](0.0)
-        data_len: Int = len(data)
+        var data_len: Int = len(data)
         
         # Process SIMD chunks
+        var offset: Int
         for sp in range(loop_count):
-            offset: Int = Int(sp - Self.ripples + 1)
+            offset = Int(sp - Self.ripples + 1)
             
             comptime if bWrap:
-                loc_point_unwrapped = index + offset * spacing
+                var loc_point_unwrapped = index + offset * spacing
                 
+                var loc_point: Int
                 comptime if mask != 0:
                     loc_point = loc_point_unwrapped & mask
                 else:
@@ -79,25 +85,25 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
                     if loc_point < 0:
                         loc_point += data_len
 
-                spaced_point = Int(Float64(loc_point) / Float64(spacing)) * spacing
-                sinc_offset = loc_point - spaced_point
+                var spaced_point = Int(Float64(loc_point) / Float64(spacing)) * spacing
+                var sinc_offset = loc_point - spaced_point
                 
-                sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
+                var sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
                 out += sinc_value * data[Int(spaced_point)]
             else:
-                loc_point = index + offset * spacing
+                var loc_point = index + offset * spacing
                 
                 if loc_point >= 0 and loc_point < data_len:
-                    spaced_point = Int(Float64(loc_point) / Float64(spacing)) * spacing
-                    sinc_offset = loc_point - spaced_point
+                    var spaced_point = Int(Float64(loc_point) / Float64(spacing)) * spacing
+                    var sinc_offset = loc_point - spaced_point
                     
-                    sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
+                    var sinc_value = self.interp_points(sp, sinc_offset, sinc_mult, frac)
                     out += sinc_value * data[Int(spaced_point)]
 
         return out
 
     @always_inline
-    def sinc_interp[num_chans: Int, bWrap: Bool = True, mask: Int = 0](self, data: Span[MFloat[num_chans], ...], current_index: Float64, prev_index: Float64) -> MFloat[num_chans]:
+    def sinc_interp[num_chans: SIMDLength, bWrap: Bool = True, mask: Int = 0](self, data: Span[MFloat[num_chans], _], current_index: Float64, prev_index: Float64) -> MFloat[num_chans]:
         """Perform sinc interpolation on the given data at the specified current index.
         
         Parameters:
@@ -113,40 +119,41 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         Returns:
             The sinc-interpolated sample value.
         """
-        size_f64: Float64 = Float64(len(data))
-        index_diff = current_index - prev_index
-        half_window = size_f64 * 0.5
+        var size_f64: Float64 = Float64(len(data))
+        var index_diff = current_index - prev_index
+        var half_window = size_f64 * 0.5
         
+        var slope_samples: Float64
         comptime if bWrap:
             slope_samples = wrap(index_diff, -half_window, half_window)  # Handle circular buffer wrap
         else:
             slope_samples = index_diff  # No wrapping
         
-        samples_per_frame = abs(slope_samples)
+        var samples_per_frame = abs(slope_samples)
         
-        octave = clip(log2(samples_per_frame), 0.0, self.sinc_power_f64 - 2.0)
-        octave_floor = floor(octave)
+        var octave = clip(log2(samples_per_frame), 0.0, self.sinc_power_f64 - 2.0)
+        var octave_floor = floor(octave)
         
         var layer = Int(octave_floor + 1.0)
         var sinc_crossfade = octave - octave_floor
         
         var layer_clamped = min(layer, self.max_layer)
-        selector: MBool[1] = (layer >= self.max_layer)
+        var selector: MBool[1] = (layer >= self.max_layer)
         sinc_crossfade = selector.select(0.0, sinc_crossfade)
         layer = layer_clamped
         
-        spacing1: Int = Int(1) << layer
-        spacing2: Int = spacing1 << 1
+        var spacing1: Int = Int(1) << layer
+        var spacing2: Int = spacing1 << 1
         
-        f_index = current_index
-        index_floor = Int(f_index)
-        frac = f_index - Float64(index_floor)
+        var f_index = current_index
+        var index_floor = Int(f_index)
+        var frac = f_index - Float64(index_floor)
         
-        sinc1 = self.spaced_sinc[num_chans, bWrap, mask](data, index_floor, frac, spacing1)
+        var sinc1 = self.spaced_sinc[num_chans, bWrap, mask](data, index_floor, frac, spacing1)
         
-        sel0: MBool[num_chans] = MBool[num_chans](fill=(sinc_crossfade == 0.0))
-        sel1: MBool[num_chans] = MBool[num_chans](fill=(layer < 12))
-        sinc2 = sel0.select(0.0, sel1.select(self.spaced_sinc[num_chans,bWrap,mask](data, index_floor, frac, spacing2),0.0))
+        var sel0: MBool[num_chans] = MBool[num_chans](fill=(sinc_crossfade == 0.0))
+        var sel1: MBool[num_chans] = MBool[num_chans](fill=(layer < 12))
+        var sinc2 = sel0.select(0.0, sel1.select(self.spaced_sinc[num_chans,bWrap,mask](data, index_floor, frac, spacing2),0.0))
         
         return sinc1 + sinc_crossfade * (sinc2 - sinc1)
 
@@ -166,7 +173,7 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
         for i in range(table_size):
             x_values.append(x_min + step * Float64(i))
 
-        table = List[Float64]()
+        var table = List[Float64]()
 
         for i in range(len(x_values)):
             if x_values[i] == 0:
@@ -176,9 +183,9 @@ struct SincInterpolator[ripples: Int = 4, power: Int = 14](Movable, Copyable):
 
         # Apply Kaiser window to the sinc table
         # The beta parameter controls the trade-off between main lobe width and side lobe height
-        beta = 5.0  # Typical values range from 5 to 8 for audio processing
+        var beta = 5.0  # Typical values range from 5 to 8 for audio processing
 
-        window = kaiser_window(table_size, beta)
+        var window = kaiser_window(table_size, beta)
         for i in range(len(table)):
             table[i] *= window[i]  # Apply the window to the sinc values
         

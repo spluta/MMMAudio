@@ -19,8 +19,8 @@ struct NessStretchWindow[num_iterations: Int=1](FFTProcessable):
         self.window_size = window_size
         self.hop_size = hop_size
         self.m = Messenger(self.world)
-        lrhp_window = create_linkwitz_riley_fft_filter(self.window_size, low_cut, 24, highpass=True)
-        lrlp_window = create_linkwitz_riley_fft_filter(self.window_size, high_cut, 24, highpass=False)
+        var lrhp_window = create_linkwitz_riley_fft_filter(self.window_size, low_cut, 24, highpass=True)
+        var lrlp_window = create_linkwitz_riley_fft_filter(self.window_size, high_cut, 24, highpass=False)
         self.lrbp_window = [lrhp_window[i] * lrlp_window[i] for i in range(len(lrhp_window))]
         self.previous_phases = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
         self.previous_mags = [MFloat[2](0.0, 0.0) for _ in range(self.window_size // 2 + 1)]
@@ -66,7 +66,7 @@ struct NessStretch(Movable, Copyable):
         self.window_sizes = [65536, 32768, 16384, 8192, 4096, 2048, 1024, 512, 256]
         self.hop_sizes = [32768, 16384, 8192, 4096, 2048, 1024, 512, 256, 128]
 
-        start_cut = [0, 64, 64, 64, 64, 64, 64, 64, 64]
+        var start_cut = [0, 64, 64, 64, 64, 64, 64, 64, 64]
 
         # the upper register benefit from less coherence, so I am using fewer in the upper register.
         self.ness_stretches = [FFTProcess[
@@ -82,12 +82,12 @@ struct NessStretch(Movable, Copyable):
 
     def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update("dur_mult", self.dur_mult)
-        new_file = self.m.notify_update("file_name", self.file_name)
+        var new_file = self.m.notify_update("file_name", self.file_name)
         if new_file:
             self.buffer = SIMDBuffer.load(self.file_name)
-        speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
-        phase = self.phasor.next(speed, trig = new_file)
-        o = MFloat[2](0.0, 0.0)
+        var speed = 1.0/self.buffer.duration * (1.0/self.dur_mult)
+        var phase = self.phasor.next(speed, trig = new_file)
+        var o = MFloat[2](0.0, 0.0)
         for ref n in self.ness_stretches:
             o += n.buffered_process.next_from_stereo_buffer[Interp.lagrange4](self.buffer, phase)
         return o * 0.5

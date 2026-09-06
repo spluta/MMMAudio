@@ -38,12 +38,12 @@ struct ChowningFM(Movable, Copyable):
         self.m.update("c_freq", self.cfreq)
         self.m.update("m_freq", self.mfreq)
         self.m.update("vol", self.vol) 
-        trig = self.m.notify_trig("trigger")
+        var trig = self.m.notify_trig("trigger")
         self.update_envs()
 
-        index = self.index_env.next(trig)
-        msig = self.m_osc.next(self.mfreq) * self.mfreq * index
-        csig = self.c_osc.next(self.cfreq + msig)
+        var index = self.index_env.next(trig)
+        var msig = self.m_osc.next(self.mfreq) * self.mfreq * index
+        var csig = self.c_osc.next(self.cfreq + msig)
         csig *= self.amp_env.next(trig)
         csig *= dbamp(self.vol)
 

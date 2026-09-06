@@ -1,4 +1,4 @@
-from mmm_audio import *
+from mmm_audio.constants import *
 from std.collections import Dict, Set
 
 struct Messenger(Copyable, Movable):
@@ -33,15 +33,12 @@ struct Messenger(Copyable, Movable):
 
 
     @doc_hidden
-    def get_name_with_namespace(mut self, name: String) raises -> UnsafePointer[mut=False, String, origin_of(self.key_dict)]:
+    def get_name_with_namespace(mut self, name: String) raises -> Pointer[mut=False, String, origin_of(self.key_dict[name])]:
         if not self.key_dict.__contains__(name):
-            if self.namespace:
-                with_namespace = self.namespace.value() + "." + name
-            else:
-                with_namespace = name
+            var with_namespace = self.namespace.value() + "." + name if self.namespace else name
             self.key_dict[name] = with_namespace
 
-        return UnsafePointer(to=self.key_dict[name]).as_immutable()
+        return Pointer(to=self.key_dict[name])
 
     # def get_name_with_namespace(mut self, name: String) raises -> UnsafePointer[mut=False,String, ...]:
     #     if not self.key_dict.__contains__(name):
@@ -193,7 +190,7 @@ struct Messenger(Copyable, Movable):
                 print("Error occurred while updating float list message. Error: ", error)
         return False
 
-    def update[dtype: DType, num_chans: Int](mut self, name: String, mut param: SIMD[dtype, num_chans]):
+    def update[dtype: DType, num_chans: SIMDLength](mut self, name: String, mut param: SIMD[dtype, num_chans]):
         """Update a SIMD[DType.float64] variable with a value sent from Python.
 
         Parameters:
@@ -214,7 +211,7 @@ struct Messenger(Copyable, Movable):
             except error:
                 print("Error occurred while updating float SIMD message. Error: ", error)
 
-    def notify_update[dtype: DType, num_chans: Int](mut self, name: String, mut param: SIMD[dtype, num_chans]) -> Bool:
+    def notify_update[dtype: DType, num_chans: SIMDLength](mut self, name: String, mut param: SIMD[dtype, num_chans]) -> Bool:
         """Notify and update a SIMD[DType.float64] variable with a value sent from Python.
 
         Parameters:

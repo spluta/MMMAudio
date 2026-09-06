@@ -27,7 +27,7 @@ struct TestFFTProcess(Movable, Copyable):
 
     def next(mut self) -> SIMD[DType.float64,2]:
 
-        input = self.playBuf.next(self.buffer)
-        out = self.fftlp.next(input)
+        var input = self.playBuf.next(self.buffer)
+        var out = self.fftlp.next(input)
         return SIMD[DType.float64,2](out,out)
 

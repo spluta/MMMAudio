@@ -67,14 +67,14 @@ struct TorchSynth(Movable, Copyable):
 
         # next_interp implements a variable wavetable oscillator between the N provided wave types
         # in this case, we are using 0, 4, 5, 6 - Sine, BandLimited Tri, BL Saw, BL Square
-        osc_frac1 = linlin(self.lags[3], 0.0, 1.0, 0.0, 1.0)
-        osc1 = self.osc1.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](freq1, 0.0, False, osc_frac=osc_frac1)
+        var osc_frac1 = linlin(self.lags[3], 0.0, 1.0, 0.0, 1.0)
+        var osc1 = self.osc1.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](freq1, 0.0, False, osc_frac=osc_frac1)
 
         # samplerate reduction
         osc1 = self.latch1.next(osc1, self.impulse1.next_bool(linexp(self.lags[4], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))
         osc1 = self.filt1.lpf(osc1, linexp(self.lags[5], 0.0, 1.0, 100.0, 20000.0), linlin(self.lags[6], 0.0, 1.0, 0.707, 4.0))
 
-        tanh_gain = linlin(self.lags[7], 0.0, 1.0, 0.5, 10.0)
+        var tanh_gain = linlin(self.lags[7], 0.0, 1.0, 0.5, 10.0)
 
         # get rid of dc offset
         osc1 = tanh(osc1*tanh_gain)
@@ -84,7 +84,7 @@ struct TorchSynth(Movable, Copyable):
 
         var freq2 = linlin(self.lags[8], 0.0, 1.0, 2.0, 5000.0) + (linlin(self.lags[9], 0.0, 1.0, 2.0, 5000.0) * osc1)
 
-        osc_frac2 = linlin(self.lags[11], 0.0, 1.0, 0.0, 1.0)
+        var osc_frac2 = linlin(self.lags[11], 0.0, 1.0, 0.0, 1.0)
         var osc2 = self.osc2.next_basic_waveforms[OscType.sine, OscType.triangle, OscType.saw, OscType.square](freq2, 0.0, False, osc_frac=osc_frac2)
 
         osc2 = self.latch2.next(osc2, self.impulse2.next_bool(linexp(self.lags[12], 0.0, 1.0, 100.0, self.world[].sample_rate*0.5)))

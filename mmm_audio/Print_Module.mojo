@@ -1,4 +1,5 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.Oscillators import Impulse
 
 struct Print(Copyable, Movable):
     """

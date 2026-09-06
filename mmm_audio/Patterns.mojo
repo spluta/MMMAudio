@@ -1,6 +1,7 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.functions import *
 
-struct Pseq[T: Movable & Copyable & ImplicitlyCopyable & ImplicitlyDeletable](Movable, Copyable):
+struct Pseq[T: ImplicitlyCopyable & Deinitable](Movable, Copyable):
     """
     Sequential pattern that cycles through a list of values.
     
@@ -56,7 +57,7 @@ struct Pseq[T: Movable & Copyable & ImplicitlyCopyable & ImplicitlyDeletable](Mo
             return self.vals[self.index]
 
 
-struct Prand[T: Movable & Copyable & ImplicitlyCopyable & ImplicitlyDeletable](Movable, Copyable):
+struct Prand[T: ImplicitlyCopyable & Deinitable](Movable, Copyable):
     """
     Random pattern generator that picks from a list of values.
     """
@@ -97,7 +98,7 @@ struct Prand[T: Movable & Copyable & ImplicitlyCopyable & ImplicitlyDeletable](M
         else:
             return self.vals[self.index]
             
-struct Pxrand[T: Movable & Copyable & ImplicitlyCopyable & ImplicitlyDeletable](Movable, Copyable):
+struct Pxrand[T: ImplicitlyCopyable & Deinitable](Movable, Copyable):
     """
     Random pattern generator that picks from a list of values. Will not repeat the same value twice in a row.
     """

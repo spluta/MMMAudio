@@ -39,7 +39,7 @@ struct TrigSynthVoice(PolyObject):
         if not self.env.is_active and not self.trigger:
             return 0.0
         else:
-            bend_freq = self.note[0] * self.bend_mul
+            var bend_freq = self.note[0] * self.bend_mul
             var mod_value = self.mod.next(bend_freq * 1.5)  
             var env = self.env.next(self.trigger)  
             var mod_mult = env * 0.5 * linlin(bend_freq, 1000, 4000, 1, 0) #decrease the mod amount as freq increases
@@ -53,7 +53,7 @@ struct TrigSynthVoice(PolyObject):
     # if you want to use this voice without Poly
     def next(mut self, trigger: Bool) -> Float64:
         self.set_trigger(trigger)
-        out = self.next()
+        var out = self.next()
         return out
 
 

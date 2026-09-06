@@ -3,7 +3,13 @@ from std.python import Python
 from std.python import ConvertibleFromPython
 from std.python.bindings import PythonModuleBuilder
 from std.os import abort
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.Buffer_Module import Buffer, SpanInterpolator
+from mmm_audio.Analysis import *
+from mmm_audio.OnsetDetection_Module import OnsetDetection, OnsetMetric, OnsetDetectionFeature
+from mmm_audio.MMMWorld_Module import MMMWorld, Environment
+from mmm_audio.Windows_Module import Windows, WindowType
+from std.memory.alloc import unsafe_alloc
 
 @export
 def PyInit_MBufAnalysisBridge() abi("C") -> PythonObject:
@@ -52,7 +58,7 @@ struct AnalysisParams:
     var chan: Int
     var start_frame: Int
     var num_frames: Int
-    # [TODO]: padding
+    var padding: Padding
 
     def __init__(out self, py_dict: PythonObject) raises:
 
@@ -60,6 +66,8 @@ struct AnalysisParams:
         self.chan = get_at_key[Int]("AnalysisParams", py_dict, "chan", 0)
         self.start_frame = get_at_key[Int]("AnalysisParams", py_dict, "start_frame", 0)
         self.num_frames = get_at_key[Int]("AnalysisParams", py_dict, "num_frames", Int(self.buf.num_frames - self.start_frame))
+        var padding_string = get_at_key[String]("AnalysisParams", py_dict, "padding", "half_window")
+        self.padding = Padding.from_string(padding_string)
 
 struct MBufAnalysisBridge:
 
@@ -82,6 +90,7 @@ struct MBufAnalysisBridge:
             * **num_bands:** (Int, optional, default 40): Number of mel bands.
             * **min_freq:** (Float64, optional, default 20.0): Minimum analysis frequency in Hz.
             * **max_freq:** (Float64, optional, default 20000.0): Maximum analysis frequency in Hz.
+            * **padding:** (Int, optional): Number of frames to pad the buffer with zeros before analysis. If not provided, `window_size` // 2 will be used.
 
         Returns:
             A NumPy float64 matrix with shape [num_hops, num_bands].
@@ -90,15 +99,16 @@ struct MBufAnalysisBridge:
             Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
         """
 
-        ap = AnalysisParams(py_dict)
-        window_size = get_at_key[Int]("mel_bands", py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("mel_bands", py_dict, "hop_size", window_size // 2)
-        num_bands = get_at_key[Int]("mel_bands", py_dict, "num_bands", 40)
-        min_freq: Float64 = getFloat64("mel_bands", py_dict, "min_freq", 20.0)
-        max_freq: Float64 = getFloat64("mel_bands", py_dict, "max_freq", 20000.0)
+        var ap = AnalysisParams(py_dict)
+        # TODO: i'm pretty sure window_size and hop_size can be computed in AnalysisParams::init
+        var window_size = get_at_key[Int]("mel_bands", py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("mel_bands", py_dict, "hop_size", window_size // 2)
+        var num_bands = get_at_key[Int]("mel_bands", py_dict, "num_bands", 40)
+        var min_freq: Float64 = getFloat64("mel_bands", py_dict, "min_freq", 20.0)
+        var max_freq: Float64 = getFloat64("mel_bands", py_dict, "max_freq", 20000.0)
 
-        mel_bands = MelBands(ap.buf.sample_rate, num_bands, min_freq, max_freq, window_size)
-        result = MBufAnalysis.fft_process[WindowType.hann](mel_bands, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var mel_bands = MelBands(ap.buf.sample_rate, num_bands, min_freq, max_freq, window_size)
+        var result = MBufAnalysis.fft_process(mel_bands, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann, padding=ap.padding)
 
         return MBufAnalysisBridge.matrix_to_numpy(result)
 
@@ -131,17 +141,17 @@ struct MBufAnalysisBridge:
             Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
         """
         # make the analysis params instance
-        ap = AnalysisParams(py_dict)
-        num_bands = get_at_key[Int]("mfcc", py_dict, "num_bands", 40)
-        num_coeffs = get_at_key[Int]("mfcc", py_dict, "num_coeffs", 13)
-        min_freq = getFloat64("mfcc", py_dict, "min_freq", 20.0)
-        max_freq = getFloat64("mfcc", py_dict, "max_freq", 20000.0)
+        var ap = AnalysisParams(py_dict)
+        var num_bands = get_at_key[Int]("mfcc", py_dict, "num_bands", 40)
+        var num_coeffs = get_at_key[Int]("mfcc", py_dict, "num_coeffs", 13)
+        var min_freq = getFloat64("mfcc", py_dict, "min_freq", 20.0)
+        var max_freq = getFloat64("mfcc", py_dict, "max_freq", 20000.0)
 
         # # run the analysis
-        mfcc = MFCC(ap.buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq)
-        window_size = get_at_key[Int]("mfcc", py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("mfcc", py_dict, "hop_size", window_size // 2)
-        result = MBufAnalysis.fft_process[WindowType.hann](mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var mfcc = MFCC(ap.buf.sample_rate, num_coeffs, num_bands, min_freq, max_freq)
+        var window_size = get_at_key[Int]("mfcc", py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("mfcc", py_dict, "hop_size", window_size // 2)
+        var result = MBufAnalysis.fft_process(mfcc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -175,17 +185,17 @@ struct MBufAnalysisBridge:
             Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
         """
         # make the analysis params instance
-        ap = AnalysisParams(py_dict)
-        num_peaks = get_at_key[Int]("top_n_freqs",py_dict, "num_peaks", 5)
-        thresh = getFloat64("top_n_freqs",py_dict, "thresh", -30.0)
-        sort_by_freq = get_at_key[Bool]("top_n_freqs",py_dict, "sort_by_freq", False)
+        var ap = AnalysisParams(py_dict)
+        var num_peaks = get_at_key[Int]("top_n_freqs",py_dict, "num_peaks", 5)
+        var thresh = getFloat64("top_n_freqs",py_dict, "thresh", -30.0)
+        var sort_by_freq = get_at_key[Bool]("top_n_freqs",py_dict, "sort_by_freq", False)
 
-        window_size = get_at_key[Int]("top_n_freqs",py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("top_n_freqs",py_dict, "hop_size", window_size // 2)
+        var window_size = get_at_key[Int]("top_n_freqs",py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("top_n_freqs",py_dict, "hop_size", window_size // 2)
 
         # # run the analysis
-        top_n_freqs = TopNFreqs(ap.buf.sample_rate, window_size, num_peaks, sort_by_freq, thresh)
-        result = MBufAnalysis.fft_process[WindowType.hann](top_n_freqs, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var top_n_freqs = TopNFreqs(ap.buf.sample_rate, window_size, num_peaks, sort_by_freq, thresh)
+        var result = MBufAnalysis.fft_process(top_n_freqs, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -215,13 +225,13 @@ struct MBufAnalysisBridge:
         """
 
         # make the analysis params instance
-        ap = AnalysisParams(py_dict)
+        var ap = AnalysisParams(py_dict)
 
         # # run the analysis
-        rms = RMS()
-        window_size = get_at_key[Int]("rms",py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("rms",py_dict, "hop_size", window_size // 2)
-        result = MBufAnalysis.buffered_process(rms, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var rms = RMS()
+        var window_size = get_at_key[Int]("rms",py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("rms",py_dict, "hop_size", window_size // 2)
+        var result = MBufAnalysis.buffered_process(rms, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -255,22 +265,22 @@ struct MBufAnalysisBridge:
         """
         
         # make the analysis params instance
-        ap = AnalysisParams(py_dict)
+        var ap = AnalysisParams(py_dict)
 
         # params specific to this analysis
-        min_freq = getFloat64("yin",py_dict, "min_freq", 20.0)
-        max_freq = getFloat64("yin",py_dict, "max_freq", 20000.0)
+        var min_freq = getFloat64("yin",py_dict, "min_freq", 20.0)
+        var max_freq = getFloat64("yin",py_dict, "max_freq", 20000.0)
 
         # define the window function that will be called for each window of audio. 
         # It has to be a function that takes a List[Float64] and returns a List[Float64] 
         # (even if it's just one value) so that it's consistent with other analyses we 
         # might want to add later
-        window_size = get_at_key[Int]("yin",py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("yin",py_dict, "hop_size", window_size // 2)
-        yin = YIN(ap.buf.sample_rate, window_size, min_freq=min_freq, max_freq=max_freq)
+        var window_size = get_at_key[Int]("yin",py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("yin",py_dict, "hop_size", window_size // 2)
+        var yin = YIN(ap.buf.sample_rate, window_size, min_freq=min_freq, max_freq=max_freq)
 
         # run the analysis
-        result = MBufAnalysis.buffered_process(yin,ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var result = MBufAnalysis.buffered_process(yin,ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -303,16 +313,16 @@ struct MBufAnalysisBridge:
             Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
         """
         # make the analysis params instance
-        ap = AnalysisParams(py_dict)
-        min_freq = getFloat64("spectral_centroid",py_dict, "min_freq", 20.0)
-        max_freq = getFloat64("spectral_centroid",py_dict, "max_freq", 20000.0)
-        power_mag = get_at_key[Bool]("spectral_centroid",py_dict, "power_mag", False)
-        window_size = get_at_key[Int]("spectral_centroid",py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("spectral_centroid",py_dict, "hop_size", window_size // 2)
+        var ap = AnalysisParams(py_dict)
+        var min_freq = getFloat64("spectral_centroid",py_dict, "min_freq", 20.0)
+        var max_freq = getFloat64("spectral_centroid",py_dict, "max_freq", 20000.0)
+        var power_mag = get_at_key[Bool]("spectral_centroid",py_dict, "power_mag", False)
+        var window_size = get_at_key[Int]("spectral_centroid",py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("spectral_centroid",py_dict, "hop_size", window_size // 2)
 
         # # run the analysis
-        sc = SpectralCentroid(ap.buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
-        result = MBufAnalysis.fft_process[WindowType.hann](sc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size)
+        var sc = SpectralCentroid(ap.buf.sample_rate, min_freq=min_freq, max_freq=max_freq, power_mag=power_mag)
+        var result = MBufAnalysis.fft_process(sc, ap.buf, ap.chan, ap.start_frame, ap.num_frames, window_size=window_size, hop_size=hop_size, window_type=WindowType.hann)
         
         # return it as a numpy array
         return MBufAnalysisBridge.matrix_to_numpy(result)
@@ -346,14 +356,14 @@ struct MBufAnalysisBridge:
         Raises:
             Error: If input parsing, buffer loading, metric conversion, analysis, or NumPy conversion fails.
         """
-        ap = AnalysisParams(py_dict)
-        metric_string = get_at_key[String]("onset_detection_feature", py_dict, "metric", "complex_domain")
-        window_size = get_at_key[Int]("onset_detection_feature", py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("onset_detection_feature", py_dict, "hop_size", window_size // 2)
-        filter_size = get_at_key[Int]("onset_detection_feature", py_dict, "filter_size", 5)
-        frame_delta = get_at_key[Int]("onset_detection_feature", py_dict, "frame_delta", 0)
+        var ap = AnalysisParams(py_dict)
+        var metric_string = get_at_key[String]("onset_detection_feature", py_dict, "metric", "complex_domain")
+        var window_size = get_at_key[Int]("onset_detection_feature", py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("onset_detection_feature", py_dict, "hop_size", window_size // 2)
+        var filter_size = get_at_key[Int]("onset_detection_feature", py_dict, "filter_size", 5)
+        var frame_delta = get_at_key[Int]("onset_detection_feature", py_dict, "frame_delta", 0)
 
-        result = OnsetDetectionFeature.buf_analysis(
+        var result = OnsetDetectionFeature.buf_analysis(
             ap.buf,
             ap.chan,
             ap.start_frame,
@@ -394,21 +404,22 @@ struct MBufAnalysisBridge:
         Raises:
             Error: If input parsing, world setup, metric conversion, analysis, or NumPy conversion fails.
         """
-        ap = AnalysisParams(py_dict)
-        metric_string = get_at_key[String]("onset_detection", py_dict, "metric", "complex_domain")
-        threshold = getFloat64("onset_detection", py_dict, "threshold", 0.5)
-        debounce = getFloat64("onset_detection", py_dict, "debounce", 0.1)
-        window_size = get_at_key[Int]("onset_detection", py_dict, "window_size", 1024)
-        hop_size = get_at_key[Int]("onset_detection", py_dict, "hop_size", window_size // 2)
-        filter_size = get_at_key[Int]("onset_detection", py_dict, "filter_size", 5)
-        frame_delta = get_at_key[Int]("onset_detection", py_dict, "frame_delta", 0)
+        var ap = AnalysisParams(py_dict)
+        var metric_string = get_at_key[String]("onset_detection", py_dict, "metric", "complex_domain")
+        var threshold = getFloat64("onset_detection", py_dict, "threshold", 0.5)
+        var debounce = getFloat64("onset_detection", py_dict, "debounce", 0.1)
+        var window_size = get_at_key[Int]("onset_detection", py_dict, "window_size", 1024)
+        var hop_size = get_at_key[Int]("onset_detection", py_dict, "hop_size", window_size // 2)
+        var filter_size = get_at_key[Int]("onset_detection", py_dict, "filter_size", 5)
+        var frame_delta = get_at_key[Int]("onset_detection", py_dict, "frame_delta", 0)
+        
 
-        w = alloc[MMMWorld](1)
-        environment = alloc[Environment](1)
-        environment.init_pointee_move(Environment(64, 2, 2))
-        w.init_pointee_move(MMMWorld(ap.buf.sample_rate, environment))
+        var w = unsafe_alloc[MMMWorld](1)
+        var environment = unsafe_alloc[Environment](1)
+        environment.unsafe_write(Environment(64, 2, 2))
+        w.unsafe_write(MMMWorld(ap.buf.sample_rate, environment))
 
-        result = OnsetDetection.buf_analysis(
+        var result = OnsetDetection.buf_analysis(
             w,
             ap.buf,
             ap.chan,
@@ -437,9 +448,9 @@ struct MBufAnalysisBridge:
         Raises:
             Error: If NumPy import/allocation or element assignment fails.
         """
-        np = Python.import_module("numpy")
-        shape = Python.tuple(Int(len(list)))
-        nparray = np.zeros(shape=shape,dtype=np.int64)
+        var np = Python.import_module("numpy")
+        var shape = Python.tuple(Int(len(list)))
+        var nparray = np.zeros(shape=shape,dtype=np.int64)
         for i in range(len(list)):
             nparray[i] = list[i]
         return nparray
@@ -457,56 +468,135 @@ struct MBufAnalysisBridge:
         Raises:
             Error: If NumPy import/allocation or element assignment fails.
         """
-        np = Python.import_module("numpy")
-        shape = Python.tuple(Int(len(list)), Int(len(list[0])))
-        nparray = np.zeros(shape=shape,dtype=np.float64)
+        var np = Python.import_module("numpy")
+        var shape = Python.tuple(Int(len(list)), Int(len(list[0])))
+        var nparray = np.zeros(shape=shape,dtype=np.float64)
         for i in range(len(list)):
             for j in range(len(list[i])):
                 nparray[i][j] = list[i][j]
         return nparray
 
+struct Padding(ImplicitlyCopyable):
+    var mode: Int
+    var offset: Int
+
+    comptime none = Padding(0)
+    comptime half_window = Padding(1)
+
+    def __init__(out self, mode: Int, offset: Int = 0):
+        self.mode = mode
+        self.offset = offset
+
+    def update(mut self, window_size: Int):
+        if self.mode == Padding.none.mode:
+            self.offset = 0
+        elif self.mode == Padding.half_window.mode:
+            self.offset = window_size // 2
+        else:
+            abort(String("MBufAnalysis: unknown padding mode ", self.mode))
+
+    @staticmethod
+    def from_string(padding_string: String) -> Padding:
+        if padding_string == "none":
+            return Padding.none
+        elif padding_string == "half_window":
+            return Padding.half_window
+        else:
+            print("MBufAnalysis: unknown padding string ", padding_string, ", defaulting to half_window")
+            return Padding.half_window
+
 @doc_hidden
 struct MBufAnalysis:
-
     # This struct is not really meant to be user facing. It creates these convenience functions for buffer analysis
     # both by MBufAnalysisBridge and the Analysis tools `.buf_analysis` methods. 
+    var num_windows: Int
+    var start_frame: Int
+    var window_func: List[Float64]
+    var samps: List[Float64]
+    var valid: Bool
+    var padding: Padding
 
-    # [TODO]: add windowing
-    @staticmethod
-    def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int = start_frame
-        if num_frames < 0:
+    def __init__(out self, buf: Buffer, var start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none, var padding: Padding = Padding.half_window) raises:
+        
+        self.valid = True
+
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
-        while frame < start_frame + num_frames:
+
+        if start_frame + num_frames.value() > buf.num_frames:
+            print("MBufAnalysis: requested frames exceed buffer length. start_frame = ", start_frame, ", num_frames = ", num_frames, ", buf.num_frames = ", buf.num_frames)
+            self.valid = False
+
+        self.window_func = Windows.make_window(window_type, window_size)
+        
+        self.samps = List[Float64](length=window_size, fill=0.0)
+
+        self.padding = padding
+        self.padding.update(window_size)
+        self.start_frame = start_frame - self.padding.offset
+        num_frames = num_frames.value() + (self.padding.offset * 2)
+
+        self.num_windows: Int = 1
+        if num_frames.value() > window_size:
+            self.num_windows = (num_frames.value() - window_size) // hop_size + 1
+
+    @staticmethod
+    def buffered_process[T: GetFloat64Featurable & BufferedProcessable](mut analyzer: T,buf: Buffer, chan: Int, var start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none, var padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+
+        var mba = MBufAnalysis(buf, start_frame, num_frames, window_size, hop_size, window_type, padding)
+
+        if not mba.valid:
+            print("MBufAnalysis: invalid buffer analysis parameters. Returning empty result.")
+            return List[List[Float64]]()
+
+        var result = List[List[Float64]](capacity=mba.num_windows)
+        for w in range(mba.num_windows):
             for i in range(window_size):
-                if frame + i < buf.num_frames:
-                    window_samps[i] = buf.data[chan][frame + i]
-                else:
-                    window_samps[i] = 0.0
-            analyzer.next_window(window_samps)
+                var frame_idx = mba.start_frame + (w * hop_size) + i
+                mba.samps[i] = SpanInterpolator.read_none[bWrap=False](buf.data[chan], Float64(frame_idx)) * mba.window_func[i]
+
+            analyzer.next_window(mba.samps)
             result.append(analyzer.get_features())
-            frame += hop_size
+            
         return result^
     
     @staticmethod
-    def fft_process[T: GetFloat64Featurable & FFTProcessable,//,input_win: WindowType = WindowType.hann](mut analyzer: T, buf: Buffer, chan: Int, start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) raises -> List[List[Float64]]:
-        result = List[List[Float64]]()
-        frame: Int = start_frame
-        if num_frames < 0:
-            num_frames = buf.num_frames - start_frame
-        window_samps = List[Float64](length=window_size,fill=0.0)
-        fft = RealFFT(window_size)
-        window_func = Windows.make_window[input_win](window_size)
-        while frame < start_frame + num_frames:
+    def fft_process[T: GetFloat64Featurable & FFTProcessable](mut analyzer: T, buf: Buffer, chan: Int, var start_frame: Int, var num_frames: Optional[Int], window_size: Int, hop_size: Int, window_type: WindowType = WindowType.none, var padding: Padding = Padding.half_window) raises -> List[List[Float64]]:
+        """Run an FFT-based analysis on a buffer.
+
+        Args:
+            analyzer: An instance of a type that implements GetFloat64Featurable and FFTProcessable.
+            buf: The audio buffer to analyze.
+            chan: The channel index to analyze.
+            start_frame: The first frame to analyze.
+            num_frames: The number of frames to analyze. If None, defaults to the remaining buffer.
+            window_size: The FFT window size in samples.
+            hop_size: The hop size in samples.
+            window_type: The type of window function to apply (default is none).
+            padding: Padding mode for the analysis (default is half_window).
+        
+        Returns:
+            A List of Lists of Float64, where each inner list contains the features for one analysis hop.
+        
+        Raises:
+            Error: If input parsing, buffer loading, analysis, or NumPy conversion fails.
+        """
+        var mba = MBufAnalysis(buf, start_frame, num_frames, window_size, hop_size, window_type, padding)
+
+        if not mba.valid:
+            print("MBufAnalysis: invalid buffer analysis parameters. Returning empty result.")
+            return List[List[Float64]]()
+        
+        var fft = RealFFT(window_size)
+        
+        var result = List[List[Float64]](capacity=mba.num_windows)
+        for w in range(mba.num_windows):
             for i in range(window_size):
-                if frame + i < buf.num_frames:
-                    window_samps[i] = buf.data[chan][frame + i] * window_func[i]
-                else:
-                    window_samps[i] = 0.0
-            fft.fft(window_samps)
+                var frame_idx = mba.start_frame + (w * hop_size) + i
+                mba.samps[i] = SpanInterpolator.read_none[bWrap=False](buf.data[chan], Float64(frame_idx)) * mba.window_func[i]
+
+            fft.fft(mba.samps)
             analyzer.next_frame(fft.mags,fft.phases)
             result.append(analyzer.get_features())
-            frame += hop_size
+
         return result^

@@ -18,7 +18,7 @@ struct MoogPops(Movable, Copyable):
 
     def __init__(out self, world: World):
         self.world = world
-        oversampled_world = self.world[].create_subworld(times_oversampling)
+        var oversampled_world = self.world[].create_subworld(times_oversampling)
         self.dusts = Dust[how_many](oversampled_world)
         self.filts = VAMoogLadder[how_many](oversampled_world)
 
@@ -31,10 +31,10 @@ struct MoogPops(Movable, Copyable):
     def next(mut self) -> MFloat[2]:
         
         for _ in range(times_oversampling.times):
-            dusts = self.dusts.next_bool(0.25, 4.0)
-            freqs = self.t_exp_rand.next(8000.0, 18000.0, dusts)
-            qs = self.t_rand.next(0.5, 1.04, dusts)
-            sig = self.filts.next(dusts.cast[DType.float64]() * self.t_rand2.next(0.2, 1.0, dusts), freqs, qs) 
+            var dusts = self.dusts.next_bool(0.25, 4.0)
+            var freqs = self.t_exp_rand.next(8000.0, 18000.0, dusts)
+            var qs = self.t_rand.next(0.5, 1.04, dusts)
+            var sig = self.filts.next(dusts.cast[DType.float64]() * self.t_rand2.next(0.2, 1.0, dusts), freqs, qs) 
             self.downsampler.add_sample(sig)
 
-        return splay(self.downsampler.get_sample(), self.world)
+        return splay(self.downsampler.get_sample(), world=self.world)

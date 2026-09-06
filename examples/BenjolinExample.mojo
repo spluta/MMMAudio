@@ -98,12 +98,12 @@ struct Benjolin(Movable, Copyable):
         self.m.update("outSignalL", self.outSignalL) 
         self.m.update("outSignalR", self.outSignalR) 
         
-        tri1 = self.tri1.next[OscType.square]((self.rungler*self.rungler1)+self.freq1)
-        tri2 = self.tri2.next[OscType.square]((self.rungler*self.rungler2)+self.freq2)
-        pulse1 = self.pulse1.next[OscType.saw]((self.rungler*self.rungler1)+self.freq1)
-        pulse2 = self.pulse2.next[OscType.saw]((self.rungler*self.rungler2)+self.freq2)
+        var tri1 = self.tri1.next[OscType.square]((self.rungler*self.rungler1)+self.freq1)
+        var tri2 = self.tri2.next[OscType.square]((self.rungler*self.rungler2)+self.freq2)
+        var pulse1 = self.pulse1.next[OscType.saw]((self.rungler*self.rungler1)+self.freq1)
+        var pulse2 = self.pulse2.next[OscType.saw]((self.rungler*self.rungler2)+self.freq2)
 
-        pwm = 1.0 if (tri1 + tri2) > 0.0 else 0.0
+        var pwm = 1.0 if (tri1 + tri2) > 0.0 else 0.0
 
         pulse1 = (self.feedback*self.loop) + (pulse1 * ((self.loop * -1) + 1))
 
@@ -136,10 +136,9 @@ struct Benjolin(Movable, Copyable):
         self.filter_outputs[7] = self.filters[7].highshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         self.filter_outputs[8] = self.filters[8].lowshelf(pwm,(self.rungler*self.runglerFiltMul)+self.filterFreq,self.q,ampdb(self.gain))
         
-        filter_output = select(self.filterType,self.filter_outputs) * dbamp(-12.0)
+        var filter_output = select(self.filterType, self.filter_outputs) * dbamp(Float64(-12.0))
         filter_output = sanitize(filter_output)
-
-        output = MFloat[2](0.0, 0.0)
+        var output = MFloat[2](0.0, 0.0)
         output[0] = select(self.outSignalL, tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output)
         output[1] = select(self.outSignalR, tri1, pulse1, tri2, pulse2, pwm, self.sh[0], filter_output)
 

@@ -54,10 +54,10 @@ struct PitchShiftExample(Movable, Copyable):
         self.messenger.update("added_delay_high", self.added_delay_high)
         self.messenger.update("fb_perc", self.fb_perc)
 
-        temp = self.world[].sound_in(self.in_chan)
-        input_sig = MFloat[2](temp, temp) + (self.fb * self.fb_perc)
+        var temp = self.world[].sound_in(self.in_chan)
+        var input_sig = MFloat[2](temp, temp) + (self.fb * self.fb_perc)
         
-        out = self.pitch_shift.next(input_sig, self.grain_dur, self.overlaps, self.shift, self.pitch_dispersion, self.time_dispersion, self.added_delay_low, self.added_delay_high)
+        var out = self.pitch_shift.next(input_sig, self.grain_dur, self.overlaps, self.shift, self.pitch_dispersion, self.time_dispersion, self.added_delay_low, self.added_delay_high)
         self.fb = self.dc_trap.next(out)
 
         return out

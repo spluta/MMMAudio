@@ -1,7 +1,11 @@
 from std.math import sin, floor
-from mmm_audio import *
+from mmm_audio.Oversampling import *
+from mmm_audio.Buffer_Module import *
+from mmm_audio.constants import *
+from mmm_audio.BooleanTests import RisingBoolDetector
+from mmm_audio.MMMWorld_Module import Interp, WindowType, OscType
 
-struct Phasor[num_chans: Int = 1](Movable, Copyable):
+struct Phasor[num_chans: SIMDLength = 1](Movable, Copyable):
     """Phasor Oscillator.
 
     An oscillator that generates a ramp waveform from 0.0 to 1.0. The phasor is the root of all oscillators in MMMAudio.
@@ -33,7 +37,7 @@ struct Phasor[num_chans: Int = 1](Movable, Copyable):
 
     @doc_hidden
     @always_inline
-    def _increment_phase(mut self: Phasor, freq: MFloat[self.num_chans]):
+    def _increment_phase(mut self, freq: MFloat[self.num_chans]):
         self.phase += (freq * self.freq_mul)
         self.phase = self.phase - floor(self.phase)
         
@@ -43,13 +47,13 @@ struct Phasor[num_chans: Int = 1](Movable, Copyable):
         """Increments the phase and returns a boolean SIMD indicating when the phase wraps around from 1.0 to 0.0, which is when an impulse would occur. This only works with possive frequencies and phase offsets between 0.0 and 1.0."""
 
         self.phase += (freq * self.freq_mul)
-        fl = floor(self.phase)
-        rbd = self.rising_bool_detector_impulse.next(abs(self.phase+clip(phase_offset, 0.0, 1.0)).gt(1.0))
+        var fl = floor(self.phase)
+        var rbd = self.rising_bool_detector_impulse.next(abs(self.phase+clip(phase_offset, 0.0, 1.0)).gt(1.0))
         self.phase = self.phase - fl 
         return rbd
 
     @always_inline
-    def next(mut self: Phasor, freq: MFloat[self.num_chans] = 100.0, phase_offset: MFloat[self.num_chans] = 0.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill=True)) -> MFloat[self.num_chans]:
+    def next(mut self, freq: MFloat[self.num_chans] = 100.0, phase_offset: MFloat[self.num_chans] = 0.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill=True)) -> MFloat[self.num_chans]:
         """Creates the next sample of the phasor output based on the inputs.
 
         Args:
@@ -82,8 +86,8 @@ struct Phasor[num_chans: Int = 1](Movable, Copyable):
             A boolean SIMD indicating True when the impulse occurs.
         """
 
-        tick = self._increment_phase_impulse(freq, phase_offset)
-        rbd = self.rising_bool_detector.next(trig)
+        var tick = self._increment_phase_impulse(freq, phase_offset)
+        var rbd = self.rising_bool_detector.next(trig)
         self.phase = rbd.select(0.0, self.phase)
         
         return (tick | rbd)
@@ -100,14 +104,14 @@ struct Phasor[num_chans: Int = 1](Movable, Copyable):
         Returns:
             The next impulse sample as a Float64. 1.0 when the impulse occurs, 0.0 otherwise.
         """
-        tick = self._increment_phase_impulse(freq, phase_offset)
-        rbd = self.rising_bool_detector.next(trig)
+        var tick = self._increment_phase_impulse(freq, phase_offset)
+        var rbd = self.rising_bool_detector.next(trig)
         self.phase = rbd.select(0.0, self.phase)
         
         return (tick | rbd).cast[DType.float64]()
 
 
-struct Impulse[num_chans: Int = 1](Movable, Copyable):
+struct Impulse[num_chans: SIMDLength = 1](Movable, Copyable):
     """Impulse Oscillator.
 
     An oscillator that outputs a 1.0 or True for one sample when the phase wraps around from 1.0 to 0.0.
@@ -156,7 +160,7 @@ struct Impulse[num_chans: Int = 1](Movable, Copyable):
         return self.phasor.next_impulse(freq, phase_offset, trig) 
 
 
-struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable):
+struct Osc[num_chans: SIMDLength = 1, interp: Interp = Interp.linear, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable):
     """Wavetable Oscillator Core.
 
     A wavetable oscillator capable of all standard waveforms and also able to load custom wavetables. Capable of linear, cubic, quadratic, lagrange, or sinc interpolation. Also capable of using an internal [Downsampler](Downsampler.md).
@@ -191,7 +195,7 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             self.phase_upsampler = None
             self.downsampler = None
         else:
-            oversampled_world = world[].create_subworld(Self.ov_samp)
+            var oversampled_world = world[].create_subworld(Self.ov_samp)
             self.phasor = Phasor[self.num_chans](oversampled_world)
             self.freq_upsampler = Upsampler[self.num_chans, Self.ov_samp](world)
             self.phase_upsampler = Upsampler[self.num_chans, Self.ov_samp](world)
@@ -201,7 +205,7 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
 
     @always_inline
     def next[osc_type: OscType = OscType.sine](
-            mut self: Osc, 
+            mut self, 
             freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), 
             phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), 
             trig: Bool = False
@@ -223,10 +227,10 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         
         var trig_mask = MBool[self.num_chans](fill=trig)
             
-        out = MFloat[self.num_chans](0.0)
+        var out = MFloat[self.num_chans](0.0)
 
         comptime if Self.ov_samp == TimesOversampling.none:
-            phase = self.phasor.next(freq, phase_offset, trig_mask)
+            var phase = self.phasor.next(freq, phase_offset, trig_mask)
             ref temp = self.world[].osc_buffers()
             comptime for chan in range(self.num_chans):
                 out[chan] = temp.at_phase[osc_type, self.interp](self.world, phase[chan], self.last_phase[chan])
@@ -234,10 +238,10 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             return out
         else:
             comptime for i in range(Self.ov_samp.times):
-                freq2 = self.freq_upsampler.value().next(freq, i)
-                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
-                phase = self.phasor.next(freq2, phase_offset2, trig_mask)
-                sample = MFloat[self.num_chans](0.0)
+                var freq2 = self.freq_upsampler.value().next(freq, i)
+                var phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
+                var sample = MFloat[self.num_chans](0.0)
                 ref temp = self.world[].osc_buffers()
                 comptime for chan in range(self.num_chans):
                     sample[chan] = temp.at_phase[osc_type, self.interp](self.world, phase[chan], self.last_phase[chan])
@@ -358,23 +362,23 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             osc_type0[i] = MInt[1](osc_types[Int(osc_type0[i])]._value) 
             osc_type1[i] = MInt[1](osc_types[Int(osc_type1[i])]._value) 
             
-        osc_frac_interp = scaled_osc_frac - floor(scaled_osc_frac) 
+        var osc_frac_interp = scaled_osc_frac - floor(scaled_osc_frac) 
         var out_sample = MFloat[self.num_chans](0.0) 
 
         comptime if Self.ov_samp == TimesOversampling.none:
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
             comptime for chan in range(self.num_chans):
-                sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
+                var sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
                 out_sample[chan] = (MFloat[2](sample[Int(osc_type0[chan])], sample[Int(osc_type1[chan])]) * MFloat[2](1.0 - osc_frac_interp[chan], osc_frac_interp[chan])).reduce_add()
             self.last_phase = phase
             return out_sample
         else:
             comptime for i in range(Self.ov_samp.times):
-                freq2 = self.freq_upsampler.value().next(freq, i)
-                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var freq2 = self.freq_upsampler.value().next(freq, i)
+                var phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
                 var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 comptime for chan in range(self.num_chans):
-                    sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
+                    var sample = self.next_all_basic_waveforms(phase[chan], self.last_phase[chan], trig)
                     out_sample[chan] = (MFloat[2](sample[Int(osc_type0[chan])], sample[Int(osc_type1[chan])]) * MFloat[2](1.0 - osc_frac_interp[chan], osc_frac_interp[chan])).reduce_add()
                 self.downsampler.value().add_sample(out_sample)
                 self.last_phase = phase
@@ -382,7 +386,7 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
    
     @always_inline
     def next_vwt(
-            mut self: Osc, 
+            mut self, 
             ref buffer: Buffer, 
             freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), 
             phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), 
@@ -412,7 +416,7 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         var buf_chan0: MInt[self.num_chans] = MInt[self.num_chans](chan0_fl)
         var buf_chan1 = MInt[self.num_chans](buf_chan0 + 1)
 
-        scaled_osc_frac = chan0_fl - floor(chan0_fl)
+        var scaled_osc_frac = chan0_fl - floor(chan0_fl)
 
         var sample0 = MFloat[self.num_chans](0.0)
         var sample1 = MFloat[self.num_chans](0.0)
@@ -428,8 +432,8 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         else:
             comptime times_os_int = Self.ov_samp.times
             comptime for i in range(times_os_int):
-                freq2 = self.freq_upsampler.value().next(freq, i)
-                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var freq2 = self.freq_upsampler.value().next(freq, i)
+                var phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
                 var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
                 comptime for out_chan in range(self.num_chans):
                     sample0[out_chan] = buffer.at_phase[self.interp, True, 0](self.world, Int(buf_chan0[out_chan]), phase[out_chan], self.last_phase[out_chan])
@@ -439,8 +443,8 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
             return self.downsampler.value().get_sample()
 
     @always_inline
-    def next_vwt[simd_chans: Int](
-            mut self: Osc, 
+    def next_vwt[simd_chans: SIMDLength](
+            mut self, 
             ref buffer: SIMDBuffer[simd_chans], 
             freq: MFloat[self.num_chans] = MFloat[self.num_chans](100.0), 
             phase_offset: MFloat[self.num_chans] = MFloat[self.num_chans](0.0), 
@@ -473,13 +477,13 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         var buf_chan0: MInt[self.num_chans] = MInt[self.num_chans](chan0_fl)
         var buf_chan1 = MInt[self.num_chans](buf_chan0 + 1)
 
-        scaled_osc_frac = chan0_fl - floor(chan0_fl)
+        var scaled_osc_frac = chan0_fl - floor(chan0_fl)
 
         comptime if Self.ov_samp == TimesOversampling.none:
             var phase = self.phasor.next(freq, phase_offset, trig_mask)
-            out_sample = MFloat[self.num_chans](0.0)
+            var out_sample = MFloat[self.num_chans](0.0)
             comptime for out_chan in range(self.num_chans):
-                sample = buffer.at_phase[self.interp, True, 0](self.world, phase[out_chan], self.last_phase[out_chan])
+                var sample = buffer.at_phase[self.interp, True, 0](self.world, phase[out_chan], self.last_phase[out_chan])
                 out_sample[out_chan] = (MFloat[2](sample[Int(buf_chan0[out_chan])], sample[Int(buf_chan1[out_chan])]) * MFloat[2](1.0 - scaled_osc_frac[out_chan], scaled_osc_frac[out_chan])).reduce_add()
                 
             self.last_phase = phase
@@ -487,12 +491,12 @@ struct Osc[num_chans: Int = 1, interp: Interp = Interp.linear, ov_samp: TimesOve
         else:
             comptime times_os_int = Self.ov_samp.times
             comptime for i in range(times_os_int):
-                freq2 = self.freq_upsampler.value().next(freq, i)
-                phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
+                var freq2 = self.freq_upsampler.value().next(freq, i)
+                var phase_offset2 = self.phase_upsampler.value().next(phase_offset, i)
                 var phase = self.phasor.next(freq2, phase_offset2, trig_mask)
-                out_sample = MFloat[self.num_chans](0.0)
+                var out_sample = MFloat[self.num_chans](0.0)
                 comptime for out_chan in range(self.num_chans):
-                    sample = buffer.at_phase[self.interp, True, 0](self.world, phase[out_chan], self.last_phase[out_chan])
+                    var sample = buffer.at_phase[self.interp, True, 0](self.world, phase[out_chan], self.last_phase[out_chan])
                     out_sample[out_chan] = (MFloat[2](sample[Int(buf_chan0[out_chan])], sample[Int(buf_chan1[out_chan])]) * MFloat[2](1.0 - scaled_osc_frac[out_chan], scaled_osc_frac[out_chan])).reduce_add()
                 self.downsampler.value().add_sample(out_sample)
                 self.last_phase = phase
@@ -520,8 +524,8 @@ struct OscBank[num: Int](Movable, Copyable):
             index: Index of the oscillator to retune.
             freq: Frequency in Hertz to assign.
         """
-        simd_index = index // Self.simd_width
-        lane_index = index % Self.simd_width
+        var simd_index = index // Self.simd_width
+        var lane_index = index % Self.simd_width
         if simd_index < Self.num_simd:
             self.freqs[simd_index][lane_index] = freq
 
@@ -534,12 +538,12 @@ struct OscBank[num: Int](Movable, Copyable):
         Returns:
             The averaged output of all oscillators in the bank.
         """
-        out = MFloat[Self.simd_width](0.0)
+        var out = MFloat[Self.simd_width](0.0)
         for i in range(Self.num_simd):
             out += self.oscs[i].next[osc_type=osc_type](self.freqs[i])
         return out.reduce_add() / Float64(Self.num) 
 
-struct LFOsc[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.none] (Movable, Copyable):
+struct LFOsc[num_chans: SIMDLength = 1, ov_samp: TimesOversampling = TimesOversampling.none] (Movable, Copyable):
     """A low-frequency oscillator with multiple waveform options.
     
     This oscillator generates a non-bandlimited oscillator capable of saw, triangle, and square waves. It is useful for modulation, but should be avoided for audio-rate synthesis due to aliasing.
@@ -568,7 +572,7 @@ struct LFOsc[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.
             self.phasor = Phasor[self.num_chans](world)
             self.downsampler = None
         else:
-            oversampled_world = world[].create_subworld(Self.ov_samp)
+            var oversampled_world = world[].create_subworld(Self.ov_samp)
             self.phasor = Phasor[self.num_chans](oversampled_world)
             self.downsampler = Downsampler[self.num_chans, Self.ov_samp](world)
 
@@ -589,17 +593,17 @@ struct LFOsc[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.
         """
 
         var trig_mask = MBool[self.num_chans](fill=trig)
-        out = MFloat[self.num_chans](0.0)
+        var out = MFloat[self.num_chans](0.0)
         comptime for _ in range(Self.ov_samp.times):
             comptime if osc_type == OscType.saw:
                 out = 1.0 - 2.0 * self.phasor.next(freq, phase_offset, trig_mask)
             elif osc_type == OscType.triangle:
                 out = (abs((self.phasor.next(freq, phase_offset, trig_mask) * 4.0) - 2.0) - 1.0)
             elif osc_type == OscType.square:
-                mask = self.phasor.next(freq, phase_offset, trig_mask).lt(0.5)
+                var mask = self.phasor.next(freq, phase_offset, trig_mask).lt(0.5)
                 out = mask.select(1.0, -1.0)
             else:
-                phase = self.phasor.next(freq, phase_offset, trig_mask)
+                var phase = self.phasor.next(freq, phase_offset, trig_mask)
                 out = sin(phase * two_pi)
             comptime if Self.ov_samp != TimesOversampling.none:
                 self.downsampler.value().add_sample(out)
@@ -658,7 +662,7 @@ struct LFOsc[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.
             The next sample of the oscillator output."""
         return self.next[OscType.square](freq, phase_offset, trig)
 
-struct Dust[num_chans: Int = 1] (Movable, Copyable):
+struct Dust[num_chans: SIMDLength = 1] (Movable, Copyable):
     """A dust noise oscillator that generates random impulses at random intervals.
     
     Dust has a Phasor as its core, and the frequency of the Phasor is randomly changed each time an impulse is generated. This allows the Dust to be used in multiple ways. It can be used as a simple random impulse generator, or the user can use the get_phase() method to get the current phase of the internal Phasor and use that phase to drive other oscillators or processes. The user can also set the phase of the internal Phasor using the set_phase() method, allowing for more complex interactions.
@@ -681,7 +685,7 @@ struct Dust[num_chans: Int = 1] (Movable, Copyable):
             self.impulse.phase[i] = rrand(0.0, 1.0)
         self.freq = MFloat[Self.num_chans](1.0)
 
-    def next(mut self: Dust, low: MFloat[self.num_chans] = 100.0, high: MFloat[self.num_chans] = 2000.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill= False)) -> MFloat[self.num_chans]:
+    def next(mut self, low: MFloat[self.num_chans] = 100.0, high: MFloat[self.num_chans] = 2000.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill= False)) -> MFloat[self.num_chans]:
         """Generate the next dust noise sample.
         
         Args:
@@ -695,7 +699,7 @@ struct Dust[num_chans: Int = 1] (Movable, Copyable):
         return self.next_bool(low, high, trig).cast[DType.float64]()
 
     @always_inline
-    def next_bool(mut self: Dust, low: MFloat[self.num_chans] = 100.0, high: MFloat[self.num_chans] = 2000.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill= False)) -> MBool[self.num_chans]:
+    def next_bool(mut self, low: MFloat[self.num_chans] = 100.0, high: MFloat[self.num_chans] = 2000.0, trig: MBool[self.num_chans] = MBool[self.num_chans](fill= False)) -> MBool[self.num_chans]:
         """Generate the next dust noise sample as a boolean impulse.
         
         Args:
@@ -711,7 +715,7 @@ struct Dust[num_chans: Int = 1] (Movable, Copyable):
 
         comptime for i in range(self.num_chans):
             if tick[i]:
-                self.freq[i] = random_float64(low[i], high[i])
+                self.freq[i] = rrand(low[i], high[i])
 
         return tick
 
@@ -764,7 +768,7 @@ struct TTrig(Movable, Copyable):
             self.counter = Int(time * self.world[].sample_rate)
         return self.next(False, 0)
 
-struct LFNoise[num_chans: Int = 1, interp: Interp = Interp.cubic](Movable, Copyable):
+struct LFNoise[num_chans: SIMDLength = 1, interp: Interp = Interp.cubic](Movable, Copyable):
     """Low-frequency interpolating noise generator generating numbers between -1.0 and 1.0. With stepped (none), linear, or cubic interpolation.
 
     Parameters:
@@ -792,11 +796,11 @@ struct LFNoise[num_chans: Int = 1, interp: Interp = Interp.cubic](Movable, Copya
         self.history = [MFloat[Self.num_chans](0.0) for _ in range(5)]
         for i in range(Self.num_chans):
             for j in range(len(self.history)):
-                self.history[j][i] = random_float64(0.1, 1.0)
+                self.history[j][i] = rrand(0.1, 1.0)
         # Initialize history with random values
 
     @always_inline
-    def next(mut self: LFNoise, freq: MFloat[self.num_chans] = 100.0) -> MFloat[self.num_chans]:
+    def next(mut self, freq: MFloat[self.num_chans] = 100.0) -> MFloat[self.num_chans]:
         """Generate the next low-frequency noise sample.
         
         Args:
@@ -816,26 +820,26 @@ struct LFNoise[num_chans: Int = 1, interp: Interp = Interp.cubic](Movable, Copya
             # so don't change that one, cubic interp needs to know that, so we'll change 
             # history_index - 2 (but, again, computed differently to avoid negative indices) so
             # the next time we wrap around to that part of the history list it will be a new random value
-            self.history[(self.history_index[i] + (len(self.history) - 2)) % len(self.history)][i] = random_float64(-1.0, 1.0)
+            self.history[(self.history_index[i] + (len(self.history) - 2)) % len(self.history)][i] = rrand(-1.0, 1.0)
 
         comptime if Self.interp == Interp.none:
-            p0 = MFloat[self.num_chans](0.0)
+            var p0 = MFloat[self.num_chans](0.0)
             comptime for i in range(self.num_chans):
                 p0[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
             return p0
         elif Self.interp == Interp.linear:
             # Linear interpolation between last and next value
-            p0 = MFloat[self.num_chans](0.0)
-            p1 = MFloat[self.num_chans](0.0)
+            var p0 = MFloat[self.num_chans](0.0)
+            var p1 = MFloat[self.num_chans](0.0)
             comptime for i in range(Self.num_chans):
                 p0[i] = self.history[self.history_index[i]][i]
                 p1[i] = self.history[(self.history_index[i] + 1) % len(self.history)][i]
             return linear_interp(p0, p1, self.impulse.phase)
         else:
-            p0 = MFloat[self.num_chans](0.0)
-            p1 = MFloat[self.num_chans](0.0)
-            p2 = MFloat[self.num_chans](0.0)
-            p3 = MFloat[self.num_chans](0.0)
+            var p0 = MFloat[self.num_chans](0.0)
+            var p1 = MFloat[self.num_chans](0.0)
+            var p2 = MFloat[self.num_chans](0.0)
+            var p3 = MFloat[self.num_chans](0.0)
             comptime for i in range(self.num_chans):
                 p0[i] = self.history[(self.history_index[i] + (len(self.history) - 1)) % len(self.history)][i]
                 p1[i] = self.history[self.history_index[i]][i]
@@ -844,7 +848,7 @@ struct LFNoise[num_chans: Int = 1, interp: Interp = Interp.cubic](Movable, Copya
             # Cubic interpolation
             return cubic_interp(p0, p1, p2, p3, self.impulse.phase)
 
-struct Sweep[num_chans: Int = 1](Movable, Copyable):
+struct Sweep[num_chans: SIMDLength = 1](Movable, Copyable):
     """A phase accumulator.
     
     Phase accumulator that sweeps from 0 up to inf at a given frequency, resetting on trigger.
@@ -889,7 +893,7 @@ struct Sweep[num_chans: Int = 1](Movable, Copyable):
 
         return self.phase
 
-struct Line[num_chans: Int = 1](Movable, Copyable):
+struct Line[num_chans: SIMDLength = 1](Movable, Copyable):
     """
         A Line between start and end that takes dur seconds to complete. Line has 3 modes: linear, exponential, and curve. The standard .next function is linear, .exp is exponential, and .curve uses lincurve to warp the output.
     """
@@ -1012,7 +1016,7 @@ struct OscBuffers(Movable, Copyable):
     @doc_hidden
     def init_sine(mut self):
         for i in range(OscBuffersSize):
-            v = sin(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize))
+            var v = sin(2.0 * 3.141592653589793 * Float64(i) / Float64(OscBuffersSize))
             self.sine_buffer.data[i] = v
             self.basic_waveforms.data[i][0] = v
 

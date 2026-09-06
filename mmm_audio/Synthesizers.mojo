@@ -1,7 +1,9 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.Oscillators import *
+from mmm_audio.MMMWorld_Module import Interp, WindowType
 
 struct PAF[
-    num_chans: Int = 1,
+    num_chans: SIMDLength = 1,
     interp: Interp = Interp.linear,
     ov_samp: TimesOversampling = TimesOversampling.none,
     wrap_gaussian: Bool = False,
@@ -67,38 +69,38 @@ struct PAF[
         Returns:
             The next sample of the synthesizer output.
         """
-        out = MFloat[Self.num_chans](0.0)
+        var out = MFloat[Self.num_chans](0.0)
 
-        a = center_freq / fundamental
-        b = wrap(a, 0.0, 1.0)
+        var a = center_freq / fundamental
+        var b = wrap(a, 0.0, 1.0)
 
         comptime for _ in range(Self.ov_samp.times):
-            phasor = self.phasor.next(fundamental)
+            var phasor = self.phasor.next(fundamental)
 
-            cos1_phase = phasor * (a - b)
-            cos2_phase = cos1_phase + phasor
-            cos1 = self.cos1.next(
+            var cos1_phase = phasor * (a - b)
+            var cos2_phase = cos1_phase + phasor
+            var cos1 = self.cos1.next(
                 freq=0, phase_offset=cos1_phase + 0.25
             )
 
-            cos2 = self.cos2.next(
+            var cos2 = self.cos2.next(
                 freq=0, phase_offset=cos2_phase + 0.25
             )
 
             ref temp = self.oversampled_world[].windows()
-            sin = temp.at_phase[
+            var sin = temp.at_phase[
                 window_type=WindowType.sine, interp=Self.interp
             ](self.oversampled_world, phasor, self.sin_last_phase)
 
-            gaussian_phase = (
+            var gaussian_phase = (
                 sin * ((bandwidth / fundamental) * 0.25)
             ) + 0.5
 
-            gaussian = temp.at_phase[
+            var gaussian = temp.at_phase[
                 window_type=WindowType.gaussian, interp=Self.interp
             ](self.oversampled_world, gaussian_phase, self.gauss_last_phase)
 
-            mod = ((cos2 - cos1) * b) + cos1
+            var mod = ((cos2 - cos1) * b) + cos1
             out = mod * gaussian
             self.gauss_last_phase = gaussian_phase
             self.sin_last_phase = phasor

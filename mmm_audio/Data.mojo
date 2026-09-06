@@ -41,8 +41,8 @@ struct StandardScaler(Copyable, Movable):
             path_joblib: Path to a joblib file containing a fitted sklearn StandardScaler object.
         """
         try:
-            joblib = Python.import_module("joblib")
-            scaler: PythonObject = joblib.load(path_joblib)
+            var joblib = Python.import_module("joblib")
+            var scaler: PythonObject = joblib.load(path_joblib)
             self.mean.clear()
             self.scale.clear()
             for i in range(len(scaler.scale_)):
@@ -123,14 +123,14 @@ struct PCA(Copyable, Movable):
             joblib_path: Path to a joblib file containing a fitted sklearn PCA object.
         """
         try:
-            joblib = Python.import_module("joblib")
-            pca: PythonObject = joblib.load(joblib_path)
+            var joblib = Python.import_module("joblib")
+            var pca: PythonObject = joblib.load(joblib_path)
 
             for i in range(len(pca.mean_)):
                 self.mean.append(Float64(py=pca.mean_[i]))
             
             for i in range(len(pca.components_)):
-                row = List[Float64]()
+                var row = List[Float64]()
                 for j in range(len(pca.components_[i])):
                     row.append(Float64(py=pca.components_[i][j]))
                 self.components.append(row^)

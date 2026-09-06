@@ -22,7 +22,7 @@ struct Tone(Movable,Copyable):
         if self.m.notify_update("gate", self.gate) :
             print("Tone gate updated to ", self.gate)
 
-        sig = self.osc.next(self.freq) if self.gate else 0.0
+        var sig = self.osc.next(self.freq) if self.gate else 0.0
 
         return sig
 
@@ -90,7 +90,7 @@ struct MessengerExample(Copyable, Movable):
         if self.m.notify_trig("trig"):
             print("Received trig")
 
-        out = MFloat[2](0.0, 0.0)
+        var out = MFloat[2](0.0, 0.0)
         for i in range(2):
             out[i] = self.tones[i].next()
 

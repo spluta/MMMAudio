@@ -1,6 +1,10 @@
-from mmm_audio import *
 
-struct Downsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable, PolyReset):
+from mmm_audio.Polyphony import PolyReset
+from mmm_audio.constants import *
+from mmm_audio.MMMWorld_Module import TimesOversampling
+from std.math import pi, sin, cos
+
+struct Downsampler[num_chans: SIMDLength = 1, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable, PolyReset):
     """A struct that collects `times_oversampling` samples and then downsamples them using a low-pass filter. Add a sample for each oversampling iteration with `add_sample()`, then get the downsampled output with `get_sample()`. VERY IMPORTANT, when initializing this struct, use the main world, not the oversampled subworld. The Downsampler exists outside of the oversampled subworld!
 
     Parameters:
@@ -8,7 +12,7 @@ struct Downsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversam
         ov_samp: A [TimesOversampling](MMMWorld.md#struct-timesoversampling) struct to indicate times oversampling.
     """
 
-    var buffer: InlineArray[MFloat[Self.num_chans], Self.ov_samp.times]  # Buffer for oversampled values
+    var buffer: Array[MFloat[Self.num_chans], Self.ov_samp.times]  # Buffer for oversampled values
     var counter: Int
     var lpf: OS_LPF4[Self.num_chans]
 
@@ -19,7 +23,7 @@ struct Downsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversam
             world: Pointer to the MMMWorld instance. VERY IMPORTANT to use the main world, not the oversampled subworld, for this struct.
         """
         self.lpf = OS_LPF4[Self.num_chans](world[].sample_rate * MFloat[1](Self.ov_samp.times))
-        self.buffer = InlineArray[MFloat[Self.num_chans], Self.ov_samp.times](fill=MFloat[Self.num_chans](0.0))
+        self.buffer = Array[MFloat[Self.num_chans], Self.ov_samp.times](fill=MFloat[Self.num_chans](0.0))
         self.counter = 0
         
         self.lpf.set_cutoff(0.45 * world[].sample_rate)
@@ -41,7 +45,7 @@ struct Downsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversam
         Returns:
             The downsampled output sample.
         """
-        out = MFloat[Self.num_chans](0.0)
+        var out = MFloat[Self.num_chans](0.0)
         comptime if Self.ov_samp.times > 1:
             for i in range(Self.ov_samp.times):
                 out = self.lpf.next(self.buffer[i])
@@ -55,7 +59,7 @@ struct Downsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversam
         self.lpf.reset()
         self.counter = 0
         
-struct Upsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.x2](Movable, Copyable, PolyReset):
+struct Upsampler[num_chans: SIMDLength = 1, ov_samp: TimesOversampling = TimesOversampling.x2](Movable, Copyable, PolyReset):
     """A struct that upsamples the input signal by the specified factor using a low-pass filter.
 
     Parameters:
@@ -93,7 +97,7 @@ struct Upsampler[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampl
         """Reset the internal state of the upsampler."""
         self.lpf.reset()
 
-struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
+struct OS_LPF[num_chans: SIMDLength = 1](Movable, Copyable):
     """A simple 2nd-order low-pass filter for oversampling applications. Does not allow changing cutoff frequency on the fly to avoid that calculation each sample.
     
     Parameters:
@@ -184,7 +188,7 @@ struct OS_LPF[num_chans: Int = 1](Movable, Copyable):
         self.z1 = MFloat[Self.num_chans](0.0)
         self.z2 = MFloat[Self.num_chans](0.0)
 
-struct OS_LPF4[num_chans: Int = 1](Movable, Copyable):
+struct OS_LPF4[num_chans: SIMDLength = 1](Movable, Copyable):
     """A 4th-order low-pass filter for oversampling applications, implemented as two cascaded 2nd-order sections.
     
     Parameters:

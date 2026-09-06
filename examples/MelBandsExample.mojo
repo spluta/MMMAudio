@@ -21,7 +21,7 @@ struct MelBandsExample(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world)
-        p = MelBands(self.world[].sample_rate, num_bands, 20.0, 20000.0)
+        var p = MelBands(self.world[].sample_rate, num_bands, 20.0, 20000.0)
         self.analyzer = FFTProcess[MelBands,ifft=False,input_window_shape=WindowType.hann](self.world,p^, window_size=1024, hop_size=512)
         self.m = Messenger(self.world)
         self.viz_mul = 500.0
@@ -46,7 +46,7 @@ struct MelBandsExample(Movable, Copyable):
         self.m.update("mix", self.mix) 
         self.m.update("sines_vol", self.sines_vol)
         self.m.update("update_modulus", self.update_modulus)
-        flute = self.playBuf.next(self.buffer)
+        var flute = self.playBuf.next(self.buffer)
         
         # do the analysis
         _ = self.analyzer.next(flute)
@@ -55,10 +55,10 @@ struct MelBandsExample(Movable, Copyable):
         if self.world[].top_of_block():
             # print the mel band energies
             if self.print_counter % self.update_modulus == 0:
-                string = "\n\n\n\n\n"
+                var string = "\n\n\n\n\n"
                 for i in range(num_bands):
-                    idx = num_bands - i - 1
-                    val = self.analyzer.buffered_process.process.process.bands[idx]
+                    var idx = num_bands - i - 1
+                    var val = self.analyzer.buffered_process.process.process.bands[idx]
                     for _ in range(Int(val * self.viz_mul)):
                         string += "*"
                     string += "\n"
@@ -67,13 +67,13 @@ struct MelBandsExample(Movable, Copyable):
                 # print the results
             self.print_counter += 1
             
-        sines = 0.0
+        var sines = 0.0
         for i in range(num_bands):
-            amp = self.lags[i].next(self.analyzer.buffered_process.process.process.bands[i])
+            var amp = self.lags[i].next(self.analyzer.buffered_process.process.process.bands[i])
             sines += self.oscs[i].next(self.freqs[i]) * amp
 
         sines *= dbamp(self.sines_vol)
 
-        sig = select(self.mix,flute,sines)
+        var sig = select(self.mix,flute,sines)
         
         return sig

@@ -78,8 +78,7 @@ with open("./testing_mmm_audio/validation/mojo_results/spectral_rolloff_mojo_res
 
     mojo_rolloff = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_rolloff.append(val)
 
@@ -94,7 +93,7 @@ librosa_rolloff = librosa.feature.spectral_rolloff(
     win_length=windowsize,
     window="hann",
     roll_percent=0.95,
-    center=False,
+    center=True,
 )[0]
 
 def compare_analyses(list1, list2):

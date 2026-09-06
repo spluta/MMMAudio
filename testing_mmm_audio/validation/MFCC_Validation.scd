@@ -14,7 +14,7 @@ s.waitForBoot{
 	"numCoeffs: %".format(numCoeffs).postln;
 	"numBands: %".format(numBands).postln;
 
-	b = Buffer.readChannel(s,dir+/+"../resources/Shiverer.wav",channels:[0]);
+	b = Buffer.readChannel(s,dir+/+"../../resources/Shiverer.wav",channels:[0]);
 	f = Buffer(s);
 	s.sync;
 	FluidBufMFCC.processBlocking(
@@ -27,12 +27,13 @@ s.waitForBoot{
 		maxFreq: maxFreq,
 		windowSize: windowsize,
 		hopSize: hopsize,
-		padding: 0
+		padding: 1
 	);
 	s.sync;
 	f.loadToFloatArray(action:{
 		arg fa;
 		var file = File.open(dir+/+"flucoma_sc_results/mfcc_flucoma_results.csv","w");
+		fa.postln;
 		fa = fa.clump(numCoeffs);
 		fa.do{
 			arg row, i;

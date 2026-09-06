@@ -1,4 +1,10 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.functions import *
+from mmm_audio.Buffer_Module import Buffer
+from mmm_audio.MMMWorld_Module import WindowType
+from mmm_audio.FFTProcess_Module import FFTProcessable
+from mmm_audio.Analysis import GetFloat64Featurable
+from mmm_audio.MBufAnalysisBridge import MBufAnalysis
 from std.complex import *
 import std.math as Math
 from std.random import random_float64
@@ -13,7 +19,7 @@ def log2_int(n: Int) -> Int:
         result += 1
     return result
 
-struct RealFFT[num_chans: Int = 1](Copyable, Movable):
+struct RealFFT[num_chans: SIMDLength = 1](Copyable, Movable):
     """Real-valued FFT implementation using Cooley-Tukey algorithm.
 
     If you're looking to create an FFT-based FX, look to the [FFTProcessable](FFTProcess.md/#trait-fftprocessable)
@@ -144,7 +150,7 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             var m = 1 << stage
             var half_m = m >> 1
             
-            stage_twiddle = ComplexSIMD[DType.float64, Self.num_chans](
+            var stage_twiddle = ComplexSIMD[DType.float64, Self.num_chans](
                 Math.cos(2.0 * Math.pi / Float64(m)),
                 -Math.sin(2.0 * Math.pi / Float64(m))
             )
@@ -296,18 +302,15 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             count = max_possible
         if count <= 0:
             return List[Float64]()
-        binHz = sr / Float64(n_fft)
-        freqs = List[Float64](length=count, fill=0.0)
+        var binHz = sr / Float64(n_fft)
+        var freqs = List[Float64](length=count, fill=0.0)
         for i in range(count):
             freqs[i] = Float64(min_b + i) * binHz
         return freqs^
 
     @staticmethod
-    def buf_analysis[input_window_shape: WindowType = WindowType.hann](buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int) -> Tuple[List[List[Float64]], List[List[Float64]]]:
+    def buf_analysis(buf: Buffer, chan: Int,start_frame: Int, var num_frames: Int, window_size: Int, hop_size: Int, window_type: WindowType = WindowType.hann) -> Tuple[List[List[Float64]], List[List[Float64]]]:
         """Compute the Short-Time Fourier Transform (STFT) of a buffer.
-
-        Parameters:
-            input_window_shape: The type of window to apply to each frame before computing the FFT.
 
         Args:
             buf: The input audio buffer to analyze.
@@ -316,17 +319,18 @@ struct RealFFT[num_chans: Int = 1](Copyable, Movable):
             num_frames: The number of frames to analyze from the starting frame.
             window_size: The size of the FFT window.
             hop_size: The hop size between successive windows.
+            window_type: The type of window to apply to each frame before computing the FFT.
 
         Returns:
             A tuple containing two lists of lists of Float64 representing the magnitudes and phases of the STFT for each frame and frequency bin.
         """
-        fftanalysis = FFTAnalysis()
+        var fftanalysis = FFTAnalysis()
         try:
-            magsphss = MBufAnalysis.fft_process[input_win=input_window_shape](fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size)
-            nframes = len(magsphss)
-            nmags = len(magsphss[0]) // 2
-            mags = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
-            phss = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
+            var magsphss = MBufAnalysis.fft_process(fftanalysis,buf,chan,start_frame,num_frames,window_size,hop_size,window_type=window_type)
+            var nframes = len(magsphss)
+            var nmags = len(magsphss[0]) // 2
+            var mags = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
+            var phss = List[List[Float64]](length=nframes, fill=List[Float64](length=nmags, fill=0.0))
             for frame_idx, frame in enumerate(magsphss):
                 for i in range(nmags):
                     mags[frame_idx][i] = frame[i]
@@ -349,17 +353,16 @@ struct FFTAnalysis(FFTProcessable, GetFloat64Featurable):
         self.phss = phases.copy()
     
     def get_features(self) -> List[Float64]:
-        nmags = len(self.mags)
-        features = List[Float64](length=nmags * 2, fill=0.0)
+        var nmags = len(self.mags)
+        var features = List[Float64](length=nmags * 2, fill=0.0)
         for i in range(nmags):
             features[i] = self.mags[i]
         for i in range(nmags):
             features[nmags + i] = self.phss[i]
         return features^
 
-from mmm_audio import *
+from mmm_audio.constants import *
 from std.complex import *
-import std.math as Math
 from std.random import random_float64
 
 

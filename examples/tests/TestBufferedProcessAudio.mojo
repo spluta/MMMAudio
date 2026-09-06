@@ -25,7 +25,7 @@ struct BufferedMultiply(BufferedProcessable):
         self.m.update("vol", self.vol) 
 
     def next_window(self, mut input: List[Float64]) -> None:
-        amp = dbamp(self.vol)
+        var amp = dbamp(self.vol)
         for i in range(len(input)):
             input[i] *= amp
 
@@ -50,10 +50,10 @@ struct TestBufferedProcessAudio(Movable, Copyable):
         self.which = 0
 
     def next(mut self) -> SIMD[DType.float64,2]:
-        i = self.playBuf.next(self.buffer,1.0)  # Read samples from the buffer
-        v = self.my_buffered_mul.process.vol
+        var i = self.playBuf.next(self.buffer,1.0)  # Read samples from the buffer
+        var v = self.my_buffered_mul.process.vol
         self.ps[0].next(v,"vol")
-        o = self.my_buffered_mul.next(i)
+        var o = self.my_buffered_mul.next(i)
         # self.ps[0].next(i[0],"input")
         self.ps[1].next(o[0],"output")
         self.m.update("which", self.which) 

@@ -1,4 +1,10 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from std.math import *
+from mmm_audio.FFTProcess_Module import FFTProcess, FFTProcessable
+from mmm_audio.Buffer_Module import Buffer
+from mmm_audio.Analysis import MBufAnalysis, GetFloat64Featurable
+from mmm_audio.Filters import MedianFilter
+from mmm_audio.MMMWorld_Module import WindowType
 
 @fieldwise_init
 struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
@@ -237,8 +243,8 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
         previous_previous_mags: List[Float64],
         previous_previous_phases: List[Float64],
     ) -> Float64:
-        num_bins: Int = len(current_mags)
-        value: Float64 = 0.0
+        var num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
         for i in range(num_bins):
             var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
             var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
@@ -260,8 +266,8 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
         previous_previous_mags: List[Float64],
         previous_previous_phases: List[Float64],
     ) -> Float64:
-        value: Float64 = 0.0
-        num_bins: Int = len(current_mags)
+        var value: Float64 = 0.0
+        var num_bins: Int = len(current_mags)
         comptime epsilon: Float64 = 2.220446049250313e-16
         for i in range(num_bins):
             var current_phase = onset_complex_atan_real(current_mags[i], current_phases[i])
@@ -286,7 +292,7 @@ struct OnsetMetric(Equatable, ImplicitlyCopyable, Writable):
     ) -> Float64:
         comptime epsilon: Float64 = 2.220446049250313e-16
         var complex_value: Float64 = 0.0
-        num_bins: Int = len(current_mags)
+        var num_bins: Int = len(current_mags)
         for i in range(num_bins):
             var previous_phase = onset_complex_atan_real(previous_mags[i], previous_phases[i])
             var previous_previous_phase = onset_complex_atan_real(
@@ -421,7 +427,7 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         buf: Buffer,
         chan: Int = 0,
         start_frame: Int = 0,
-        var num_frames: Int = -1,
+        var num_frames: Optional[Int] = None,
         metric: OnsetMetric = OnsetMetric.complex_domain,
         window_size: Int = 1024,
         hop_size: Int = 512,
@@ -451,9 +457,9 @@ struct OnsetDetectionFeature(FFTProcessable, GetFloat64Featurable):
         Raises:
             Error: If onset analysis or buffered processing fails.
         """
-        if num_frames < 0:
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
+        var odf = OnsetDetectionFeature(metric=metric, window_size=window_size, filter_size=filter_size, frame_delta=frame_delta)
         return MBufAnalysis.fft_process(odf, buf, chan, start_frame, num_frames, window_size, hop_size)
 
 struct OnsetDetection(Movable, Copyable):
@@ -556,7 +562,7 @@ struct OnsetDetection(Movable, Copyable):
         buf: Buffer,
         chan: Int = 0,
         start_frame: Int = 0,
-        var num_frames: Int = -1,
+        var num_frames: Optional[Int] = None,
         metric: OnsetMetric = OnsetMetric.complex_domain,
         threshold: Float64 = 0.5,
         debounce: Float64 = 0.1,
@@ -583,9 +589,9 @@ struct OnsetDetection(Movable, Copyable):
 
         Returns:
             A List of Int sample indices where onsets were detected.        """
-        if num_frames < 0:
+        if num_frames is None:
             num_frames = buf.num_frames - start_frame
-        var end_frame = min(start_frame + num_frames, buf.num_frames)
+        var end_frame = min(start_frame + num_frames.value(), buf.num_frames)
 
         var detector = OnsetDetection(
             world=world,
@@ -600,7 +606,7 @@ struct OnsetDetection(Movable, Copyable):
         var onsets = List[Int]()
         
         for frame in range(start_frame, end_frame):
-            sample = buf.data[chan][frame]
+            var sample = buf.data[chan][frame]
             if detector.next(sample):
                 onsets.append(frame - (window_size // 2)) # subtract half the window size because I want it to be in the "middle" of the fft window
 

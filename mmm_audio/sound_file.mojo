@@ -80,7 +80,7 @@ def bytes_to_int16_le(data: List[UInt8], offset: Int) -> Float64:
 @doc_hidden
 def bytes_to_int24_le(data: List[UInt8], offset: Int) -> Float64:
     """Convert 3 bytes (little-endian) to signed Int32 (24-bit audio)."""
-    sign_bit = 255 if data[offset + 2] & 0x80 else 0
+    var sign_bit = 255 if data[offset + 2] & 0x80 else 0
     var bytes = SIMD[DType.uint8, 4](
         data[offset], 
         data[offset + 1], 
@@ -278,6 +278,7 @@ def read_wav_header(file_name: String) raises -> WavHeader:
     Raises:
         Error: If the file is missing required WAV header data.
     """
+    var file_data: List[UInt8]
     with open(file_name, "r") as f:
         file_data = f.read_bytes(-1)
 
@@ -349,6 +350,7 @@ def read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int =
     var audio_format = Int(header.audio_format)
     var data_offset = header.data_offset
     
+    var file_data: List[UInt8]
     with open(file_name, "r") as f:
         file_data = f.read_bytes()
     
@@ -369,7 +371,7 @@ def read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int =
             samples.append(List[Float64]())
         for _ in range(num_samples):
             for ch in range(file_num_channels):
-                sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
+                var sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
                 samples[ch].append(sample_value)
                 offset += bytes_per_sample
     else:
@@ -379,14 +381,14 @@ def read_wav_samples(file_name: String, header: WavHeader, num_wavetables: Int =
         var samples_per_wavetable = num_samples // num_wavetables
         for wavetable_idx in range(num_wavetables):
             for _ in range(samples_per_wavetable):
-                sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
+                var sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
                 offset += bytes_per_sample
                 samples[wavetable_idx].append(sample_value)
     
     return samples^
 
 def get_sample(file_data: List[UInt8], offset: Int, bits_per_sample: Int, is_pcm: Bool, is_float: Bool) -> Float64:
-    sample_value = 0.0
+    var sample_value = 0.0
     if is_pcm:
         # PCM format
         if bits_per_sample == 8:
@@ -441,6 +443,7 @@ def read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_
     var is_pcm = audio_format == 1
     var is_float = audio_format == 3
 
+    var file_data: List[UInt8]
     with open(file_name, "r") as f:
         file_data = f.read_bytes()
     
@@ -451,8 +454,9 @@ def read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_
     var offset = data_offset
     if num_wavetables <= 1:
         for _ in range(num_samples):
-            SIMD_sample = MFloat[num_channels](0.0)
-            read_chans = min(num_channels, filenum_channels)
+            var SIMD_sample = MFloat[num_channels](0.0)
+            var read_chans = min(num_channels, filenum_channels)
+            var sample_value: Float64
             for ch in range(read_chans):
                 sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
                 
@@ -466,9 +470,9 @@ def read_wav_SIMDs[num_channels: Int](file_name: String, header: WavHeader, num_
         for wavetable_idx in range(num_wavetables):
             for sample_idx in range(samples_per_wavetable):
                 if wavetable_idx == 0:
-                    SIMD_sample = MFloat[num_channels](0.0)
+                    var SIMD_sample = MFloat[num_channels](0.0)
                     samples.append(SIMD_sample)
-                sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
+                var sample_value = get_sample(file_data, offset, bits_per_sample, is_pcm, is_float)
                 samples[sample_idx][wavetable_idx] = sample_value
                 offset += bytes_per_sample
                 
@@ -556,7 +560,7 @@ def write_f32(mut data: List[UInt8], value: Float32):
     data.append(UInt8((bits >> 16) & 0xFF))
     data.append(UInt8((bits >> 24) & 0xFF))
 
-def write_wav_file(file_name: String, samples: Span[mut=False, List[Float64], ...], sample_rate: Int = 44100) raises:
+def write_wav_file(file_name: String, samples: Span[mut=False, List[Float64], MutUntrackedOrigin, address_space = AddressSpace.GENERIC], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file.
 
     Args:
@@ -581,7 +585,7 @@ def write_wav_file(file_name: String, samples: Span[mut=False, List[Float64], ..
     with open(file_name, "w") as f:
         f.write_bytes(data)
 
-def write_wav_file[num_channels: Int](file_name: String, samples: Span[mut=False, MFloat[num_channels], ...], sample_rate: Int = 44100) raises:
+def write_wav_file[num_channels: SIMDLength](file_name: String, samples: Span[mut=False, MFloat[num_channels], ...], sample_rate: Int = 44100) raises:
     """Write audio samples to a WAV file.
 
     Parameters:

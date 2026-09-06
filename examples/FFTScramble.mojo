@@ -14,10 +14,10 @@ struct FFTScrambleWindow(FFTProcessable):
 
     def next_frame(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         for (i,j) in self.swaps:
-            temp_mag = magnitudes[i]
+            var temp_mag = magnitudes[i]
             magnitudes[i] = magnitudes[j]
             magnitudes[j] = temp_mag
-            temp_phase = phases[i]
+            var temp_phase = phases[i]
             phases[i] = phases[j]
             phases[j] = temp_phase
 
@@ -33,12 +33,12 @@ struct FFTScrambleWindow(FFTProcessable):
     def scramble(mut self) -> None:
         self.swaps.clear()
         for _ in range(self.nscrambles):
-            i_f = linlin(random_float64() ** 3, 0.0, 1.0, 0.0, Float64(self.nbins - 1))
-            i = Int(i_f)
-            minj = max(i - self.scramble_range,0)
-            maxj = min(i + self.scramble_range, self.nbins - 1)
-            j_f = rrand(minj, maxj)
-            j = Int(j_f)
+            var i_f = linlin(random_float64() ** 3, 0.0, 1.0, 0.0, Float64(self.nbins - 1))
+            var i = Int(i_f)
+            var minj = max(i - self.scramble_range,0)
+            var maxj = min(i + self.scramble_range, self.nbins - 1)
+            var j_f = rrand(minj, maxj)
+            var j = Int(j_f)
             self.swaps.append((i,j))
     
     def get_messages(mut self) -> None:
@@ -60,6 +60,6 @@ struct FFTScramble(Movable, Copyable):
         self.fft_scramble = FFTProcess[FFTScrambleWindow](self.world,process=FFTScrambleWindow(self.world,(windowsize//2)+1),window_size=windowsize,hop_size=hopsize)
         
     def next(mut self) -> SIMD[DType.float64,2]:
-        input = self.playBuf.next(self.buffer)  # Read samples from the buffer
-        out = self.fft_scramble.next(input)
+        var input = self.playBuf.next(self.buffer)  # Read samples from the buffer
+        var out = self.fft_scramble.next(input)
         return SIMD[DType.float64,2](out,out)

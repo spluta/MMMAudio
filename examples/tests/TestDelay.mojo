@@ -22,7 +22,7 @@ struct TestDelay(Movable, Copyable):
         # self.messenger.update("del_time", self.del_time)
         self.del_time = self.world[].mouse_x() * 0.11
 
-        trig = self.messenger.notify_trig("trig")
-        sample = self.synth.next_impulse(self.freq, 0.0, MBool[1](fill=trig))  # Get the next sample from the synth
-        delay = self.delay.next(sample, self.del_time)  # Process the sample through the delay line
+        var trig = self.messenger.notify_trig("trig")
+        var sample = self.synth.next_impulse(self.freq, 0.0, MBool[1](fill=trig))  # Get the next sample from the synth
+        var delay = self.delay.next(sample, self.del_time)  # Process the sample through the delay line
         return MFloat[2](sample, delay) * 0.2  # Get the next sample from the synth

@@ -31,14 +31,14 @@ struct TestCombAllpass(Movable, Copyable):
         self.messenger.update("which_fx", self.which)
         self.messenger.update("delay_time", self.delay_time)
 
-        sample = self.synth.next(0.4)  # Get the next sample from the synth
+        var sample = self.synth.next(0.4)  # Get the next sample from the synth
 
-        comb0 = self.comb.next(sample, self.delay_time, 0.9)
-        allpass0 = self.allpass.next(sample, self.delay_time, 0.9)
-        comb1 = self.comb2.next_decaytime(sample, self.delay_time, 1)
-        allpass1 = self.allpass2.next_decaytime(sample, self.delay_time, 1)
-        lp_comb = self.LP_Comb.next(sample, self.delay_time, 0.9, 10000.0)
+        var comb0 = self.comb.next(sample, self.delay_time, 0.9)
+        var allpass0 = self.allpass.next(sample, self.delay_time, 0.9)
+        var comb1 = self.comb2.next_decaytime(sample, self.delay_time, 1)
+        var allpass1 = self.allpass2.next_decaytime(sample, self.delay_time, 1)
+        var lp_comb = self.LP_Comb.next(sample, self.delay_time, 0.9, 10000.0)
 
-        filt = select(self.which, comb0, allpass0, comb1, allpass1, lp_comb)
+        var filt = select(self.which, comb0, allpass0, comb1, allpass1, lp_comb)
 
         return MFloat[2](sample, filt)

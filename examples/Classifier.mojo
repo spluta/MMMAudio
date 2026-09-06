@@ -21,7 +21,7 @@ struct ClassifierWindow(FFTProcessable):
         self.scaled_coeffs = List[Float64](fill=0.0, length=n_mfcc)
     
         try:
-            torch = Python.import_module("torch")
+            var torch = Python.import_module("torch")
             self.model = torch.jit.load(model_path)
             self.py_input = torch.zeros(n_mfcc)
             self.py_output = torch.zeros(1)  # Adjust the size based on your model's output
@@ -35,8 +35,8 @@ struct ClassifierWindow(FFTProcessable):
             for i in range(n_mfcc):
                 self.py_input[i] = self.scaled_coeffs[i]
             self.py_output = self.model(self.py_input)
-            o = Float64(py=self.py_output.item())
-            display: String = "🐶" if o > 0.5 else "❌"
+            var o = Float64(py=self.py_output.item())
+            var display: String = "🐶" if o > 0.5 else "❌"
             print("Dog:",display,"---", o)
         except e:
             abort("Error predicting: " + String(e))
@@ -62,6 +62,6 @@ struct Classifier(Movable,Copyable):
         if self.m.notify_update("src_path", self.src_path):
             self.src = Buffer.load(self.src_path)
 
-        src = self.player.next(self.src)
+        var src = self.player.next(self.src)
         _ = self.fftp.next(src)
         return src

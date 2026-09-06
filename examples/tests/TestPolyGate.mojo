@@ -32,8 +32,8 @@ struct PGVoice(PolyObject):
 
 
     def next(mut self) -> MFloat[2]:
-        env = self.env.next(0.01, 1, 0.7, self.gate, self.curves)
-        sample = self.synth.next(self.freq)
+        var env = self.env.next(0.01, 1, 0.7, self.gate, self.curves)
+        var sample = self.synth.next(self.freq)
         return env * pan2(sample, self.pan) * 0.1
 
 
@@ -66,7 +66,7 @@ struct TestPolyGate(Movable, Copyable):
         # interpret the gates
         _ = self.poly.next_gate(self.psg_voices, self.gated_sigs)
         # sum the voices
-        out = MFloat[2](0.0, 0.0)
+        var out = MFloat[2](0.0, 0.0)
         for ref voice in self.psg_voices:
             out += voice.next()
         return out

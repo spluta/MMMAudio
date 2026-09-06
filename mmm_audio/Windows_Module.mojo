@@ -1,5 +1,7 @@
-from mmm_audio import *
+from mmm_audio.constants import *
 from std.math import exp, sin, sqrt, cos, pi
+from mmm_audio.MMMWorld_Module import Interp, WindowType
+from mmm_audio.Buffer_Module import SpanInterpolator
 
 struct Windows(Movable, Copyable):
     """Stores various window functions used in audio processing. This struct precomputes several common window types."""
@@ -38,11 +40,10 @@ struct Windows(Movable, Copyable):
         """
         return SpanInterpolator.read[2,interp,True,self.mask](world,self.pan2, pan * 255.0, 0.0)
 
-    def at_phase[num_chans: Int, window_type: WindowType, interp: Interp = Interp.none](self, world: World, phase: MFloat[num_chans], prev_phase: MFloat[num_chans] = 0.0) -> MFloat[num_chans]:
+    def at_phase[window_type: WindowType, interp: Interp = Interp.none](self, world: World, phase: MFloat[_], prev_phase: type_of(phase) = 0.0) -> type_of(phase):
         """Get a window value at the given normalized phase.
 
         Parameters:
-            num_chans: Size of the SIMD vector.
             window_type: Window type to sample.
             interp: Interpolation mode used when reading the window table.
 
@@ -55,26 +56,26 @@ struct Windows(Movable, Copyable):
             Window values sampled at the requested phases.
         """
 
-        out = MFloat[num_chans](0.0)
+        var out = MFloat[phase.length](0.0)
 
         
         comptime if window_type == WindowType.hann:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.hann, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.hamming:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.hamming, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.blackman:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.blackman, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.kaiser:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.kaiser, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.sine:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.sine, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.gaussian:
-            comptime for chan in range(num_chans):
+            comptime for chan in range(phase.length):
                 out[chan] = SpanInterpolator.read[1,interp,True,self.mask](world,self.gaussian, phase[chan] * self.size_f64, prev_phase[chan] * self.size_f64)
         elif window_type == WindowType.rect:
             out = 1.0 
@@ -101,6 +102,41 @@ struct Windows(Movable, Copyable):
             List[Float64] of length `size` containing the window values.
         """
         comptime if window_type == WindowType.rect:
+            return rect_window(size)
+        elif window_type == WindowType.hann:
+            return hann_window(size)
+        elif window_type == WindowType.hamming:
+            return hamming_window(size)
+        elif window_type == WindowType.blackman:
+            return blackman_window(size)
+        elif window_type == WindowType.sine:
+            return sine_window(size)
+        elif window_type == WindowType.kaiser:
+            return kaiser_window(size, beta)
+        elif window_type == WindowType.tri:
+            return tri_window(size)
+        elif window_type == WindowType.pan2:
+            print("Windows.make_window: pan2 window requires MFloat[2] output, use pan2_window() function instead.")
+            return List[Float64]()
+        elif window_type == WindowType.gaussian:
+            return gaussian_window(size)
+        else:
+            print("Windows.make_window: Unsupported window type")
+            return List[Float64]()
+
+    @staticmethod
+    def make_window(window_type: WindowType,size: Int, beta: Float64 = 5.0) -> List[Float64]:
+        """Generate a window of specified type and size.
+        
+        Args:
+            window_type: Type of window to generate. Use comptime variables from [WindowType](MMMWorld.md/#struct-windowtype) struct (e.g. WindowType.hann).
+            size: Length of the window.
+            beta: Shape parameter only used for Kaiser window. See kaiser_window() for details.
+
+        Returns:
+            List[Float64] of length `size` containing the window values.
+        """
+        if window_type == WindowType.rect or window_type == WindowType.none:
             return rect_window(size)
         elif window_type == WindowType.hann:
             return hann_window(size)
@@ -316,7 +352,7 @@ def gaussian_window(size: Int) -> List[Float64]:
     var window = List[Float64]()
     for i in range(size):
         # bell curve with 4 standard deviations
-        a = (Float64(i) - (Float64(size)*0.5)) / (Float64(size)*0.125)
-        b = exp(-1*a*a)
+        var a = (Float64(i) - (Float64(size)*0.5)) / (Float64(size)*0.125)
+        var b = exp(-1*a*a)
         window.append(b)
     return window.copy()

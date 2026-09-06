@@ -15,7 +15,7 @@ struct TestRMS(Movable, Copyable):
         self.world = world
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.playBuf = Play(self.world) 
-        rms = RMS()
+        var rms = RMS()
         # samplerate of 48000 50 ms for the RMS = 2400 samples
         self.bi = BufferedProcess[RMS,False,WindowType.rect](self.world,process=rms^,window_size=2400,hop_size=2400)
         self.m = Messenger(self.world)
@@ -25,12 +25,12 @@ struct TestRMS(Movable, Copyable):
     def next(mut self) -> SIMD[DType.float64,2]:
         self.m.update("vol", self.vol) 
         
-        i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        var i = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
         
         i *= dbamp(self.vol)
         
         _ = self.bi.next(i)
-        analysis_vol = ampdb(self.bi.process.rms)
+        var analysis_vol = ampdb(self.bi.process.rms)
         self.printer.next(analysis_vol, "RMS dB")
         return SIMD[DType.float64,2](i,i)
 

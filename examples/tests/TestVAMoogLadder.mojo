@@ -23,15 +23,15 @@ struct TestVAMoogLadder[N: Int = 2](Movable, Copyable):
         self.which = 0.0
 
     def next(mut self) -> MFloat[Self.N]:
-        sample = self.noise.next()  # Get the next white noise sample
-        freq = linexp(self.world[].mouse_x(), 0.0, 1.0, 20.0, 24000.0)
-        q = linexp(self.world[].mouse_y(), 0.0, 1.0, 0.01, 1.04)
+        var sample = self.noise.next()  # Get the next white noise sample
+        var freq = linexp(self.world[].mouse_x(), 0.0, 1.0, 20.0, 24000.0)
+        var q = linexp(self.world[].mouse_y(), 0.0, 1.0, 0.01, 1.04)
 
         self.m.update("which", self.which) 
         
-        sample0 = self.filt0.next(sample, freq, q)  # Get the next sample from the filter
-        sample2 = self.filt4.next(sample, freq, q)  # Get the next sample from the filter
-        sample4 = self.filt16.next(sample, freq, q)  # Get the next sample from the filter
+        var sample0 = self.filt0.next(sample, freq, q)  # Get the next sample from the filter
+        var sample2 = self.filt4.next(sample, freq, q)  # Get the next sample from the filter
+        var sample4 = self.filt16.next(sample, freq, q)  # Get the next sample from the filter
 
         sample = select(self.which, sample0, sample2, sample4)
 

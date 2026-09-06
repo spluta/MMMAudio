@@ -19,9 +19,9 @@ struct TestLFNoise(Movable, Copyable):
 
     def next(mut self) -> MFloat[2]:
         self.get_msgs()
-        freq = self.noise.next(MFloat[num_osc](0.5,0.4,0.3,0.2)) * 200.0 + 300.0
-        sample = self.synth.next(freq)  # Get the next sample from the synth
-        return splay(sample, self.world) * 0.2  # Get the next sample from the synth
+        var freq = self.noise.next(MFloat[num_osc](0.5,0.4,0.3,0.2)) * 200.0 + 300.0
+        var sample = self.synth.next(freq)  # Get the next sample from the synth
+        return splay(sample, world=self.world) * 0.2  # Get the next sample from the synth
 
     def get_msgs(mut self: Self):
         # Get messages from the world

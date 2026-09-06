@@ -1,10 +1,13 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.functions import *
+from mmm_audio.MMMWorld_Module import Interp
+from mmm_audio.sound_file import *
 from std.math import sin, log2, ceil, floor
 from std.sys import simd_width_of
 from std.pathlib import Path
 
 
-struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
+struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
     """A multi-channel audio buffer for storing audio data.
 
     Audio data is stored in the `data` variable as a `List[MFloat[Self.num_chans]]` where each `MFloat[Self.num_chans]` represents a single frame of audio data for all channels. For example, if `num_chans` is 2, each element of `data` would be an `MFloat[2]` where the first element is the sample value for the left channel and the second element is the sample value for the right channel.
@@ -98,12 +101,12 @@ struct SIMDBuffer[num_chans: Int = 2](Movable, Copyable):
         """
         if file_name != "":
             try:
-                header = read_wav_header(file_name)
+                var header = read_wav_header(file_name)
                 if verbose:
                     print("Loading file into SIMDBuffer: ", file_name)
                     print_wav_info(header)
 
-                data = read_wav_SIMDs[Self.num_chans](file_name, header, num_wavetables)
+                var data = read_wav_SIMDs[Self.num_chans](file_name, header, num_wavetables)
                 
                 return SIMDBuffer(data^, MFloat[](header.sample_rate))
                 
@@ -174,7 +177,7 @@ struct Buffer(Movable, Copyable):
     Audio data is stored in the `data` variable as a `List[List[Float64]]`, where each inner `List` represents a channel of audio samples.
     """
     var data: List[List[Float64]]
-    var num_chans: Int 
+    var num_chans: SIMDLength 
     var num_frames: Int
     var num_frames_f64: Float64
     var sample_rate: Float64
@@ -219,6 +222,7 @@ struct Buffer(Movable, Copyable):
             The interpolated sample value at the given phase.
         """
         return SpanInterpolator.read[
+            num_chans=1,
             interp=interp,
             bWrap=bWrap,
             mask=mask
@@ -230,7 +234,7 @@ struct Buffer(Movable, Copyable):
         )
 
     @staticmethod
-    def zeros(num_frames: Int, num_chans: Int = 1, sample_rate: Float64 = 48000.0) -> Buffer:
+    def zeros(num_frames: Int, num_chans: SIMDLength = 1, sample_rate: Float64 = 48000.0) -> Buffer:
         """Initialize a Buffer with zeros.
 
         Args:
@@ -244,7 +248,7 @@ struct Buffer(Movable, Copyable):
 
         var data = List[List[Float64]]()
         for _ in range(num_chans):
-            channel_data = List[Float64]()
+            var channel_data = List[Float64]()
             for _ in range(num_frames):
                 channel_data.append(0.0)
             data.append(channel_data^)
@@ -274,12 +278,12 @@ struct Buffer(Movable, Copyable):
         if file_name != "":
             # Load the file if a file_name is provided
             try:
-                header = read_wav_header(file_name)
+                var header = read_wav_header(file_name)
                 if verbose:
                     print("Loading file into Buffer: ", file_name)
                     print_wav_info(header)
 
-                data = read_wav_samples(file_name, header, num_wavetables)
+                var data = read_wav_samples(file_name, header, num_wavetables)
                 
                 return Buffer(data^, MFloat[](header.sample_rate))
                 
@@ -294,7 +298,7 @@ struct Buffer(Movable, Copyable):
 
 struct SpanInterpolator(Movable, Copyable):
     """
-    A collection of static methods for interpolating values from a `List[Float64]` or `InlineArray[Float64]`.
+    A collection of static methods for interpolating values from a `List[Float64]` or `Array[Float64]`.
     
     `SpanInterpolator` supports various interpolation methods including
     
@@ -310,15 +314,15 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def idx_in_range[num_chans: Int = 1](data: Span[MFloat[num_chans], ...], idx: Int) -> Bool:
+    def idx_in_range[num_chans: SIMDLength = 1](data: Span[MFloat[num_chans], _], idx: Int) -> Bool:
         return idx >= 0 and idx < len(data)
 
     # Once structs are allowed to have static variables, the since table will be stored in here so that 
     # a reference to the MMMWorld is not needed for every read call.
     @always_inline
     @staticmethod
-    def read[num_chans: Int = 1, interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans], ...], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> MFloat[num_chans]:
-        """Read a value from a Span[MFloat[num_chans], ...] using provided index and interpolation method, which is determined at compile time.
+    def read[num_chans: SIMDLength = 1, interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans], _], f_idx: Float64, prev_f_idx: Float64 = 0.0) -> MFloat[num_chans]:
+        """Read a value from a Span[MFloat[num_chans], _] using provided index and interpolation method, which is determined at compile time.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -328,7 +332,7 @@ struct SpanInterpolator(Movable, Copyable):
 
         Args:
             world: Pointer to the MMMWorld instance.
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
             prev_f_idx: The previous floating-point index (used for [SincInterpolation](SincInterpolator.md)).
 
@@ -356,8 +360,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with no interpolation.
+    def read_none[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with no interpolation.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -365,20 +369,20 @@ struct SpanInterpolator(Movable, Copyable):
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at. It will be truncated to an integer for indexing.
 
         Returns:
             The sample value at the requested index.
         """
 
-        idx = Int(f_idx)
+        var idx = Int(f_idx)
         return SpanInterpolator.read_none[num_chans,bWrap,mask](data, idx)
     
     @always_inline
     @staticmethod
-    def read_none[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], idx: Int) -> MFloat[num_chans]:
-        idx2 = idx
+    def read_none[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], idx: Int) -> type_of(data[0]):
+        var idx2 = idx
         comptime if bWrap:
             comptime if mask != 0:
                 idx2 = idx2 & mask
@@ -390,8 +394,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_linear[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with linear interpolation.
+    def read_linear[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with linear interpolation.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -399,21 +403,23 @@ struct SpanInterpolator(Movable, Copyable):
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
 
         Returns:
             The linearly interpolated sample value.
         """
-        idx0: Int = Int(f_idx)
-        idx1: Int = idx0 + 1
-        frac: Float64 = f_idx - Float64(idx0)
+        var idx0: Int = Int(f_idx)
+        var idx1: Int = idx0 + 1
+        var frac: Float64 = f_idx - Float64(idx0)
+        var y0: MFloat[num_chans]
+        var y1: MFloat[num_chans]
         comptime if bWrap:
             comptime if mask != 0:
                 idx0 = idx0 & mask
                 idx1 = idx1 & mask
             else:
-                length = len(data)
+                var length = len(data)
                 idx0 = idx0 % length
                 idx1 = idx1 % length
             
@@ -429,8 +435,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_quad[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with quadratic interpolation.
+    def read_quad[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with quadratic interpolation.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -438,17 +444,19 @@ struct SpanInterpolator(Movable, Copyable):
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
 
         Returns:
             The quadratically interpolated sample value.
         """
-
-        idx0 = Int(f_idx)
-        idx1 = idx0 + 1
-        idx2 = idx0 + 2
-        frac: Float64 = f_idx - Float64(idx0)
+        var idx0 = Int(f_idx)
+        var idx1 = idx0 + 1
+        var idx2 = idx0 + 2
+        var frac: Float64 = f_idx - Float64(idx0)
+        var y0: MFloat[num_chans]
+        var y1: MFloat[num_chans]
+        var y2: MFloat[num_chans]
 
         comptime if bWrap:
             comptime if mask != 0:
@@ -456,7 +464,7 @@ struct SpanInterpolator(Movable, Copyable):
                 idx1 = idx1 & mask
                 idx2 = idx2 & mask
             else:
-                length = len(data)
+                var length = len(data)
                 idx0 = idx0 % length
                 idx1 = idx1 % length
                 idx2 = idx2 % length
@@ -474,8 +482,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_cubic[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with cubic interpolation.
+    def read_cubic[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with cubic interpolation.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -483,17 +491,21 @@ struct SpanInterpolator(Movable, Copyable):
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used. (only valid for power-of-two lengths).
 
         Args:
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
 
         Returns:
             The cubically interpolated sample value.
         """
-        idx1 = Int(f_idx)
-        idx0 = idx1 - 1
-        idx2 = idx1 + 1
-        idx3 = idx1 + 2
-        frac: Float64 = f_idx - Float64(idx1)
+        var idx1 = Int(f_idx)
+        var idx0 = idx1 - 1
+        var idx2 = idx1 + 1
+        var idx3 = idx1 + 2
+        var y0: MFloat[num_chans]
+        var y1: MFloat[num_chans]
+        var y2: MFloat[num_chans]
+        var y3: MFloat[num_chans]
+        var frac: Float64 = f_idx - Float64(idx1)
 
         comptime if bWrap:
             comptime if mask != 0:
@@ -502,7 +514,7 @@ struct SpanInterpolator(Movable, Copyable):
                 idx2 = idx2 & mask
                 idx3 = idx3 & mask
             else:
-                length = len(data)
+                var length = len(data)
                 idx0 = idx0 % length
                 idx1 = idx1 % length
                 idx2 = idx2 % length
@@ -522,8 +534,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_lagrange4[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], ...], f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with lagrange4 interpolation.
+    def read_lagrange4[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with lagrange4 interpolation.
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -531,19 +543,24 @@ struct SpanInterpolator(Movable, Copyable):
             mask: Bitmask for wrapping indices (if applicable). If 0, standard modulo wrapping is used. If non-zero, bitwise AND wrapping is used (only valid for power-of-two lengths).
 
         Args:
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
 
         Returns:
             The fourth-order Lagrange interpolated sample value.
         """
        
-        idx0 = Int(f_idx)
-        idx1 = idx0 + 1
-        idx2 = idx0 + 2
-        idx3 = idx0 + 3
-        idx4 = idx0 + 4
-        frac: Float64 = f_idx - Float64(idx0)
+        var idx0 = Int(f_idx)
+        var idx1 = idx0 + 1
+        var idx2 = idx0 + 2
+        var idx3 = idx0 + 3
+        var idx4 = idx0 + 4
+        var y0: MFloat[num_chans]
+        var y1: MFloat[num_chans]
+        var y2: MFloat[num_chans]
+        var y3: MFloat[num_chans]
+        var y4: MFloat[num_chans]
+        var frac: Float64 = f_idx - Float64(idx0)
 
         comptime if bWrap:
             comptime if mask != 0:
@@ -553,7 +570,7 @@ struct SpanInterpolator(Movable, Copyable):
                 idx3 = idx3 & mask
                 idx4 = idx4 & mask
             else:
-                length = len(data)
+                var length = len(data)
                 idx0 = idx0 % length
                 idx1 = idx1 % length
                 idx2 = idx2 % length
@@ -577,8 +594,8 @@ struct SpanInterpolator(Movable, Copyable):
 
     @always_inline
     @staticmethod
-    def read_sinc[num_chans: Int = 1, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans], ...], f_idx: Float64, prev_f_idx: Float64) -> MFloat[num_chans]:
-        """Read a value from a `Span[MFloat[num_chans], ...]` using provided index with [SincInterpolation](SincInterpolator.md).
+    def read_sinc[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](world: World, data: Span[MFloat[num_chans], _], f_idx: Float64, prev_f_idx: Float64) -> MFloat[num_chans]:
+        """Read a value from a `Span[MFloat[num_chans], _]` using provided index with [SincInterpolation](SincInterpolator.md).
         
         Parameters:
             num_chans: Number of channels in the data.
@@ -587,7 +604,7 @@ struct SpanInterpolator(Movable, Copyable):
 
         Args:
             world: Pointer to the MMMWorld instance.
-            data: The `Span[MFloat[num_chans], ...]` to read from.
+            data: The `Span[MFloat[num_chans], _]` to read from.
             f_idx: The floating-point index to read at.
             prev_f_idx: The previous floating-point index.
 

@@ -16,6 +16,37 @@ def choose(a: list) -> object:
     """Return a random element from the list a."""
     return random.choice(a)
 
+def wchoose(items: list, weights: list) -> object:
+    """
+    Return a value from the list based on the list of weights provided.
+
+    Args:
+        items: The values to choose from.
+        weights: The weights for the values.
+
+    Returns:
+        A value from the list.
+    """
+    if len(items) != len(weights):
+            raise ValueError("Items and weights must have the same length.")
+    
+    max = 0
+    selected_item = None
+
+    for item, weight in zip(items, weights):
+        if weight <= 0:
+            continue
+
+        u = rrand(0.001, 1.0)
+        
+        # Calculate the Efraimidis-Spirakis sort key: k_i = u_i ** (1 / w_i)
+        key = u ** (1.0 / weight)
+        if key > max:
+            max = key
+            selected_item = item
+
+    return selected_item if selected_item is not None else choose(items)
+
 def swap(a: object, b: object) -> tuple:
     """Swap the values of a and b, returning them in a tuple."""
     return b, a

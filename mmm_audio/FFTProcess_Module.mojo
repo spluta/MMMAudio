@@ -1,4 +1,7 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.BufferedProcess_Module import BufferedProcess, BufferedProcessable
+from mmm_audio.FFTs import *
+from mmm_audio.Buffer_Module import Buffer, SIMDBuffer
 
 @doc_hidden
 struct FFTProcessor[T: FFTProcessable, ifft: Bool = True](BufferedProcessable):
@@ -38,7 +41,7 @@ struct FFTProcessor[T: FFTProcessable, ifft: Bool = True](BufferedProcessable):
     def get_messages(mut self) -> None:
         self.process.get_messages()
 
-trait FFTProcessable(Movable,Copyable, ImplicitlyDestructible):
+trait FFTProcessable(Movable,Copyable, Deinitable):
     """Implement this trait in a custom struct to pass to `FFTProcess`
     as a Parameter.
 
@@ -84,7 +87,7 @@ struct FFTProcess[T: FFTProcessable, ifft: Bool = True,input_window_shape: Windo
         self.world = world
         self.window_size = window_size
         self.hop_size = hop_size
-        p = FFTProcessor[Self.T, Self.ifft](self.world, process=process^, window_size=self.window_size)
+        var p = FFTProcessor[Self.T, Self.ifft](self.world, process=process^, window_size=self.window_size)
         self.buffered_process = BufferedProcess[FFTProcessor[Self.T, Self.ifft], output=Self.ifft, input_window_shape=Self.input_window_shape, output_window_shape=Self.output_window_shape](self.world, process=p^,window_size=self.window_size, hop_size=self.hop_size)
 
     def next(mut self, input: Float64 = 0.0) -> Float64:

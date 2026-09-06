@@ -47,19 +47,19 @@ struct TestDelayInterps(Movable, Copyable):
         self.m.update("which_delay", self.which_delay)
         self.m.update("max_delay_time", self.max_delay_time)  
         self.max_delay_time = self.lag.next(self.max_delay_time) 
-        delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0.001,self.max_delay_time)
+        var delay_time = linlin(self.lfo.next(self.lfo_freq),-1,1,0.001,self.max_delay_time)
 
         delay_time = select(self.mouse_onoff,delay_time, self.mouse_lag.next(linlin(self.world[].mouse_x(), 0.0, 1.0, 0.0, 0.001)))
 
-        input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        var input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
 
-        none = self.delay_none.next(input, delay_time)
-        linear = self.delay_linear.next(input, delay_time)
-        quadratic = self.delay_quadratic.next(input, delay_time)
-        cubic = self.delay_cubic.next(input, delay_time)
-        lagrange4 = self.delay_lagrange.next(input, delay_time)
+        var none = self.delay_none.next(input, delay_time)
+        var linear = self.delay_linear.next(input, delay_time)
+        var quadratic = self.delay_quadratic.next(input, delay_time)
+        var cubic = self.delay_cubic.next(input, delay_time)
+        var lagrange4 = self.delay_lagrange.next(input, delay_time)
 
-        one_delay = select(self.which_delay,none,linear,quadratic,cubic,lagrange4)
-        sig = input * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
+        var one_delay = select(self.which_delay,none,linear,quadratic,cubic,lagrange4)
+        var sig = input * (1.0 - self.mix) + one_delay * self.mix  # Mix the dry and wet signals based on the mix level
 
         return MFloat[2](sig, sig)

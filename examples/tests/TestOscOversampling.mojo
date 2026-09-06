@@ -29,17 +29,17 @@ struct TestOscOversampling(Movable, Copyable):
         self.lag = Lag(world, 0.1)
 
         self.downsampler = Downsampler[1,TimesOversampling.x16](world)
-        oversampled_world = world[].create_subworld(TimesOversampling.x16)
+        var oversampled_world = world[].create_subworld(TimesOversampling.x16)
         self.osc5 = Osc[1,Interp.linear](oversampled_world)
 
     def next(mut self) -> Float64:
         self.messenger.update("which", self.which) 
-        freq = self.lag.next(linexp(self.world[].mouse_x(), 0.0, 1.0, 20.0, 20000.0))
+        var freq = self.lag.next(linexp(self.world[].mouse_x(), 0.0, 1.0, 20.0, 20000.0))
 
         for _ in range(TimesOversampling.x16.times):
             self.downsampler.add_sample(self.osc5.next[OscType.saw](freq))
             
-        sample = select(self.which, 
+        var sample = select(self.which, 
             self.osc.next[OscType.saw](freq)[0],
             self.osc1.next[OscType.saw](freq)[0],
             self.osc2.next[OscType.saw](freq)[0],

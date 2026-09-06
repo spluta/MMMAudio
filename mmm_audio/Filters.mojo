@@ -1,9 +1,13 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.functions import *
+from mmm_audio.Polyphony import PolyReset
+from mmm_audio.MMMWorld_Module import TimesOversampling
+from mmm_audio.Oversampling import *
 from std.math import exp, sqrt, tan, pi, tanh, ceil, floor
 
 from std.sys import simd_width_of
 
-struct Lag[num_chans: Int = 1](Movable, Copyable):
+struct Lag[num_chans: SIMDLength = 1](Movable, Copyable):
     """A lag processor that smooths input values over time based on a specified lag time in seconds.
 
     Parameters:
@@ -104,14 +108,14 @@ struct Lags[num_lags: Int](Movable, Copyable):
     def __init__(out self, sr: Float64, lag_time: Float64 = 0.1):
         self.lags = [Lag[Self.simd_width](sr, lag_time) for _ in range(Self.num_simd)]
 
-    def next(mut self, vals: Span[MFloat[1], ...]):
-        """Process a Span (List or InlineArray) of Floats through the lags.
+    def next(mut self, vals: Span[MFloat[1], _]):
+        """Process a Span (List or Array) of Floats through the lags.
 
         Args:
             vals: Input values whose length should match num_lags.
         """
         comptime for i in range(Self.num_simd):
-            simd_val = MFloat[Self.simd_width](0.0)
+            var simd_val = MFloat[Self.simd_width](0.0)
             comptime for j in range(Self.simd_width):
                 comptime idx = i * Self.simd_width + j
                 comptime if idx < Self.num_lags:
@@ -134,17 +138,17 @@ struct Lags[num_lags: Int](Movable, Copyable):
             self.lags[i].set_lag_time(lag)
 
     def __getitem__(self, idx: Int) -> Float64:
-        simd_index = idx // Self.simd_width
-        lane_index = idx % Self.simd_width
+        var simd_index = idx // Self.simd_width
+        var lane_index = idx % Self.simd_width
         return self.lags[simd_index].lagged[lane_index]
 
     def __setitem__(mut self, idx: Int, value: Float64):
-        simd_index = idx // Self.simd_width
-        lane_index = idx % Self.simd_width
+        var simd_index = idx // Self.simd_width
+        var lane_index = idx % Self.simd_width
         self.lags[simd_index].input[lane_index] = value
 
 
-struct LagUD[num_chans: Int = 1](Movable, Copyable):
+struct LagUD[num_chans: SIMDLength = 1](Movable, Copyable):
     """A lag processor with separate lag times for rising (up) and falling (down) values.
 
     Parameters:
@@ -192,8 +196,8 @@ struct LagUD[num_chans: Int = 1](Movable, Copyable):
             Output values after applying the appropriate lag.
         """
         # Select coefficient based on whether input is greater than current value
-        mask = input.gt(self.lagged)
-        b1 = mask.select(self.b1_up, self.b1_down)
+        var mask = input.gt(self.lagged)
+        var b1 = mask.select(self.b1_up, self.b1_down)
 
         self.lagged = input + b1 * (self.lagged - input)
         self.lagged = sanitize(self.lagged)
@@ -208,8 +212,8 @@ struct LagUD[num_chans: Int = 1](Movable, Copyable):
             Output values after applying the appropriate lag.
         """
         # Select coefficient based on whether input is greater than current value
-        mask = self.input.gt(self.lagged)
-        b1 = mask.select(self.b1_up, self.b1_down)
+        var mask = self.input.gt(self.lagged)
+        var b1 = mask.select(self.b1_up, self.b1_down)
 
         self.lagged = self.input + b1 * (self.lagged - self.input)
         self.lagged = sanitize(self.lagged)
@@ -246,14 +250,14 @@ struct LagsUD[num_lags: Int](Movable, Copyable):
     def __init__(out self, world: World, lag_up: Float64 = 0.1, lag_down: Float64 = 0.1):
         self.lags = [LagUD[Self.simd_width](world, lag_up, lag_down) for _ in range(Self.num_simd)]
 
-    def next(mut self, vals: Span[MFloat[1], ...]):
-        """Process a Span (List or InlineArray) of Floats through the lags.
+    def next(mut self, vals: Span[MFloat[1], _]):
+        """Process a Span (List or Array) of Floats through the lags.
 
         Args:
             vals: Input values whose length should match num_lags.
         """
         comptime for i in range(Self.num_simd):
-            simd_val = MFloat[Self.simd_width](0.0)
+            var simd_val = MFloat[Self.simd_width](0.0)
             comptime for j in range(Self.simd_width):
                 comptime idx = i * Self.simd_width + j
                 comptime if idx < Self.num_lags:
@@ -277,13 +281,13 @@ struct LagsUD[num_lags: Int](Movable, Copyable):
             self.lags[i].set_lag_times(lag_up, lag_down)
 
     def __getitem__(self, idx: Int) -> Float64:
-        simd_index = idx // Self.simd_width
-        lane_index = idx % Self.simd_width
+        var simd_index = idx // Self.simd_width
+        var lane_index = idx % Self.simd_width
         return self.lags[simd_index].lagged[lane_index]
 
     def __setitem__(mut self, idx: Int, value: Float64):
-        simd_index = idx // Self.simd_width
-        lane_index = idx % Self.simd_width
+        var simd_index = idx // Self.simd_width
+        var lane_index = idx % Self.simd_width
         self.lags[simd_index].input[lane_index] = value
 
 @fieldwise_init
@@ -326,7 +330,7 @@ struct FilterType(Equatable, ImplicitlyCopyable):
     def __ne__(self, other: Self) -> Bool:
         return not (self == other)
 
-struct SVF[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct SVF[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """A State Variable Filter struct.
 
     To use the different modes, see the mode-specific methods: `lpf`, `hpf`, `bpf`, `notch`, `peak`, `bell`, `allpass`, `lowshelf`, and `highshelf`. Each of these methods takes the same parameters: input, frequency, q, and gain_db (for those that use it).
@@ -406,9 +410,9 @@ struct SVF[num_chans: Int = 1](Movable, Copyable, PolyReset):
     def _get_mix_coefficients[filter_type: FilterType](self, k: MFloat[Self.num_chans], A: MFloat[Self.num_chans]) -> Tuple[MFloat[Self.num_chans], MFloat[Self.num_chans], MFloat[Self.num_chans]]:
         """Get mixing coefficients for different filter types"""
         
-        mc0 = MFloat[Self.num_chans](1.0)
-        mc1 = MFloat[Self.num_chans](0.0)
-        mc2 = MFloat[Self.num_chans](0.0)
+        var mc0 = MFloat[Self.num_chans](1.0)
+        var mc1 = MFloat[Self.num_chans](0.0)
+        var mc2 = MFloat[Self.num_chans](0.0)
 
         comptime for i in range(Self.num_chans):
             comptime if filter_type == FilterType.lowpass:    
@@ -613,7 +617,7 @@ struct SVF[num_chans: Int = 1](Movable, Copyable, PolyReset):
         """
         return self.next[FilterType.highshelf](input, frequency, q, gain_db)
 
-struct lpf_LR4[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct lpf_LR4[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """A 4th-order [Linkwitz-Riley](https://en.wikipedia.org/wiki/Linkwitz%E2%80%93Riley_filter) lowpass filter.
 
     Parameters:
@@ -655,7 +659,7 @@ struct lpf_LR4[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.svf1.reset()
         self.svf2.reset()
 
-struct OnePole[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct OnePole[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """One-pole IIR filter that can be configured as lowpass or highpass. Has three defs: `next`, `lpf`, and `hpf`. The `next` def is the most general, allowing you to specify the filter coefficient directly. The `lpf` and `hpf` defs are convenience methods that calculate the appropriate coefficient based on a given cutoff frequency.
 
     Parameters:
@@ -685,7 +689,7 @@ struct OnePole[num_chans: Int = 1](Movable, Copyable, PolyReset):
         Returns:
             The next sample of the filtered output.
         """
-        coef2 = clip(coef, -0.999999, 0.999999)
+        var coef2 = clip(coef, -0.999999, 0.999999)
         var output = (1 - abs(coef2)) * input + coef2 * self.last_samp
         self.last_samp = output
         return output
@@ -725,13 +729,13 @@ struct OnePole[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.last_samp = MFloat[Self.num_chans](0.0)
 
 @doc_hidden
-def _time_to_coef[num_chans: Int](time_s: MFloat[num_chans], sample_rate: MFloat[num_chans]) -> MFloat[num_chans]:
-    mask0 = time_s.le(0.0)
-    val = 1.0 / (time_s * sample_rate)
-    mask = val.lt(1.0)
+def _time_to_coef[num_chans: SIMDLength](time_s: MFloat[num_chans], sample_rate: MFloat[num_chans]) -> MFloat[num_chans]:
+    var mask0 = time_s.le(0.0)
+    var val = 1.0 / (time_s * sample_rate)
+    var mask = val.lt(1.0)
     return mask0.select(1.0, mask.select(val, 1.0))
 
-struct Amplitude[num_chans: Int](Movable, Copyable):
+struct Amplitude[num_chans: SIMDLength](Movable, Copyable):
     """An amplitude tracker that smooths the absolute value of an input signal over time based on specified attack and release times.
     
     Parameters:
@@ -772,15 +776,14 @@ struct Amplitude[num_chans: Int](Movable, Copyable):
         Returns:
             The next sample of the amplitude-tracked output.
         """
-
-        a_val = abs(sample)
-        mask = a_val.gt(self.last_val)
-        coef = mask.select(self.coef_att, self.coef_rel)
+        var a_val = abs(sample)
+        var mask = a_val.gt(self.last_val)
+        var coef = mask.select(self.coef_att, self.coef_rel)
         self.last_val = self.one_pole.next(a_val, coef)
 
         return self.last_val
 
-struct Onsets[num_chans: Int = 1](Movable, Copyable):
+struct Onsets[num_chans: SIMDLength = 1](Movable, Copyable):
     """Amplitude-based onset detector. Uses Amplitude instead of an FFT to detect onsets. See SpectralFluxOnsets for an FFT-based onset detector.
     
     Parameters:
@@ -836,9 +839,9 @@ struct Onsets[num_chans: Int = 1](Movable, Copyable):
         var was_below = self.prev_amplitude.le(self.threshold)
         var crossed = above_threshold & was_below
         
-        cooldown_passed = self.samples_since_onset.ge(MInt[Self.num_chans](self.cooldown_samples))
+        var cooldown_passed = self.samples_since_onset.ge(MInt[Self.num_chans](self.cooldown_samples))
 
-        onset = crossed & cooldown_passed
+        var onset = crossed & cooldown_passed
 
         self.samples_since_onset = onset.select(MInt[Self.num_chans](0), self.samples_since_onset)
         
@@ -852,7 +855,7 @@ struct Onsets[num_chans: Int = 1](Movable, Copyable):
         self.prev_diff = MFloat[Self.num_chans](0.0)
         self.samples_since_onset = MInt[Self.num_chans](self.cooldown_samples)
 
-struct DCTrap[num_chans: Int=1](Movable, Copyable, PolyReset):
+struct DCTrap[num_chans: SIMDLength=1](Movable, Copyable, PolyReset):
     """DC Trap filter.
     
     Implementation from Digital Sound Generation by Beat Frei. The cutoff
@@ -892,12 +895,12 @@ struct DCTrap[num_chans: Int=1](Movable, Copyable, PolyReset):
         """
         self.last_inner = self.last_samp * self.alpha + self.last_inner
 
-        sample = input - self.last_inner
+        var sample = input - self.last_inner
         self.last_samp = sample
 
         return sample
 
-struct VAOnePole[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct VAOnePole[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """
     One-pole filter based on the Virtual Analog design by 
     Vadim Zavalishin in "The Art of VA Filter Design".
@@ -985,7 +988,7 @@ struct VAOnePole[num_chans: Int = 1](Movable, Copyable, PolyReset):
         """Clears filter's internal state.""" 
         self.last_1 = MFloat[Self.num_chans](0.0)
 
-struct VAMoogLadder[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable, PolyReset):
+struct VAMoogLadder[num_chans: SIMDLength = 1, ov_samp: TimesOversampling = TimesOversampling.none](Movable, Copyable, PolyReset):
     """Virtual Analog Moog Ladder Filter.
     
     Implementation based on the Virtual Analog design by Vadim Zavalishin in 
@@ -1048,8 +1051,8 @@ struct VAMoogLadder[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversa
         var s4 = g * g * g * (self.last_1 * (1 - g)) + g * g * (self.last_2 * (1 - g)) + g * (self.last_3 * (1 - g)) + (self.last_4 * (1 - g))
         
         # internally clips the feedback signal to prevent the filter from blowing up
-        mask1: MBool[Self.num_chans] = s4.gt(2.0)
-        mask2: MBool[Self.num_chans] = s4.lt(-2.0)
+        var mask1: MBool[Self.num_chans] = s4.gt(2.0)
+        var mask2: MBool[Self.num_chans] = s4.lt(-2.0)
 
         s4 = mask1.select(
             tanh(s4 - 1.0) + 1.0,
@@ -1102,7 +1105,7 @@ struct VAMoogLadder[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversa
         else:
             comptime for i in range(Self.ov_samp.times):
                 # upsample the input
-                sig2 = self.upsampler.next(sig, i)
+                var sig2 = self.upsampler.next(sig, i)
 
                 var lp4 = self.lp4(sig2, freq, res)
                 comptime if Self.ov_samp == TimesOversampling.none:
@@ -1111,7 +1114,7 @@ struct VAMoogLadder[num_chans: Int = 1, ov_samp: TimesOversampling = TimesOversa
                     self.downsampler.add_sample(lp4)
             return self.downsampler.get_sample()
 
-struct Reson[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct Reson[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """Resonant filter with lowpass, highpass, and bandpass modes.
 
     A translation of Julius Smith's Faust implementation of [tf2s (virtual analog) resonant filters](https://github.com/grame-cncm/faustlibraries/blob/6061da8bf2279ae4281333861a3dc6254e9076f9/filters.lib#L2054).
@@ -1180,7 +1183,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable, PolyReset):
         var b1 = 0.0
         var b0 = clip(gain, 0.0, 1.0)
 
-        b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
+        var b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
 
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
@@ -1220,7 +1223,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable, PolyReset):
         var b1 = clip(gain, 0.0, 1.0)
         var b0 = 0.0
 
-        b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
+        var b0d, b1d, b2d, a1d, a2d = tf2s[Self.num_chans](b2, b1, b0, a1, a0, wc, self.sample_rate)
 
         return self.tf2.next(input, b0d, b1d, b2d, a1d, a2d)
 
@@ -1229,7 +1232,7 @@ struct Reson[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.tf2.reset()
 
 @doc_hidden
-struct FIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct FIR[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """Finite Impulse Response (FIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -1253,7 +1256,7 @@ struct FIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.index = 0
 
     @always_inline
-    def next(mut self: FIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the FIR filter.
 
         Args:
@@ -1276,7 +1279,7 @@ struct FIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.index = 0
 
 @doc_hidden
-struct IIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct IIR[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """Infinite Impulse Response (IIR) filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -1300,7 +1303,7 @@ struct IIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.fb = MFloat[Self.num_chans](0.0)
 
     @always_inline
-    def next(mut self: IIR, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], *coeffs: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Compute the next output sample of the IIR filter.
         
         Args:
@@ -1324,7 +1327,7 @@ struct IIR[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.fb = MFloat[Self.num_chans](0.0)
 
 @doc_hidden
-struct tf2[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct tf2[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """Second-order transfer function filter implementation.
 
     A translation of Julius Smith's Faust implementation of digital filters.
@@ -1344,7 +1347,7 @@ struct tf2[num_chans: Int = 1](Movable, Copyable, PolyReset):
         self.iir = IIR[Self.num_chans](world)
 
     @always_inline
-    def next(mut self: tf2, input: MFloat[self.num_chans], b0d: MFloat[self.num_chans], b1d: MFloat[self.num_chans], b2d: MFloat[self.num_chans], a1d: MFloat[self.num_chans], a2d: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
+    def next(mut self, input: MFloat[self.num_chans], b0d: MFloat[self.num_chans], b1d: MFloat[self.num_chans], b2d: MFloat[self.num_chans], a1d: MFloat[self.num_chans], a2d: MFloat[self.num_chans]) -> MFloat[self.num_chans]:
         """Process one sample through the second-order transfer function filter.
 
         Args:
@@ -1366,7 +1369,7 @@ struct tf2[num_chans: Int = 1](Movable, Copyable, PolyReset):
 
 @doc_hidden
 @always_inline
-def tf2s[num_chans: Int = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: MFloat[num_chans], a1: MFloat[num_chans], a0: MFloat[num_chans], w1: MFloat[num_chans], sample_rate: Float64) -> Tuple[MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans]]:
+def tf2s[num_chans: SIMDLength = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: MFloat[num_chans], a1: MFloat[num_chans], a0: MFloat[num_chans], w1: MFloat[num_chans], sample_rate: Float64) -> Tuple[MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans], MFloat[num_chans]]:
     var c   = 1/tan(w1*0.5/sample_rate) # bilinear-transform scale-factor
     var csq = c*c
     var d   = a0 + a1 * c + csq
@@ -1378,7 +1381,7 @@ def tf2s[num_chans: Int = 1](b2: MFloat[num_chans], b1: MFloat[num_chans], b0: M
 
     return (b0d, b1d, b2d, a1d, a2d)
 
-struct Biquad[num_chans: Int = 1](Movable, Copyable, PolyReset):
+struct Biquad[num_chans: SIMDLength = 1](Movable, Copyable, PolyReset):
     """A Biquad filter struct.
 
     To use the different modes, see the mode-specific methods.
@@ -1551,7 +1554,7 @@ struct Biquad[num_chans: Int = 1](Movable, Copyable, PolyReset):
         Returns:
             The next sample of the filtered output.
         """
-        f2 = clip(frequency, 0.0, self.nyquist)
+        var f2 = clip(frequency, 0.0, self.nyquist)
         var q2 = max(q, 1e-6)
         var coefs = self._compute_coefficients[filter_type](f2, q2, gain_db)
         var b0 = coefs[0]

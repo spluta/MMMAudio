@@ -38,9 +38,6 @@ struct EQSynth(Movable, Copyable):
         self.buffer = Buffer.load("resources/Shiverer.wav")
         self.num_chans = MInt[1](self.buffer.num_chans)
         
-        # without printing this, the compiler wants to free the buffer for some reason
-        print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
-        
         self.play_buf = Play(self.world)
         self.lowshelf = Biquad[2](self.world)
         self.bell1 = Biquad[2](self.world)

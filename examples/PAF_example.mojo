@@ -35,10 +35,10 @@ struct PAF_example(Copyable, Movable):
         self.m.update("bandwidth", self.band)
         self.trig = self.m.notify_trig("trig")
 
-        env = self.env.next[interp=Interp.linear](self.trig)
+        var env = self.env.next[interp=Interp.linear](self.trig)
 
-        osc = self.paf.next(self.fund, self.center, self.band)
-        out = osc * env
+        var osc = self.paf.next(self.fund, self.center, self.band)
+        var out = osc * env
         # print("osc: " + String(osc))
 
         return out

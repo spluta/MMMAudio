@@ -52,14 +52,14 @@ struct DelaySynth(Movable, Copyable):
         self.m.update("main", self.main) 
 
         var sample = self.playBuf.next[num_chans=2](self.buf, 1.0 if self.play else 0.0)  # Read samples from the buffer
-        deltime = self.delay_time_lag.next(MFloat[2](self.delaytime_m, self.delaytime_m * 0.9))
+        var deltime = self.delay_time_lag.next(MFloat[2](self.delaytime_m, self.delaytime_m * 0.9))
 
 
-        fb = MFloat[2](dbamp(self.feedback), dbamp(self.feedback) * 0.9)
+        var fb = MFloat[2](dbamp(self.feedback), dbamp(self.feedback) * 0.9)
 
-        delays = self.delays.next(sample * self.gate_lag.next(1.0 if self.delay_input else 0.0), deltime, fb)
+        var delays = self.delays.next(sample * self.gate_lag.next(1.0 if self.delay_input else 0.0), deltime, fb)
         delays = self.svf.lpf(delays, self.ffreq, self.q)
-        output = (self.mix * delays) + ((1.0 - self.mix) * sample)
+        var output = (self.mix * delays) + ((1.0 - self.mix) * sample)
         output *= dbamp(-12.0)
         output *= self.main_lag.next(1.0 if self.main else 0.0)
         return output

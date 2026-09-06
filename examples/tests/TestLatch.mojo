@@ -20,8 +20,8 @@ struct TestLatch(Movable, Copyable):
         self.messenger = Messenger(self.world)
 
     def next(mut self) -> MFloat[2]:
-        freq = self.lfo.next(0.1) * 200 + 300
-        edge = self.dusty.next_bool(0.5, 1.0)
+        var freq = self.lfo.next(0.1) * 200 + 300
+        var edge = self.dusty.next_bool(0.5, 1.0)
         freq = self.latch.next(freq,edge)
-        sample = self.osc.next(freq)  # Get the next sample from the synth
+        var sample = self.osc.next(freq)  # Get the next sample from the synth
         return sample * 0.2  # Get the next sample from the synth

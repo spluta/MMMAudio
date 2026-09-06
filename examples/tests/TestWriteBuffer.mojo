@@ -18,7 +18,7 @@ struct TestWriteBuffer(Copyable,Movable):
         self.counter = 0
 
     def next(mut self) -> SIMD[DType.float64,2]:
-        linear = self.linear.next[1,Interp.linear](self.buf)
+        var linear = self.linear.next[1,Interp.linear](self.buf)
         self.rec.write_next(linear)
         if self.counter == Int(self.world[].sample_rate*2.0 + 20000):
             self.rec.buf.write_to_file("tmp/rec_test1.wav")

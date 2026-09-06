@@ -4,7 +4,7 @@ from mmm_audio import *
 
 # there can only be one graph in an MMMAudio instance
 # a graph can have as many synths as you want
-struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
+struct TestHardClipADAA[num_chans: SIMDLength = 2](Movable, Copyable):
     var world: World
     var osc: Osc[]
     var lag: Lag[]
@@ -19,10 +19,10 @@ struct TestHardClipADAA[num_chans: Int = 2](Movable, Copyable):
         self.lag = Lag(world)
 
     def next(mut self) -> MFloat[Self.num_chans]:
-        sample = self.osc.next(self.world[].mouse_y() * 40.0 + 20)  # Get the next white noise sample
-        gain = self.lag.next(self.world[].mouse_x() * (20.0)) + 1.0
+        var sample = self.osc.next(self.world[].mouse_y() * 40.0 + 20)  # Get the next white noise sample
+        var gain = self.lag.next(self.world[].mouse_x() * (20.0)) + 1.0
 
-        sample2 = self.clip.next(sample*gain) 
+        var sample2 = self.clip.next(sample*gain) 
         # sample = self.overdrive.next(sample*gain)
         return MFloat[self.num_chans](sample, sample2)*0.5
 

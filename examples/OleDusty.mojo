@@ -12,7 +12,7 @@ struct Dusty(Movable, Copyable):
 
     def next(mut self, freq: MFloat[1]) -> MFloat[2]:
 
-        out = self.dust.next(freq*0.125, freq*8) * 0.5
+        var out = self.dust.next(freq*0.125, freq*8) * 0.5
 
         # uncomment below for use the phase of the Dust oscillator instead of the impulse
         # out = self.dust.get_phase()
@@ -37,9 +37,9 @@ struct OleDusty(Movable, Copyable):
 
     def next(mut self) -> MFloat[2]:
 
-        freq = linexp(self.world[].mouse_y(), 0.0, 1.0, 100.0, 2000.0)
+        var freq = linexp(self.world[].mouse_y(), 0.0, 1.0, 100.0, 2000.0)
 
-        out = self.dusty.next(linlin(self.world[].mouse_x(), 0.0, 1.0, 1.0, 10.0))
+        var out = self.dusty.next(linlin(self.world[].mouse_x(), 0.0, 1.0, 1.0, 10.0))
 
         # the reson filter uses SIMD to run 2 filters in parallel, each processing a channel of the dusty synth
         out = self.reson.bpf(out, self.lag.next(freq), 10.0, 1.0)  # apply a bandpass filter to the output of the Dusty synth

@@ -36,3 +36,16 @@ Join the [MMMAudio Discourse Group](https://mmmaudio.discourse.group/). Ask ques
 Created by Sam Pluta and Ted Moore.
 
 This repository includes a recording of "Shiverer" by Eric Wubbels as the default sample. This was performed by Eric Wubbels and Erin Lesser and recorded by Jeff Snyder.
+
+## Citing MMMAudio
+
+The best way to cite this work is the [paper](https://github.com/mmmaudio/mmmaudio/blob/main/resources/MMMAudioPaperICMC2026.pdf) that was presented at the 2026 International Computer Music Conference.
+
+```bibtex
+@inproceedings{pluta2026mmmaudio,
+  title={The MMMAudio Computer Music Environment},
+  author={Pluta, Sam and Moore, Ted},
+  booktitle={Proceedings of the International Computer Music Conference (ICMC)},
+  year=2026
+}
+```

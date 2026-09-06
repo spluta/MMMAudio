@@ -5,7 +5,7 @@ comptime num_chans = 2
 struct PlayRecExample(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]
-    var num_chans: Int
+    var num_chans: SIMDLength
 
     var play_buf: Play
     var play_rate: Float64
@@ -30,7 +30,7 @@ struct PlayRecExample(Movable, Copyable):
         self.recorder = Recorder[2](self.world, Int(10*world[].sample_rate), world[].sample_rate)  # Initialize the recorder for 2 channels
 
         # without printing this, the compiler wants to free the buffer for some reason
-        print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
+        print("Loaded buffer with", Int(self.buffer.num_chans), "channels and", self.buffer.num_frames, "frames.")
 
         self.play_rate = 1.0
         self.record_bool = False
@@ -46,35 +46,35 @@ struct PlayRecExample(Movable, Copyable):
     def next(mut self) -> MFloat[num_chans]:
         self.messenger.update("lpf_freq", self.lpf_freq)
         self.messenger.update("play_rate", self.play_rate)
-        load_buffer = self.messenger.notify_update("load_buffer", self.filepath)
+        var load_buffer = self.messenger.notify_update("load_buffer", self.filepath)
         if load_buffer:
             print("Loading new buffer from:", self.filepath)
-            temp_buffer = SIMDBuffer.load(self.filepath)
+            var temp_buffer = SIMDBuffer.load(self.filepath)
             if temp_buffer.num_frames > 0 and temp_buffer.num_chans > 0:
                 self.buffer = temp_buffer^
                 self.play_buf.reset_phase()
-        start_rec = self.messenger.notify_trig("start_recording")
+        var start_rec = self.messenger.notify_trig("start_recording")
         if start_rec:
             print("Starting recording to internal buffer.")
             self.recorder.write_head = 0
             self.record_bool = True
-        stop_rec = self.messenger.notify_trig("stop_recording")
+        var stop_rec = self.messenger.notify_trig("stop_recording")
         if stop_rec:
             print("Stopping recording.")
             self.record_bool = False
         
 
-        save_buffer = self.messenger.notify_update("save_buffer", self.filepath)
+        var save_buffer = self.messenger.notify_update("save_buffer", self.filepath)
         if save_buffer:
             print("Saving current buffer to:", self.filepath)
             self.recorder.buf.write_to_file(self.filepath, self.recorder.write_head)
             print("Saved", self.recorder.write_head, "samples to file.")
         
-        out = self.play_buf.next[num_chans=num_chans](self.buffer, self.play_rate, True)
+        var out = self.play_buf.next[num_chans=num_chans](self.buffer, self.play_rate, True)
         if self.record_bool:
             self.recorder.write_next[loop=False](out)
 
-        freq = self.lpf_freq_lag.next(self.lpf_freq)
+        var freq = self.lpf_freq_lag.next(self.lpf_freq)
         out = self.moog.next(out, freq, 1.0)
         return out
 

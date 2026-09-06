@@ -25,18 +25,18 @@ struct BinScramble(Copyable,Movable):
     def new_swaps(mut self) -> None:
         self.swaps.clear()
         for _ in range(self.nscrambles):
-            i = rrand(0, self.nbins - 1)
-            minj = max(i - self.scramble_range,0)
-            maxj = min(i + self.scramble_range, self.nbins - 1)
-            j = rrand(minj, maxj)
+            var i = rrand(0, self.nbins - 1)
+            var minj = max(i - self.scramble_range,0)
+            var maxj = min(i + self.scramble_range, self.nbins - 1)
+            var j = rrand(minj, maxj)
             self.swaps.append((Int(i),Int(j)))
 
     def next(mut self, mut magnitudes: List[Float64], mut phases: List[Float64]) -> None:
         for (i,j) in self.swaps:
-            temp_mag = magnitudes[i]
+            var temp_mag = magnitudes[i]
             magnitudes[i] = magnitudes[j]
             magnitudes[j] = temp_mag
-            temp_phase = phases[i]
+            var temp_phase = phases[i]
             phases[i] = phases[j]
             phases[j] = temp_phase
 
@@ -91,10 +91,10 @@ struct TestFFTProcess(Movable, Copyable):
         self.m.update("onsets_thresh", self.onsets.threshold)
         self.m.update("onsets_min_slice_len", self.onsets.debounce)
 
-        input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
-        onset = self.onsets.next(input)
+        var input = self.playBuf.next(self.buffer, 1.0, True)  # Read samples from the buffer
+        var onset = self.onsets.next(input)
         if onset:
             self.fftlowpass.buffered_process.process.process.bin_scramble.new_swaps()
-        out = self.fftlowpass.next(input)
+        var out = self.fftlowpass.next(input)
         return SIMD[DType.float64,2](out,out)
 

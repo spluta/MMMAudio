@@ -24,7 +24,7 @@ struct OscVoice(Movable, Copyable):
         self.messenger.update("gate", self.gate) 
         self.messenger.update("freq", self.freq) 
         self.messenger.update("wubb_rate", self.wubb_rate)
-        osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
+        var osc_frac = self.tri.next[OscType.triangle](self.wubb_rate, 0.75, trig=self.gate) * 0.5 + 0.5
         return self.osc.next_vwt(buffer, self.freq, osc_frac = osc_frac) * self.env.next(0.01,0.2,0.1,self.gate,2)
 
 struct WavetableOsc(Movable, Copyable):

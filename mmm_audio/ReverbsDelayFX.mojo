@@ -1,6 +1,11 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.functions import *
+from mmm_audio.Delays import *
+from mmm_audio.Filters import *
+from mmm_audio.Oscillators import *
+from std.math import sqrt
 
-struct Freeverb[num_chans: Int = 1](Movable, Copyable):
+struct Freeverb[num_chans: SIMDLength = 1](Movable, Copyable):
     """
     A custom implementation of the Freeverb reverb algorithm. Based on Romain Michon's Faust implementation (https://github.com/grame-cncm/faustlibraries/blob/master/reverbs.lib), thus is licensed under LGPL.
 
@@ -65,14 +70,14 @@ struct Freeverb[num_chans: Int = 1](Movable, Copyable):
           The processed output sample.
 
         """
-        room_size_clipped = clip(room_size, 0.0, 1.0)
-        added_space_clipped = clip(added_space, 0.0, 1.0)
-        feedback = 0.28 + (room_size_clipped * 0.7)
-        feedback2 = 0.5
+        var room_size_clipped = clip(room_size, 0.0, 1.0)
+        var added_space_clipped = clip(added_space, 0.0, 1.0)
+        var feedback = 0.28 + (room_size_clipped * 0.7)
+        var feedback2 = 0.5
 
-        delay_offset = added_space_clipped * 0.0012
+        var delay_offset = added_space_clipped * 0.0012
 
-        out = self.lp_comb0.next(input, 0.025306122448979593 + delay_offset, feedback, lp_comb_lpfreq)
+        var out = self.lp_comb0.next(input, 0.025306122448979593 + delay_offset, feedback, lp_comb_lpfreq)
         out += self.lp_comb1.next(input, 0.026938775510204082 + delay_offset, feedback, lp_comb_lpfreq)
         out += self.lp_comb2.next(input, 0.02895691609977324 + delay_offset, feedback, lp_comb_lpfreq)
         out += self.lp_comb3.next(input, 0.03074829931972789 + delay_offset, feedback, lp_comb_lpfreq)
@@ -201,15 +206,15 @@ struct DattorroReverb[interp: Interp = Interp.none](Movable, Copyable):
 
     def next(mut self, input: MFloat[2]) -> MFloat[2]:
         
-        upper = (input[0] + input[1]) * 0.5
+        var upper = (input[0] + input[1]) * 0.5
         upper = self.pre_delay.next(upper,self.pre_delay_time)
         upper = self.one_pole.next(upper, 1-self.bandwidth)
         for i in range(len(self.allpass_early)):
           upper = self.allpass_early[i].next(upper, self.early_dtimes[i], self.input_diffusion1 if i < 2 else self.input_diffusion2)
 
-        excursion = self.shimmer.next(MFloat[2](1, 0.707), MFloat[2](0.0, 0.678)) * self.EXCURSION
+        var excursion = self.shimmer.next(MFloat[2](1, 0.707), MFloat[2](0.0, 0.678)) * self.EXCURSION
 
-        tank = upper + self.feedback
+        var tank = upper + self.feedback
         tank = self.ap1.next(tank, self.tank_delay_times[0] + excursion, self.decay_diffusion1)
         tank = self.del1.next(tank, self.tank_delay_samples[1])
         tank = self.pole.next(tank, self.damping)
@@ -219,14 +224,14 @@ struct DattorroReverb[interp: Interp = Interp.none](Movable, Copyable):
         
         self.feedback = self.trap.next(MFloat[2](tank[1], tank[0])) # flip left and right for feedback
 
-        accumulator = MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[0])
+        var accumulator = MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[0])
         accumulator += MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[1])
         accumulator -= MFloat[2](0.0, 0.6) * self.ap2.tap(self.final_taps[2])
         accumulator += MFloat[2](0.0, 0.6) * self.del2.tap(self.final_taps[3])
         accumulator -= MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[4])
         accumulator -= MFloat[2](0.6, 0.0) * self.ap2.tap(self.final_taps[5])
         accumulator -= MFloat[2](0.6, 0.0) * self.del2.tap(self.final_taps[6])
-        L = accumulator.reduce_add()
+        var L = accumulator.reduce_add()
 
         accumulator = MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[7])
         accumulator += MFloat[2](0.6, 0.0) * self.del1.tap(self.final_taps[8])
@@ -235,11 +240,11 @@ struct DattorroReverb[interp: Interp = Interp.none](Movable, Copyable):
         accumulator -= MFloat[2](0.0, 0.6) * self.del1.tap(self.final_taps[11])
         accumulator -= MFloat[2](0.0, 0.6) * self.ap2.tap(self.final_taps[12])
         accumulator -= MFloat[2](0.0, 0.6) * self.del2.tap(self.final_taps[13])
-        R = accumulator.reduce_add()
+        var R = accumulator.reduce_add()
 
         return MFloat[2](L, R)
 
-struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
+struct Phaser[num_chans: SIMDLength = 1, stages: Int = 8](Movable, Copyable):
     """A phaser effect implemented as a series of allpass filters, with the center frequencies modulated by an LFO.
     
     Parameters:
@@ -276,19 +281,20 @@ struct Phaser[num_chans: Int = 1, stages: Int = 8](Movable, Copyable):
             The phaser output.
         """
 
-        allpass_out = input
-        lfo = self.lfo.next[OscType.triangle](lfo_freq)
-        center_freq_real = abs(center_freq)
-        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2**lfo_octaves), center_freq_real*(2**lfo_octaves))
+        var allpass_out = input
+        var lfo = self.lfo.next[OscType.triangle](lfo_freq)
+        var center_freq_real = abs(center_freq)
+        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2.**lfo_octaves), center_freq_real*(2.**lfo_octaves))
+        var freq_offset_real: MFloat[1] 
         for i in range(Self.stages):
             freq_offset_real = 1.0 + (MFloat[1](i) * freq_offset)
             allpass_out = self.all_passes[i].allpass(allpass_out, clip(center_freq_real * freq_offset_real, 20., 20000.), Q)
-        mix_real = clip(mix, 0., 1.)
-        wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
+        var mix_real = clip(mix, 0., 1.)
+        var wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
         return (allpass_out * wet_dry[0]) + (input * wet_dry[1])
 
 
-struct Flanger[num_chans: Int = 1, interp: Interp = Interp.lagrange4](Movable, Copyable):
+struct Flanger[num_chans: SIMDLength = 1, interp: Interp = Interp.lagrange4](Movable, Copyable):
     """A flanger effect implemented as a single comb filter with the delay time modulated by an LFO.
 
     Parameters:
@@ -318,13 +324,13 @@ struct Flanger[num_chans: Int = 1, interp: Interp = Interp.lagrange4](Movable, C
         Returns:
             The processed flanger output.
         """
-        lfo = self.lfo.next[OscType.triangle](lfo_freq)
-        center_freq_real = abs(center_freq)
-        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2**lfo_octaves), center_freq_real*(2**lfo_octaves))
+        var lfo = self.lfo.next[OscType.triangle](lfo_freq)
+        var center_freq_real = abs(center_freq)
+        center_freq_real = center_freq_real + linexp(lfo, -1., 1., center_freq_real/(2.**lfo_octaves), center_freq_real*(2.**lfo_octaves))
         center_freq_real = clip(center_freq_real, 20., 20000.)
         
-        comb = self.comb.next(input, 1./center_freq_real, feedback_coef)
+        var comb = self.comb.next(input, 1./center_freq_real, feedback_coef)
         
-        mix_real = clip(mix, 0., 1.)
-        wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
+        var mix_real = clip(mix, 0., 1.)
+        var wet_dry = sqrt(MFloat[2](mix_real, 1.0 - mix_real))
         return (comb * wet_dry[0]) + (input * wet_dry[1])

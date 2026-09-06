@@ -38,7 +38,7 @@ def load_flucoma_spectral_shape(windowsize, hopsize):
             with open(settings_path, "w") as f:
                 f.write(f"windowsize,{windowsize}\n")
                 f.write(f"hopsize,{hopsize}\n")
-            os.system("sclang ./SpectralShape_Validation.scd")
+            os.system("sclang ./testing_mmm_audio/validation/SpectralShape_Validation.scd")
         except Exception as e:
             print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
 
@@ -78,8 +78,7 @@ with open("./testing_mmm_audio/validation/mojo_results/spectral_flatness_mojo_re
 
     mojo_flatness = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_flatness.append(val)
 
@@ -92,7 +91,7 @@ librosa_flatness = librosa.feature.spectral_flatness(
     hop_length=hopsize,
     win_length=windowsize,
     window="hann",
-    center=False,
+    center=True,
 )[0]
 
 eps = 1.0e-12

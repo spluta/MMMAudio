@@ -1,6 +1,6 @@
 [workspace]
 authors = ["Sam Pluta <spluta@gmail.com>","Ted Moore <ted@tedmooremusic.com>"]
-channels = ["https://conda.modular.com/max-nightly", "conda-forge", "pytorch","https://repo.prefix.dev/modular-community"]
+channels = ["conda-forge", "pytorch", "https://conda.modular.com/max"]
 name = "MMMAudio"
 platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
 version = "0.1.0"
@@ -33,8 +33,8 @@ depends-on = ["unit_tests_mojo", "unit_tests_python", "test_building","validate_
 cmd = "mkdocs serve"
 
 [dependencies]
+mojo = ">=1.0.0,<2"
 setuptools = "<82"
-mojo = "1.0.0b2.*"
 numpy = ">=2.3.5,<3"
 scipy = ">=1.17.0,<2"
 librosa = ">=0.11.0,<0.12"
@@ -51,7 +51,6 @@ mkdocstrings-python = ">=2.0.2,<3"
 ipykernel = ">=7.1.0,<8"
 jupyterlab = ">=4.5.5,<5"
 pixi-kernel = ">=0.7.1,<0.8"
-emberjson = ">=0.3.3,<0.4"
 # portaudio = ">=19.7.0,<20"
 # libhidapi = ">=0.15,<1"
 # pyaudio = "*"

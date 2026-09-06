@@ -14,7 +14,7 @@ s.waitForBoot{
 			metric: metric,
 			windowSize:1024,
 			hopSize:512,
-			padding:0
+			padding:1
 		);
 
 		s.sync;

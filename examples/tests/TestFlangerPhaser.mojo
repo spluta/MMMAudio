@@ -48,14 +48,14 @@ struct TestFlangerPhaser(Movable, Copyable):
         self.m.update("freq_offset", self.freq_offset)
         self.m.update("mix", self.mix) 
 
-        sample = self.play.next(self.buf)
+        var sample = self.play.next(self.buf)
 
         if self.which_source != 0:
             sample = MFloat[2](rrand(-1., 1.), rrand(-1., 1.)) * 0.1
 
-        phaser = self.phasor.next(sample, self.center, self.Q, self.lfo_freq, self.lfo_octaves, self.freq_offset, self.mix)
-        flanger = self.flanger.next(sample, self.center, self.feedback_coef, self.lfo_freq, self.lfo_octaves, self.mix)
+        var phaser = self.phasor.next(sample, self.center, self.Q, self.lfo_freq, self.lfo_octaves, self.freq_offset, self.mix)
+        var flanger = self.flanger.next(sample, self.center, self.feedback_coef, self.lfo_freq, self.lfo_octaves, self.mix)
 
-        out = select(self.which_fx, phaser, flanger)
+        var out = select(self.which_fx, phaser, flanger)
 
         return out 

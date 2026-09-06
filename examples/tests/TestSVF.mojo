@@ -23,8 +23,8 @@ struct TestSVF(Movable, Copyable):
 
     def next(mut self) -> MFloat[2]:
         self.messenger.update("freq", self.freq) 
-        sample = self.osc.next[OscType.triangle](self.freq) 
-        outs = MFloat[2](0.0,0.0)
+        var sample = self.osc.next[OscType.triangle](self.freq) 
+        var outs = MFloat[2](0.0,0.0)
         self.cutoff = linexp(self.world[].mouse_x(), 0.0, 1.0, 20.0, 20000.0)
         self.messenger.update("res", self.res) 
         outs[0] = self.filts[0].lpf(sample, self.cutoff, self.res)

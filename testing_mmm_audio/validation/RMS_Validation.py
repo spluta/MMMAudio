@@ -36,16 +36,14 @@ with open("./testing_mmm_audio/validation/mojo_results/rms_mojo_results.csv", "r
     
     mojo_rms = []
     # skip line 2 (header)
-    # skip line 3, to account for 1 frame lag
-    for line in lines[4:]:
+    for line in lines[3:]:
         val = float(line.strip())
         mojo_rms.append(val)
 
 y, sr = librosa.load("./resources/Shiverer.wav", sr=None)
 
 # Librosa RMS
-# center=False to match Mojo's BufferedInput behavior better
-librosa_rms = librosa.feature.rms(y=y, frame_length=windowsize, hop_length=hopsize, center=False)[0]
+librosa_rms = librosa.feature.rms(y=y, frame_length=windowsize, hop_length=hopsize, center=True)[0]
 
 def compare_analyses(list1, list2):
     shorter = min(len(list1), len(list2))
@@ -57,7 +55,7 @@ def compare_analyses(list1, list2):
 flucoma_csv_path = "./testing_mmm_audio/validation/flucoma_sc_results/rms_flucoma_results.csv"
 if not os.path.exists(flucoma_csv_path):
 	try:
-		os.system("sclang ./RMS_Validation.scd")
+		os.system("sclang ./testing_mmm_audio/validation/RMS_Validation.scd")
 		scrun = True
 	except Exception as e:
 		print("Error running SuperCollider script (make sure `sclang` can be called from the Terminal):", e)
@@ -65,12 +63,8 @@ else:
 	print("FluCoMa CSV already exists, skipping .scd execution")
 	scrun = True
 
-mojo_rms_db = [float(val) for val in mojo_rms]
-librosa_rms_db = [float(val) for val in librosa_rms]
-
-plt.figure(figsize=(12, 6))
-plt.plot(mojo_rms_db, label="MMMAudio RMS (dB)", alpha=0.7)
-plt.plot(librosa_rms_db, label="librosa RMS (dB)", alpha=0.7)
+mojo_rms_db = np.array([float(val) for val in mojo_rms])
+librosa_rms_db = np.array([float(val) for val in librosa_rms])
 
 try:
     with open("./testing_mmm_audio/validation/flucoma_sc_results/rms_flucoma_results.csv", "r") as f:
@@ -80,10 +74,18 @@ try:
             val = float(line.strip())
             sclang_rms.append(val)
 
-    sclang_rms_db = [float(val) for val in sclang_rms]
-    plt.plot(sclang_rms_db, label="FluCoMa RMS (dB)", alpha=0.7)
+    sclang_rms_db = np.array([float(val) for val in sclang_rms])
 except Exception as e:
     print("Error reading FluCoMa results:", e)
+
+print("sc shape: ", sclang_rms_db.shape)
+print("mojo shape: ", mojo_rms_db.shape)
+print("librosa shape: ", librosa_rms_db.shape)
+
+plt.figure(figsize=(12, 6))
+plt.plot(mojo_rms_db, label="MMMAudio RMS (dB)", alpha=0.7)
+plt.plot(librosa_rms_db, label="librosa RMS (dB)", alpha=0.7)
+plt.plot(sclang_rms_db, label="FluCoMa RMS (dB)", alpha=0.7)
 
 mean_dev_librosa, std_dev_librosa = compare_analyses(mojo_rms, librosa_rms)
 print(f"MMMAudio vs Librosa RMS: Mean Deviation = {float(mean_dev_librosa):.2f} dB, Std Dev = {float(std_dev_librosa):.2f} dB")

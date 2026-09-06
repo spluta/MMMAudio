@@ -19,7 +19,7 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
         self.delays = [Delay[2, Interp.none](world, self.one_samp*200) for _ in range(0, Self.window_size // 2 + 1)]
         self.delay_times = List[Int]()
         self.feedback = List[Float64]()
-        vals = [random_float64(0.0, 1.0) for _ in range(5)]
+        var vals = [random_float64(0.0, 1.0) for _ in range(5)]
         for _ in range(0, Self.window_size // 2 + 1):
             self.delay_times.append(4)
             self.feedback.append(0.5)
@@ -32,8 +32,8 @@ struct BinDelaysWindow[window_size: Int](FFTProcessable):
 
     def next_frame(mut self, mut mags: List[Float64], mut phases: List[Float64]):
         for i in range(0, len(mags)):
-            read = self.delays[i].read(Float64(self.delay_times[i]) * self.one_samp)
-            write = MFloat[2](mags[i] + read[0] * self.feedback[i], phases[i] + read[1] * self.feedback[i])
+            var read = self.delays[i].read(Float64(self.delay_times[i]) * self.one_samp)
+            var write = MFloat[2](mags[i] + read[0] * self.feedback[i], phases[i] + read[1] * self.feedback[i])
             self.delays[i].write(write)
             mags[i] = read[0]
             phases[i] = read[1]
@@ -65,7 +65,7 @@ struct FFTBinDelays(Movable, Copyable):
         self.play = Play(self.world)
 
     def next(mut self) -> SIMD[DType.float64,2]:
-        sound = self.play.next(self.buffer)
-        o = self.fft_bin_delays.next(sound)
+        var sound = self.play.next(self.buffer)
+        var o = self.fft_bin_delays.next(sound)
         return o
 

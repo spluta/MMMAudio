@@ -44,7 +44,7 @@ struct RTPGHIExample(Movable, Copyable):
         self.fftp = FFTProcess[RTPGHIWindow,True,WindowType.hann,WindowType.hann](self.world,process=RTPGHIWindow(self.world),window_size=windowsize,hop_size=hopsize)
 
     def next(mut self) -> SIMD[DType.float64,2]:
-        input = self.playBuf.next(self.buffer)  # Read samples from the buffer
-        out = self.fftp.next(input)
+        var input = self.playBuf.next(self.buffer)  # Read samples from the buffer
+        var out = self.fftp.next(input)
         return out
 

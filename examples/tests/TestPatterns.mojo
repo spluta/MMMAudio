@@ -24,15 +24,15 @@ struct TestPatterns(Movable, Copyable):
 
     def next(mut self) -> MFloat[2]:
         self.messenger.update("which", self.which) 
-        trig = self.imp.next_bool(1)
+        var trig = self.imp.next_bool(1)
         if trig:
             if self.which == 0:
-                val = self.pseq.next()
+                var val = self.pseq.next()
                 print("pseq val: ", val)
             elif self.which == 1:
-                val = self.prand.next()
+                var val = self.prand.next()
                 print("prand val: ", val)
             else:
-                val = self.pxrand.next()
+                var val = self.pxrand.next()
                 print("pxrand val: ", val)
         return [0.0, 0.0]

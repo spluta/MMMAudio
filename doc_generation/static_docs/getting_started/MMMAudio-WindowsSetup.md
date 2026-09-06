@@ -85,6 +85,6 @@ Then create a new python environment and install the required python packages wi
 python3 -m venv venv 
 source venv/bin/activate
 
-pip install numpy scipy librosa pyautogui torch supriya-midi python-osc python-rtmidi matplotlib PySide6 mojo==1.0.0b1 hidapi pyaudio
+pip install numpy scipy librosa pyautogui torch supriya-midi python-osc python-rtmidi matplotlib PySide6 mojo==1.0.0 hidapi pyaudio
 ```
 

@@ -17,7 +17,7 @@ s.waitForBoot{
 		features: f,
 		windowSize: windowsize,
 		hopSize: hopsize,
-		padding: 0,
+		padding: 1,
 		normalize:1,
 		ref:60.midicps
 

@@ -5,7 +5,7 @@ comptime num_chans = 2
 struct BufSynth(Movable, Copyable):
     var world: World
     var buffer: SIMDBuffer[2]
-    var num_chans: Int
+    var num_chans: SIMDLength
 
     var play_buf: Play
     var play_rate: Float64
@@ -23,8 +23,7 @@ struct BufSynth(Movable, Copyable):
         self.buffer = SIMDBuffer[2].load("resources/Shiverer.wav")
         self.num_chans = self.buffer.num_chans  
 
-        # without printing this, the compiler wants to free the buffer for some reason
-        print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
+        print("Loaded buffer with", Int(self.buffer.num_chans), "channels and", self.buffer.num_frames, "frames.")
 
         self.play_rate = 1.0
 
@@ -40,9 +39,9 @@ struct BufSynth(Movable, Copyable):
         self.messenger.update("lpf_freq", self.lpf_freq)
         self.messenger.update("play_rate", self.play_rate)
 
-        out = self.play_buf.next[num_chans=num_chans](self.buffer, self.play_rate, True)
+        var out = self.play_buf.next[num_chans=num_chans](self.buffer, self.play_rate, True)
 
-        freq = self.lpf_freq_lag.next(self.lpf_freq)
+        var freq = self.lpf_freq_lag.next(self.lpf_freq)
         out = self.moog.next(out, freq, 1.0)
         return out
 

@@ -56,18 +56,18 @@ struct AnalysisExample(Movable, Copyable):
         self.m.update("freq", self.freq) 
         self.m.update("which", self.which) 
 
-        oscs = MFloat[2](self.osc.next[OscType.sine](self.freq, 0, False), self.osc.next[OscType.saw](self.freq, 0, False))
-        flute = self.playBuf.next(self.buffer)
+        var oscs = MFloat[2](self.osc.next[OscType.sine](self.freq, 0, False), self.osc.next[OscType.saw](self.freq, 0, False))
+        var flute = self.playBuf.next(self.buffer)
         
-        sig = select(self.which, oscs[0], oscs[1], flute)
+        var sig = select(self.which, oscs[0], oscs[1], flute)
         
         # do the analysis
         _ = self.analyzer.next(sig)
 
         # get the results
-        (frequency, confidence) = (self.analyzer.process.pitch, self.analyzer.process.pitch_conf)
-        rms = self.analyzer.process.rms
-        centroid = self.analyzer.process.centroid
+        var (frequency, confidence) = (self.analyzer.process.pitch, self.analyzer.process.pitch_conf)
+        var rms = self.analyzer.process.rms
+        var centroid = self.analyzer.process.centroid
         
         # print the results
         self.world[].print("Pitch: ", frequency, " \tHz, Confidence: ", confidence, ", \tRMS: ", rms, ", \tCentroid: ", centroid)

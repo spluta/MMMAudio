@@ -1,4 +1,10 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.ComplexFFTProcess_Module import ComplexFFTProcessable, ComplexFFTProcess
+from mmm_audio.FFTProcess_Module import FFTProcessable, FFTProcessor
+from mmm_audio.Delays import Delay
+from mmm_audio.MMMWorld_Module import WindowType, Interp
+from std.complex import ComplexSIMD
+from std.math import cos, sin
 
 struct HilbertWindow(ComplexFFTProcessable):
     var m: Messenger
@@ -18,7 +24,7 @@ struct HilbertWindow(ComplexFFTProcessable):
         complex[self.window_size] *= ComplexSIMD[DType.float64, 1](0.0, 0.0)
 
         for i in range(1, self.window_size):
-            complex[i] *= ComplexSIMD[DType.float64, 1](math.cos(self.radians), math.sin(self.radians))
+            complex[i] *= ComplexSIMD[DType.float64, 1](cos(self.radians), sin(self.radians))
 
 struct Hilbert[window_type: WindowType = WindowType.sine](Movable, Copyable):
     var world: World
@@ -54,8 +60,8 @@ struct Hilbert[window_type: WindowType = WindowType.sine](Movable, Copyable):
             The delayed dry sample and the Hilbert-transformed output sample.
         """
         self.hilbert.buffered_process.process.process.radians = radians
-        o = self.hilbert.next(input)
-        delayed: Float64 = self.delay.next(input, MInt[1](self.window_size))
+        var o = self.hilbert.next(input)
+        var delayed: Float64 = self.delay.next(input, MInt[1](self.window_size))
         return Tuple(delayed, o)
 
 struct SpectralFreezeWindow[window_size: Int](FFTProcessable):

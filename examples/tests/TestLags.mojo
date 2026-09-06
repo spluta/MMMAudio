@@ -24,12 +24,10 @@ struct TestLags(Movable, Copyable):
         self.lags_ud = LagsUD[4](world, 0.1, 3.0)
 
     def next(mut self) -> MFloat[2]:
-        sq = self.square.next[OscType.square](0.1)
-        lag = self.lag.next(sq[0])
-        lag2 = self.lag2.next(sq[0])
-        lag_ud = self.lag_ud.next(sq[0])
-        lag_ud2 = self.lag_ud2.next(sq[0])
-        sqs = [sq[0], sq[1], sq[2], sq[3]]
+        var sq = self.square.next[OscType.square](0.1)
+        var lag_ud = self.lag_ud.next(sq[0])
+        var lag_ud2 = self.lag_ud2.next(sq[0])
+        var sqs = [sq[0], sq[1], sq[2], sq[3]]
         self.lags.next(sqs)
         for i in range(4):
             self.lags_ud[i] = self.lag_ud.next(sqs[i])

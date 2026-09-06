@@ -20,9 +20,9 @@ struct Default_Synth(Movable, Copyable):
         self.messenger.update("freq", self.freq) 
         self.messenger.update("pan", self.pan) 
 
-        osc = self.osc.saw(self.freq)
+        var osc = self.osc.saw(self.freq)
         osc = self.filt.next[FilterType.lowpass](osc, 2000.0, 1.0)
-        osc2 = pan2(osc, self.pan)
+        var osc2 = pan2(osc, self.pan)
 
         return osc2 * 0.1
 

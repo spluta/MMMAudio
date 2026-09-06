@@ -1,6 +1,7 @@
-from mmm_audio import *
+from mmm_audio.constants import *
+from mmm_audio.Buffer_Module import SIMDBuffer
 
-struct Recorder[num_chans: Int = 1](Movable, Copyable):
+struct Recorder[num_chans: SIMDLength = 1](Movable, Copyable):
     """
     A struct for storing a buffer and recording audio into it.
 

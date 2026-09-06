@@ -47,7 +47,7 @@ struct Record(Movable, Copyable):
                 print("Input channel out of range, resetting to 0")
                 self.input_chan = 0
 
-        notified = self.messenger.notify_update("is_recording", self.is_recording)
+        var notified = self.messenger.notify_update("is_recording", self.is_recording)
         if notified and self.is_recording:
             self.start_recording()
         elif notified and not self.is_recording:
@@ -63,9 +63,9 @@ struct Record(Movable, Copyable):
                 print("Recording stopped: buffer full")
                 
 
-        out = self.play_buf.next(self.buffer.buf, 1.0, True, self.trig, start_frame = 0, num_frames = self.buffer.write_head-1)
+        var out = self.play_buf.next(self.buffer.buf, 1.0, True, self.trig, start_frame = 0, num_frames = self.buffer.write_head-1)
 
-        env = min_env[WindowType.hann](self.world, self.play_buf.get_relative_phase(), 0.01)
+        var env = min_env[WindowType.hann](self.world, self.play_buf.get_relative_phase(), 0.01)
 
         out = out * self.lag.next(self.is_playing) * env
 

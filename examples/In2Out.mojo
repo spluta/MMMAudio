@@ -15,10 +15,10 @@ struct In2Out(Movable, Copyable):
                 print("input[", i, "] =", self.world[].sound_in(i))
 
         # the SIMD vector has to be a power of 2
-        output = MFloat[16](0.0)
+        var output = MFloat[16](0.0)
 
         # whichever is smaller, the output or the sound_in - that number of values are copied to the output
-        smaller  = min(len(output), self.world[].num_in_chans())
+        var smaller  = min(len(output), self.world[].num_in_chans())
         for i in range(smaller):
             output[i] = self.world[].sound_in(i)
 

@@ -30,15 +30,15 @@ struct TestImpulse(Movable, Copyable):
         else:
             self.trig = MBool[2](fill = False)
 
-        offsets = [0.0,0.0]
+        var offsets: List[Float64] = [0.0,0.0]
         if self.messenger.notify_update("phase_offsets", offsets):
             for i in range(min(2, len(offsets))):
                 self.phase_offsets[i] = offsets[i]
 
-        freqs = List[Float64]()
+        var freqs = List[Float64]()
         if self.messenger.notify_update("freqs", freqs) :
             for i in range(min(2, len(freqs))):
                 self.freqs[i] = freqs[i]
 
-        sample = self.synth.next(self.freqs, self.phase_offsets, self.trig)  # Get the next sample from the synth
+        var sample = self.synth.next(self.freqs, self.phase_offsets, self.trig)  # Get the next sample from the synth
         return sample * 0.2  # Get the next sample from the synth

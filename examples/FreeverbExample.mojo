@@ -23,7 +23,7 @@ struct FreeverbSynth(Copyable, Movable):
         self.buffer = SIMDBuffer.load("resources/Shiverer.wav")
 
         # without printing this, the compiler wants to free the buffer for some reason
-        print("Loaded buffer with", self.buffer.num_chans, "channels and", self.buffer.num_frames, "frames.")
+        print("Loaded buffer with", Int(self.buffer.num_chans), "channels and", self.buffer.num_frames, "frames.")
 
         self.play_buf = Play(self.world)
         self.freeverb = Freeverb[num_chans](self.world)
@@ -43,7 +43,7 @@ struct FreeverbSynth(Copyable, Movable):
         self.m.update("added_space", self.added_space)
         self.m.update("mix", self.mix) 
 
-        out = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
+        var out = self.play_buf.next[num_chans=num_chans](self.buffer, 1.0, True)
         out = self.freeverb.next(out, self.room_size, self.lpf_comb, self.added_space) * 0.1 * self.mix + out * (1.0 - self.mix)
         return out
 
