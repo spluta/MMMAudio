@@ -742,6 +742,7 @@ struct VBAP2D(Movable, Copyable):
 
 from std.python import PythonObject
 from std.python import Python
+from std.utils.numerics import isnan
 
 struct VBAP3D[num_speakers: Int, simd_out_size: Int](Movable, Copyable):
     """
@@ -954,7 +955,11 @@ struct VBAP3D[num_speakers: Int, simd_out_size: Int](Movable, Copyable):
                 largest_small_gain = i
                 active_index = i
         
-
+        
+        # Handle all <= 0 values gracefully. Occurs when a source vector points too far from an array.
+        if gain_factors[active_index][0] <= 0.0 and gain_factors[active_index][1] <= 0.0 and gain_factors[active_index][2] <= 0.0:
+            return
+        
         for i in range(3):
             if gain_factors[active_index][i] < 0.0:
                 gain_factors[active_index][i] = 0.0
@@ -962,6 +967,7 @@ struct VBAP3D[num_speakers: Int, simd_out_size: Int](Movable, Copyable):
         self.active_triplet[0] = self.speaker_triplets[active_index][0]
         self.active_triplet[1] = self.speaker_triplets[active_index][1]
         self.active_triplet[2] = self.speaker_triplets[active_index][2]
+        
         var scaled_gains = gain_factors[active_index] / (sqrt((gain_factors[active_index] * gain_factors[active_index]).reduce_add()))
         self.active_gain_factors = scaled_gains
     
