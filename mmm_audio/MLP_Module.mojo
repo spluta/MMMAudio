@@ -19,7 +19,11 @@ struct GILGuard(Movable):
         self.state = Python().cpython().PyGILState_Ensure()
 
     def __enter__(mut self) -> ref [self] Self:
-        """Enter the `with` block. Returns a reference to the guard itself."""
+        """Enter the `with` block. Returns a reference to the guard itself.
+        
+        Returns:
+            A reference to the guard itself, which can be used to access the GIL state if needed.
+        """
         return self
 
     def __exit__(mut self):
@@ -113,7 +117,7 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                 for _ in range (5):
                     self.model(self.torch.randn(1, Self.input_size))  # I'm about to
             print("Torch model reloaded successfully")
-        except Exception:
+        except _:
             print("Error reloading MLP model. Turning off inference.")
             self.inference_gate = False
 
@@ -157,5 +161,5 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                     comptime for i in range(Self.output_size):
                         var py_val = self.py_output[0][i].item()
                         self.model_output[i] = Float64(py=py_val)
-                except Exception:
+                except _:
                     print("Error processing input through MLP")

@@ -53,7 +53,6 @@ jupyterlab = ">=4.5.5,<5"
 pixi-kernel = ">=0.7.1,<0.8"
 max = ">=26.5.0,<27"
 portaudio = ">=19.7.0,<20"
-# libhidapi = ">=0.15,<1"
 
 [pypi-dependencies]
 torch = ">=2.10.0, <3"

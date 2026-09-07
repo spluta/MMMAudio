@@ -1,12 +1,10 @@
 """
-FFI bindings for PortAudio, loaded at runtime from the system's
-libportaudio shared library.
+FFI bindings for PortAudio, loaded at runtime from the libportaudio shared
+library.
 
-Install PortAudio first:
-
-    macOS:          brew install portaudio
-    Debian/Ubuntu:  sudo apt install libportaudio2
-    Windows:        download and install from https://www.portaudio.com/download.html
+`pixi install` puts libportaudio in the project's environment and the loader
+below finds it there, so no system-wide install is needed - but you have to be
+running inside that environment (`pixi run ...` or `pixi shell`). 
 
 The two structs below mirror the C definitions in portaudio.h field for
 field. Mojo lays out a `RegisterPassable` struct of C types using the C
@@ -167,10 +165,10 @@ def _load_portaudio(library_path: String) raises -> OwnedDLHandle:
             continue
 
     raise Error(
-        "could not find libportaudio. Install it (into this environment with"
-        " `pixi add portaudio`, or system-wide - macOS: `brew install"
-        " portaudio`, Debian/Ubuntu: `sudo apt install libportaudio2`), or"
-        " pass the full path to PortAudio(library_path=...)."
+        "could not find libportaudio. MMMAudio gets it from its pixi"
+        " environment, so run this with `pixi run ...` or from a `pixi shell`"
+        " in the MMMAudio directory (after `pixi install`) - a uv/venv or"
+        " system python will not have it. "
     )
 
 
