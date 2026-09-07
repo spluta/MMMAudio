@@ -1,8 +1,43 @@
 from std.python import PythonObject
 from std.python import Python
+from std.python._cpython import PyGILState_STATE
 from mmm_audio.constants import *
 from mmm_audio.functions import py_to_float64
 from mmm_audio.Oscillators import Phasor
+
+
+struct GILGuard(Movable):
+    """Holds the CPython GIL for the duration of a `with` block.
+
+    `PyGILState_Ensure` is reference counted, so nesting guards is fine.
+    """
+
+    var state: PyGILState_STATE
+
+    def __init__(out self):
+        """Attach a thread state to this thread and take the GIL."""
+        self.state = Python().cpython().PyGILState_Ensure()
+
+    def __enter__(mut self) -> ref [self] Self:
+        """Enter the `with` block. Returns a reference to the guard itself."""
+        return self
+
+    def __exit__(mut self):
+        """Release the GIL on the way out of the block."""
+        Python().cpython().PyGILState_Release(self.state)
+
+    def __exit__(mut self, error: Error) -> Bool:
+        """Release the GIL when the block exits via an error, which keeps propagating.
+
+        Args:
+            error: The in-flight error, which this guard does not handle.
+
+        Returns:
+            False, so the error continues to propagate.
+        """
+        Python().cpython().PyGILState_Release(self.state)
+        return False
+
 
 struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable): 
     """A Mojo wrapper for a PyTorch MLP model using Python interop.
@@ -72,10 +107,11 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
           file_name: The path to the model file.
         """
         try:
-            self.model = self.torch.jit.load(file_name)
-            self.model.eval()
-            for _ in range (5):
-                self.model(self.torch.randn(1, Self.input_size))  # I'm about to
+            with GILGuard():
+                self.model = self.torch.jit.load(file_name)
+                self.model.eval()
+                for _ in range (5):
+                    self.model(self.torch.randn(1, Self.input_size))  # I'm about to
             print("Torch model reloaded successfully")
         except Exception:
             print("Error reloading MLP model. Turning off inference.")
@@ -107,19 +143,19 @@ struct MLP[input_size: Int = 2, output_size: Int = 16](Copyable, Movable):
                         
         # do the inference only when triggered and the gate is on
         if self.inference_gate and self.inference_trig.next_bool(self.trig_rate):
-            if self.torch is None:
-                return 
-            try:
-                comptime for i in range(Self.input_size):
-                    self.py_input[0][i] = self.model_input[Int(i)]
-                self.py_output = self.model(self.py_input)  # Run the model with the input
-            except Exception:
-                print("Error processing input through MLP")
+            # Everything below touches CPython, the `is None` test included, so
+            # the audio thread has to be holding the GIL for all of it.
+            with GILGuard():
+                if self.torch is None:
+                    return
 
-            try:
-                var py_output = self.model(self.py_input)  # Run the model with the input
-                comptime for i in range(Self.output_size):
-                    var py_val = py_output[0][i].item()
-                    self.model_output[i] = Float64(py=py_val)
-            except Exception:
-                print("Error processing input through MLP:")
+                try:
+                    comptime for i in range(Self.input_size):
+                        self.py_input[0][i] = self.model_input[Int(i)]
+                    self.py_output = self.model(self.py_input)  # Run the model with the input
+
+                    comptime for i in range(Self.output_size):
+                        var py_val = self.py_output[0][i].item()
+                        self.model_output[i] = Float64(py=py_val)
+                except Exception:
+                    print("Error processing input through MLP")

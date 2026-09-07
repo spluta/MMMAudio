@@ -20,7 +20,7 @@ sudo apt install libhidapi-hidraw0 libhidapi-dev
 sudo apt install pulseaudio python3-dev build-essential
 ```
 
-Linux users may encounter issues installing some packages, like pyaudio. This is probably because you need to build the package on your machine. You may need some or more of the following:
+Linux users may encounter issues installing some packages. This is probably because you need to build the package on your machine. You may need some or more of the following:
 ```
 sudo apt-get install python3-all-dev python3-venv
 ```
@@ -57,7 +57,7 @@ From the root MMMAudio directory:
 python -m venv venv 
 source venv/bin/activate
 
-pip install numpy scipy librosa pyautogui torch supriya-midi python-osc matplotlib PySide6 mojo==1.0.0 hidapi pyaudio
+pip install numpy scipy librosa pyautogui torch supriya-midi python-osc matplotlib PySide6 mojo==1.0.0 hidapi
 ```
 
 ## 3 Edit the .vscode/settings.json file to have the following:

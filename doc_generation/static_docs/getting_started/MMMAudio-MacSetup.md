@@ -62,7 +62,7 @@ From the MMMAudio directory:
 python -m venv venv 
 source venv/bin/activate
 
-pip install numpy scipy librosa pyautogui torch supriya-midi python-osc matplotlib PySide6 mojo==1.0.0 hidapi pyaudio
+pip install numpy scipy librosa pyautogui torch supriya-midi python-osc matplotlib PySide6 mojo==1.0.0 hidapi
 ```
 
 ## 3 Edit the .vscode/settings.json file to have the following:

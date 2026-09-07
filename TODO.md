@@ -5,7 +5,7 @@
 
 ## Big Ones
 
-- replace pyaudio with Mojo PortAudio bindings
+- ~~replace pyaudio with Mojo PortAudio bindings~~ working!
 - ~~load and save wav files without numpy/scipy~~ working!
 - ~~Multiple graphs in one MMMAudioinstance~~ not necessary with multiprocessor support
 - ~~multiprocessor support~~ working!

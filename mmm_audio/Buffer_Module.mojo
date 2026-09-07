@@ -38,6 +38,7 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
         self.num_frames_f64 = Float64(self.num_frames)
         self.duration = self.num_frames_f64 / self.sample_rate
 
+    @always_inline
     def at_phase[interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](self, world: World, phase: Float64, prev_phase: Float64 = 0) -> MFloat[Self.num_chans]:
         """Read a value from the SIMDBuffer at a given phase using sinc interpolation.
 
@@ -54,6 +55,10 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
         Returns:
             The interpolated sample value at the given phase.
         """
+        var prev_f_idx: Float64 = 0.0
+        comptime if interp == Interp.sinc:
+            prev_f_idx = prev_phase * self.num_frames_f64
+
         return SpanInterpolator.read[
             interp=interp,
             bWrap=bWrap,
@@ -62,7 +67,7 @@ struct SIMDBuffer[num_chans: SIMDLength = 2](Movable, Copyable):
             world = world,
             data=self.data,
             f_idx=phase * self.num_frames_f64,
-            prev_f_idx=prev_phase * self.num_frames_f64
+            prev_f_idx=prev_f_idx
         )
 
     @staticmethod
@@ -204,6 +209,7 @@ struct Buffer(Movable, Copyable):
         self.num_frames_f64 = Float64(self.num_frames)
         self.duration = self.num_frames_f64 / self.sample_rate
 
+    @always_inline
     def at_phase[interp: Interp = Interp.none, bWrap: Bool = True, mask: Int = 0](self, world: World, chan: Int, phase: Float64, prev_phase: Float64 = 0) -> MFloat[1]:
         """Read a value from the Buffer at a given phase using interpolation.
 
@@ -221,6 +227,10 @@ struct Buffer(Movable, Copyable):
         Returns:
             The interpolated sample value at the given phase.
         """
+        var prev_f_idx: Float64 = 0.0
+        comptime if interp == Interp.sinc:
+            prev_f_idx = prev_phase * self.num_frames_f64
+
         return SpanInterpolator.read[
             num_chans=1,
             interp=interp,
@@ -230,7 +240,7 @@ struct Buffer(Movable, Copyable):
             world = world,
             data=self.data[chan],
             f_idx=phase * self.num_frames_f64,
-            prev_f_idx=prev_phase * self.num_frames_f64
+            prev_f_idx=prev_f_idx
         )
 
     @staticmethod
@@ -382,15 +392,19 @@ struct SpanInterpolator(Movable, Copyable):
     @always_inline
     @staticmethod
     def read_none[num_chans: SIMDLength = 1, bWrap: Bool = True, mask: Int = 0](data: Span[MFloat[num_chans], _], idx: Int) -> type_of(data[0]):
+        if len(data) == 0:
+            return 0.0
+        check_wrap_mask[mask](len(data))
+
         var idx2 = idx
         comptime if bWrap:
             comptime if mask != 0:
                 idx2 = idx2 & mask
             else:
                 idx2 = idx2 % len(data)
-            return data[idx2]
+            return data.unsafe_get(idx2)
         else:
-            return data[idx2] if SpanInterpolator.idx_in_range(data,idx2) else 0.0
+            return data.unsafe_get(idx2) if SpanInterpolator.idx_in_range(data,idx2) else 0.0
 
     @always_inline
     @staticmethod
@@ -409,11 +423,16 @@ struct SpanInterpolator(Movable, Copyable):
         Returns:
             The linearly interpolated sample value.
         """
+        if len(data) == 0:
+            return 0.0
+        check_wrap_mask[mask](len(data))
+
         var idx0: Int = Int(f_idx)
         var idx1: Int = idx0 + 1
         var frac: Float64 = f_idx - Float64(idx0)
         var y0: MFloat[num_chans]
         var y1: MFloat[num_chans]
+
         comptime if bWrap:
             comptime if mask != 0:
                 idx0 = idx0 & mask
@@ -423,13 +442,13 @@ struct SpanInterpolator(Movable, Copyable):
                 idx0 = idx0 % length
                 idx1 = idx1 % length
             
-            y0 = data[idx0]
-            y1 = data[idx1]
+            y0 = data.unsafe_get(idx0)
+            y1 = data.unsafe_get(idx1)
 
         else:
             # not wrapping
-            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y0 = data.unsafe_get(idx0) if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data.unsafe_get(idx1) if SpanInterpolator.idx_in_range(data, idx1) else 0.0
 
         return linear_interp(y0,y1,frac)
 
@@ -450,6 +469,10 @@ struct SpanInterpolator(Movable, Copyable):
         Returns:
             The quadratically interpolated sample value.
         """
+        if len(data) == 0:
+            return 0.0
+        check_wrap_mask[mask](len(data))
+
         var idx0 = Int(f_idx)
         var idx1 = idx0 + 1
         var idx2 = idx0 + 2
@@ -469,15 +492,15 @@ struct SpanInterpolator(Movable, Copyable):
                 idx1 = idx1 % length
                 idx2 = idx2 % length
 
-            y0 = data[idx0]
-            y1 = data[idx1]
-            y2 = data[idx2]
+            y0 = data.unsafe_get(idx0)
+            y1 = data.unsafe_get(idx1)
+            y2 = data.unsafe_get(idx2)
 
             return quadratic_interp(y0, y1, y2, frac)
         else:
-            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
+            y0 = data.unsafe_get(idx0) if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data.unsafe_get(idx1) if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data.unsafe_get(idx2) if SpanInterpolator.idx_in_range(data, idx2) else 0.0
             return quadratic_interp(y0, y1, y2, frac)
 
     @always_inline
@@ -497,6 +520,10 @@ struct SpanInterpolator(Movable, Copyable):
         Returns:
             The cubically interpolated sample value.
         """
+        if len(data) == 0:
+            return 0.0
+        check_wrap_mask[mask](len(data))
+
         var idx1 = Int(f_idx)
         var idx0 = idx1 - 1
         var idx2 = idx1 + 1
@@ -520,16 +547,16 @@ struct SpanInterpolator(Movable, Copyable):
                 idx2 = idx2 % length
                 idx3 = idx3 % length
 
-            y0 = data[idx0]
-            y1 = data[idx1]
-            y2 = data[idx2]
-            y3 = data[idx3]
+            y0 = data.unsafe_get(idx0)
+            y1 = data.unsafe_get(idx1)
+            y2 = data.unsafe_get(idx2)
+            y3 = data.unsafe_get(idx3)
             return cubic_interp(y0, y1, y2, y3, frac)
         else:
-            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
-            y3 = data[idx3] if SpanInterpolator.idx_in_range(data, idx3) else 0.0
+            y0 = data.unsafe_get(idx0) if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data.unsafe_get(idx1) if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data.unsafe_get(idx2) if SpanInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data.unsafe_get(idx3) if SpanInterpolator.idx_in_range(data, idx3) else 0.0
             return cubic_interp(y0, y1, y2, y3, frac)
 
     @always_inline
@@ -550,6 +577,10 @@ struct SpanInterpolator(Movable, Copyable):
             The fourth-order Lagrange interpolated sample value.
         """
        
+        if len(data) == 0:
+            return 0.0
+        check_wrap_mask[mask](len(data))
+
         var idx0 = Int(f_idx)
         var idx1 = idx0 + 1
         var idx2 = idx0 + 2
@@ -577,19 +608,19 @@ struct SpanInterpolator(Movable, Copyable):
                 idx3 = idx3 % length
                 idx4 = idx4 % length
 
-            y0 = data[idx0]
-            y1 = data[idx1]
-            y2 = data[idx2]
-            y3 = data[idx3]
-            y4 = data[idx4]
+            y0 = data.unsafe_get(idx0)
+            y1 = data.unsafe_get(idx1)
+            y2 = data.unsafe_get(idx2)
+            y3 = data.unsafe_get(idx3)
+            y4 = data.unsafe_get(idx4)
             # print(idx0,idx1,idx2,idx3,idx4,y0,y1,y2,y3,y4)
             return lagrange4(y0, y1, y2, y3, y4, frac)
         else:
-            y0 = data[idx0] if SpanInterpolator.idx_in_range(data, idx0) else 0.0
-            y1 = data[idx1] if SpanInterpolator.idx_in_range(data, idx1) else 0.0
-            y2 = data[idx2] if SpanInterpolator.idx_in_range(data, idx2) else 0.0
-            y3 = data[idx3] if SpanInterpolator.idx_in_range(data, idx3) else 0.0
-            y4 = data[idx4] if SpanInterpolator.idx_in_range(data, idx4) else 0.0
+            y0 = data.unsafe_get(idx0) if SpanInterpolator.idx_in_range(data, idx0) else 0.0
+            y1 = data.unsafe_get(idx1) if SpanInterpolator.idx_in_range(data, idx1) else 0.0
+            y2 = data.unsafe_get(idx2) if SpanInterpolator.idx_in_range(data, idx2) else 0.0
+            y3 = data.unsafe_get(idx3) if SpanInterpolator.idx_in_range(data, idx3) else 0.0
+            y4 = data.unsafe_get(idx4) if SpanInterpolator.idx_in_range(data, idx4) else 0.0
             return lagrange4(y0, y1, y2, y3, y4, frac)
 
     @always_inline
