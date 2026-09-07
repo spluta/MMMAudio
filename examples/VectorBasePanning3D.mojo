@@ -25,26 +25,30 @@ struct VectorBasePanning3D(Movable, Copyable):
         self.pos = [0.0, -1.0]
         self.mouse = False
         comptime degrees_to_radians = pi/180
-        # var speaker_array : Array[MFloat[2], 11] = [
-        #     MFloat[2](0.0, 0),#Center
-        #     MFloat[2](25 * degrees_to_radians, 0),# L
-        #     MFloat[2](-25 * degrees_to_radians, 0),# R
-        #     MFloat[2](90 * degrees_to_radians, 0), # LS
-        #     MFloat[2](-90 * degrees_to_radians, 0), # RS
-        #     MFloat[2](135  * degrees_to_radians, 0), # LB
-        #     MFloat[2](-135 * degrees_to_radians, 0), # RB
-        #     MFloat[2](40 * degrees_to_radians, 35 * degrees_to_radians), #LTF
-        #     MFloat[2](-40 * degrees_to_radians, 35 * degrees_to_radians), #RTF
-        #     MFloat[2](120 * degrees_to_radians, 35 * degrees_to_radians), #LTR
-        #     MFloat[2](-120 * degrees_to_radians, 35 * degrees_to_radians) #RTF
-        #     ]
-        var speaker_array : Array[MFloat[2], 5] = [
-            MFloat[2](-0.5 * pi, 0),
-            MFloat[2](0.0, 0.0),
-            MFloat[2](0.5 * pi, 0.0),
-            MFloat[2](0.0, -0.5 * pi),
-            MFloat[2](0.0, 0.5 * pi)
-        ]
+        
+        # A 7.1.4 Atmos array
+        var speaker_array : Array[MFloat[2], 11] = [
+            MFloat[2](0.0, 0),#Center
+            MFloat[2](25 * degrees_to_radians, 0),# L
+            MFloat[2](-25 * degrees_to_radians, 0),# R
+            MFloat[2](90 * degrees_to_radians, 0), # LS
+            MFloat[2](-90 * degrees_to_radians, 0), # RS
+            MFloat[2](135  * degrees_to_radians, 0), # LB
+            MFloat[2](-135 * degrees_to_radians, 0), # RB
+            MFloat[2](40 * degrees_to_radians, 35 * degrees_to_radians), #LTF
+            MFloat[2](-40 * degrees_to_radians, 35 * degrees_to_radians), #RTF
+            MFloat[2](120 * degrees_to_radians, 35 * degrees_to_radians), #LTR
+            MFloat[2](-120 * degrees_to_radians, 35 * degrees_to_radians) #RTF
+            ]
+        
+        
+        # var speaker_array : Array[MFloat[2], 5] = [
+        #     MFloat[2](-0.5 * pi, 0),
+        #     MFloat[2](0.0, 0.0),
+        #     MFloat[2](0.5 * pi, 0.0),
+        #     MFloat[2](0.0, -0.5 * pi),
+        #     MFloat[2](0.0, 0.5 * pi)
+        # ]
         self.vbap = VBAP3D[5, 8](speaker_array)
 
         

@@ -40,7 +40,7 @@ from math import cos, sin, pi
 import numpy as np
 from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
-
+degrees_to_radians = pi/180
 
 # Test 5 speaker array
 # speaker_positions = [
@@ -70,24 +70,6 @@ speaker_positions = [
 ]
 
 
-# LSU Immersive Lab
-# speaker_positions = [
-#     (0.0, 0),#Center
-#     (25 * degrees_to_radians, 0),# L
-#     (-25 * degrees_to_radians, 0),# R
-#     (90 * degrees_to_radians, 0), # LS
-#     (-90 * degrees_to_radians, 0), # RS
-#     (135  * degrees_to_radians, 0), # LB
-#     (-135 * degrees_to_radians, 0), # RB
-#     (40 * degrees_to_radians, 35 * degrees_to_radians), #LTF
-#     (-40 * degrees_to_radians, 35 * degrees_to_radians), #RTF
-#     (120 * degrees_to_radians, 35 * degrees_to_radians), #LTR
-#     (-120 * degrees_to_radians, 35 * degrees_to_radians) #RTF
-        
-# ]
-
-
-
 
 speaker_vectors = np.array([[cos(x[0]) * cos(x[1]),sin(x[0]) * cos(x[1]), sin(x[1])] for x in speaker_positions])
 
@@ -96,7 +78,13 @@ speaker_vectors = np.array([[cos(x[0]) * cos(x[1]),sin(x[0]) * cos(x[1]), sin(x[
 
 qhull = ConvexHull(speaker_vectors)
 qhull.simplices
+triplets = []
 
+for triplet in qhull.simplices:
+    if speaker_vectors[triplet[0]][2] == 0.0 and speaker_vectors[triplet[1]][2] == 0.0 and speaker_vectors[triplet[2]][2] == 0:
+        pass
+    else:
+        triplets.append(triplet)
 
 fig = plt.figure()
 ax = fig.add_subplot(projection="3d")
@@ -110,10 +98,10 @@ zs = [vec[2] for vec in speaker_vectors]
 
 ax.scatter(xs,ys,zs) #type:ignore
 
-for i in range(len(qhull.simplices)):
-    speaker_1 = qhull.simplices[i][0]
-    speaker_2 = qhull.simplices[i][1]
-    speaker_3 = qhull.simplices[i][2]
+for i in range(len(triplets)):
+    speaker_1 = triplets[i][0]
+    speaker_2 = triplets[i][1]
+    speaker_3 = triplets[i][2]
 
     
     ax.plot3D(
