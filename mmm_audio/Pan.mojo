@@ -987,7 +987,9 @@ struct VBAP3D[num_speakers: Int, simd_out_size: Int](Movable, Copyable):
             sample: A mono sample to pan.
             az: The azimuth in radians. 0.0 is directly ahead, positive values move clockwise.
             ht: The height of the source in radians. 0.0 is on the same horizontal plane as the listener's ears. Positve values are above the listener, negative values are below. From -1pi radians (directly below) to 1pi radians (directly above).
-        
+
+        Returns:
+            An MFloat of the panned sample. 
         """
        
         comptime two_pi = 2 * pi
