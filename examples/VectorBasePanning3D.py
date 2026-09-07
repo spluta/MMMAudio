@@ -37,15 +37,6 @@ from matplotlib import pyplot as plt
 from scipy.spatial import ConvexHull
 degrees_to_radians = pi/180
 
-# Test 5 speaker array
-# speaker_positions = [
-#     [-0.5 * pi, 0.0],
-#     [0.0, 0.0],
-#     [0.5 * pi, 0.0],
-#     [0.0, -0.5 * pi],
-#     [0.0, 0.5 * pi]
-# ]
-
 
 # A 7.1.4 Atmos Array 
 speaker_positions = [
