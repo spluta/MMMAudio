@@ -333,7 +333,6 @@ def dbap2D[
     comptime assert simd_out_size & (simd_out_size - 1) == 0, "simd_out_size must be a power of two for dbap2D"
 
     # Calculates the covariance of speaker distances 
-    var materialized_speaker_positions = materialize[speaker_positions]()
 
     def variance_of_dists[
         comp_num_speakers: Int, 
