@@ -1,4 +1,3 @@
-from mmm_python import * #this needs to be imported first so supriya_midi can be instantiated without error
 import supriya_midi as s_m
 
 # create the MidiIn object
